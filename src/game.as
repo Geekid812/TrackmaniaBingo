@@ -46,6 +46,7 @@ class Map {
     int TmxID = -1; // Used to compare whether a map is valid
     string Uid;
     int ClaimedTeam = -1;
+    RunResult ClaimedRun;
     CachedImage@ Thumbnail;
     CachedImage@ MapImage;
 
@@ -71,6 +72,21 @@ class EndState {
     }
 }
 
+class RunResult {
+    int Time = -1;
+    Medal Medal = Medal::None;
+
+    RunResult() { }
+    RunResult(int time, Medal medal) {
+        this.Time = time;
+        this.Medal = medal;
+    }
+
+    string Display() {
+        return symbolOf(this.Medal) + "\\$z " + Time::Format(this.Time);
+    }
+}
+
 enum MapMode {
     TOTD,
     MXRandom
@@ -81,20 +97,6 @@ string stringof(MapMode mode) {
         return "Track of the Day";
     }
     return "Random Map (TMX)";
-}
-
-enum Medal {
-    Author,
-    Gold,
-    Silver,
-    Bronze
-}
-
-string stringof(Medal medal) {
-    if (medal == Medal::Author) return "Author";
-    if (medal == Medal::Gold) return "Gold";
-    if (medal == Medal::Silver) return "Silver";
-    return "Bronze";
 }
 
 enum BingoDirection {
