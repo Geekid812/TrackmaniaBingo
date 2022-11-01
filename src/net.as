@@ -68,6 +68,7 @@ namespace Network {
             }
         } else if (Body["method"] == "GAME_START") {
             @Room.MapList = {};
+            if (Body["maplist"].Length < 25) return; // Prevents a crash, user needs to retry later
             for (uint i = 0; i < Body["maplist"].Length; i++) {
                 auto JsonMap = Body["maplist"][i];
                 Room.MapList.InsertLast(Map(
@@ -80,16 +81,31 @@ namespace Network {
 
             StartCountdown = 5000;
         } else if (Body["method"] == "CLAIM_CELL") {
-            auto ClaimedMap = Room.MapList[Body["cellid"]];
+            Map@ ClaimedMap = Room.MapList[Body["cellid"]];
+            RunResult Result = RunResult(int(Body["time"]), Medal(int(Body["medal"])));
             ClaimedMap.ClaimedTeam = Body["team"];
+            ClaimedMap.ClaimedRun = Result;
+
             string PlayerName = Body["playername"];
             string MapName = Body["mapname"];
             string TeamName = (Body["team"] == 0 ? "Red" : "Blue");
+            bool IsReclaim = Body["delta"] != -1;
+            bool IsImprovement = Body["improve"];
+            string DeltaFormatted = "-" + Time::Format(Body["delta"]);
             vec4 TeamColor = (Body["team"] == 0 ? vec4(.6, .2, .2, 1.) : vec4(.2, .2, .6, 1.));
-            UI::ShowNotification(Icons::Bookmark + " Map Claimed", PlayerName + " has claimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team", TeamColor, 12000);
+            vec4 DimColor = TeamColor / 1.5;
+            
+            if (!IsReclaim) {
+                UI::ShowNotification(Icons::Bookmark + " Map Claimed", PlayerName + " has claimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display(), TeamColor, 15000);
+            } else if (IsImprovement) {
+                UI::ShowNotification(Icons::ClockO + " Time Improved", PlayerName + " has improved " + TeamName + " Team's time on \\$fd8" + MapName + "\\$z\n" + Result.Display() + " (" + DeltaFormatted + ")", DimColor, 15000);
+            } else { // Reclaim
+                UI::ShowNotification(Icons::Retweet + " Map Reclaimed", PlayerName + " has reclaimed \\fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display() + " (" + DeltaFormatted + ")", TeamColor, 15000);
+            }
+                
         } else if (Body["method"] == "GAME_END") {
             string TeamName = (Body["winner"] == 0 ? "\\$e33Red Team" : "\\$33eBlue Team");
-            UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z has won the game!", vec4(.8, .8, 0, 1), 12000);
+            UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
 
             Room.EndState.BingoDirection = BingoDirection(int(Body["bingodir"]));
             Room.EndState.Offset = Body["offset"];
@@ -109,6 +125,7 @@ namespace Network {
         IsLooping = false;
         Room.Active = false;
         Room.InGame = false;
+        Room.EndState = EndState();
         MapList::Visible = false;
     }
 
@@ -216,9 +233,11 @@ namespace Network {
         Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/start", GetLogin(), true);
     }
 
-    void ClaimCell(string&in uid) {
+    void ClaimCell(string&in uid, RunResult result) {
         auto Body = Json::Object();
         Body["uid"] = uid;
+        Body["time"] = result.Time;
+        Body["medal"] = result.Medal;
         Body["login"] = GetLogin();
         Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/claim", Json::Write(Body), false);
     }

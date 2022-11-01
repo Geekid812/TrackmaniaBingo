@@ -1,8 +1,9 @@
 
 namespace Window {
+    const bool CanAlwaysStart = false; // Debug constant 
     bool Visible;
     bool RoomCodeVisible;
-    
+
     void Render() {
         if (!Visible) return;
         UI::Begin(WindowName, Visible);
@@ -86,6 +87,9 @@ namespace Window {
             if (UI::Selectable(stringof(Medal::Bronze), Room.TargetMedal == Medal::Bronze)) {
                 Room.TargetMedal = Medal::Bronze;
             }
+            if (UI::Selectable(stringof(Medal::None), Room.TargetMedal == Medal::None)) {
+                Room.TargetMedal = Medal::None;
+            }
 
             UI::EndCombo();
         }
@@ -108,7 +112,7 @@ namespace Window {
         UI::PopFont();
 
         UI::TextWrapped("In this mode, two teams compete be the first to complete a row, column or diagonal on the game board. Each cell on this board corresponds to a track that players can claim for their team by achieving a specific medal on that track.");
-        UI::TextWrapped("Once a track has been claimed, other players can no longer reclaim it. Try to play strategically to be the first team to achieve a bingo!");
+        UI::TextWrapped("Once a track has been claimed, in order to reclaim it, other teams must beat the time that was set on that track. Try to play strategically to be the first team to achieve a bingo!");
         UI::Text("Good luck and have fun!");
         UI::TextDisabled("Mode created by TheGeekid");
     }
@@ -124,14 +128,14 @@ namespace Window {
 
         bool StartDisabled = Room.Players.Length < 2;
         UIColor::DarkGreen();
-        if (StartDisabled) UI::BeginDisabled();
+        if (!CanAlwaysStart && StartDisabled) UI::BeginDisabled();
         if (Room.LocalPlayerIsHost) {
             UI::SameLine();
             if (UI::Button(Icons::PlayCircleO + " Start")) {
                 startnew(Network::StartGame);
             }
         }
-        if (StartDisabled) UI::EndDisabled();
+        if (!CanAlwaysStart && StartDisabled) UI::EndDisabled();
         UIColor::Reset();
 
         UI::Text("\\$ff0Map Selection: \\$z" + stringof(Room.MapSelection));

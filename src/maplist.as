@@ -33,10 +33,15 @@ namespace MapList {
             UI::TableSetupColumn("", UI::TableColumnFlags::None, 65);
             UI::TableNextColumn();
             UI::Text(Map.Name);
-            UI::TextDisabled("By " + Map.Author);
+
+            if (Map.ClaimedRun.Time != -1) {
+                UI::TextDisabled(Map.ClaimedRun.Display());
+            } else {
+                UI::TextDisabled("By " + Map.Author);
+            }
 
             UI::TableNextColumn();
-            if (Map.ClaimedTeam == -1 && !Room.EndState.HasEnded()) {
+            if (!Room.EndState.HasEnded()) {
                 UIColor::DarkGreen();
                 if (UI::Button(Icons::Play + " Play")) {
                     MapList::Visible = false;

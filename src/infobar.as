@@ -31,13 +31,14 @@ namespace InfoBar {
         }
 
         UIColor::Gray();
-        if (Room.EndState.BingoDirection != BingoDirection::None && UI::Button("Exit")) {
-            Network::Reset();
+        if (Room.EndState.HasEnded() ) {
+            UI::SameLine();
+            if (UI::Button("Exit")) {
+                Network::Reset();
+            }
         }
         UIColor::Reset();
-
         UI::PopStyleVar();
-
 
         UI::End();
     }
