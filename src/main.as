@@ -12,6 +12,7 @@ void RenderMenu() {
 }
 
 void Render() {
+    BoardLocator::Render();
     Board::Draw();
     InfoBar::Render();
     MapList::Render();

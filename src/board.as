@@ -1,23 +1,21 @@
 
 namespace Board {
-    float Width = 20.;
-    vec2 Position = vec2(79, 1);
+    // Controlled by BoardLocator
+    float BoardSize;
+    vec2 Position;
+
     const float StrokeWidth = 8.;
     const vec4 BingoStrokeColor = vec4(1, 0.6, 0, 0.9);
 
     void Draw() {
         if (!Room.InGame) return;
 
-        float u = Unit();
-        float BoardSize = Width * u;
         float BorderSize = BoardSize / 120.;
         float CellSize = (BoardSize - BorderSize * 6.) / 5.;
-        float TLBoardX = Position.x * u;
-        float TLBoardY = Position.y * u;
         nvg::BeginPath();
 
         // Board
-        //nvg::Rect(TLBoardX, TLBoardY, BoardSize, BoardSize);
+        //nvg::Rect(Position.x, Position.y, BoardSize, BoardSize);
         //nvg::Fill();
 
         // Borders
@@ -25,13 +23,13 @@ namespace Board {
         nvg::FillColor(vec4(.9, .9, .9, 1.));
         for (uint i = 0; i < 6; i++) {
             nvg::BeginPath();
-            nvg::Rect(TLBoardX + float(i) * (CellSize + BorderSize), TLBoardY, BorderSize, BoardSize);
+            nvg::Rect(Position.x + float(i) * (CellSize + BorderSize), Position.y, BorderSize, BoardSize);
             nvg::Fill();
         }
         // Rows
         for (uint i = 0; i < 6; i++) {
             nvg::BeginPath();
-            nvg::Rect(TLBoardX, TLBoardY + float(i) * (CellSize + BorderSize), BoardSize, BorderSize);
+            nvg::Rect(Position.x, Position.y + float(i) * (CellSize + BorderSize), BoardSize, BorderSize);
             nvg::Fill();
         }
 
@@ -52,7 +50,7 @@ namespace Board {
                         color = vec4(.3, .3, .3, .8);
                 }
                 nvg::FillColor(color);
-                nvg::Rect(TLBoardX + float(i) * (CellSize + BorderSize) + BorderSize, TLBoardY + float(j) * (CellSize + BorderSize) + BorderSize, CellSize, CellSize);
+                nvg::Rect(Position.x + float(i) * (CellSize + BorderSize) + BorderSize, Position.y + float(j) * (CellSize + BorderSize) + BorderSize, CellSize, CellSize);
                 nvg::Fill();
             }
         }
@@ -63,21 +61,21 @@ namespace Board {
         nvg::StrokeColor(BingoStrokeColor);
         nvg::StrokeWidth(StrokeWidth);
         if (Room.EndState.BingoDirection == BingoDirection::Horizontal) {
-            float yPos = TLBoardY + BorderSize + (CellSize / 2) + i * (CellSize + BorderSize);
+            float yPos = Position.y + BorderSize + (CellSize / 2) + i * (CellSize + BorderSize);
             nvg::BeginPath();
-            nvg::MoveTo(vec2(TLBoardX - BorderSize, yPos));
-            nvg::LineTo(vec2(TLBoardX + BoardSize + BorderSize, yPos));
+            nvg::MoveTo(vec2(Position.x - BorderSize, yPos));
+            nvg::LineTo(vec2(Position.x + BoardSize + BorderSize, yPos));
             nvg::Stroke();
         } else if (Room.EndState.BingoDirection == BingoDirection::Vertical) {
-            float xPos = TLBoardX + BorderSize + (CellSize / 2) + i * (CellSize + BorderSize);
+            float xPos = Position.x + BorderSize + (CellSize / 2) + i * (CellSize + BorderSize);
             nvg::BeginPath();
-            nvg::MoveTo(vec2(xPos, TLBoardY - BorderSize));
-            nvg::LineTo(vec2(xPos, TLBoardY + BoardSize + BorderSize));
+            nvg::MoveTo(vec2(xPos, Position.y - BorderSize));
+            nvg::LineTo(vec2(xPos, Position.y + BoardSize + BorderSize));
             nvg::Stroke();
         } else if (Room.EndState.BingoDirection == BingoDirection::Diagonal) {
             nvg::BeginPath();
-            nvg::MoveTo(vec2(TLBoardX - BorderSize, TLBoardY - BorderSize + i * (BoardSize + 2 * BorderSize)));
-            nvg::LineTo(vec2(TLBoardX + BoardSize + BorderSize, TLBoardY - BorderSize + (1 - i) * (BoardSize + 2 * BorderSize)));
+            nvg::MoveTo(vec2(Position.x - BorderSize, Position.y - BorderSize + i * (BoardSize + 2 * BorderSize)));
+            nvg::LineTo(vec2(Position.x + BoardSize + BorderSize, Position.y - BorderSize + (1 - i) * (BoardSize + 2 * BorderSize)));
             nvg::Stroke();
         }
 

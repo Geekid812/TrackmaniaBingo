@@ -9,9 +9,8 @@ namespace InfoBar {
     void Render() {
         if (!Room.InGame) return;
 
-        float u = Board::Unit();
-        UI::SetNextWindowPos(int(Board::Position.x * u), int(Board::Position.y * u) + int(Board::Width * u) + BoardMargin, UI::Cond::Always);
-        UI::SetNextWindowSize(int(Board::Width * u), 42, UI::Cond::Always);
+        UI::SetNextWindowPos(int(Board::Position.x), int(Board::Position.y) + int(Board::BoardSize) + BoardMargin, UI::Cond::Always);
+        UI::SetNextWindowSize(int(Board::BoardSize), 42, UI::Cond::Always);
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize);
         
         UI::PushFont(Font::Monospace);
