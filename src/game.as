@@ -7,6 +7,7 @@ class GameRoom {
     bool Active;
     bool InGame;
     string JoinCode;
+    string ClientSecret;
     array<Player>@ Players = {};
     int MaxPlayers;
     MapMode MapSelection;

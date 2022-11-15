@@ -171,17 +171,22 @@ namespace Network {
         Body["name"] = LocalUsername;
         Body["login"] = GetLogin();
 
-        auto Request = Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/create", Json::Write(Body), true);
+        auto Request = PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/create", Json::Write(Body), true);
         if (Request is null) {
             Reset();
             return;
         }
 
-        string RoomCode = Request.String();
+        string json = Request.String();
+        auto response = Json::Parse(json);
+        string RoomCode = response["room_code"];
+        string ClientSecret = response["client_secret"];
+
         Room.Active = true;
         Room.LocalPlayerIsHost = true;
         Room.HostName = LocalUsername;
         Room.JoinCode = RoomCode;
+        Room.ClientSecret = ClientSecret;
         @Room.Players = { Player(LocalUsername, 0, true) };
     }
 
@@ -214,6 +219,7 @@ namespace Network {
             Room.MaxPlayers = JsonRoom["size"];
             Room.MapSelection = MapMode(int(JsonRoom["selection"]));
             Room.TargetMedal = Medal(int(JsonRoom["medal"]));
+            Room.ClientSecret = JsonRoom["client_secret"];
             Room.HostName = JsonRoom["host"];
 
             Room.Active = true;
@@ -223,14 +229,27 @@ namespace Network {
     }
 
     void JoinTeam(int Team) {
+        for (uint i = 0; i < Room.Players.Length; i++){
+            auto player = Room.Players[i];
+            if (player.IsSelf)
+                if (player.Team == Team)
+                    return;
+                else
+                    break;
+        }
+
         auto Body = Json::Object();
         Body["team"] = Team;
+        Body["client_secret"] = Room.ClientSecret;
         Body["login"] = GetLogin();
         Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/team-update", Json::Write(Body), false);
     }
 
     void StartGame() {
-        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/start", GetLogin(), true);
+        auto Body = Json::Object();
+        Body["login"] = GetLogin();
+        Body["client_secret"] = Room.ClientSecret;
+        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/start", Json::Write(Body), true);
     }
 
     void ClaimCell(string&in uid, RunResult result) {
@@ -239,6 +258,7 @@ namespace Network {
         Body["time"] = result.Time;
         Body["medal"] = result.Medal;
         Body["login"] = GetLogin();
+        Body["client_secret"] = Room.ClientSecret;
         Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/claim", Json::Write(Body), false);
     }
 
