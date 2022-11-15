@@ -216,6 +216,7 @@ namespace Network {
             // Success!
             auto JsonRoom = Json::Parse(Request.String());
 
+            Room.LocalPlayerIsHost = false;
             Room.MaxPlayers = JsonRoom["size"];
             Room.MapSelection = MapMode(int(JsonRoom["selection"]));
             Room.TargetMedal = Medal(int(JsonRoom["medal"]));
