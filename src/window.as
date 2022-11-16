@@ -128,21 +128,24 @@ namespace Window {
 
         if (Room.LocalPlayerIsHost) {
             UIColor::DarkGreen();
-            bool StartDisabled = (Room.Players.Length < 2 && !CanAlwaysStart) || !Room.MapsLoaded;
+            bool StartDisabled = (Room.Players.Length < 2 && !CanAlwaysStart) || Room.MapsLoadingStatus != LoadStatus::LoadSuccess;
             if (StartDisabled) UI::BeginDisabled();
             
             UI::SameLine();
             if (UI::Button(Icons::PlayCircleO + " Start")) {
                 startnew(Network::StartGame);
             }
-            if (!Room.MapsLoaded){
-                UI::EndDisabled();
-                StartDisabled = false;
-                UI::SameLine();
-                UI::Text("\\$fffFetching maps from tmx...");
-            }
             if (StartDisabled) UI::EndDisabled();
             UIColor::Reset();
+        }
+        if (Room.MapsLoadingStatus != LoadStatus::LoadSuccess) {
+            if (Room.MapsLoadingStatus == LoadStatus::Loading) {
+                UI::Text("\\$ff0" + Icons::HourglassHalf + " \\$zFetching maps from TMX...");
+            } else {
+                UI::Text("\\$ff0" + Icons::ExclamationTriangle + " \\$ff6Maps could not be loaded from TMX. The game cannot be started.");
+            }
+        } else {
+            UI::Text(""); // Blank space to avoid layout shifts
         }
 
         UI::Text("\\$ff0Map Selection: \\$z" + stringof(Room.MapSelection));

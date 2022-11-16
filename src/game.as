@@ -12,7 +12,7 @@ class GameRoom {
     MapMode MapSelection;
     Medal TargetMedal;
     array<Map>@ MapList = {};
-    bool MapsLoaded = false;
+    LoadStatus MapsLoadingStatus = LoadStatus::Loading;
     string HostName;
     bool LocalPlayerIsHost;
     EndState EndState;
@@ -114,6 +114,12 @@ enum BingoDirection {
     Horizontal,
     Vertical,
     Diagonal
+}
+
+enum LoadStatus {
+    Loading,
+    LoadSuccess,
+    LoadFail
 }
 
 // Game tick function

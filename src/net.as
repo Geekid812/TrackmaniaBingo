@@ -11,6 +11,7 @@ namespace Network {
     bool IsLooping = false;
     // Connection indicator
     bool IsConnected = false;
+    // Secret token provided by the server
     string Secret;
 
     void Loop() {
@@ -115,8 +116,8 @@ namespace Network {
             Room.EndState.BingoDirection = BingoDirection(int(Body["bingodir"]));
             Room.EndState.Offset = Body["offset"];
             Room.EndState.EndTime = Time::Now;
-        } else if (Body["method"] == "MAPS_LOADED") {
-            Room.MapsLoaded = true;
+        } else if (Body["method"] == "MAPS_LOAD_STATUS") {
+            Room.MapsLoadingStatus = LoadStatus(int(Body["status"]));
         }
     }
 
@@ -133,7 +134,7 @@ namespace Network {
         Room.Active = false;
         Room.InGame = false;
         Room.EndState = EndState();
-        Room.MapsLoaded = false;
+        Room.MapsLoadingStatus = LoadStatus::Loading;
         MapList::Visible = false;
     }
 
@@ -193,6 +194,7 @@ namespace Network {
         Room.HostName = LocalUsername;
         Room.JoinCode = RoomCode;
         @Room.Players = { Player(LocalUsername, 0, true) };
+        Room.MapsLoadingStatus = LoadStatus::Loading;
     }
 
     void JoinRoom() {
@@ -226,6 +228,7 @@ namespace Network {
             Room.MapSelection = MapMode(int(JsonRoom["selection"]));
             Room.TargetMedal = Medal(int(JsonRoom["medal"]));
             Room.HostName = JsonRoom["host"];
+            Room.MapsLoadingStatus = LoadStatus(int(JsonRoom["status"]));
 
             Room.Active = true;
             ShouldClose = false;
