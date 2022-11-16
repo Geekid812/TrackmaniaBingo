@@ -7,12 +7,12 @@ class GameRoom {
     bool Active;
     bool InGame;
     string JoinCode;
-    string ClientSecret;
     array<Player>@ Players = {};
     int MaxPlayers;
     MapMode MapSelection;
     Medal TargetMedal;
     array<Map>@ MapList = {};
+    bool MapsLoaded = false;
     string HostName;
     bool LocalPlayerIsHost;
     EndState EndState;
@@ -24,6 +24,15 @@ class GameRoom {
         }
 
         return Map();
+    }
+
+    Player@ GetSelf(){
+        for (uint i = 0; i < Room.Players.Length; i++){
+            auto player = Room.Players[i];
+            if (player.IsSelf)
+                return player;
+        }
+        return null;
     }
 }
 
