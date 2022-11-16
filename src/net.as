@@ -249,13 +249,14 @@ namespace Network {
         Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/start", Json::Write(Body), true);
     }
 
-    void ClaimCell(string&in uid, RunResult result) {
+    bool ClaimCell(string&in uid, RunResult result) {
         auto Body = Json::Object();
         Body["uid"] = uid;
         Body["time"] = result.Time;
         Body["medal"] = result.Medal;
         Body["client_secret"] = Secret;
-        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/claim", Json::Write(Body), false);
+        auto Request = Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/claim", Json::Write(Body), false);
+        return @Request != null;
     }
 
     // Network identifier
