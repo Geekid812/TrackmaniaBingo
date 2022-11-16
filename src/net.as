@@ -1,5 +1,8 @@
 
 namespace Network {
+
+    const int SECRET_LENGTH = 16;
+
     // Server TCP socket listening for events
     Net::Socket@ EventStream = Net::Socket();
     // Suspend UI while a blocking request is happening
@@ -8,6 +11,7 @@ namespace Network {
     bool IsLooping = false;
     // Connection indicator
     bool IsConnected = false;
+    string Secret;
 
     void Loop() {
         trace("Connecting to "+ Settings::BackendURL + ":" + Settings::TcpPort);
@@ -21,16 +25,15 @@ namespace Network {
         sleep(100);
         
         // Identification
-        string Login = GetLogin();
-        trace("Identifying with login: " + Login);
-        EventStream.WriteRaw(Login + "\n");
         while (EventStream.Available() == 0) { yield(); }
-        if (EventStream.ReadRaw(EventStream.Available()) != "OK\u0004") {
+        string InitialResponse = EventStream.ReadRaw(EventStream.Available());
+        if (InitialResponse.Length < SECRET_LENGTH) {
             IsLooping = false;
             return;
         }
         // OK
         IsConnected = true;
+        Secret = InitialResponse.SubStr(0, SECRET_LENGTH);
         trace("Connection established. Remote IP: " + EventStream.GetRemoteIP());
         while (true) {
             while (EventStream.Available() == 0) {
@@ -112,6 +115,8 @@ namespace Network {
             Room.EndState.BingoDirection = BingoDirection(int(Body["bingodir"]));
             Room.EndState.Offset = Body["offset"];
             Room.EndState.EndTime = Time::Now;
+        } else if (Body["method"] == "MAPS_LOADED") {
+            Room.MapsLoaded = true;
         }
     }
 
@@ -128,6 +133,7 @@ namespace Network {
         Room.Active = false;
         Room.InGame = false;
         Room.EndState = EndState();
+        Room.MapsLoaded = false;
         MapList::Visible = false;
     }
 
@@ -136,7 +142,6 @@ namespace Network {
         if (!IsLooping) {
             IsLooping = true;
             startnew(Network::Loop);
-
             while (!IsConnected && IsLooping) yield();
         }
 
@@ -171,15 +176,18 @@ namespace Network {
         Body["selection"] = Room.MapSelection;
         Body["medal"] = Room.TargetMedal;
         Body["name"] = LocalUsername;
-        Body["login"] = GetLogin();
+        Body["client_secret"] = Secret;
 
-        auto Request = Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/create", Json::Write(Body), true);
+        auto Request = PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/create", Json::Write(Body), true);
         if (Request is null) {
             Reset();
             return;
         }
 
-        string RoomCode = Request.String();
+        string json = Request.String();
+        auto response = Json::Parse(json);
+        string RoomCode = response["room_code"];
+
         Room.Active = true;
         Room.LocalPlayerIsHost = true;
         Room.HostName = LocalUsername;
@@ -194,14 +202,14 @@ namespace Network {
         auto Body = Json::Object();
         Body["name"] = LocalUsername;
         Body["code"] = Room.JoinCode;
-        Body["login"] = GetLogin();
+        Body["client_secret"] = Secret;
 
         auto Request = Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/join", Json::Write(Body), true);
         if (Request is null) {
             Reset();
             return;
         }
-
+        
         bool ShouldClose = true;
         if (Request.ResponseCode() == 204) {
             UI::ShowNotification(Icons::Times + " No room was found with code " + Room.JoinCode + ".");  
@@ -226,14 +234,19 @@ namespace Network {
     }
 
     void JoinTeam(int Team) {
+        if (Room.GetSelf().Team == Team)
+            return;
+
         auto Body = Json::Object();
         Body["team"] = Team;
-        Body["login"] = GetLogin();
+        Body["client_secret"] = Secret;
         Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/team-update", Json::Write(Body), false);
     }
 
     void StartGame() {
-        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/start", GetLogin(), true);
+        auto Body = Json::Object();
+        Body["client_secret"] = Secret;
+        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/start", Json::Write(Body), true);
     }
 
     bool ClaimCell(string&in uid, RunResult result) {
@@ -241,7 +254,7 @@ namespace Network {
         Body["uid"] = uid;
         Body["time"] = result.Time;
         Body["medal"] = result.Medal;
-        Body["login"] = GetLogin();
+        Body["client_secret"] = Secret;
         auto Request = Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/claim", Json::Write(Body), false);
         return @Request != null;
     }

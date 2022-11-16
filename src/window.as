@@ -101,7 +101,7 @@ namespace Window {
 
     void JoinTab() {
         Room.JoinCode = UI::InputText("Room Code", Room.JoinCode);
-        if (UI::Button("Join Room")) {
+        if (UI::Button("Join Room") && Room.JoinCode.Length >= 6) {
             startnew(Network::JoinRoom);
         }
     }
@@ -126,17 +126,24 @@ namespace Window {
         }
         UIColor::Reset();
 
-        bool StartDisabled = Room.Players.Length < 2;
-        UIColor::DarkGreen();
-        if (!CanAlwaysStart && StartDisabled) UI::BeginDisabled();
         if (Room.LocalPlayerIsHost) {
+            UIColor::DarkGreen();
+            bool StartDisabled = (Room.Players.Length < 2 && !CanAlwaysStart) || !Room.MapsLoaded;
+            if (StartDisabled) UI::BeginDisabled();
+            
             UI::SameLine();
             if (UI::Button(Icons::PlayCircleO + " Start")) {
                 startnew(Network::StartGame);
             }
+            if (!Room.MapsLoaded){
+                UI::EndDisabled();
+                StartDisabled = false;
+                UI::SameLine();
+                UI::Text("\\$fffFetching maps from tmx...");
+            }
+            if (StartDisabled) UI::EndDisabled();
+            UIColor::Reset();
         }
-        if (!CanAlwaysStart && StartDisabled) UI::EndDisabled();
-        UIColor::Reset();
 
         UI::Text("\\$ff0Map Selection: \\$z" + stringof(Room.MapSelection));
         UI::Text("\\$ff0Target Medal: \\$z" + stringof(Room.TargetMedal));
