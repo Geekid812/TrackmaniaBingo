@@ -1,8 +1,13 @@
 
 namespace Playground {
     // Data for map claim coroutine (see CheckMedals())
-    string ClaimingMapUid;
-    RunResult ClaimingMapResult;
+    MapClaimStatus MapClaimData;
+
+    class MapClaimStatus {
+        int Retries;
+        string MapUid;
+        RunResult MapResult;
+    }
 
     void LoadMap(int TmxID) {
         startnew(LoadMapCoroutine, CoroutineData(TmxID));
@@ -88,7 +93,7 @@ namespace Playground {
 
     // Watching task that claims cells when certain medals are achieved
     void CheckMedals() {
-        if (ClaimingMapUid != "") return; // Request in progress
+        if (MapClaimData.Retries > 0) return; // Request in progress
         RunResult Result = GetRunResult();
         if (Result.Time == -1) return;
 
@@ -101,9 +106,29 @@ namespace Playground {
         Medal TargetMedal = Room.TargetMedal;
         if (Result.Medal <= TargetMedal) {
             // Map should be claimed
-            ClaimingMapUid = GameMap.Uid;
-            ClaimingMapResult = Result;
-            startnew(function() { Network::ClaimCell(ClaimingMapUid, ClaimingMapResult); ClaimingMapUid = ""; });
+            MapClaimData.Retries = 3;
+            MapClaimData.MapUid = GameMap.Uid;
+            MapClaimData.MapResult = Result;
+            trace("Claiming map '" + GameMap.Uid + "' with time of " + Result.Time + " (previous time: " + CurrentTime + ")");
+            startnew(ClaimMedalCoroutine);
         }
+    }
+
+    void ClaimMedalCoroutine() {
+        bool Ok = false;
+        while (MapClaimData.Retries > 0) {
+            bool Success = Network::ClaimCell(MapClaimData.MapUid, MapClaimData.MapResult);
+            MapClaimData.Retries -= 1;
+            if (Success) {
+                trace("Map successfully claimed.");
+                Ok = true;
+                break;
+            }
+            else trace("Map claim failed, retrying... (" + MapClaimData.Retries + " attempts left)");
+        }
+        if (!Ok) {
+            warn("Warning! Failed to claim a map after several retries.");
+        }
+        MapClaimData.Retries = 0;
     }
 }

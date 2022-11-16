@@ -21,7 +21,9 @@ namespace Network {
         sleep(100);
         
         // Identification
-        EventStream.WriteRaw(GetLogin() + "\n");
+        string Login = GetLogin();
+        trace("Identifying with login: " + Login);
+        EventStream.WriteRaw(Login + "\n");
         while (EventStream.Available() == 0) { yield(); }
         if (EventStream.ReadRaw(EventStream.Available()) != "OK\u0004") {
             IsLooping = false;
@@ -234,13 +236,14 @@ namespace Network {
         Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/start", GetLogin(), true);
     }
 
-    void ClaimCell(string&in uid, RunResult result) {
+    bool ClaimCell(string&in uid, RunResult result) {
         auto Body = Json::Object();
         Body["uid"] = uid;
         Body["time"] = result.Time;
         Body["medal"] = result.Medal;
         Body["login"] = GetLogin();
-        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/claim", Json::Write(Body), false);
+        auto Request = Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/claim", Json::Write(Body), false);
+        return @Request != null;
     }
 
     // Network identifier
