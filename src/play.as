@@ -22,8 +22,12 @@ namespace Playground {
     // This code is mostly taken from Greep's RMC
     void LoadMapCoroutine(ref@ Data) {
         int TmxID = cast<CoroutineData>(Data).Id;
-        ClosePauseMenu();
         auto App = cast<CTrackMania>(GetApp());
+        bool MenuDisplayed = App.ManiaPlanetScriptAPI.ActiveContext_InGameMenuDisplayed;
+        if (MenuDisplayed) {
+            UI::ShowNotification(Icons::ExclamationCircle + " Warning!", "Please close the pause menu before switching maps! Trackmania would crash otherwise.", vec4(.6, .6, .1, 1.), 10000);
+            return;
+        }
 
         // Go to main menu and wait until map loading is ready
         App.BackToMainMenu();
@@ -32,17 +36,6 @@ namespace Playground {
         }
 
         App.ManiaTitleControlScriptAPI.PlayMap("https://trackmania.exchange/maps/download/" + TmxID, "", "");
-    }
-
-    void ClosePauseMenu() {
-        auto App = cast<CTrackMania>(GetApp());
-        bool MenuDisplayed = App.ManiaPlanetScriptAPI.ActiveContext_InGameMenuDisplayed;
-        if (MenuDisplayed) {
-            CSmArenaClient@ Playground = cast<CSmArenaClient>(App.CurrentPlayground);
-            if(Playground !is null) {
-                Playground.Interface.ManialinkScriptHandler.CloseInGameMenu(CGameScriptHandlerPlaygroundInterface::EInGameMenuResult::Resume);
-            }
-        }
     }
 
     CGameCtnChallenge@ GetCurrentMap() {
