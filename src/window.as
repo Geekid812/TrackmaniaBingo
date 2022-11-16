@@ -1,6 +1,6 @@
 
 namespace Window {
-    const bool CanAlwaysStart = true; // Debug constant 
+    const bool CanAlwaysStart = false; // Debug constant 
     bool Visible;
     bool RoomCodeVisible;
 
