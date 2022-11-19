@@ -12,6 +12,8 @@ namespace Network {
     bool IsConnected = false;
     // Secret token provided by the server
     string Secret;
+    // Secret token used during reconnection sync
+    string ReconnectToken;
 
     void Loop() {
         trace("Connecting to "+ Settings::BackendURL + ":" + Settings::TcpPort);
@@ -21,7 +23,7 @@ namespace Network {
             return;
         }
         // Sleep a bit because for some reason the server takes
-        // time to register the TCP connection (gotta love proxies)
+        // time to register the TCP connection
         sleep(100);
         
         // Wait to receive secret token
@@ -37,6 +39,7 @@ namespace Network {
 
         string InitialResponse = EventStream.ReadRaw(EventStream.Available());
         if (InitialResponse.Length < SECRET_LENGTH) {
+            trace("Received an unexpected token: " + InitialResponse);
             IsLooping = false;
             return;
         }
@@ -140,40 +143,111 @@ namespace Network {
         // Not a clean disconnect
         UI::ShowNotification(Icons::ExclamationCircle + " You have been disconnected! Attempting to reconnect...");
         print("Disconnected! Client is attemping reconnection...");
+        yield(); // Wait for old loop cleanup
 
         int RetryBackoff = 5000;
         uint RetryAttempts = 1;
         bool ReconnectSuccess = false; 
         while (RetryAttempts <= 5 && !ReconnectSuccess) {
             if (TryConnect()) {
-                // TODO: Sync
-                UI::ShowNotification("", Icons::Check + " Reconnected!", vec4(.2, .2, .9, 1));
-                print("Reconnection succeeded!");
-                ReconnectSuccess = true;
-            } else {
-                string ReconnectionInfo;
-                if (RetryAttempts == 5) {
-                    ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s).";
-                    RetryBackoff = 5000;
+                trace("Syncing with server...");
+                if (Sync()) {
+                    UI::ShowNotification("", Icons::Check + " Reconnected!", vec4(.2, .2, .9, 1));
+                    print("Reconnection succeeded!");
+                    ReconnectSuccess = true;
+                    break;
                 } else {
-                    ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s). Retrying in " + (RetryBackoff / 1000) + " seconds.";
+                    trace("Syncing did not succeed.");
                 }
-                trace(ReconnectionInfo);
-                UI::ShowNotification(Icons::ExclamationCircle + " " + ReconnectionInfo, RetryBackoff - 500);
-                if (RetryAttempts == 5) break;
-
-                RequestInProgress = true;
-                sleep(RetryBackoff);
-                RetryAttempts += 1;
-                RetryBackoff += 5000;
-                UI::ShowNotification(Icons::ExclamationCircle + " Attempting to reconnect...", Math::Min(Settings::ConnectionTimeout - 500, 10000));
             }
+
+            // Reconnect failure
+            string ReconnectionInfo;
+            if (RetryAttempts == 5) {
+                ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s).";
+                RetryBackoff = 5000;
+            } else {
+                ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s). Retrying in " + (RetryBackoff / 1000) + " seconds.";
+            }
+            trace(ReconnectionInfo);
+            UI::ShowNotification(Icons::ExclamationCircle + " " + ReconnectionInfo, RetryBackoff - 500);
+            if (RetryAttempts == 5) break;
+
+            RequestInProgress = true;
+            sleep(RetryBackoff);
+            RetryAttempts += 1;
+            RetryBackoff += 5000;
+            UI::ShowNotification(Icons::ExclamationCircle + " Attempting to reconnect...", Math::Min(Settings::ConnectionTimeout - 500, 10000));
         }
 
         if (!ReconnectSuccess) {
             UI::ShowNotification("", Icons::Times + " Reconnection has failed!", vec4(.6, .1, .1, 1), 10000);
             warn("Reconnection has failed!");
         }
+    }
+
+    bool Sync() {
+        auto Body = Json::Object();
+        Body["client_secret"] = Secret;
+        Body["reconnect"] = ReconnectToken;
+        Net::HttpRequest@ Request = Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/sync", Json::Write(Body), true);
+        if (Request is null) return false;
+        if (Request.ResponseCode() == 204) {
+            trace("Empty response from sync.");
+            CloseConnection();
+            UI::ShowNotification(Icons::ExclamationCircle + " The room you were connected to has ended.");
+            return true;
+        }
+
+        trace("Reconnection sync: " + Request.String());
+        string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
+        auto JsonSync = Json::Parse(Request.String());
+        Room.Active = true;
+        Room.HostName = JsonSync["host"];
+        Room.MapSelection = MapMode(int(JsonSync["selection"]));
+        Room.TargetMedal = Medal(int(JsonSync["medal"]));
+        Room.MaxPlayers = JsonSync["size"];
+        Room.MapsLoadingStatus = LoadStatus(int(JsonSync["status"]));
+
+        @Room.Players = {};
+        for (uint i = 0; i < JsonSync["players"].Length; i++) {
+            auto JsonPlayer = JsonSync["players"][i];
+            Room.Players.InsertLast(Player(
+                JsonPlayer["name"],
+                JsonPlayer["team"],
+                JsonPlayer["name"] == LocalUsername
+            ));
+        }
+
+        int StartTimestamp = JsonSync["started"];
+        if (StartTimestamp == -1) {
+            Room.InGame = false;
+            return true;
+        }
+
+        Room.InGame = true;
+        InfoBar::StartTime = Time::Now - StartTimestamp;
+
+        @Room.MapList = {};
+        for (uint i = 0; i < JsonSync["boardstate"].Length; i++) {
+            auto JsonMap = JsonSync["boardstate"][i];
+            Map GameMap = Map(
+                JsonMap["name"],
+                JsonMap["author"],
+                JsonMap["tmxid"],
+                JsonMap["uid"]
+            );
+
+            if (JsonMap["claim"].GetType() != Json::Type::Null) {
+                GameMap.ClaimedTeam = JsonMap["claim"]["team"];
+                GameMap.ClaimedRun = RunResult(
+                    JsonMap["claim"]["time"],
+                    Medal(int(JsonMap["claim"]["medal"]))
+                );
+            }
+            Room.MapList.InsertLast(GameMap);
+        }
+        return true;
     }
 
     void Reset() {
@@ -186,6 +260,7 @@ namespace Network {
         Room.EndState = EndState();
         Room.MapsLoadingStatus = LoadStatus::Loading;
         MapList::Visible = false;
+        ReconnectToken = Secret;
     }
 
     bool TryConnect() {
@@ -209,9 +284,11 @@ namespace Network {
 
         int Status = Request.ResponseCode();
         if (Status == 0) {
+            trace(Url + " request failed");
             UI::ShowNotification(Icons::Times + " Connection Failed", "The server could not be reached. Please check your connection. \n" + Request.Error(), vec4(.6, 0, 0, 1));
             return null;
         } else if (Status / 100 != 2) { // Not a 2XX status code
+            trace(Url + " received status code " + Status);
             if (Status == 426) { // Upgrade required
                 UI::ShowNotification(Icons::ArrowCircleOUp + " Update required!", "Please update the Bingo plugin to continue playing.", vec4(.2, .2, .9, 1));
             } else { // Default case

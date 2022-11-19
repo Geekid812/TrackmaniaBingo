@@ -10,4 +10,7 @@ namespace Settings {
     
     [Setting name="Connection Timeout" category="Debug"]
     uint ConnectionTimeout = 5000;
+
+    [Setting name="Developer Mode" category="Debug"]
+    bool DevMode = true;
 }

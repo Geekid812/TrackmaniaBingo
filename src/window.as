@@ -1,6 +1,5 @@
 
 namespace Window {
-    const bool CanAlwaysStart = false; // Debug constant 
     bool Visible;
     bool RoomCodeVisible;
 
@@ -8,14 +7,19 @@ namespace Window {
         if (!Visible) return;
         UI::Begin(WindowName, Visible);
 
-        if (Room.InGame) {
-            InGame();
+        if (!Permissions::PlayLocalMap()) {
+            NoPermissions();
             UI::End();
             return;
         }
 
-        if (!Permissions::PlayLocalMap()) {
-            NoPermissions();
+        if (Settings::DevMode) {
+            DevControls();
+            UI::Separator();
+        }
+
+        if (Room.InGame) {
+            InGame();
             UI::End();
             return;
         }
@@ -128,7 +132,7 @@ namespace Window {
 
         if (Room.LocalPlayerIsHost) {
             UIColor::DarkGreen();
-            bool StartDisabled = (Room.Players.Length < 2 && !CanAlwaysStart) || Room.MapsLoadingStatus != LoadStatus::LoadSuccess;
+            bool StartDisabled = (Room.Players.Length < 2 && !Settings::DevMode) || Room.MapsLoadingStatus != LoadStatus::LoadSuccess;
             if (StartDisabled) UI::BeginDisabled();
             
             UI::SameLine();
@@ -217,7 +221,6 @@ namespace Window {
         UI::Text("A game is already running! Close this window and keep playing!");
         if (UI::Button(Icons::Kenney::Exit + " Leave Game")) {
             Network::CloseConnection();
-            Room.Active = false;
         }
     }
 
@@ -225,6 +228,12 @@ namespace Window {
         UI::TextWrapped("Unfortunately, you do not have permission to play this gamemode.");
         UI::TextWrapped("Playing Bingo requires having at least \\$999Standard Access\\$z, which you do not seem to have. Sorry!");
         UI::TextWrapped("If you believe this is a mistake, make sure to restart your game and check your internet connection.");
+    }
+
+    void DevControls() {
+        if (UI::Button(Icons::Signal + " Force Disconnect")) {
+            startnew(Network::OnDisconnect);
+        }
     }
 }
 
