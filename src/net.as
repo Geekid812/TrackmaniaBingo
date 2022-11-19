@@ -1,6 +1,5 @@
 
 namespace Network {
-
     const int SECRET_LENGTH = 16;
 
     // Server TCP socket listening for events
@@ -25,8 +24,17 @@ namespace Network {
         // time to register the TCP connection (gotta love proxies)
         sleep(100);
         
-        // Identification
-        while (EventStream.Available() == 0) { yield(); }
+        // Wait to receive secret token
+        uint TimeoutAt = Time::Now + Settings::ConnectionTimeout;
+        while (EventStream.Available() == 0 && Time::Now < TimeoutAt) { yield(); }
+        
+        // Check for timeout
+        if (Time::Now >= TimeoutAt) {
+            trace("Timed out on token reception.");
+            IsLooping = false;
+            return;
+        }
+
         string InitialResponse = EventStream.ReadRaw(EventStream.Available());
         if (InitialResponse.Length < SECRET_LENGTH) {
             IsLooping = false;
@@ -121,9 +129,51 @@ namespace Network {
         }
     }
 
+    void CloseConnection() {
+        Reset();
+        trace("Connection closed cleanly.");
+    }
+
     void OnDisconnect() {
         Reset();
-        print("Disconnected! Connection status has been reset.");
+
+        // Not a clean disconnect
+        UI::ShowNotification(Icons::ExclamationCircle + " You have been disconnected! Attempting to reconnect...");
+        print("Disconnected! Client is attemping reconnection...");
+
+        int RetryBackoff = 5000;
+        uint RetryAttempts = 1;
+        bool ReconnectSuccess = false; 
+        while (RetryAttempts <= 5 && !ReconnectSuccess) {
+            if (TryConnect()) {
+                // TODO: Sync
+                UI::ShowNotification("", Icons::Check + " Reconnected!", vec4(.2, .2, .9, 1));
+                print("Reconnection succeeded!");
+                ReconnectSuccess = true;
+            } else {
+                string ReconnectionInfo;
+                if (RetryAttempts == 5) {
+                    ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s).";
+                    RetryBackoff = 5000;
+                } else {
+                    ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s). Retrying in " + (RetryBackoff / 1000) + " seconds.";
+                }
+                trace(ReconnectionInfo);
+                UI::ShowNotification(Icons::ExclamationCircle + " " + ReconnectionInfo, RetryBackoff - 500);
+                if (RetryAttempts == 5) break;
+
+                RequestInProgress = true;
+                sleep(RetryBackoff);
+                RetryAttempts += 1;
+                RetryBackoff += 5000;
+                UI::ShowNotification(Icons::ExclamationCircle + " Attempting to reconnect...", Math::Min(Settings::ConnectionTimeout - 500, 10000));
+            }
+        }
+
+        if (!ReconnectSuccess) {
+            UI::ShowNotification("", Icons::Times + " Reconnection has failed!", vec4(.6, .1, .1, 1), 10000);
+            warn("Reconnection has failed!");
+        }
     }
 
     void Reset() {
@@ -174,7 +224,10 @@ namespace Network {
     }
 
     void CreateRoom() {
-        if (!TryConnect()) return;
+        if (!TryConnect()) {
+            UI::ShowNotification(Icons::QuestionCircle + " Could not connect to the server. Please check your connection.");
+            return;
+        }
 
         string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
         auto Body = Json::Object();
@@ -204,7 +257,10 @@ namespace Network {
     }
 
     void JoinRoom() {
-        if (!TryConnect()) return;
+        if (!TryConnect()) {
+            UI::ShowNotification(Icons::QuestionCircle + " Could not connect to the server. Please check your connection.");
+            return;
+        }
 
         string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
         auto Body = Json::Object();

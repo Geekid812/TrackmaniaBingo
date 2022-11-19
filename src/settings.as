@@ -7,4 +7,7 @@ namespace Settings {
 
     [Setting name="Backend HTTP Port" category="Debug"]
     uint16 HttpPort = 80;
+    
+    [Setting name="Connection Timeout" category="Debug"]
+    uint ConnectionTimeout = 5000;
 }

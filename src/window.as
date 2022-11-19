@@ -122,7 +122,7 @@ namespace Window {
         UI::SameLine();
         UIColor::DarkRed();
         if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-            Network::Reset();
+            Network::CloseConnection();
         }
         UIColor::Reset();
 
@@ -216,7 +216,7 @@ namespace Window {
     void InGame() {
         UI::Text("A game is already running! Close this window and keep playing!");
         if (UI::Button(Icons::Kenney::Exit + " Leave Game")) {
-            Network::Reset();
+            Network::CloseConnection();
             Room.Active = false;
         }
     }
