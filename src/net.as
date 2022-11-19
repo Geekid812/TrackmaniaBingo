@@ -157,11 +157,16 @@ namespace Network {
         while (!Request.Finished()) { yield(); }
         if (Blocking) RequestInProgress = false;
 
-        if (Request.ResponseCode() == 0) {
-            UI::ShowNotification(Icons::Times + "Connection Failed", "The server could not be reached. Please check your connection. \n" + Request.Error(), vec4(.6, 0, 0, 1));
+        int Status = Request.ResponseCode();
+        if (Status == 0) {
+            UI::ShowNotification(Icons::Times + " Connection Failed", "The server could not be reached. Please check your connection. \n" + Request.Error(), vec4(.6, 0, 0, 1));
             return null;
-        } else if (Request.ResponseCode() / 100 != 2) { // 2XX status code
-            UI::ShowNotification(Icons::Times + "Connection Error", "An error occured while communicating with the server. (Error " + Request.ResponseCode() + ")", vec4(.6, 0, 0, 1));  
+        } else if (Status / 100 != 2) { // Not a 2XX status code
+            if (Status == 426) { // Upgrade required
+                UI::ShowNotification(Icons::ArrowCircleOUp + " Update required!", "Please update the Bingo plugin to continue playing.", vec4(.2, .2, .9, 1));
+            } else { // Default case
+                UI::ShowNotification(Icons::Times + " Connection Error", "An error occured while communicating with the server. (Error " + Status + ")", vec4(.6, 0, 0, 1));  
+            }
             return null; 
         }
 
@@ -178,6 +183,7 @@ namespace Network {
         Body["medal"] = Room.TargetMedal;
         Body["name"] = LocalUsername;
         Body["client_secret"] = Secret;
+        Body["version"] = Meta::ExecutingPlugin().Version;
 
         auto Request = PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/create", Json::Write(Body), true);
         if (Request is null) {
@@ -205,6 +211,7 @@ namespace Network {
         Body["name"] = LocalUsername;
         Body["code"] = Room.JoinCode;
         Body["client_secret"] = Secret;
+        Body["version"] = Meta::ExecutingPlugin().Version;
 
         auto Request = Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/join", Json::Write(Body), true);
         if (Request is null) {
