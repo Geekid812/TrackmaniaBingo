@@ -39,16 +39,10 @@ namespace Board {
                 auto Map = Room.MapList[j * 5 + i];
                 nvg::BeginPath();
                 vec4 color;
-                switch (Map.ClaimedTeam) {
-                    case 0:
-                        color = vec4(.9, .3, .3, 1.);
-                        break;
-                    case 1:
-                        color = vec4(.3, .3, .9, 1.);
-                        break;
-                    default:
-                        color = vec4(.3, .3, .3, .8);
-                }
+                if (Map.ClaimedTeam is null)
+                    color = vec4(.3, .3, .3, .8);
+                else 
+                    color = Map.ClaimedTeam.GetAlphaColor(.8);
                 nvg::FillColor(color);
                 nvg::Rect(Position.x + float(i) * (CellSize + BorderSize) + BorderSize, Position.y + float(j) * (CellSize + BorderSize) + BorderSize, CellSize, CellSize);
                 nvg::Fill();

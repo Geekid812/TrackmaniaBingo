@@ -74,12 +74,23 @@ namespace Network {
     void Handle(Json::Value@ Body) {
         if (Body["method"] == "ROOM_UPDATE") {
             string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
+            @Room.Teams = {};
+            auto JsonTeams = Body["teams"];
+            for (uint i = 0; i < JsonTeams.Length; i++){
+                auto JsonTeam = JsonTeams[i];
+                Room.Teams.InsertLast(Team(
+                    JsonTeam["id"],
+                    JsonTeam["name"], 
+                    vec3(JsonTeam["color"]["r"], JsonTeam["color"]["g"], JsonTeam["color"]["b"])
+                ));
+            }
+
             @Room.Players = {};
             for (uint i = 0; i < Body["members"].Length; i++) {
                 auto JsonPlayer = Body["members"][i];
                 Room.Players.InsertLast(Player(
                     JsonPlayer["name"],
-                    JsonPlayer["team"],
+                    Room.GetTeamWithId(JsonPlayer["team_id"]),
                     JsonPlayer["name"] == LocalUsername
                 ));
             }
@@ -100,16 +111,17 @@ namespace Network {
         } else if (Body["method"] == "CLAIM_CELL") {
             Map@ ClaimedMap = Room.MapList[Body["cellid"]];
             RunResult Result = RunResult(int(Body["time"]), Medal(int(Body["medal"])));
-            ClaimedMap.ClaimedTeam = Body["team"];
+            Team team = Room.GetTeamWithId(Body["team_id"]);
+            ClaimedMap.ClaimedTeam = team;
             ClaimedMap.ClaimedRun = Result;
 
             string PlayerName = Body["playername"];
             string MapName = Body["mapname"];
-            string TeamName = (Body["team"] == 0 ? "Red" : "Blue");
+            string TeamName = team.Name;
             bool IsReclaim = Body["delta"] != -1;
             bool IsImprovement = Body["improve"];
             string DeltaFormatted = "-" + Time::Format(Body["delta"]);
-            vec4 TeamColor = (Body["team"] == 0 ? vec4(.6, .2, .2, 1.) : vec4(.2, .2, .6, 1.));
+            vec4 TeamColor = team.GetAlphaColor(0.1);
             vec4 DimColor = TeamColor / 1.5;
             
             if (!IsReclaim) {
@@ -121,7 +133,8 @@ namespace Network {
             }
                 
         } else if (Body["method"] == "GAME_END") {
-            string TeamName = (Body["winner"] == 0 ? "\\$e33Red Team" : "\\$33eBlue Team");
+            Team team = Room.GetTeamWithId(Body["team_id"]);
+            string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
             UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
 
             Room.EndState.BingoDirection = BingoDirection(int(Body["bingodir"]));
@@ -209,12 +222,23 @@ namespace Network {
         Room.MaxPlayers = JsonSync["size"];
         Room.MapsLoadingStatus = LoadStatus(int(JsonSync["status"]));
 
+        @Room.Teams = {};
+        auto JsonTeams = JsonSync["teams"];
+        for (uint i = 0; i < JsonTeams.Length; i++){
+            auto JsonTeam = JsonTeams[i];
+            Room.Teams.InsertLast(Team(
+                JsonTeam["id"], 
+                JsonTeam["name"],
+                vec3(JsonTeam["color"]["r"], JsonTeam["color"]["g"], JsonTeam["color"]["b"])
+            ));
+        }
+
         @Room.Players = {};
         for (uint i = 0; i < JsonSync["players"].Length; i++) {
             auto JsonPlayer = JsonSync["players"][i];
             Room.Players.InsertLast(Player(
                 JsonPlayer["name"],
-                JsonPlayer["team"],
+                Room.GetTeamWithId(JsonPlayer["team_id"]),
                 JsonPlayer["name"] == LocalUsername
             ));
         }
@@ -239,7 +263,7 @@ namespace Network {
             );
 
             if (JsonMap["claim"].GetType() != Json::Type::Null) {
-                GameMap.ClaimedTeam = JsonMap["claim"]["team"];
+                GameMap.ClaimedTeam = Room.GetTeamWithId(JsonMap["claim"]["team_id"]);
                 GameMap.ClaimedRun = RunResult(
                     JsonMap["claim"]["time"],
                     Medal(int(JsonMap["claim"]["medal"]))
@@ -325,12 +349,29 @@ namespace Network {
         auto response = Json::Parse(json);
         string RoomCode = response["room_code"];
 
+        Room.Teams = {};
+        auto JsonTeams = response["teams"];
+        for (uint i = 0; i < JsonTeams.Length; i++){
+            auto JsonTeam = JsonTeams[i];
+            Room.Teams.InsertLast(Team(
+                JsonTeam["id"], 
+                JsonTeam["name"],
+                vec3(JsonTeam["color"]["r"], JsonTeam["color"]["g"], JsonTeam["color"]["b"])
+            ));
+        }
+
         Room.Active = true;
         Room.LocalPlayerIsHost = true;
         Room.HostName = LocalUsername;
         Room.JoinCode = RoomCode;
-        @Room.Players = { Player(LocalUsername, 0, true) };
+        @Room.Players = { Player(LocalUsername, Room.Teams[0], true) };
         Room.MapsLoadingStatus = LoadStatus::Loading;
+    }
+
+    void CreateTeam(){
+        auto Body = Json::Object();
+        Body["client_secret"] = Secret;
+        Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/team-create", Json::Write(Body), false);
     }
 
     void JoinRoom() {
@@ -376,12 +417,12 @@ namespace Network {
         if (ShouldClose) Network::Reset();
     }
 
-    void JoinTeam(int Team) {
+    void JoinTeam(Team Team) {
         if (Room.GetSelf().Team == Team)
             return;
 
         auto Body = Json::Object();
-        Body["team"] = Team;
+        Body["team_id"] = Team.Id;
         Body["client_secret"] = Secret;
         Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/team-update", Json::Write(Body), false);
     }

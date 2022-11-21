@@ -9,11 +9,11 @@ namespace Medals {
 }
 
 enum Medal {
-    Author,
-    Gold,
-    Silver,
-    Bronze,
-    None
+    Author = 0,
+    Gold = 1,
+    Silver = 2,
+    Bronze = 3,
+    None = 4
 }
 
 string stringof(Medal medal) {

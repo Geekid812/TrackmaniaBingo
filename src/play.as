@@ -74,11 +74,11 @@ namespace Playground {
         PlaygroundScript.DataFileMgr.Ghost_Release(Ghost.Id);
 
         if (Time != -1) {
-            int MedalInt = 4;
-            if (Time <= BronzeTime) MedalInt = 3;
-            if (Time <= SilverTime) MedalInt = 2;
-            if (Time <= GoldTime) MedalInt = 1;
-            if (Time <= AuthorTime) MedalInt = 0;
+            int MedalInt = Medal::None;
+            if (Time <= AuthorTime) MedalInt = Medal::Author;
+            else if (Time <= GoldTime) MedalInt = Medal::Gold;
+            else if (Time <= SilverTime) MedalInt = Medal::Silver;
+            else if (Time <= BronzeTime) MedalInt = Medal::Bronze;
             return RunResult(Time, Medal(MedalInt));
         }
         return RunResult();

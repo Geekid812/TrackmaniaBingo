@@ -115,7 +115,7 @@ namespace Window {
         UI::Text("Welcome to the Trackmania Bingo!");
         UI::PopFont();
 
-        UI::TextWrapped("In this mode, two teams compete be the first to complete a row, column or diagonal on the game board. Each cell on this board corresponds to a track that players can claim for their team by achieving a specific medal on that track.");
+        UI::TextWrapped("In this mode, two or more teams compete be the first to complete a row, column or diagonal on the game board. Each cell on this board corresponds to a track that players can claim for their team by achieving a specific medal on that track.");
         UI::TextWrapped("Once a track has been claimed, in order to reclaim it, other teams must beat the time that was set on that track. Try to play strategically to be the first team to achieve a bingo!");
         UI::Text("Good luck and have fun!");
         UI::TextDisabled("Mode created by TheGeekid");
@@ -161,50 +161,47 @@ namespace Window {
         UI::SameLine();
         if (UI::Button(Icons::Clipboard + " Copy")) IO::SetClipboard(Room.JoinCode);
 
-        UI::BeginTable("Bingo_TeamTable", 2);
+        UI::BeginTable("Bingo_TeamTable", Room.Teams.Length + (Room.MaxTeamsReached()? 0 : 1));
 
-        UI::TableNextColumn();
-        UIColor::Red();
-        if (UI::Button("Join##red")) { startnew(function() { Network::JoinTeam(0); }); }
-        UI::SameLine();
-        UI::Text("\\$f44Red Team");
-        UIColor::Reset();
-
-        UI::TableNextColumn();
-        UIColor::Blue();
-        if (UI::Button("Join##blue")) { startnew(function() { Network::JoinTeam(1); }); }
-        UI::SameLine();
-        UI::Text("\\$44fBlue Team");
-        UIColor::Reset();
-
-        bool RedCompleted = false;
-        bool BlueCompleted = false;
-        int Row = 0;
-        while (!RedCompleted || !BlueCompleted) {
-            UI::TableNextRow();
-
+        for (uint i = 0; i < Room.Teams.Length; i++) {
             UI::TableNextColumn();
-            if (!RedCompleted) {
-                try {
-                    auto Player = PlayerCell(0, Row);
-                    UI::Text((Player.IsSelf ? "\\$ff8" : "") + Player.Name);
-                } catch {
-                    RedCompleted = true;
-                }
-            }
-
-            UI::TableNextColumn();
-            if (!BlueCompleted) {
-                try {
-                    auto Player = PlayerCell(1, Row);
-                    UI::Text((Player.IsSelf ? "\\$ff8" : "") + Player.Name);
-                } catch {
-                    BlueCompleted = true;
-                }
-            }
-            Row += 1;
+            Team@ Team = Room.Teams[i];
+            UIColor::Custom(UIColor::Brighten(Team.Color, 0.75));
+            int teamIdXdd = Team.Id;
+            if (UI::Button("Join##" + Team.Id)) startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, Team);
+            UI::SameLine();
+            UI::Text("\\$" + UIColor::GetHex(Team.Color) + Team.Name);
+            UIColor::Reset();
         }
 
+        if (Room.LocalPlayerIsHost && !Room.MaxTeamsReached()) {
+            UI::TableNextColumn();
+            if (UI::Button("Create+")) {
+                startnew(function() { Network::CreateTeam(); });
+            }
+        }
+
+        uint RowIndex = 0;
+        while (true){
+            // Iterate forever until no players in any team remain
+            UI::TableNextRow();
+            uint FinishedTeams = 0;
+            for (uint i = 0; i < Room.Teams.Length; i++){
+                // Iterate through all teams
+                UI::TableNextColumn();
+                Team Team = Room.Teams[i];
+                Player@ Player = PlayerCell(Team, RowIndex);
+                if (Player is null) { // No more players in this team
+                    FinishedTeams += 1;
+                    continue;
+                }
+                else {
+                    UI::Text((Player.IsSelf ? "\\$ff8" : "") + (RowIndex + 1) + ". " + Player.Name);
+                }
+            }
+            if (FinishedTeams == Room.Teams.Length) break;
+            RowIndex += 1;
+        }
         UI::EndTable();
     }
 
@@ -238,16 +235,14 @@ namespace Window {
 }
 
 // Helper function to build the table
-Player PlayerCell(int Team, int Index) {
+Player@ PlayerCell(Team team, int index) {
     int Count = 0;
     for (uint i = 0; i < Room.Players.Length; i++) {
         auto Player = Room.Players[i];
-        if (Player.Team == Team) {
-            if (Count == Index) return Player;
+        if (Player.Team == team) {
+            if (Count == index) return Player;
             else Count += 1;
         }
     }
-
-    throw("not found");
-    return Player();
+    return null;
 }
