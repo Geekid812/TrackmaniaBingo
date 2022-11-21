@@ -38,7 +38,8 @@ class GameRoom {
 
     Team@ GetTeamWithId(int id) {
         for (uint i = 0; i < Teams.Length; i++) {
-            if (Teams[i].Id == id) return Teams[i];
+            if (Teams[i].Id == id) 
+                return Teams[i];
         }
         return null;
     }
@@ -69,10 +70,6 @@ class Team {
         this.Name = name;
         this.Id = id;
         this.Color = color;
-    }
-
-    vec4 GetAlphaColor(float alpha) {
-        return vec4(Color.x, Color.y, Color.z, alpha);
     }
 
     bool opEquals(Team other) {

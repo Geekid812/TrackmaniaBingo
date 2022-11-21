@@ -54,7 +54,8 @@ namespace MapList {
 
             auto Size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(8, 6) - StartPos;
             vec4 Rect = vec4(StartPos.x, StartPos.y, 216, Size.y);
-            DrawList.AddRectFilled(Rect, Map.ClaimedTeam.GetAlphaColor(0.1));
+            if (Map.ClaimedTeam !is null)
+                DrawList.AddRectFilled(Rect, UIColor::GetAlphaColor(Map.ClaimedTeam.Color, 0.1));
         }
 
         UI::EndTable();

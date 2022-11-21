@@ -42,7 +42,7 @@ namespace Board {
                 if (Map.ClaimedTeam is null)
                     color = vec4(.3, .3, .3, .8);
                 else 
-                    color = Map.ClaimedTeam.GetAlphaColor(.8);
+                    color = UIColor::GetAlphaColor(Map.ClaimedTeam.Color, .8);
                 nvg::FillColor(color);
                 nvg::Rect(Position.x + float(i) * (CellSize + BorderSize) + BorderSize, Position.y + float(j) * (CellSize + BorderSize) + BorderSize, CellSize, CellSize);
                 nvg::Fill();

@@ -90,7 +90,7 @@ namespace Network {
                 auto JsonPlayer = Body["members"][i];
                 Room.Players.InsertLast(Player(
                     JsonPlayer["name"],
-                    Room.GetTeamWithId(JsonPlayer["team_id"]),
+                    Room.GetTeamWithId(int(JsonPlayer["team_id"])),
                     JsonPlayer["name"] == LocalUsername
                 ));
             }
@@ -111,8 +111,8 @@ namespace Network {
         } else if (Body["method"] == "CLAIM_CELL") {
             Map@ ClaimedMap = Room.MapList[Body["cellid"]];
             RunResult Result = RunResult(int(Body["time"]), Medal(int(Body["medal"])));
-            Team team = Room.GetTeamWithId(Body["team_id"]);
-            ClaimedMap.ClaimedTeam = team;
+            Team team = Room.GetTeamWithId(int(Body["team_id"]));
+            @ClaimedMap.ClaimedTeam = @team;
             ClaimedMap.ClaimedRun = Result;
 
             string PlayerName = Body["playername"];
@@ -121,7 +121,7 @@ namespace Network {
             bool IsReclaim = Body["delta"] != -1;
             bool IsImprovement = Body["improve"];
             string DeltaFormatted = "-" + Time::Format(Body["delta"]);
-            vec4 TeamColor = team.GetAlphaColor(0.1);
+            vec4 TeamColor = UIColor::Brighten(UIColor::GetAlphaColor(team.Color, 0.1), 0.75);
             vec4 DimColor = TeamColor / 1.5;
             
             if (!IsReclaim) {
@@ -133,7 +133,7 @@ namespace Network {
             }
                 
         } else if (Body["method"] == "GAME_END") {
-            Team team = Room.GetTeamWithId(Body["team_id"]);
+            Team team = Room.GetTeamWithId(int(Body["team_id"]));
             string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
             UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
 
@@ -238,7 +238,7 @@ namespace Network {
             auto JsonPlayer = JsonSync["players"][i];
             Room.Players.InsertLast(Player(
                 JsonPlayer["name"],
-                Room.GetTeamWithId(JsonPlayer["team_id"]),
+                Room.GetTeamWithId(int(JsonPlayer["team_id"])),
                 JsonPlayer["name"] == LocalUsername
             ));
         }
@@ -263,7 +263,7 @@ namespace Network {
             );
 
             if (JsonMap["claim"].GetType() != Json::Type::Null) {
-                GameMap.ClaimedTeam = Room.GetTeamWithId(JsonMap["claim"]["team_id"]);
+                GameMap.ClaimedTeam = Room.GetTeamWithId(int(JsonMap["claim"]["team_id"]));
                 GameMap.ClaimedRun = RunResult(
                     JsonMap["claim"]["time"],
                     Medal(int(JsonMap["claim"]["medal"]))

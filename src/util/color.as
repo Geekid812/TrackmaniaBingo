@@ -43,6 +43,10 @@ namespace UIColor {
         UI::PopStyleColor(3);
     }
 
+    vec4 GetAlphaColor(vec3 color, float alpha) {
+        return vec4(color.x, color.y, color.z, alpha);
+    }
+
     string GetHex(vec3 color){
         string hex = "";
         for(int i = 0; i < 3; i++){
@@ -58,20 +62,10 @@ namespace UIColor {
     }
 
     vec3 Brighten(vec3 color, float amount){
-        vec3 newColor = color;
-        for(int i = 0; i < 3; i++){
-            float col;
-            if (i == 0) col = color.x;
-            else if (i == 1) col = color.y;
-            else col = color.z;
+        return vec3(color.x * amount, color.y * amount, color.z * amount);
+    }
 
-            col *= amount;
-            if (col > 1) col = 1;
-            else if (col < 0) col = 0;
-            if (i == 0) newColor.x = col;
-            else if (i == 1) newColor.y = col;
-            else newColor.z = col;
-        }
-        return newColor;
+    vec4 Brighten(vec4 color, float amount) {
+        return vec4(color.x * amount, color.y * amount, color.z * amount, color.w);
     }
 }
