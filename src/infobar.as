@@ -11,6 +11,8 @@ namespace InfoBar {
 
         UI::SetNextWindowPos(int(Board::Position.x), int(Board::Position.y) + int(Board::BoardSize) + BoardMargin, UI::Cond::Always);
         UI::SetNextWindowSize(int(Board::BoardSize), 42, UI::Cond::Always);
+        auto team = Room.GetSelf().Team;
+        UI::PushStyleColor(UI::Col::WindowBg, UIColor::GetAlphaColor(UIColor::Brighten(team.Color, 0.75), 1));
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize);
         
         UI::PushFont(Font::Monospace);
@@ -40,5 +42,6 @@ namespace InfoBar {
         UI::PopStyleVar();
 
         UI::End();
+        UI::PopStyleColor();
     }
 }

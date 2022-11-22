@@ -107,7 +107,7 @@ namespace Network {
                 ));
             }
 
-            StartCountdown = 5000;
+            StartCountdown = Settings::DevMode? 100 : 5000;
         } else if (Body["method"] == "CLAIM_CELL") {
             Map@ ClaimedMap = Room.MapList[Body["cellid"]];
             RunResult Result = RunResult(int(Body["time"]), Medal(int(Body["medal"])));
@@ -142,6 +142,9 @@ namespace Network {
             Room.EndState.EndTime = Time::Now;
         } else if (Body["method"] == "MAPS_LOAD_STATUS") {
             Room.MapsLoadingStatus = LoadStatus(int(Body["status"]));
+        } else if (Body["method"] == "ROOM_CLOSED"){
+            CloseConnection();
+            UI::ShowNotification(Icons::Info + " The host has disconnected.");
         }
     }
 
@@ -263,7 +266,7 @@ namespace Network {
             );
 
             if (JsonMap["claim"].GetType() != Json::Type::Null) {
-                GameMap.ClaimedTeam = Room.GetTeamWithId(int(JsonMap["claim"]["team_id"]));
+                @GameMap.ClaimedTeam = Room.GetTeamWithId(int(JsonMap["claim"]["team_id"]));
                 GameMap.ClaimedRun = RunResult(
                     JsonMap["claim"]["time"],
                     Medal(int(JsonMap["claim"]["medal"]))
@@ -348,6 +351,7 @@ namespace Network {
         string json = Request.String();
         auto response = Json::Parse(json);
         string RoomCode = response["room_code"];
+        Room.MaxTeams = int(response["max_teams"]);
 
         Room.Teams = {};
         auto JsonTeams = response["teams"];
@@ -413,8 +417,18 @@ namespace Network {
 
             Room.Active = true;
             ShouldClose = false;
+            Window::JoinCodeVisible = false;
+            Window::RoomCodeVisible = false;
         }
         if (ShouldClose) Network::Reset();
+    }
+
+    void LeaveRoom(){
+        auto Body = Json::Object();
+        Body["client_secret"] = Secret;
+        CloseConnection();
+        // Send leave notification or server would wait for reconnection
+        Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/leave", Json::Write(Body), false);
     }
 
     void JoinTeam(Team Team) {

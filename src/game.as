@@ -10,6 +10,7 @@ class GameRoom {
     array<Team>@ Teams = {};
     array<Player>@ Players = {};
     int MaxPlayers;
+    int MaxTeams = 999; // Gets overriden by server
     MapMode MapSelection;
     Medal TargetMedal;
     array<Map>@ MapList = {};
@@ -54,8 +55,9 @@ class GameRoom {
         return players;
     }
 
-    bool MaxTeamsReached(){
-        return Teams.Length >= 6;
+    bool MoreTeamsAvaliable(){
+        // Non hosts should not see that more teams can be created
+        return Teams.Length < uint(Math::Min(MaxTeams, MaxPlayers)) && Room.LocalPlayerIsHost;
     }
 }
 

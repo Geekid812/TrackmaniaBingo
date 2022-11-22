@@ -1,6 +1,7 @@
 
 namespace Window {
     bool Visible;
+    bool JoinCodeVisible;
     bool RoomCodeVisible;
 
     void Render() {
@@ -104,7 +105,9 @@ namespace Window {
     }
 
     void JoinTab() {
-        Room.JoinCode = UI::InputText("Room Code", Room.JoinCode);
+        Room.JoinCode = UI::InputText("Room Code", Room.JoinCode, false, UI::InputTextFlags::CharsUppercase | (JoinCodeVisible? 0 : UI::InputTextFlags::Password));
+        UI::SameLine();
+        JoinCodeVisible = UI::Checkbox("Show code", JoinCodeVisible);
         if (UI::Button("Join Room") && Room.JoinCode.Length >= 6) {
             startnew(Network::JoinRoom);
         }
@@ -126,7 +129,7 @@ namespace Window {
         UI::SameLine();
         UIColor::DarkRed();
         if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-            Network::CloseConnection();
+            startnew(Network::LeaveRoom);
         }
         UIColor::Reset();
 
@@ -161,7 +164,7 @@ namespace Window {
         UI::SameLine();
         if (UI::Button(Icons::Clipboard + " Copy")) IO::SetClipboard(Room.JoinCode);
 
-        UI::BeginTable("Bingo_TeamTable", Room.Teams.Length + (Room.MaxTeamsReached()? 0 : 1));
+        UI::BeginTable("Bingo_TeamTable", Room.Teams.Length + (Room.MoreTeamsAvaliable()? 1 : 0));
 
         for (uint i = 0; i < Room.Teams.Length; i++) {
             UI::TableNextColumn();
@@ -174,7 +177,7 @@ namespace Window {
             UIColor::Reset();
         }
 
-        if (Room.LocalPlayerIsHost && !Room.MaxTeamsReached()) {
+        if (Room.MoreTeamsAvaliable()) {
             UI::TableNextColumn();
             if (UI::Button("Create+")) {
                 startnew(function() { Network::CreateTeam(); });
@@ -217,7 +220,7 @@ namespace Window {
     void InGame() {
         UI::Text("A game is already running! Close this window and keep playing!");
         if (UI::Button(Icons::Kenney::Exit + " Leave Game")) {
-            Network::CloseConnection();
+            startnew(Network::LeaveRoom);
         }
     }
 
