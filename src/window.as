@@ -180,7 +180,7 @@ namespace Window {
         if (Room.MoreTeamsAvaliable()) {
             UI::TableNextColumn();
             if (UI::Button("Create+")) {
-                startnew(function() { Network::CreateTeam(); });
+                startnew(Network::CreateTeam);
             }
         }
 
@@ -192,8 +192,7 @@ namespace Window {
             for (uint i = 0; i < Room.Teams.Length; i++){
                 // Iterate through all teams
                 UI::TableNextColumn();
-                Team Team = Room.Teams[i];
-                Player@ Player = PlayerCell(Team, RowIndex);
+                Player@ Player = PlayerCell(Room.Teams[i], RowIndex);
                 if (Player is null) { // No more players in this team
                     FinishedTeams += 1;
                     continue;
