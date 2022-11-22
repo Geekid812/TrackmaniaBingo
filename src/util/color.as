@@ -34,9 +34,9 @@ namespace UIColor {
     }
 
     void Custom(vec3 color){
-        UI::PushStyleColor(UI::Col::Button, vec4(color.x, color.y, color.z, 1.));
-        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(color.x, color.y, color.z, 1.));
-        UI::PushStyleColor(UI::Col::ButtonActive, vec4(color.x, color.y, color.z, 1.));   
+        UI::PushStyleColor(UI::Col::Button, GetAlphaColor(Brighten(color, .8), 1));
+        UI::PushStyleColor(UI::Col::ButtonHovered, GetAlphaColor(Brighten(color, .9), 1));
+        UI::PushStyleColor(UI::Col::ButtonActive, GetAlphaColor(Brighten(color, 1), 1));
     }
 
     void Reset() {
