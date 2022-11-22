@@ -12,5 +12,5 @@ namespace Settings {
     uint ConnectionTimeout = 5000;
 
     [Setting name="Developer Mode" category="Debug"]
-    bool DevMode = true;
+    bool DevMode = false;
 }
