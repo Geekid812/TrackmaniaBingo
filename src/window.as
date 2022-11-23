@@ -40,20 +40,24 @@ namespace Window {
         } else {
             UI::BeginTabBar("Bingo_TabBar");
 
-            if (UI::BeginTabItem("Join Room")) {
+            if (UI::BeginTabItem(Icons::ShareSquareO + " Join Room")) {
                 JoinTab();
                 UI::EndTabItem();
             }
 
-            if (UI::BeginTabItem("Create Room")) {
+            if (UI::BeginTabItem(Icons::PlusSquare + " Create Room")) {
                 CreateTab();
                 UI::EndTabItem();
             }
 
-            if (UI::BeginTabItem(Icons::QuestionCircle + " How to play")) {
-                TutorialTab();
+            UI::PushStyleColor(UI::Col::Tab, vec4(0.1, 0.15, 0.3, 1.));
+            UI::PushStyleColor(UI::Col::TabHovered, vec4(0.1, 0.2, 0.5, 1.));
+            UI::PushStyleColor(UI::Col::TabActive, vec4(0.2, 0.3, 0.7, 1.));
+            if (UI::BeginTabItem(Icons::InfoCircle + " About")) {
+                InfoTab();
                 UI::EndTabItem();
             }
+            UI::PopStyleColor(3);
 
             UI::EndTabBar();
         }
@@ -113,15 +117,26 @@ namespace Window {
         }
     }
 
-    void TutorialTab() {
+    void InfoTab() {
         UI::PushFont(Font::Header);
-        UI::Text("Welcome to the Trackmania Bingo!");
+        UI::Text("Trackmania Bingo");
         UI::PopFont();
+        UI::Text(Icons::Plug + " Plugin created by \\$ff0TheGeekid");
+        UI::Text(Icons::Github + " Source code:");
+        UI::SameLine();
+        UI::Markdown("[Geekid812/TrackmaniaBingo](https://github.com/Geekid812/TrackmaniaBingo)");
+        UI::Text(Icons::Bug + " Bug tracker:");
+        UI::SameLine();
+        UI::Markdown("[Report an Issue](https://github.com/Geekid812/TrackmaniaBingo/issues)");
+        UI::Text("");
 
+        Changelog();
+        UI::Text("");
+
+        UI::Markdown("## How to play");
         UI::TextWrapped("In this mode, two or more teams compete be the first to complete a row, column or diagonal on the game board. Each cell on this board corresponds to a track that players can claim for their team by achieving a specific medal on that track.");
         UI::TextWrapped("Once a track has been claimed, in order to reclaim it, other teams must beat the time that was set on that track. Try to play strategically to be the first team to achieve a bingo!");
         UI::Text("Good luck and have fun!");
-        UI::TextDisabled("Mode created by TheGeekid");
     }
 
     void RoomView() {
@@ -179,7 +194,7 @@ namespace Window {
 
         if (Room.MoreTeamsAvaliable()) {
             UI::TableNextColumn();
-            if (UI::Button("Create+")) {
+            if (UI::Button(Icons::PlusSquare + " Create team")) {
                 startnew(Network::CreateTeam);
             }
         }

@@ -352,6 +352,7 @@ namespace Network {
         auto response = Json::Parse(json);
         string RoomCode = response["room_code"];
         Room.MaxTeams = int(response["max_teams"]);
+        Window::RoomCodeVisible = false;
 
         Room.Teams = {};
         auto JsonTeams = response["teams"];
@@ -426,9 +427,9 @@ namespace Network {
     void LeaveRoom(){
         auto Body = Json::Object();
         Body["client_secret"] = Secret;
-        CloseConnection();
         // Send leave notification or server would wait for reconnection
         Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/leave", Json::Write(Body), false);
+        CloseConnection();
     }
 
     void JoinTeam(Team Team) {
