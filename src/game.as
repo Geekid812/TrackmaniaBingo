@@ -26,6 +26,15 @@ class GameRoom {
         return Map();
     }
 
+    int GetMapCellId(string&in uid) {
+        for (uint i = 0; i < MapList.Length; i++) {
+            Map SelectedMap = MapList[i];
+            if (SelectedMap.Uid == uid) return i;
+        }
+
+        return -1;
+    }
+
     Player@ GetSelf(){
         for (uint i = 0; i < Room.Players.Length; i++){
             auto player = Room.Players[i];

@@ -5,6 +5,7 @@ namespace Board {
     vec2 Position;
 
     const float StrokeWidth = 8.;
+    const vec4 CellHighlightColor = vec4(0.9, 0.8, 0, 0.9);
     const vec4 BingoStrokeColor = vec4(1, 0.6, 0, 0.9);
 
     void Draw() {
@@ -53,6 +54,27 @@ namespace Board {
                 nvg::Rect(Position.x + float(i) * (CellSize + BorderSize) + BorderSize, Position.y + float(j) * (CellSize + BorderSize) + BorderSize, CellSize, CellSize);
                 nvg::Fill();
             }
+        }
+
+        // Cell highlight
+        CGameCtnChallenge@ CurrentMap = Playground::GetCurrentMap();
+        int CellId = (@CurrentMap != null) ? Room.GetMapCellId(CurrentMap.EdChallengeId) : -1;
+        if (CellId != -1) {
+            int Row = CellId / 5;
+            int Col = CellId % 5;
+            nvg::BeginPath();
+            nvg::FillColor(CellHighlightColor);
+            nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * Row, CellSize + BorderSize * 2, BorderSize);
+            nvg::Fill();
+            nvg::BeginPath();
+            nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * (Row + 1), CellSize + BorderSize * 2, BorderSize);
+            nvg::Fill();
+            nvg::BeginPath();
+            nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * Row, BorderSize, CellSize + BorderSize * 2);
+            nvg::Fill();
+            nvg::BeginPath();
+            nvg::Rect(Position.x + (CellSize + BorderSize) * (Col + 1), Position.y + (CellSize + BorderSize) * Row, BorderSize, CellSize + BorderSize * 2);
+            nvg::Fill();
         }
 
         // Winning stroke
