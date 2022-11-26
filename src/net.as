@@ -96,7 +96,7 @@ namespace Network {
                 ));
             }
 
-            StartCountdown = 5000;
+            StartCountdown = Settings::DevMode ? 1000 : 5000;
         } else if (Body["method"] == "CLAIM_CELL") {
             Map@ ClaimedMap = Room.MapList[Body["cellid"]];
             RunResult Result = RunResult(int(Body["time"]), Medal(int(Body["medal"])));
