@@ -36,6 +36,16 @@ class GameRoom {
 
         return Map();
     }
+    
+    int GetMapCellId(string&in uid) {
+        for (uint i = 0; i < MapList.Length; i++) {
+            Map SelectedMap = MapList[i];
+            if (SelectedMap.Uid == uid) return i;
+        }
+
+        return -1;
+    }
+
 
     Team@ GetTeamWithId(int id) {
         for (uint i = 0; i < Teams.Length; i++) {
