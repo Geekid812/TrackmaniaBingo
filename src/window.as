@@ -262,9 +262,11 @@ namespace Window {
     }
 
     void DevControls() {
+        UIColor::Cyan();
         if (UI::Button(Icons::Signal + " Force Disconnect")) {
             startnew(Network::OnDisconnect);
         }
+        UIColor::Reset();
     }
 }
 

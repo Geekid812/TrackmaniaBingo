@@ -27,6 +27,12 @@ namespace UIColor {
         UI::PushStyleColor(UI::Col::ButtonActive, vec4(.5, .3, .3, 1.));   
     }
 
+    void Cyan() {
+        UI::PushStyleColor(UI::Col::Button, vec4(.0, .6, .6, 1.));
+        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(.0, .7, .7, 1.));
+        UI::PushStyleColor(UI::Col::ButtonActive, vec4(.0, .8, .8, 1.));
+    }
+
     void Gray() {
         UI::PushStyleColor(UI::Col::Button, vec4(.2, .2, .2, 1.));
         UI::PushStyleColor(UI::Col::ButtonHovered, vec4(.3, .3, .3, 1.));

@@ -47,12 +47,15 @@ namespace MapList {
             UI::TableNextColumn();
             if (!Room.EndState.HasEnded()) {
                 UIColor::DarkGreen();
-                if (UI::Button((Settings::TinyBoard ? "" : Icons::Play + " ") + "Play")) {
-                    MapList::Visible = false;
-                    Playground::LoadMap(Map.TmxID);
-                }
-                UIColor::Reset();
+            } else {
+                UIColor::Cyan();
             }
+            if (UI::Button((Settings::TinyBoard ? "" : Icons::Play + " ") + "Play")) {
+                MapList::Visible = false;
+                Playground::LoadMap(Map.TmxID);
+            }
+            UIColor::Reset();
+
             UI::EndTable();
             UI::PopStyleVar();
 
