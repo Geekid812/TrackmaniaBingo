@@ -315,6 +315,8 @@ namespace Network {
         Body["client_secret"] = Secret;
         Body["version"] = Meta::ExecutingPlugin().Version;
 
+        if (Room.MapSelection == MapMode::Mappack) Body["mappack_id"] = tostring(Room.MappackId);
+
         auto Request = PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/create", Json::Write(Body), true);
         if (Request is null) {
             Reset();

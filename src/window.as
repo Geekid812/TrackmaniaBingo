@@ -77,7 +77,15 @@ namespace Window {
                 Room.MapSelection = MapMode::MXRandom;
             }
 
+            if (UI::Selectable(stringof(MapMode::Mappack), Room.MapSelection == MapMode::Mappack)) {
+                Room.MapSelection = MapMode::Mappack;
+            }
+
             UI::EndCombo();
+        }
+
+        if (Room.MapSelection == MapMode::Mappack) {
+            Room.MappackId = UI::InputInt("TMX Mappack ID", Room.MappackId, 0);
         }
 
         if (UI::BeginCombo("Target Medal", stringof(Room.TargetMedal))) {

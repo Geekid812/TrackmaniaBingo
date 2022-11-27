@@ -10,6 +10,7 @@ class GameRoom {
     array<Player>@ Players = {};
     int MaxPlayers;
     MapMode MapSelection;
+    int MappackId;
     Medal TargetMedal;
     array<Map>@ MapList = {};
     LoadStatus MapsLoadingStatus = LoadStatus::Loading;
@@ -108,14 +109,18 @@ class RunResult {
 
 enum MapMode {
     TOTD,
-    MXRandom
+    MXRandom,
+    Mappack
 }
 
 string stringof(MapMode mode) {
     if (mode == MapMode::TOTD) {
         return "Track of the Day";
     }
-    return "Random Map (TMX)";
+    if (mode == MapMode::MXRandom) {
+        return "Random Map (TMX)";
+    }
+    return "Selected Mappack";
 }
 
 enum BingoDirection {
