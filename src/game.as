@@ -7,8 +7,10 @@ class GameRoom {
     bool Active;
     bool InGame;
     string JoinCode;
+    array<Team>@ Teams = {};
     array<Player>@ Players = {};
     int MaxPlayers;
+    int MaxTeams = 999; // Gets overriden by server
     MapMode MapSelection;
     int MappackId;
     Medal TargetMedal;
@@ -18,6 +20,15 @@ class GameRoom {
     bool LocalPlayerIsHost;
     EndState EndState;
 
+    Player@ GetSelf(){
+        for (uint i = 0; i < Room.Players.Length; i++){
+            auto player = Room.Players[i];
+            if (player.IsSelf)
+                return player;
+        }
+        return null;
+    }
+
     Map GetMapWithUid(string&in uid) {
         for (uint i = 0; i < MapList.Length; i++) {
             Map SelectedMap = MapList[i];
@@ -26,7 +37,7 @@ class GameRoom {
 
         return Map();
     }
-
+    
     int GetMapCellId(string&in uid) {
         for (uint i = 0; i < MapList.Length; i++) {
             Map SelectedMap = MapList[i];
@@ -36,24 +47,57 @@ class GameRoom {
         return -1;
     }
 
-    Player@ GetSelf(){
-        for (uint i = 0; i < Room.Players.Length; i++){
-            auto player = Room.Players[i];
-            if (player.IsSelf)
-                return player;
+
+    Team@ GetTeamWithId(int id) {
+        for (uint i = 0; i < Teams.Length; i++) {
+            if (Teams[i].Id == id) 
+                return Teams[i];
         }
         return null;
+    }
+
+    array<Player> GetTeamPlayers(Team team){
+        array<Player> players = {};
+        for (uint i = 0; i < Room.Players.Length; i++){
+            auto player = Room.Players[i];
+            if (player.Team == team)
+                players.InsertLast(player);
+        }
+        return players;
+    }
+
+    bool MoreTeamsAvaliable(){
+        // Non hosts should not see that more teams can be created
+        return Teams.Length < uint(Math::Min(MaxTeams, MaxPlayers)) && Room.LocalPlayerIsHost && StartCountdown <= 0;
+    }
+}
+
+class Team {
+    string Name;
+    int Id;
+    vec3 Color;
+
+    Team() { }
+
+    Team(int id, string&in name, vec3 color) {
+        this.Name = name;
+        this.Id = id;
+        this.Color = color;
+    }
+
+    bool opEquals(Team other) {
+        return Id == other.Id;
     }
 }
 
 class Player {
     string Name;
-    int Team;
+    Team Team;
     bool IsSelf;
 
     Player() { }
 
-    Player(string&in name, int team, bool self) {
+    Player(string&in name, Team team, bool self) {
         this.Name = name;
         this.Team = team;
         this.IsSelf = self;
@@ -65,7 +109,7 @@ class Map {
     string Author;
     int TmxID = -1; // Used to compare whether a map is valid
     string Uid;
-    int ClaimedTeam = -1;
+    Team@ ClaimedTeam = null;
     RunResult ClaimedRun;
     CachedImage@ Thumbnail;
     CachedImage@ MapImage;

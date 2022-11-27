@@ -58,8 +58,8 @@ namespace MapList {
 
             auto Size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(8, 6) - StartPos;
             vec4 Rect = vec4(StartPos.x, StartPos.y + (Settings::TinyBoard ? 4 : 0), 216, Size.y - (Settings::TinyBoard ? 8 : 0));
-            if (Map.ClaimedTeam == 0) DrawList.AddRectFilled(Rect, vec4(1, .2, .2, .1));
-            if (Map.ClaimedTeam == 1) DrawList.AddRectFilled(Rect, vec4(.2, .2, 1, .1));
+            if (Map.ClaimedTeam !is null)
+                DrawList.AddRectFilled(Rect, UIColor::GetAlphaColor(Map.ClaimedTeam.Color, 0.1));
         }
         if (Settings::TinyBoard) UI::PopFont();
 

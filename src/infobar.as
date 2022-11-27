@@ -8,6 +8,9 @@ namespace InfoBar {
 
     void Render() {
         if (!Room.InGame) return;
+        
+        auto team = Room.GetSelf().Team;
+        UI::PushStyleColor(UI::Col::WindowBg, UIColor::GetAlphaColor(UIColor::Brighten(team.Color, 0.75), 1));
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar);
 
         UI::PushFont(Font::Monospace);
@@ -50,5 +53,6 @@ namespace InfoBar {
         vec2 WindowSize = UI::GetWindowSize();
         UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - WindowSize.x) / 2, int(Board::Position.y) + int(Board::BoardSize) + BoardMargin), UI::Cond::Always);
         UI::End();
+        UI::PopStyleColor();
     }
 }
