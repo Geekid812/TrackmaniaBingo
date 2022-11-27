@@ -1,7 +1,6 @@
 
 void Changelog() {
-
-    UI::Markdown("## Changelog: Version 1.1");
-    UI::TextWrapped("This is a bugfix update addressing the overwhelming amount of bugs reported since the plugin launched! Thank you all for reporting all these problems and helping us fix these terrible bugs.");
-    UI::TextWrapped("8 bugs have been addressed in this release, including the infamous \"why won't my game start?\" problem. An indicator has been added to inform you of when your game is ready to start or if a problem occured when fetching the maps (if that happens, you can go to sleep until TrackmaniaExchange is back up).");
+    UI::Markdown("## Changelog: Version 2.0");
+    UI::TextWrapped("A new major update has been released! New features include:");
+    UI::Markdown("- Play with up to 6 teams in a single game! (Thanks to LukeTheVirus for contributing this feature!)\n- Play with maps from a specific mappack on TMX\n- Revamped infobar, now displays the time to beat on the current map\n- The square you are playing on is highlighted on the bingo board\n- Maps can be played even after the bingo game has ended\n- Tiny maplist option: small bingo board to make it easier to play on lower resolutions\n- Various fixes here and there");
 }
