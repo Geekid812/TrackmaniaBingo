@@ -8,34 +8,38 @@ namespace MapList {
         UI::Begin(WindowName, Visible, UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoCollapse);
         auto DrawList = UI::GetWindowDrawList();
 
-        UI::PushStyleVar(UI::StyleVar::CellPadding, vec2(8, 8));
+        UI::PushStyleVar(UI::StyleVar::CellPadding, Settings::TinyBoard ? vec2(4, 4) : vec2(8, 8));
         UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2(2, 2));
+        if (Settings::TinyBoard) UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(4, 4));
         UI::PushStyleColor(UI::Col::TableBorderLight, vec4(.6, .6, .6, 1.));
         UI::PushStyleColor(UI::Col::TableBorderStrong, vec4(1., 1., 1., 1.));
         UI::BeginTable("Bingo_MapList", 5, UI::TableFlags::SizingFixedFit | UI::TableFlags::Borders);
 
+        if (Settings::TinyBoard) UI::PushFont(Font::Tiny);
         for (uint i = 0; i < Room.MapList.Length; i++) {
             auto Map = Room.MapList[i];
             UI::TableNextColumn();
 
             auto StartPos = UI::GetCursorPos() + UI::GetWindowPos() - vec2(8, 7);
 
+            vec2 ThumbnailSize = vec2(200, 145);
+            if (Settings::TinyBoard) ThumbnailSize = vec2(100, 72);
             if (@Map.MapImage.m_texture != null) {
-                UI::Image(Map.MapImage.m_texture, vec2(200, 145));
+                UI::Image(Map.MapImage.m_texture, ThumbnailSize);
             } else if (@Map.Thumbnail.m_texture != null) {
-                UI::Image(Map.Thumbnail.m_texture, vec2(200, 145));
+                UI::Image(Map.Thumbnail.m_texture, ThumbnailSize);
             } else {
-                UI::Dummy(vec2(200, 145));
+                UI::Dummy(ThumbnailSize);
             }
             UI::PushStyleVar(UI::StyleVar::CellPadding, vec2(2, 2));
             UI::BeginTable("Bingo_Map" + i, 2, UI::TableFlags::SizingFixedFit);
-            UI::TableSetupColumn("", UI::TableColumnFlags::None, 135);
-            UI::TableSetupColumn("", UI::TableColumnFlags::None, 65);
+            UI::TableSetupColumn("", UI::TableColumnFlags::None, Settings::TinyBoard ? 70 : 135);
+            UI::TableSetupColumn("", UI::TableColumnFlags::None, Settings::TinyBoard ? 30 : 65);
             UI::TableNextColumn();
             UI::Text(Map.Name);
 
             if (Map.ClaimedRun.Time != -1) {
-                UI::TextDisabled(Map.ClaimedRun.Display());
+                UI::TextDisabled(Settings::TinyBoard ? Map.ClaimedRun.DisplayTime() : Map.ClaimedRun.Display());
             } else {
                 UI::TextDisabled("By " + Map.Author);
             }
@@ -43,7 +47,7 @@ namespace MapList {
             UI::TableNextColumn();
             if (!Room.EndState.HasEnded()) {
                 UIColor::DarkGreen();
-                if (UI::Button(Icons::Play + " Play")) {
+                if (UI::Button((Settings::TinyBoard ? "" : Icons::Play + " ") + "Play")) {
                     MapList::Visible = false;
                     Playground::LoadMap(Map.TmxID);
                 }
@@ -53,14 +57,15 @@ namespace MapList {
             UI::PopStyleVar();
 
             auto Size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(8, 6) - StartPos;
-            vec4 Rect = vec4(StartPos.x, StartPos.y, 216, Size.y);
+            vec4 Rect = vec4(StartPos.x, StartPos.y + (Settings::TinyBoard ? 4 : 0), 216, Size.y - (Settings::TinyBoard ? 8 : 0));
             if (Map.ClaimedTeam == 0) DrawList.AddRectFilled(Rect, vec4(1, .2, .2, .1));
             if (Map.ClaimedTeam == 1) DrawList.AddRectFilled(Rect, vec4(.2, .2, 1, .1));
         }
+        if (Settings::TinyBoard) UI::PopFont();
 
         UI::EndTable();
         UI::PopStyleColor(2);
-        UI::PopStyleVar(2);
+        UI::PopStyleVar(Settings::TinyBoard ? 3 : 2);
         UI::End();
     }
 }

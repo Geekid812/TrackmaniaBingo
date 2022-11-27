@@ -105,6 +105,10 @@ class RunResult {
     string Display() {
         return symbolOf(this.Medal) + "\\$z " + Time::Format(this.Time);
     }
+
+    string DisplayTime() {
+        return Time::Format(this.Time);
+    }
 }
 
 enum MapMode {
