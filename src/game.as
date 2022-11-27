@@ -37,6 +37,12 @@ class GameRoom {
 
         return Map();
     }
+
+    Map GetCurrentMap() {
+        CGameCtnChallenge@ CurrentMap = Playground::GetCurrentMap();
+        if (@CurrentMap == null) return Map();
+        return GetMapWithUid(CurrentMap.EdChallengeId);
+    }
     
     int GetMapCellId(string&in uid) {
         for (uint i = 0; i < MapList.Length; i++) {
