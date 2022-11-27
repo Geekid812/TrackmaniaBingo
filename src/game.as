@@ -12,6 +12,7 @@ class GameRoom {
     int MaxPlayers;
     int MaxTeams = 999; // Gets overriden by server
     MapMode MapSelection;
+    int MappackId;
     Medal TargetMedal;
     array<Map>@ MapList = {};
     LoadStatus MapsLoadingStatus = LoadStatus::Loading;
@@ -148,18 +149,26 @@ class RunResult {
     string Display() {
         return symbolOf(this.Medal) + "\\$z " + Time::Format(this.Time);
     }
+
+    string DisplayTime() {
+        return Time::Format(this.Time);
+    }
 }
 
 enum MapMode {
     TOTD,
-    MXRandom
+    MXRandom,
+    Mappack
 }
 
 string stringof(MapMode mode) {
     if (mode == MapMode::TOTD) {
         return "Track of the Day";
     }
-    return "Random Map (TMX)";
+    if (mode == MapMode::MXRandom) {
+        return "Random Map (TMX)";
+    }
+    return "Selected Mappack";
 }
 
 enum BingoDirection {

@@ -74,12 +74,7 @@ namespace Playground {
         PlaygroundScript.DataFileMgr.Ghost_Release(Ghost.Id);
 
         if (Time != -1) {
-            int MedalInt = Medal::None;
-            if (Time <= AuthorTime) MedalInt = Medal::Author;
-            else if (Time <= GoldTime) MedalInt = Medal::Gold;
-            else if (Time <= SilverTime) MedalInt = Medal::Silver;
-            else if (Time <= BronzeTime) MedalInt = Medal::Bronze;
-            return RunResult(Time, Medal(MedalInt));
+            return RunResult(Time, CalculateMedal(Time, AuthorTime, GoldTime, SilverTime, BronzeTime));
         }
         return RunResult();
     }
@@ -105,6 +100,33 @@ namespace Playground {
             trace("Claiming map '" + GameMap.Uid + "' with time of " + Result.Time + " (previous time: " + CurrentTime + ")");
             startnew(ClaimMedalCoroutine);
         }
+    }
+
+    RunResult@ GetCurrentTimeToBeat() {
+        CGameCtnChallenge@ Map = GetCurrentMap();
+        if (@Map == null) return null;
+        Map GameMap = Room.GetMapWithUid(Map.EdChallengeId);
+        if (GameMap.TmxID == -1) return null;
+        if (GameMap.ClaimedRun.Time != -1) return GameMap.ClaimedRun;
+
+        return RunResult(GetMedalTime(Map, Room.TargetMedal), Room.TargetMedal);
+    }
+
+    Medal CalculateMedal(int time, int author, int gold, int silver, int bronze) {
+            Medal medal = Medal::None;
+            if (time <= bronze) medal = Medal::Bronze;
+            if (time <= silver) medal = Medal::Silver;
+            if (time <= gold) medal = Medal::Gold;
+            if (time <= author) medal = Medal::Author;
+            return medal;
+    }
+
+    int GetMedalTime(CGameCtnChallenge@ map, Medal medal) {
+        if (medal == Medal::Author) return map.TMObjective_AuthorTime;
+        if (medal == Medal::Gold) return map.TMObjective_GoldTime;
+        if (medal == Medal::Silver) return map.TMObjective_SilverTime;
+        if (medal == Medal::Bronze) return map.TMObjective_BronzeTime;
+        return -1;
     }
 
     void ClaimMedalCoroutine() {

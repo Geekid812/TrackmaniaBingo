@@ -3,6 +3,7 @@ const string MenuItemName = "\\$ff0" + WindowName;
 
 void Main() {
     Font::Init();
+    Config::FetchConfig();
 } 
 
 void RenderMenu() {

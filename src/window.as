@@ -38,6 +38,10 @@ namespace Window {
         if (Room.Active) {
             RoomView();
         } else {
+            if (Config::StatusMessage != "") {
+                UI::Text("\\$z" + Icons::InfoCircle + " \\$ff0" + Config::StatusMessage);
+            }
+
             UI::BeginTabBar("Bingo_TabBar");
 
             if (UI::BeginTabItem(Icons::ShareSquareO + " Join Room")) {
@@ -78,7 +82,15 @@ namespace Window {
                 Room.MapSelection = MapMode::MXRandom;
             }
 
+            if (UI::Selectable(stringof(MapMode::Mappack), Room.MapSelection == MapMode::Mappack)) {
+                Room.MapSelection = MapMode::Mappack;
+            }
+
             UI::EndCombo();
+        }
+
+        if (Room.MapSelection == MapMode::Mappack) {
+            Room.MappackId = UI::InputInt("TMX Mappack ID", Room.MappackId, 0);
         }
 
         if (UI::BeginCombo("Target Medal", stringof(Room.TargetMedal))) {
@@ -103,18 +115,23 @@ namespace Window {
             UI::EndCombo();
         }
 
+        if (!Config::CanPlay) UI::BeginDisabled();
         if (UI::Button("Create Room")) {
             startnew(Network::CreateRoom);
         }
+        if (!Config::CanPlay) UI::EndDisabled();
     }
 
     void JoinTab() {
         Room.JoinCode = UI::InputText("Room Code", Room.JoinCode, false, UI::InputTextFlags::CharsUppercase | (JoinCodeVisible? 0 : UI::InputTextFlags::Password));
         UI::SameLine();
         JoinCodeVisible = UI::Checkbox("Show code", JoinCodeVisible);
+
+        if (!Config::CanPlay) UI::BeginDisabled();
         if (UI::Button("Join Room") && Room.JoinCode.Length >= 6) {
             startnew(Network::JoinRoom);
         }
+        if (!Config::CanPlay) UI::EndDisabled();
     }
 
     void InfoTab() {

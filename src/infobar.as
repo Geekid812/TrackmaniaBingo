@@ -8,13 +8,11 @@ namespace InfoBar {
 
     void Render() {
         if (!Room.InGame) return;
-
-        UI::SetNextWindowPos(int(Board::Position.x), int(Board::Position.y) + int(Board::BoardSize) + BoardMargin, UI::Cond::Always);
-        UI::SetNextWindowSize(int(Board::BoardSize), 42, UI::Cond::Always);
+        
         auto team = Room.GetSelf().Team;
         UI::PushStyleColor(UI::Col::WindowBg, UIColor::GetAlphaColor(UIColor::Brighten(team.Color, 0.75), 1));
-        UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize);
-        
+        UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar);
+
         UI::PushFont(Font::Monospace);
         if (Room.EndState.EndTime == 0) {
             UI::Text(Time::Format(Time::Now - StartTime, false, true, true));
@@ -41,6 +39,19 @@ namespace InfoBar {
         UIColor::Reset();
         UI::PopStyleVar();
 
+        if (!Room.EndState.HasEnded()) {
+            RunResult@ RunToBeat = Playground::GetCurrentTimeToBeat();
+            if (@RunToBeat != null) {
+                if (RunToBeat.Time != -1) {
+                    UI::Text("Time to beat: " + RunToBeat.Display());
+                } else {
+                    UI::Text("Complete this map to claim it!");
+                }
+            }
+        }
+
+        vec2 WindowSize = UI::GetWindowSize();
+        UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - WindowSize.x) / 2, int(Board::Position.y) + int(Board::BoardSize) + BoardMargin), UI::Cond::Always);
         UI::End();
         UI::PopStyleColor();
     }
