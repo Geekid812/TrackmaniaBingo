@@ -37,6 +37,10 @@ namespace Window {
         if (Room.Active) {
             RoomView();
         } else {
+            if (Config::StatusMessage != "") {
+                UI::Text("\\$z" + Icons::InfoCircle + " \\$ff0" + Config::StatusMessage);
+            }
+
             UI::BeginTabBar("Bingo_TabBar");
 
             if (UI::BeginTabItem(Icons::ShareSquareO + " Join Room")) {
@@ -110,16 +114,21 @@ namespace Window {
             UI::EndCombo();
         }
 
+        if (!Config::CanPlay) UI::BeginDisabled();
         if (UI::Button("Create Room")) {
             startnew(Network::CreateRoom);
         }
+        if (!Config::CanPlay) UI::EndDisabled();
     }
 
     void JoinTab() {
         Room.JoinCode = UI::InputText("Room Code", Room.JoinCode);
+
+        if (!Config::CanPlay) UI::BeginDisabled();
         if (UI::Button("Join Room") && Room.JoinCode.Length >= 6) {
             startnew(Network::JoinRoom);
         }
+        if (!Config::CanPlay) UI::EndDisabled();
     }
 
     void InfoTab() {
