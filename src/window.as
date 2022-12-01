@@ -145,6 +145,9 @@ namespace Window {
         UI::Text(Icons::Bug + " Bug tracker:");
         UI::SameLine();
         UI::Markdown("[Report an Issue](https://github.com/Geekid812/TrackmaniaBingo/issues)");
+        UI::Text(Icons::DiscordAlt + " Discord server:");
+        UI::SameLine();
+        UI::Markdown("[Trackmania Bingo](https://discord.gg/pJbeqptsEa)");
         UI::Text("");
 
         Changelog();

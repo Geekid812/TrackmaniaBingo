@@ -9,3 +9,6 @@ Feel free to contribute to the development of this project by submitting an issu
 
 The source code for the backend of this plugin is located in [Geekid812/bingoserver](https://github.com/Geekid812/bingoserver).
 It communicates via HTTP for client to server and TCP for server to client.
+
+### Discord server
+Join us in our [Discord server](https://discord.gg/pJbeqptsEa) to get involved in the community!
