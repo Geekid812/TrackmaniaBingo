@@ -46,6 +46,7 @@ namespace Network {
         // OK
         IsConnected = true;
         Secret = InitialResponse.SubStr(0, SECRET_LENGTH);
+        if (Settings::DevMode) trace("Token response: " + InitialResponse + " | Token set to: " + Secret);
         trace("Connection established. Remote IP: " + EventStream.GetRemoteIP());
         while (true) {
             while (EventStream.Available() == 0) {
