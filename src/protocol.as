@@ -1,8 +1,19 @@
 // Implementation of a full TCP custom protocol, similar to websockets
+class HandshakeData {
+    string ClientVersion;
+    string AuthToken;
+
+    Json::Value ToJSON() {
+        auto object = Json::Object();
+        object["version"] = ClientVersion;
+        object["token"] = AuthToken;
+        return object;
+    }
+}
+
 class Protocol {
     Net::Socket@ Socket;
     ConnectionState State;
-
     int MsgSize;
 
     Protocol() {
@@ -11,7 +22,7 @@ class Protocol {
         MsgSize = 0;
     }
 
-    void Connect(const string&in host, uint16 port, uint timeout = 5000) {
+    void Connect(const string&in host, uint16 port, HandshakeData handshake, uint timeout = 5000) {
         State = ConnectionState::Connecting;
         @Socket = Net::Socket();
         MsgSize = 0;
@@ -36,10 +47,7 @@ class Protocol {
         trace("Protocol: Connected to server after " + (Time::Now - InitialDate) + "ms.");
 
         // Opening Handshake
-        Json::Value Handshake = Json::Object();
-        Handshake["version"] = Meta::ExecutingPlugin().Version;
-
-        if (!InnerSend(Json::Write(Handshake))) {
+        if (!InnerSend(Json::Write(handshake.ToJSON()))) {
             trace("Protocol: Failed sending opening handshake.");
             Fail();
             return;

@@ -4,7 +4,18 @@ const string MenuItemName = "\\$ff0" + WindowName;
 void Main() {
     Font::Init();
     Config::FetchConfig();
+    ProtocolExample();
 } 
+
+void ProtocolExample() {
+    auto prot = Protocol();
+    HandshakeData handshake = HandshakeData();
+    handshake.ClientVersion = Meta::ExecutingPlugin().Version;
+    auto AuthReq = Auth::GetToken();
+    while (!AuthReq.Finished()) { yield(); }
+    handshake.AuthToken = AuthReq.Token();
+    prot.Connect("localhost", 6600, handshake);
+}
 
 void RenderMenu() {
     if (UI::MenuItem(MenuItemName, "", Window::Visible)) {
