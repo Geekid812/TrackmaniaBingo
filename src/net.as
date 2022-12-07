@@ -15,61 +15,62 @@ namespace Network {
     // Secret token used during reconnection sync
     string ReconnectToken;
 
+    Protocol _protocol;
+    string AuthToken;
+    uint64 TokenExpireDate;
+
+    void Init() {
+        _protocol = Protocol();
+        TokenExpireDate = 0;
+        FetchAuthToken();
+        OpenConnection();
+    }
+
+    void FetchAuthToken() {
+        trace("Network: fetching a new authentication token...");
+        Auth::PluginAuthTask@ task = Auth::GetToken();
+        while (!task.Finished()) { yield(); }
+        
+        string token = task.Token();
+        if (token != "") {
+            AuthToken = token;
+            TokenExpireDate = Time::Now + (5 * 60 * 1000); // Valid for 5 minutes
+            trace("Network: received new authentication token.");
+        } else {
+            trace("Network: did not receive a valid token. This could be a connection issue.");
+        }
+    }
+
+    bool OpenConnection() {
+        auto handshake = HandshakeData();
+        handshake.ClientVersion = Meta::ExecutingPlugin().Version;
+        if (Time::Now > TokenExpireDate) {
+            trace("Network: could not open a connection: authentication token is not valid.");
+            return false;
+        }
+        handshake.AuthToken = AuthToken;
+        _protocol.Connect(Settings::BackendURL, Settings::TcpPort, handshake);
+        return _protocol.State == ConnectionState::Connected;
+    }
+
     void Loop() {
-        trace("Connecting to "+ Settings::BackendURL + ":" + Settings::TcpPort);
-        if (!EventStream.Connect(Settings::BackendURL, Settings::TcpPort)) {
-            trace("Failed to open TCP connection.");
-            IsLooping = false;
-            return;
-        }
-        // Sleep a bit because for some reason the server takes
-        // time to register the TCP connection
-        sleep(100);
+        if (_protocol.State != ConnectionState::Connected) return;
         
-        // Wait to receive secret token
-        uint TimeoutAt = Time::Now + Settings::ConnectionTimeout;
-        while (EventStream.Available() == 0 && Time::Now < TimeoutAt) { yield(); }
-        
-        // Check for timeout
-        if (Time::Now >= TimeoutAt) {
-            trace("Timed out on token reception.");
-            IsLooping = false;
-            return;
-        }
-
-        string InitialResponse = EventStream.ReadRaw(EventStream.Available());
-        if (InitialResponse.Length < SECRET_LENGTH) {
-            trace("Received an unexpected token: " + InitialResponse);
-            IsLooping = false;
-            return;
-        }
-        // OK
-        IsConnected = true;
-        Secret = InitialResponse.SubStr(0, SECRET_LENGTH);
-        if (Settings::DevMode) trace("Token response: " + InitialResponse + " | Token set to: " + Secret);
-        trace("Connection established. Remote IP: " + EventStream.GetRemoteIP());
-        while (true) {
-            while (EventStream.Available() == 0) {
-                if (!IsLooping) break; // Manual disconnect
-                if (EventStream.CanRead()) {
-                    // Client is disconnected
-                    OnDisconnect();
-                    break;
-                }
-                yield();
+        string Message = _protocol.Recv();
+        while (Message != "") {
+            Json::Value Json;
+            try {
+                Json = Json::Parse(Message);
+            } catch {
+                trace("Network: Failed to parse received message. Got: " + Message);
+                _protocol.Fail();
+                break;
             }
-            if (EventStream.Available() == 0) break; // Close loop if disconnected
-            string Message = EventStream.ReadRaw(EventStream.Available());
-            trace("Received: " + Message);
-            string[]@ Events = Message.Split("\u0004"); // Control character to seperate messages
-            for (uint i = 0; i < Events.Length - 1; i++) {
-                if (Events[i] == "PING") continue; // Just a simple ping
-                Handle(Json::Parse(Events[i]));
-            }
-        }
 
-        IsLooping = false;
-        IsConnected = false;
+            Handle(Json);
+
+            Message = _protocol.Recv();
+        }
     }
 
     void Handle(Json::Value@ Body) {

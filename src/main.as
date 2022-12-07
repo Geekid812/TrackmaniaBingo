@@ -4,17 +4,12 @@ const string MenuItemName = "\\$ff0" + WindowName;
 void Main() {
     Font::Init();
     Config::FetchConfig();
-    ProtocolExample();
-} 
+    Network::Init();
 
-void ProtocolExample() {
-    auto prot = Protocol();
-    HandshakeData handshake = HandshakeData();
-    handshake.ClientVersion = Meta::ExecutingPlugin().Version;
-    auto AuthReq = Auth::GetToken();
-    while (!AuthReq.Finished()) { yield(); }
-    handshake.AuthToken = AuthReq.Token();
-    prot.Connect("localhost", 6600, handshake);
+    while (true) {
+        Network::Loop();
+        yield();
+    }
 }
 
 void RenderMenu() {
@@ -34,10 +29,7 @@ void RenderInterface() {
     Window::Render();
 }
 
+// TODO: refactor so this is not using the Update callback
 void Update(float dt) {
     Tick(int(dt));
-}
-
-void OnDestroyed() {
-    Network::EventStream.Close();
 }

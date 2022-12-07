@@ -92,11 +92,13 @@ class Protocol {
     string BlockRecv(uint timeout) {
         uint TimeoutDate = Time::Now + timeout;
         string Message = "";
-        while (Message == "" && Time::Now < TimeoutDate) { yield(); Message = Recv(); }
+        while (Message == "" && State != ConnectionState::Closed && Time::Now < TimeoutDate) { yield(); Message = Recv(); }
         return Message;
     }
 
     string Recv() {
+        if (State == ConnectionState::Closed) return "";
+
         if (MsgSize == 0) {
             if (Socket.Available() >= 4) {
                 MemoryBuffer@ buf = MemoryBuffer(4);
@@ -104,8 +106,9 @@ class Protocol {
                 buf.Seek(0);
                 int Size = buf.ReadInt32();
                 if (Size <= 0) {
-                    // TODO: fail
                     trace("Protocol: buffer size violation (got " + Size + ").");
+                    Fail();
+                    return "";
                 }
                 MsgSize = Size;
             }
@@ -123,7 +126,10 @@ class Protocol {
     }
 
     void Fail() {
+        if (State == ConnectionState::Closed) return;
         trace("Protocol: Connection fault. Closing.");
+        if (@Socket != null && Socket.CanWrite()) Socket.Close();
+
         State = ConnectionState::Closed;
         @Socket = null;
         MsgSize = 0;
