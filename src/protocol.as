@@ -22,7 +22,7 @@ class Protocol {
         MsgSize = 0;
     }
 
-    void Connect(const string&in host, uint16 port, HandshakeData handshake, uint timeout = 5000) {
+    int Connect(const string&in host, uint16 port, HandshakeData handshake, uint timeout = 5000) {
         State = ConnectionState::Connecting;
         @Socket = Net::Socket();
         MsgSize = 0;
@@ -31,7 +31,7 @@ class Protocol {
         if (!Socket.Connect(host, port)) {
             trace("Protocol: Could not create socket to connect to " + host + ":" + port + ".");
             Fail();
-            return;
+            return -1;
         }
         trace("Protocol: Socket bound and ready to connect to " + host + ":" + port + ".");
 
@@ -42,7 +42,7 @@ class Protocol {
         if (!Socket.CanWrite()) {
             trace("Protocol: Connection timed out after " + timeout + "ms.");
             Fail();
-            return;
+            return -1;
         }
         trace("Protocol: Connected to server after " + (Time::Now - InitialDate) + "ms.");
 
@@ -50,7 +50,7 @@ class Protocol {
         if (!InnerSend(Json::Write(handshake.ToJSON()))) {
             trace("Protocol: Failed sending opening handshake.");
             Fail();
-            return;
+            return -1;
         }
         trace("Protocol: Opening handshake sent.");
 
@@ -58,7 +58,7 @@ class Protocol {
         if (HandshakeReply == "") {
             trace("Protocol: Handshake reply reception timed out after " + timeout + "ms.");
             Fail();
-            return;
+            return -1;
         }
 
         // Handshake Check
@@ -69,16 +69,17 @@ class Protocol {
         } catch {
             trace("Protocol: Handshake reply parse failed. Got: " + HandshakeReply);
             Fail();
-            return;
+            return -1;
         }
 
         if (StatusCode == 0) {
             trace("Protocol: Handshake reply validated. Connection has been established!");
             State = ConnectionState::Connected;
+            return 0;
         } else {
             trace("Protocol: Received non-zero code " + StatusCode + " in handshake.");
             Fail();
-            return;
+            return StatusCode;
         }
     }
 
@@ -139,6 +140,14 @@ class Protocol {
 enum ProtocolFailure {
     SocketCreation,
     Timeout
+}
+
+enum HandshakeCode {
+    Ok = 0,
+    ParseError = 1,
+    IncompatibleVersion = 2,
+    AuthFailure = 3,
+    AuthRefused = 4,
 }
 
 enum ConnectionState {

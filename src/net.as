@@ -18,10 +18,12 @@ namespace Network {
     Protocol _protocol;
     string AuthToken;
     uint64 TokenExpireDate;
+    bool IsOffline;
 
     void Init() {
         _protocol = Protocol();
         TokenExpireDate = 0;
+        IsOffline = false;
         FetchAuthToken();
         OpenConnection();
     }
@@ -49,8 +51,20 @@ namespace Network {
             return false;
         }
         handshake.AuthToken = AuthToken;
-        _protocol.Connect(Settings::BackendURL, Settings::TcpPort, handshake);
+        int code = _protocol.Connect(Settings::BackendURL, Settings::TcpPort, handshake);
+        if (code != -1) HandleHandshakeCode(HandshakeCode(code));
         return _protocol.State == ConnectionState::Connected;
+    }
+
+    void HandleHandshakeCode(HandshakeCode code) {
+        if (code == HandshakeCode::Ok) return;
+        if (code == HandshakeCode::IncompatibleVersion) {
+            // Update required
+        } else if (code == HandshakeCode::AuthFailure) {
+            // Auth servers are not reachable
+        } else {
+            // Plugin error (this should not happen)
+        }
     }
 
     void Loop() {
@@ -319,7 +333,6 @@ namespace Network {
         } else if (Status / 100 != 2) { // Not a 2XX status code
             trace(Url + " received status code " + Status);
             if (Status == 426) { // Upgrade required
-                UI::ShowNotification(Icons::ArrowCircleOUp + " Update required!", "Please update the Bingo plugin to continue playing.", vec4(.2, .2, .9, 1));
             } else { // Default case
                 UI::ShowNotification(Icons::Times + " Connection Error", "An error occured while communicating with the server. (Error " + Status + ")", vec4(.6, 0, 0, 1));  
             }
