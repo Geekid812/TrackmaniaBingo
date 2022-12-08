@@ -95,6 +95,24 @@ namespace Network {
                     JsonPlayer["name"] == LocalUsername
                 ));
             }
+
+            if (Body["maplist"].Length < 25) return; // Prevents a crash, user needs to retry later
+
+            // Start the countdown if the server things the game has started but the user isn't in it
+            if (!Room.InGame && StartCountdown <= 0 && Body["has_started"]) {
+                @Room.MapList = {};
+                for (uint i = 0; i < Body["maplist"].Length; i++) {
+                    auto JsonMap = Body["maplist"][i];
+                    Room.MapList.InsertLast(Map(
+                        JsonMap["name"],
+                        JsonMap["author"],
+                        JsonMap["tmxid"],
+                        JsonMap["uid"]
+                    ));
+                }
+                
+                StartCountdown = Settings::DevMode ? 1000 : 5000;
+            }
         } else if (Body["method"] == "GAME_START") {
             @Room.MapList = {};
             if (Body["maplist"].Length < 25) return; // Prevents a crash, user needs to retry later
