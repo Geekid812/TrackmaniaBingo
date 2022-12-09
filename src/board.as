@@ -9,7 +9,7 @@ namespace Board {
     const vec4 BingoStrokeColor = vec4(1, 0.6, 0, 0.9);
 
     void Draw() {
-        if (!Room.InGame) return;
+        if (Room.MapList.IsEmpty() || (!Room.InGame && !Room.EndState.HasEnded())) return;
 
         float BorderSize = BoardSize / 120.;
         float CellSize = (BoardSize - BorderSize * 6.) / 5.;

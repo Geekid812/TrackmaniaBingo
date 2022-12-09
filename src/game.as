@@ -4,8 +4,8 @@ GameRoom Room;
 int StartCountdown;
 
 class GameRoom {
-    bool Active;
-    bool InGame;
+    bool Active; // If we are in a room
+    bool InGame; // If the room has started (post countdown)
     string JoinCode;
     array<Team>@ Teams = {};
     array<Player>@ Players = {};

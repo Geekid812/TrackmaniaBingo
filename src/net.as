@@ -96,7 +96,7 @@ namespace Network {
                 ));
             }
         } else if (Body["method"] == "GAME_START") {
-            @Room.MapList = {};
+            @Room.MapList = {}; // Reset map list
             if (Body["maplist"].Length < 25) return; // Prevents a crash, user needs to retry later
             for (uint i = 0; i < Body["maplist"].Length; i++) {
                 auto JsonMap = Body["maplist"][i];
@@ -108,6 +108,7 @@ namespace Network {
                 ));
             }
 
+            Room.EndState = EndState(); // Reset end state
             StartCountdown = Settings::DevMode ? 1000 : 5000;
         } else if (Body["method"] == "CLAIM_CELL") {
             Map@ ClaimedMap = Room.MapList[Body["cellid"]];
@@ -132,7 +133,6 @@ namespace Network {
             } else { // Reclaim
                 UI::ShowNotification(Icons::Retweet + " Map Reclaimed", PlayerName + " has reclaimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display() + " (" + DeltaFormatted + ")", TeamColor, 15000);
             }
-                
         } else if (Body["method"] == "GAME_END") {
             Team team = Room.GetTeamWithId(int(Body["team_id"]));
             string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
@@ -141,6 +141,9 @@ namespace Network {
             Room.EndState.BingoDirection = BingoDirection(int(Body["bingodir"]));
             Room.EndState.Offset = Body["offset"];
             Room.EndState.EndTime = Time::Now;
+            Room.MapsLoadingStatus = LoadStatus::Loading;
+            Window::Visible = true;
+            Room.InGame = false;
         } else if (Body["method"] == "MAPS_LOAD_STATUS") {
             Room.MapsLoadingStatus = LoadStatus(int(Body["status"]));
         } else if (Body["method"] == "ROOM_CLOSED"){

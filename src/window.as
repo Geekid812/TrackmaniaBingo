@@ -4,6 +4,9 @@ namespace Window {
     bool JoinCodeVisible;
     bool RoomCodeVisible;
 
+    int DebugClaimCellIndex = 0;
+    int DebugClaimCellTime = 0;
+
     void Render() {
         if (!Visible) return;
         UI::Begin(WindowName, Visible);
@@ -21,11 +24,9 @@ namespace Window {
 
         if (Room.InGame) {
             InGame();
-            UI::End();
-            return;
         }
 
-        bool Disabled = false;
+        bool Disabled = Room.InGame;
         if (StartCountdown > 0) {
             Countdown();
             Disabled = true;
@@ -205,7 +206,6 @@ namespace Window {
             UI::TableNextColumn();
             Team@ Team = Room.Teams[i];
             UIColor::Custom(UIColor::Brighten(Team.Color, 0.75));
-            int teamIdXdd = Team.Id;
             if (UI::Button("Join##" + Team.Id)) startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, Team);
             UI::SameLine();
             UI::Text("\\$" + UIColor::GetHex(Team.Color) + Team.Name);
@@ -269,8 +269,42 @@ namespace Window {
         if (UI::Button(Icons::Signal + " Force Disconnect")) {
             startnew(Network::OnDisconnect);
         }
+
+        if (Meta::ExecutingPlugin().SiteID == 0) { // Don't show in release
+            UI::Text("Claim Cell Index: ");
+            UI::SameLine();
+            DebugClaimCellIndex = Math::Clamp(UI::InputInt("##ClaimCellIndex", DebugClaimCellIndex), 0, 24);
+            UI::Text("Time: ");
+            UI::SameLine();
+            DebugClaimCellTime = Math::Max(UI::InputInt("##ClaimCellTime", DebugClaimCellTime), 0);
+            if (UI::Button("Claim Cell")) {
+                startnew(DebugClaimCell, DebugClaimCellData(DebugClaimCellIndex, DebugClaimCellTime));
+            }
+        }
         UIColor::Reset();
     }
+}
+
+class DebugClaimCellData {
+    int Index;
+    int Time;
+    
+    DebugClaimCellData(int index, int time) {
+        Index = index;
+        Time = time;
+    }
+}
+
+void DebugClaimCell(ref@ refData) {
+    if (!Room.InGame) return;
+    auto data = cast<DebugClaimCellData>(refData);
+    string uid = Room.MapList[data.Index].Uid;
+    trace("Claiming cell " + data.Index + " with time " + data.Time + " and uid " + uid);
+    RunResult result = RunResult();
+    result.Medal = Medal::Author;
+    result.Time = data.Time;
+    bool success = Network::ClaimCell(uid, result);
+    if (!success) trace("Failed to claim cell " + data.Index + " with time " + data.Time + " and uid " + uid);
 }
 
 // Helper function to build the table

@@ -7,7 +7,7 @@ namespace InfoBar {
     bool SettingsOpen;
 
     void Render() {
-        if (!Room.InGame) return;
+        if (Room.MapList.IsEmpty() || (!Room.InGame && !Room.EndState.HasEnded())) return;
         
         auto team = Room.GetSelf().Team;
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar);
@@ -34,7 +34,7 @@ namespace InfoBar {
         if (Room.EndState.HasEnded()) {
             UI::SameLine();
             if (UI::Button("Exit")) {
-                Network::Reset();
+                startnew(Network::LeaveRoom);
             }
         }
         UIColor::Reset();

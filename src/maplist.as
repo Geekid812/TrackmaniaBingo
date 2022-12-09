@@ -3,7 +3,7 @@ namespace MapList {
     bool Visible;
 
     void Render() {
-        if (!Visible) return;
+        if (!Visible || Room.MapList.IsEmpty() || (!Room.InGame && !Room.EndState.HasEnded())) return;
 
         UI::Begin(WindowName, Visible, UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoCollapse);
         auto DrawList = UI::GetWindowDrawList();
