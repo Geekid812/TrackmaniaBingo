@@ -19,11 +19,15 @@ namespace Network {
     string AuthToken;
     uint64 TokenExpireDate;
     bool IsOffline;
+    uint SequenceNext;
+    dictionary Received;
 
     void Init() {
         _protocol = Protocol();
         TokenExpireDate = 0;
         IsOffline = false;
+        SequenceNext = 0;
+        Received = {};
         FetchAuthToken();
         OpenConnection();
     }
@@ -87,7 +91,16 @@ namespace Network {
         }
     }
 
+    bool Connected() {
+        return _protocol.State == ConnectionState::Connected;
+    }
+
     void Handle(Json::Value@ Body) {
+        if (@Body["seq"] != null) {
+            string SequenceCode = Body["seq"];
+            Received.Set(SequenceCode, Body);
+            return;
+        }
         if (Body["method"] == "ROOM_UPDATE") {
             string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
             @Room.Teams = {};
@@ -183,7 +196,7 @@ namespace Network {
         while (RetryAttempts <= 5 && !ReconnectSuccess) {
             if (TryConnect()) {
                 trace("Syncing with server...");
-                if (Sync()) {
+                if (true) {
                     UI::ShowNotification("", Icons::Check + " Reconnected!", vec4(.2, .2, .9, 1));
                     print("Reconnection succeeded!");
                     ReconnectSuccess = true;
@@ -218,90 +231,12 @@ namespace Network {
         }
     }
 
-    bool Sync() {
-        auto Body = Json::Object();
-        Body["client_secret"] = Secret;
-        Body["reconnect"] = ReconnectToken;
-        Net::HttpRequest@ Request = Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/sync", Json::Write(Body), true);
-        if (Request is null) return false;
-        if (Request.ResponseCode() == 204) {
-            trace("Empty response from sync.");
-            CloseConnection();
-            UI::ShowNotification(Icons::ExclamationCircle + " The room you were connected to has ended.");
-            return true;
-        }
-
-        trace("Reconnection sync: " + Request.String());
-        string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
-        auto JsonSync = Json::Parse(Request.String());
-        Room.Active = true;
-        Room.HostName = JsonSync["host"];
-        Room.MapSelection = MapMode(int(JsonSync["selection"]));
-        Room.TargetMedal = Medal(int(JsonSync["medal"]));
-        Room.MaxPlayers = JsonSync["size"];
-        Room.MapsLoadingStatus = LoadStatus(int(JsonSync["status"]));
-
-        @Room.Teams = {};
-        auto JsonTeams = JsonSync["teams"];
-        for (uint i = 0; i < JsonTeams.Length; i++){
-            auto JsonTeam = JsonTeams[i];
-            Room.Teams.InsertLast(Team(
-                JsonTeam["id"], 
-                JsonTeam["name"],
-                vec3(JsonTeam["color"]["r"], JsonTeam["color"]["g"], JsonTeam["color"]["b"])
-            ));
-        }
-
-        @Room.Players = {};
-        for (uint i = 0; i < JsonSync["players"].Length; i++) {
-            auto JsonPlayer = JsonSync["players"][i];
-            Room.Players.InsertLast(Player(
-                JsonPlayer["name"],
-                Room.GetTeamWithId(int(JsonPlayer["team_id"])),
-                JsonPlayer["name"] == LocalUsername
-            ));
-        }
-
-        int StartTimestamp = JsonSync["started"];
-        if (StartTimestamp == -1) {
-            Room.InGame = false;
-            return true;
-        }
-
-        Room.InGame = true;
-        InfoBar::StartTime = Time::Now - StartTimestamp;
-
-        @Room.MapList = {};
-        for (uint i = 0; i < JsonSync["boardstate"].Length; i++) {
-            auto JsonMap = JsonSync["boardstate"][i];
-            Map GameMap = Map(
-                JsonMap["name"],
-                JsonMap["author"],
-                JsonMap["tmxid"],
-                JsonMap["uid"]
-            );
-
-            if (JsonMap["claim"].GetType() != Json::Type::Null) {
-                @GameMap.ClaimedTeam = Room.GetTeamWithId(int(JsonMap["claim"]["team_id"]));
-                GameMap.ClaimedRun = RunResult(
-                    JsonMap["claim"]["time"],
-                    Medal(int(JsonMap["claim"]["medal"]))
-                );
-            }
-            Room.MapList.InsertLast(GameMap);
-        }
-        return true;
-    }
-
     void Reset() {
         EventStream.Close();
         @EventStream = Net::Socket();
         IsConnected = false;
         IsLooping = false;
-        Room.Active = false;
-        Room.InGame = false;
-        Room.EndState = EndState();
-        Room.MapsLoadingStatus = LoadStatus::Loading;
+        @Room = null;
         MapList::Visible = false;
         ReconnectToken = Secret;
     }
@@ -342,31 +277,55 @@ namespace Network {
         return Request;
     }
 
-    void CreateRoom() {
-        if (!TryConnect()) {
-            UI::ShowNotification(Icons::QuestionCircle + " Could not connect to the server. Please check your connection.");
-            return;
+    int AddSequenceValue(Json::Value@ val) {
+        uint seq = SequenceNext;
+        val["seq"] = seq;
+        SequenceNext += 1;
+        return seq;
+    }
+
+    string ExpectReply(uint SequenceCode, uint timeout = 5000) {
+        uint64 TimeoutDate = Time::Now + timeout;
+        string Message = "";
+        string Sequence = tostring(SequenceCode);
+        while (Time::Now < TimeoutDate && Message == "") {
+            if (Received.Exists(Sequence)) {
+                Received.Get(Sequence, Message);
+            }
         }
+        return Message;
+    }
 
-        string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
+    Json::Value@ Post(Json::Value@ Body, bool blocking = false, uint timeout = 5000) {
+        uint Sequence = AddSequenceValue(Body);
+        string Text = Json::Write(Body);
+        if (!_protocol.Send(Text)) return null; // TODO: connection fault?
+        RequestInProgress = blocking;
+        string Reply = ExpectReply(Sequence, timeout);
+        RequestInProgress = false;
+        if (Reply != "") {
+            return Json::Parse(Reply);
+        }
+        return null;
+    }
+
+    void CreateRoom() {
         auto Body = Json::Object();
-        Body["size"] = Room.MaxPlayers;
-        Body["selection"] = Room.MapSelection;
-        Body["medal"] = Room.TargetMedal;
-        Body["name"] = LocalUsername;
-        Body["client_secret"] = Secret;
-        Body["version"] = Meta::ExecutingPlugin().Version;
+        Body["size"] = RoomConfig.MaxPlayers;
+        Body["selection"] = RoomConfig.MapSelection;
+        Body["medal"] = RoomConfig.TargetMedal;
+        Body["timelimit"] = RoomConfig.MinutesLimit;
 
-        if (Room.MapSelection == MapMode::Mappack) Body["mappack_id"] = tostring(Room.MappackId);
+        if (RoomConfig.MapSelection == MapMode::Mappack) Body["mappack_id"] = tostring(RoomConfig.MappackId);
 
-        auto Request = PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/create", Json::Write(Body), true);
+        Json::Value@ Request = Post(Body, true);
         if (Request is null) {
+            trace("Network: CreateRoom - No reply from server.");
             Reset();
             return;
         }
+        // TODO: finish here
 
-        string json = Request.String();
-        auto response = Json::Parse(json);
         string RoomCode = response["room_code"];
         Room.MaxTeams = int(response["max_teams"]);
         Window::RoomCodeVisible = false;

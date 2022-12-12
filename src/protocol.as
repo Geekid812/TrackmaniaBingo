@@ -73,6 +73,7 @@ class Protocol {
         }
 
         if (StatusCode == 0) {
+            LocalUsername = Reply["username"];
             trace("Protocol: Handshake reply validated. Connection has been established!");
             State = ConnectionState::Connected;
             return 0;
@@ -88,6 +89,11 @@ class Protocol {
         buf.Write(data.Length);
         buf.Seek(0);
         return Socket.WriteRaw(buf.ReadString(4) + data);
+    }
+
+    bool Send(const string&in data) {
+        if (State != ConnectionState::Connected) return false;
+        return InnerSend(data);
     }
 
     string BlockRecv(uint timeout) {

@@ -1,19 +1,17 @@
 // Global active room
-GameRoom Room;
+GameRoom@ Room;
+RoomConfiguration RoomConfig;
+string LocalUsername;
 // Milliseconds time until game starts (displayed while loading maps)
 int StartCountdown;
 
 class GameRoom {
-    bool Active;
     bool InGame;
+    RoomConfiguration Config;
     string JoinCode;
     array<Team>@ Teams = {};
     array<Player>@ Players = {};
-    int MaxPlayers;
     int MaxTeams = 999; // Gets overriden by server
-    MapMode MapSelection;
-    int MappackId;
-    Medal TargetMedal;
     array<Map>@ MapList = {};
     LoadStatus MapsLoadingStatus = LoadStatus::Loading;
     string HostName;
@@ -159,22 +157,6 @@ class RunResult {
     string DisplayTime() {
         return Time::Format(this.Time);
     }
-}
-
-enum MapMode {
-    TOTD,
-    MXRandom,
-    Mappack
-}
-
-string stringof(MapMode mode) {
-    if (mode == MapMode::TOTD) {
-        return "Track of the Day";
-    }
-    if (mode == MapMode::MXRandom) {
-        return "Random Map (TMX)";
-    }
-    return "Selected Mappack";
 }
 
 enum BingoDirection {

@@ -71,45 +71,45 @@ namespace Window {
     }
 
     void CreateTab() {
-        Room.MaxPlayers = Math::Clamp(UI::InputInt("Room Size", Room.MaxPlayers), 2, 32);
+        RoomConfig.MaxPlayers = Math::Clamp(UI::InputInt("Room Size", RoomConfig.MaxPlayers), 2, 32);
         
-        if (UI::BeginCombo("Map Selection", stringof(Room.MapSelection))) {
-            if (UI::Selectable(stringof(MapMode::TOTD), Room.MapSelection == MapMode::TOTD)) {
-                Room.MapSelection = MapMode::TOTD;
+        if (UI::BeginCombo("Map Selection", stringof(RoomConfig.MapSelection))) {
+            if (UI::Selectable(stringof(MapMode::TOTD), RoomConfig.MapSelection == MapMode::TOTD)) {
+                RoomConfig.MapSelection = MapMode::TOTD;
             }
 
-            if (UI::Selectable(stringof(MapMode::MXRandom), Room.MapSelection == MapMode::MXRandom)) {
-                Room.MapSelection = MapMode::MXRandom;
+            if (UI::Selectable(stringof(MapMode::MXRandom), RoomConfig.MapSelection == MapMode::MXRandom)) {
+                RoomConfig.MapSelection = MapMode::MXRandom;
             }
 
-            if (UI::Selectable(stringof(MapMode::Mappack), Room.MapSelection == MapMode::Mappack)) {
-                Room.MapSelection = MapMode::Mappack;
+            if (UI::Selectable(stringof(MapMode::Mappack), RoomConfig.MapSelection == MapMode::Mappack)) {
+                RoomConfig.MapSelection = MapMode::Mappack;
             }
 
             UI::EndCombo();
         }
 
-        if (Room.MapSelection == MapMode::Mappack) {
-            Room.MappackId = UI::InputInt("TMX Mappack ID", Room.MappackId, 0);
+        if (RoomConfig.MapSelection == MapMode::Mappack) {
+            RoomConfig.MappackId = UI::InputInt("TMX Mappack ID", RoomConfig.MappackId, 0);
         }
 
-        if (UI::BeginCombo("Target Medal", stringof(Room.TargetMedal))) {
-            if (UI::Selectable(stringof(Medal::Author), Room.TargetMedal == Medal::Author)) {
-                Room.TargetMedal = Medal::Author;
+        if (UI::BeginCombo("Target Medal", stringof(RoomConfig.TargetMedal))) {
+            if (UI::Selectable(stringof(Medal::Author), RoomConfig.TargetMedal == Medal::Author)) {
+                RoomConfig.TargetMedal = Medal::Author;
             }
 
-            if (UI::Selectable(stringof(Medal::Gold), Room.TargetMedal == Medal::Gold)) {
-                Room.TargetMedal = Medal::Gold;
+            if (UI::Selectable(stringof(Medal::Gold), RoomConfig.TargetMedal == Medal::Gold)) {
+                RoomConfig.TargetMedal = Medal::Gold;
             }
 
-            if (UI::Selectable(stringof(Medal::Silver), Room.TargetMedal == Medal::Silver)) {
-                Room.TargetMedal = Medal::Silver;
+            if (UI::Selectable(stringof(Medal::Silver), RoomConfig.TargetMedal == Medal::Silver)) {
+                RoomConfig.TargetMedal = Medal::Silver;
             }
-            if (UI::Selectable(stringof(Medal::Bronze), Room.TargetMedal == Medal::Bronze)) {
-                Room.TargetMedal = Medal::Bronze;
+            if (UI::Selectable(stringof(Medal::Bronze), RoomConfig.TargetMedal == Medal::Bronze)) {
+                RoomConfig.TargetMedal = Medal::Bronze;
             }
-            if (UI::Selectable(stringof(Medal::None), Room.TargetMedal == Medal::None)) {
-                Room.TargetMedal = Medal::None;
+            if (UI::Selectable(stringof(Medal::None), RoomConfig.TargetMedal == Medal::None)) {
+                RoomConfig.TargetMedal = Medal::None;
             }
 
             UI::EndCombo();
