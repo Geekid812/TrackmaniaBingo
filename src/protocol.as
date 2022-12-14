@@ -66,6 +66,9 @@ class Protocol {
         try {
             Json::Value@ Reply = Json::Parse(HandshakeReply);
             StatusCode = Reply["code"];
+            if (@Reply["username"] != null) {
+                LocalUsername = Reply["username"];
+            }
         } catch {
             trace("Protocol: Handshake reply parse failed. Got: " + HandshakeReply);
             Fail();
@@ -73,7 +76,6 @@ class Protocol {
         }
 
         if (StatusCode == 0) {
-            LocalUsername = Reply["username"];
             trace("Protocol: Handshake reply validated. Connection has been established!");
             State = ConnectionState::Connected;
             return 0;

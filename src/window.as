@@ -3,6 +3,7 @@ namespace Window {
     bool Visible;
     bool JoinCodeVisible;
     bool RoomCodeVisible;
+    string JoinCodeInput;
 
     void Render() {
         if (!Visible) return;
@@ -19,7 +20,7 @@ namespace Window {
             UI::Separator();
         }
 
-        if (Room.InGame) {
+        if (@Room != null && Room.InGame) {
             InGame();
             UI::End();
             return;
@@ -35,7 +36,7 @@ namespace Window {
         }
         if (Disabled) UI::BeginDisabled();
 
-        if (Room.Active) {
+        if (@Room != null) {
             RoomView();
         } else {
             if (Config::StatusMessage != "") {
@@ -123,7 +124,7 @@ namespace Window {
     }
 
     void JoinTab() {
-        Room.JoinCode = UI::InputText("Room Code", Room.JoinCode, false, UI::InputTextFlags::CharsUppercase | (JoinCodeVisible? 0 : UI::InputTextFlags::Password));
+        JoinCodeInput = UI::InputText("Room Code", JoinCodeInput, false, UI::InputTextFlags::CharsUppercase | (JoinCodeVisible? 0 : UI::InputTextFlags::Password));
         UI::SameLine();
         JoinCodeVisible = UI::Checkbox("Show code", JoinCodeVisible);
 
@@ -160,7 +161,7 @@ namespace Window {
     }
 
     void RoomView() {
-        UI::Text(Room.HostName + (Room.HostName.EndsWith("s") ? "'": "'s") + " Bingo Room - " + Room.Players.Length + "/" + Room.MaxPlayers + " players");
+        UI::Text(Room.HostName + (Room.HostName.EndsWith("s") ? "'": "'s") + " Bingo Room - " + Room.Players.Length + "/" + Room.Config.MaxPlayers + " players");
         UI::SameLine();
         UIColor::DarkRed();
         if (UI::Button(Icons::Kenney::Exit + " Leave")) {
@@ -190,8 +191,8 @@ namespace Window {
             UI::Text(""); // Blank space to avoid layout shifts
         }
 
-        UI::Text("\\$ff0Map Selection: \\$z" + stringof(Room.MapSelection));
-        UI::Text("\\$ff0Target Medal: \\$z" + stringof(Room.TargetMedal));
+        UI::Text("\\$ff0Map Selection: \\$z" + stringof(Room.Config.MapSelection));
+        UI::Text("\\$ff0Target Medal: \\$z" + stringof(Room.Config.TargetMedal));
 
         UI::Text("\\$ff0Room Code: \\$z" + (RoomCodeVisible ? Room.JoinCode : "######"));
         UI::SameLine();

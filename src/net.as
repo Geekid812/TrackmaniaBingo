@@ -20,7 +20,17 @@ namespace Network {
     uint64 TokenExpireDate;
     bool IsOffline;
     uint SequenceNext;
-    dictionary Received;
+    array<Response@> Received;
+
+    class Response {
+        uint Sequence;
+        Json::Value@ Body;
+
+        Response(uint seq, Json::Value@ body) {
+            Sequence = seq;
+            @Body = body;
+        }
+    }
 
     void Init() {
         _protocol = Protocol();
@@ -76,6 +86,7 @@ namespace Network {
         
         string Message = _protocol.Recv();
         while (Message != "") {
+            trace("Network: Received message: " + Message);
             Json::Value Json;
             try {
                 Json = Json::Parse(Message);
@@ -97,8 +108,9 @@ namespace Network {
 
     void Handle(Json::Value@ Body) {
         if (@Body["seq"] != null) {
-            string SequenceCode = Body["seq"];
-            Received.Set(SequenceCode, Body);
+            uint SequenceCode = Body["seq"];
+            Response@ res = Response(SequenceCode, Body);
+            Received.InsertLast(res);
             return;
         }
         if (Body["method"] == "ROOM_UPDATE") {
@@ -284,13 +296,17 @@ namespace Network {
         return seq;
     }
 
-    string ExpectReply(uint SequenceCode, uint timeout = 5000) {
+    Json::Value@ ExpectReply(uint SequenceCode, uint timeout = 5000) {
         uint64 TimeoutDate = Time::Now + timeout;
-        string Message = "";
-        string Sequence = tostring(SequenceCode);
-        while (Time::Now < TimeoutDate && Message == "") {
-            if (Received.Exists(Sequence)) {
-                Received.Get(Sequence, Message);
+        Json::Value@ Message = null;
+        while (Time::Now < TimeoutDate && @Message == null) {
+            yield();
+            for (uint i = 0; i < Received.Length; i++) {
+                if (Received[i].Sequence == SequenceCode) {
+                    @Message = Received[i].Body;
+                    Received.RemoveAt(i);
+                    break;       
+                }
             }
         }
         return Message;
@@ -301,12 +317,9 @@ namespace Network {
         string Text = Json::Write(Body);
         if (!_protocol.Send(Text)) return null; // TODO: connection fault?
         RequestInProgress = blocking;
-        string Reply = ExpectReply(Sequence, timeout);
+        Json::Value@ Reply = ExpectReply(Sequence, timeout);
         RequestInProgress = false;
-        if (Reply != "") {
-            return Json::Parse(Reply);
-        }
-        return null;
+        return Reply;
     }
 
     void CreateRoom() {
@@ -318,30 +331,31 @@ namespace Network {
 
         if (RoomConfig.MapSelection == MapMode::Mappack) Body["mappack_id"] = tostring(RoomConfig.MappackId);
 
-        Json::Value@ Request = Post(Body, true);
-        if (Request is null) {
+        Json::Value@ Response = Post(Body, true);
+        if (Response is null) {
             trace("Network: CreateRoom - No reply from server.");
             Reset();
             return;
         }
-        // TODO: finish here
 
-        string RoomCode = response["room_code"];
-        Room.MaxTeams = int(response["max_teams"]);
+        // The room was created. Setting up room status (local player is host)
+        @Room = GameRoom();
+        Room.Config = RoomConfig;
+        string RoomCode = Response["room_code"];
+        Room.MaxTeams = int(Response["max_teams"]);
         Window::RoomCodeVisible = false;
 
         Room.Teams = {};
-        auto JsonTeams = response["teams"];
+        auto JsonTeams = Response["teams"];
         for (uint i = 0; i < JsonTeams.Length; i++){
             auto JsonTeam = JsonTeams[i];
             Room.Teams.InsertLast(Team(
                 JsonTeam["id"], 
                 JsonTeam["name"],
-                vec3(JsonTeam["color"]["r"], JsonTeam["color"]["g"], JsonTeam["color"]["b"])
+                vec3(JsonTeam["color"][0], JsonTeam["color"][1], JsonTeam["color"][2])
             ));
         }
 
-        Room.Active = true;
         Room.LocalPlayerIsHost = true;
         Room.HostName = LocalUsername;
         Room.JoinCode = RoomCode;
@@ -385,14 +399,13 @@ namespace Network {
             // Success!
             auto JsonRoom = Json::Parse(Request.String());
 
-            Room.LocalPlayerIsHost = false;
-            Room.MaxPlayers = JsonRoom["size"];
-            Room.MapSelection = MapMode(int(JsonRoom["selection"]));
-            Room.TargetMedal = Medal(int(JsonRoom["medal"]));
-            Room.HostName = JsonRoom["host"];
-            Room.MapsLoadingStatus = LoadStatus(int(JsonRoom["status"]));
+            //Room.LocalPlayerIsHost = false;
+            //Room.MaxPlayers = JsonRoom["size"];
+            //Room.MapSelection = MapMode(int(JsonRoom["selection"]));
+            //Room.TargetMedal = Medal(int(JsonRoom["medal"]));
+            //Room.HostName = JsonRoom["host"];
+            //Room.MapsLoadingStatus = LoadStatus(int(JsonRoom["status"]));
 
-            Room.Active = true;
             ShouldClose = false;
             Window::JoinCodeVisible = false;
             Window::RoomCodeVisible = false;

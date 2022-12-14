@@ -72,7 +72,7 @@ class GameRoom {
 
     bool MoreTeamsAvaliable(){
         // Non hosts should not see that more teams can be created
-        return Teams.Length < uint(Math::Min(MaxTeams, MaxPlayers)) && Room.LocalPlayerIsHost && StartCountdown <= 0;
+        return Teams.Length < uint(Math::Min(MaxTeams, Config.MaxPlayers)) && Room.LocalPlayerIsHost && StartCountdown <= 0;
     }
 }
 
@@ -174,6 +174,7 @@ enum LoadStatus {
 
 // Game tick function
 void Tick(int dt) {
+    if (@Room == null) return;
     if (Room.InGame && !Room.EndState.HasEnded()) {
         Playground::CheckMedals();
     }

@@ -7,7 +7,7 @@ namespace InfoBar {
     bool SettingsOpen;
 
     void Render() {
-        if (!Room.InGame) return;
+        if (@Room == null || !Room.InGame) return;
         
         auto team = Room.GetSelf().Team;
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar);
