@@ -341,7 +341,7 @@ namespace Network {
         // The room was created. Setting up room status (local player is host)
         @Room = GameRoom();
         Room.Config = RoomConfig;
-        string RoomCode = Response["room_code"];
+        string RoomCode = Response["join_code"];
         Room.MaxTeams = int(Response["max_teams"]);
         Window::RoomCodeVisible = false;
 
@@ -350,9 +350,9 @@ namespace Network {
         for (uint i = 0; i < JsonTeams.Length; i++) {
             auto JsonTeam = JsonTeams[i];
             Room.Teams.InsertLast(Team(
-                JsonTeam["id"], 
+                i, 
                 JsonTeam["name"],
-                vec3(JsonTeam["color"][0], JsonTeam["color"][1], JsonTeam["color"][2])
+                vec3(JsonTeam["color"][0] / 255., JsonTeam["color"][1] / 255., JsonTeam["color"][2] / 255.)
             ));
         }
 
