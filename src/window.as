@@ -193,6 +193,7 @@ namespace Window {
 
         UI::Text("\\$ff0Map Selection: \\$z" + stringof(Room.Config.MapSelection));
         UI::Text("\\$ff0Target Medal: \\$z" + stringof(Room.Config.TargetMedal));
+        UI::Text("\\$ff0Time Limit: \\$z" + (Room.Config.MinutesLimit == 0 ? "Unlimited" : tostring(Room.Config.MinutesLimit) + " minutes"));
 
         UI::Text("\\$ff0Room Code: \\$z" + (RoomCodeVisible ? Room.JoinCode : "######"));
         UI::SameLine();
