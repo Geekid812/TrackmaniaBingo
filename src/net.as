@@ -327,7 +327,7 @@ namespace Network {
         Body["size"] = RoomConfig.MaxPlayers;
         Body["selection"] = RoomConfig.MapSelection;
         Body["medal"] = RoomConfig.TargetMedal;
-        Body["timelimit"] = RoomConfig.MinutesLimit;
+        Body["time_limit"] = RoomConfig.MinutesLimit;
 
         if (RoomConfig.MapSelection == MapMode::Mappack) Body["mappack_id"] = tostring(RoomConfig.MappackId);
 
@@ -347,7 +347,7 @@ namespace Network {
 
         Room.Teams = {};
         auto JsonTeams = Response["teams"];
-        for (uint i = 0; i < JsonTeams.Length; i++){
+        for (uint i = 0; i < JsonTeams.Length; i++) {
             auto JsonTeam = JsonTeams[i];
             Room.Teams.InsertLast(Team(
                 JsonTeam["id"], 
