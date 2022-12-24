@@ -25,12 +25,17 @@ namespace Playground {
         auto App = cast<CTrackMania>(GetApp());
         bool MenuDisplayed = App.ManiaPlanetScriptAPI.ActiveContext_InGameMenuDisplayed;
         if (MenuDisplayed) {
-            UI::ShowNotification(Icons::ExclamationCircle + " Warning!", "Please close the pause menu before switching maps! Trackmania would crash otherwise.", vec4(.6, .6, .1, 1.), 10000);
-            return;
+            // Close the in-game menu via ::Quit to avoid TM hanging / crashing. Also takes us back to the main menu.
+            App.Network.PlaygroundInterfaceScriptHandler.CloseInGameMenu(CGameScriptHandlerPlaygroundInterface::EInGameMenuResult::Quit);
+        } else {
+            // Go to main menu and wait until map loading is ready
+            App.BackToMainMenu();
         }
 
-        // Go to main menu and wait until map loading is ready
-        App.BackToMainMenu();
+        // Wait for the active module to be the main menu, and be ready. If getting back to the main menu fails, this will block until the user quits the map.
+        while (App.Switcher.ModuleStack.Length == 0 || cast<CTrackManiaMenus>(App.Switcher.ModuleStack[0]) is null) {
+            yield();
+        }
         while (!App.ManiaTitleControlScriptAPI.IsReady) {
             yield();
         }
