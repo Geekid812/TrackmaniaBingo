@@ -107,13 +107,13 @@ namespace Network {
     }
 
     void Handle(Json::Value@ Body) {
-        if (@Body["seq"] != null) {
+        if (Body.HasKey("seq")) {
             uint SequenceCode = Body["seq"];
             Response@ res = Response(SequenceCode, Body);
             Received.InsertLast(res);
             return;
         }
-        if (Body["method"] == "ROOM_UPDATE") {
+        if (Body["event"] == "RoomUpdate") {
             string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
             @Room.Teams = {};
             auto JsonTeams = Body["teams"];
@@ -122,7 +122,7 @@ namespace Network {
                 Room.Teams.InsertLast(Team(
                     JsonTeam["id"],
                     JsonTeam["name"], 
-                    vec3(JsonTeam["color"]["r"], JsonTeam["color"]["g"], JsonTeam["color"]["b"])
+                    vec3(JsonTeam["color"][0] / 255., JsonTeam["color"][1] / 255., JsonTeam["color"][2] / 255.)
                 ));
             }
 
@@ -131,7 +131,7 @@ namespace Network {
                 auto JsonPlayer = Body["members"][i];
                 Room.Players.InsertLast(Player(
                     JsonPlayer["name"],
-                    Room.GetTeamWithId(int(JsonPlayer["team_id"])),
+                    Room.GetTeamWithId(int(JsonPlayer["team"])),
                     JsonPlayer["name"] == LocalUsername
                 ));
             }
@@ -312,7 +312,8 @@ namespace Network {
         return Message;
     }
 
-    Json::Value@ Post(Json::Value@ Body, bool blocking = false, uint timeout = 5000) {
+    Json::Value@ Post(string&in Type, Json::Value@ Body, bool blocking = false, uint timeout = 5000) {
+        Body["request"] = Type;
         uint Sequence = AddSequenceValue(Body);
         string Text = Json::Write(Body);
         if (!_protocol.Send(Text)) return null; // TODO: connection fault?
@@ -322,16 +323,16 @@ namespace Network {
         return Reply;
     }
 
+    void FireEvent(string&in Type, Json::Value@ Body) {
+        Body["event"] = Type;
+        string Text = Json::Write(Body);
+        if (!_protocol.Send(Text)) return; // TODO: connection fault?
+    }
+
     void CreateRoom() {
-        auto Body = Json::Object();
-        Body["size"] = RoomConfig.MaxPlayers;
-        Body["selection"] = RoomConfig.MapSelection;
-        Body["medal"] = RoomConfig.TargetMedal;
-        Body["time_limit"] = RoomConfig.MinutesLimit;
+        auto Body = Serialize(RoomConfig);
 
-        if (RoomConfig.MapSelection == MapMode::Mappack) Body["mappack_id"] = tostring(RoomConfig.MappackId);
-
-        Json::Value@ Response = Post(Body, true);
+        Json::Value@ Response = Post("CreateRoom", Body, true);
         if (Response is null) {
             trace("Network: CreateRoom - No reply from server.");
             Reset();
@@ -350,7 +351,7 @@ namespace Network {
         for (uint i = 0; i < JsonTeams.Length; i++) {
             auto JsonTeam = JsonTeams[i];
             Room.Teams.InsertLast(Team(
-                i, 
+                JsonTeam["id"], 
                 JsonTeam["name"],
                 vec3(JsonTeam["color"][0] / 255., JsonTeam["color"][1] / 255., JsonTeam["color"][2] / 255.)
             ));
@@ -427,8 +428,7 @@ namespace Network {
 
         auto Body = Json::Object();
         Body["team_id"] = Team.Id;
-        Body["client_secret"] = Secret;
-        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/team-update", Json::Write(Body), false);
+        FireEvent("ChangeTeam", Body);
     }
 
     void StartGame() {

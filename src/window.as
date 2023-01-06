@@ -1,5 +1,8 @@
 
 namespace Window {
+    const uint[] TimeLimitOptions = { 15, 30, 45, 60, 90, 120 };
+    const uint GridSizeMin = 3;
+    const uint GridSizeMax = 8;
     bool Visible;
     bool JoinCodeVisible;
     bool RoomCodeVisible;
@@ -55,7 +58,7 @@ namespace Window {
                 UI::EndTabItem();
             }
 
-            UI::PushStyleColor(UI::Col::Tab, vec4(0.1, 0.15, 0.3, 1.));
+            UI::PushStyleColor(UI::Col::Tab, vec4(0.1, 0.1, 0.2, 1.));
             UI::PushStyleColor(UI::Col::TabHovered, vec4(0.1, 0.2, 0.5, 1.));
             UI::PushStyleColor(UI::Col::TabActive, vec4(0.2, 0.3, 0.7, 1.));
             if (UI::BeginTabItem(Icons::InfoCircle + " About")) {
@@ -72,8 +75,28 @@ namespace Window {
     }
 
     void CreateTab() {
-        RoomConfig.MaxPlayers = Math::Clamp(UI::InputInt("Room Size", RoomConfig.MaxPlayers), 2, 32);
-        
+        SettingsSection("Room Settings");
+        RoomConfig.HasPlayerLimit = UI::Checkbox("##maxplayers", RoomConfig.HasPlayerLimit);
+        UI::BeginDisabled(!RoomConfig.HasPlayerLimit);
+        UI::SameLine();
+        UI::SetNextItemWidth(200);
+        RoomConfig.MaxPlayers = Math::Clamp(UI::InputInt("Player Limit", RoomConfig.MaxPlayers), 2, 100);
+        UI::EndDisabled();
+
+        RoomConfig.RandomizeTeams = UI::Checkbox("Randomize Teams", RoomConfig.RandomizeTeams);
+        RoomConfig.InGameChat = UI::Checkbox("In-Game Chat", RoomConfig.InGameChat);
+
+        SettingsSection("Game Settings");
+        if (UI::BeginCombo("Grid Size", tostring(RoomConfig.GridSize) + "x" + tostring(RoomConfig.GridSize))) {
+            
+            for (uint i = GridSizeMin; i <= GridSizeMax; i++) {
+                if (UI::Selectable(tostring(i) + "x" + tostring(i), RoomConfig.GridSize == i)) {
+                    RoomConfig.GridSize = i;
+                }
+            }
+
+            UI::EndCombo();
+        }
         if (UI::BeginCombo("Map Selection", stringof(RoomConfig.MapSelection))) {
             if (UI::Selectable(stringof(MapMode::TOTD), RoomConfig.MapSelection == MapMode::TOTD)) {
                 RoomConfig.MapSelection = MapMode::TOTD;
@@ -116,11 +139,38 @@ namespace Window {
             UI::EndCombo();
         }
 
-        if (!Config::CanPlay) UI::BeginDisabled();
-        if (UI::Button("Create Room")) {
+        if (UI::BeginCombo("Time Limit", RoomConfig.MinutesLimit == 0 ? "Disabled" : tostring(RoomConfig.MinutesLimit) + " minutes")) {
+
+            if (UI::Selectable("Disabled", RoomConfig.MinutesLimit == 0)) {
+                RoomConfig.MinutesLimit = 0;
+            }
+
+            for (uint i = 0; i < TimeLimitOptions.Length; i++) {
+                uint TimeOption = TimeLimitOptions[i];
+                if (UI::Selectable(tostring(TimeOption) + " minutes", RoomConfig.MinutesLimit == TimeOption)) {
+                    RoomConfig.MinutesLimit = TimeOption;
+                }
+            }
+
+            UI::EndCombo();
+        }
+
+        CreateRoomButton();
+    }
+    void CreateRoomButton() {
+        UI::Dummy(vec2(0, 10));
+        UI::BeginDisabled(!Config::CanPlay);
+        UIColor::Lime();
+        if (UI::Button(Icons::CheckCircle + " Create Room")) {
             startnew(Network::CreateRoom);
         }
-        if (!Config::CanPlay) UI::EndDisabled();
+        UIColor::Reset();
+        UI::EndDisabled();
+    }
+
+    void SettingsSection(string&in text) {
+        UI::Dummy(vec2(0, 10));
+        UI::Markdown("**" + text + "**");
     }
 
     void JoinTab() {
@@ -161,8 +211,6 @@ namespace Window {
     }
 
     void RoomView() {
-        UI::Text(Room.HostName + (Room.HostName.EndsWith("s") ? "'": "'s") + " Bingo Room - " + Room.Players.Length + "/" + Room.Config.MaxPlayers + " players");
-        UI::SameLine();
         UIColor::DarkRed();
         if (UI::Button(Icons::Kenney::Exit + " Leave")) {
             startnew(Network::LeaveRoom);
@@ -172,15 +220,25 @@ namespace Window {
         if (Room.LocalPlayerIsHost) {
             UIColor::DarkGreen();
             bool StartDisabled = (Room.Players.Length < 2 && !Settings::DevMode) || Room.MapsLoadingStatus != LoadStatus::LoadSuccess;
-            if (StartDisabled) UI::BeginDisabled();
+            UI::BeginDisabled(StartDisabled);
             
             UI::SameLine();
             if (UI::Button(Icons::PlayCircleO + " Start")) {
                 startnew(Network::StartGame);
             }
-            if (StartDisabled) UI::EndDisabled();
+            UI::EndDisabled();
             UIColor::Reset();
         }
+
+        UI::SameLine();
+        UI::Text(
+            Room.HostName +
+            (Room.HostName.EndsWith("s") ? "'": "'s") +
+            " Bingo Room - " + Room.Players.Length +
+            (Room.Config.HasPlayerLimit ? "/" + Room.Config.MaxPlayers : "") +
+            " player" +
+            (Room.Config.HasPlayerLimit || Room.Players.Length != 1 ? "s" : "")
+        );
         if (Room.MapsLoadingStatus != LoadStatus::LoadSuccess) {
             if (Room.MapsLoadingStatus == LoadStatus::Loading) {
                 UI::Text("\\$ff0" + Icons::HourglassHalf + " \\$zFetching maps from TMX...");

@@ -72,7 +72,7 @@ class GameRoom {
 
     bool MoreTeamsAvaliable(){
         // Non hosts should not see that more teams can be created
-        return Teams.Length < uint(Math::Min(MaxTeams, Config.MaxPlayers)) && Room.LocalPlayerIsHost && StartCountdown <= 0;
+        return Teams.Length < uint(Math::Min(MaxTeams, Config.HasPlayerLimit ? Config.MaxPlayers : MaxTeams)) && Room.LocalPlayerIsHost && StartCountdown <= 0;
     }
 }
 
