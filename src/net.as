@@ -337,6 +337,7 @@ namespace Network {
             ));
         }
 
+        Room.Name = Response["name"];
         Room.LocalPlayerIsHost = true;
         Room.HostName = LocalUsername;
         Room.JoinCode = RoomCode;
@@ -366,6 +367,7 @@ namespace Network {
         } else {
             // Success!
             @Room = GameRoom();
+            Room.Name = Response["name"];
             Room.Config = Deserialize(Response["config"]);
             Room.JoinCode = Window::JoinCodeInput;
             Room.LocalPlayerIsHost = false;

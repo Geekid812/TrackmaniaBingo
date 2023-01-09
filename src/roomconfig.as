@@ -45,7 +45,7 @@ Json::Value@ Serialize(RoomConfiguration Config) {
 
 RoomConfiguration Deserialize(Json::Value@ Value) {
     auto Config = RoomConfiguration();
-    Config.HasPlayerLimit = int(Value["size"]) == 0;
+    Config.HasPlayerLimit = int(Value["size"]) != 0;
     Config.MaxPlayers = Value["size"];
     Config.RandomizeTeams = Value["randomize"];
     Config.InGameChat = Value["chat_enabled"];

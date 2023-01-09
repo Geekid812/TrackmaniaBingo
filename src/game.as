@@ -6,6 +6,7 @@ string LocalUsername;
 int StartCountdown;
 
 class GameRoom {
+    string Name;
     bool InGame;
     RoomConfiguration Config;
     string JoinCode;

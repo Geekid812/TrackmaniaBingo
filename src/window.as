@@ -232,9 +232,8 @@ namespace Window {
 
         UI::SameLine();
         UI::Text(
-            Room.HostName +
-            (Room.HostName.EndsWith("s") ? "'": "'s") +
-            " Bingo Room - " + Room.Players.Length +
+            Room.Name +
+            " - " + Room.Players.Length +
             (Room.Config.HasPlayerLimit ? "/" + Room.Config.MaxPlayers : "") +
             " player" +
             (Room.Config.HasPlayerLimit || Room.Players.Length != 1 ? "s" : "")
