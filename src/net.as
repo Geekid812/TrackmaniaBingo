@@ -114,27 +114,7 @@ namespace Network {
             return;
         }
         if (Body["event"] == "RoomUpdate") {
-            string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
-            @Room.Teams = {};
-            auto JsonTeams = Body["teams"];
-            for (uint i = 0; i < JsonTeams.Length; i++){
-                auto JsonTeam = JsonTeams[i];
-                Room.Teams.InsertLast(Team(
-                    JsonTeam["id"],
-                    JsonTeam["name"], 
-                    vec3(JsonTeam["color"][0] / 255., JsonTeam["color"][1] / 255., JsonTeam["color"][2] / 255.)
-                ));
-            }
-
-            @Room.Players = {};
-            for (uint i = 0; i < Body["members"].Length; i++) {
-                auto JsonPlayer = Body["members"][i];
-                Room.Players.InsertLast(Player(
-                    JsonPlayer["name"],
-                    Room.GetTeamWithId(int(JsonPlayer["team"])),
-                    JsonPlayer["name"] == LocalUsername
-                ));
-            }
+            NetworkHandlers::UpdateRoom(Body);
         } else if (Body["method"] == "GAME_START") {
             @Room.MapList = {};
             if (Body["maplist"].Length < 25) return; // Prevents a crash, user needs to retry later
@@ -371,47 +351,29 @@ namespace Network {
     }
 
     void JoinRoom() {
-        if (!TryConnect()) {
-            UI::ShowNotification(Icons::QuestionCircle + " Could not connect to the server. Please check your connection.");
-            return;
-        }
-
-        string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
         auto Body = Json::Object();
-        Body["name"] = LocalUsername;
-        Body["code"] = Room.JoinCode;
-        Body["client_secret"] = Secret;
-        Body["version"] = Meta::ExecutingPlugin().Version;
+        Body["join_code"] = Window::JoinCodeInput;
 
-        auto Request = Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/join", Json::Write(Body), true);
-        if (Request is null) {
+        auto Response = Post("JoinRoom", Body, true);
+        if (Response is null) {
+            trace("Network: JoinRoom - No reply from server.");
             Reset();
             return;
         }
         
-        bool ShouldClose = true;
-        if (Request.ResponseCode() == 204) {
-            UI::ShowNotification(Icons::Times + " No room was found with code " + Room.JoinCode + ".");  
-        } else if (Request.ResponseCode() == 298) {
-            UI::ShowNotification(Icons::Times + " Sorry, this room is already full.");
-        } else if (Request.ResponseCode() == 299) {
-            UI::ShowNotification(Icons::Times + " Sorry, the game has already started in this room.");  
+        if (Response.HasKey("error")) {
+            UI::ShowNotification(Icons::Times + string(Response["error"]));  
         } else {
             // Success!
-            auto JsonRoom = Json::Parse(Request.String());
+            @Room = GameRoom();
+            Room.Config = Deserialize(Response["config"]);
+            Room.JoinCode = Window::JoinCodeInput;
+            Room.LocalPlayerIsHost = false;
+            NetworkHandlers::UpdateRoom(Response["status"]);
 
-            //Room.LocalPlayerIsHost = false;
-            //Room.MaxPlayers = JsonRoom["size"];
-            //Room.MapSelection = MapMode(int(JsonRoom["selection"]));
-            //Room.TargetMedal = Medal(int(JsonRoom["medal"]));
-            //Room.HostName = JsonRoom["host"];
-            //Room.MapsLoadingStatus = LoadStatus(int(JsonRoom["status"]));
-
-            ShouldClose = false;
             Window::JoinCodeVisible = false;
             Window::RoomCodeVisible = false;
         }
-        if (ShouldClose) Network::Reset();
     }
 
     void LeaveRoom(){

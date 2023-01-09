@@ -8,7 +8,7 @@ class RoomConfiguration {
     // Game Config
     uint GridSize = 5;
     MapMode MapSelection = MapMode::TOTD;
-    int MappackId;
+    uint MappackId;
     Medal TargetMedal = Medal::Author;
     uint MinutesLimit = 0;
 }
@@ -41,4 +41,19 @@ Json::Value@ Serialize(RoomConfiguration Config) {
 
     if (Config.MapSelection == MapMode::Mappack) Value["mappack_id"] = tostring(Config.MappackId);
     return Value;
+}
+
+RoomConfiguration Deserialize(Json::Value@ Value) {
+    auto Config = RoomConfiguration();
+    Config.HasPlayerLimit = int(Value["size"]) == 0;
+    Config.MaxPlayers = Value["size"];
+    Config.RandomizeTeams = Value["randomize"];
+    Config.InGameChat = Value["chat_enabled"];
+    Config.GridSize = Value["grid_size"];
+    Config.MapSelection = MapMode(int(Value["selection"]));
+    Config.TargetMedal = Medal(int(Value["medal"]));
+    Config.MinutesLimit = uint(Value["time_limit"]);
+
+    if (Value.HasKey("mappack_id")) Config.MappackId = uint(Value["mappack_id"]);
+    return Config;
 }

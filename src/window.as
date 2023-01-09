@@ -179,7 +179,7 @@ namespace Window {
         JoinCodeVisible = UI::Checkbox("Show code", JoinCodeVisible);
 
         if (!Config::CanPlay) UI::BeginDisabled();
-        if (UI::Button("Join Room") && Room.JoinCode.Length >= 6) {
+        if (UI::Button("Join Room") && JoinCodeInput.Length >= 6) {
             startnew(Network::JoinRoom);
         }
         if (!Config::CanPlay) UI::EndDisabled();
@@ -259,14 +259,14 @@ namespace Window {
         UI::SameLine();
         if (UI::Button(Icons::Clipboard + " Copy")) IO::SetClipboard(Room.JoinCode);
 
-        UI::BeginTable("Bingo_TeamTable", Room.Teams.Length + (Room.MoreTeamsAvaliable()? 1 : 0));
+        UI::BeginTable("Bingo_TeamTable", Room.Teams.Length + (Room.MoreTeamsAvaliable() ? 1 : 0));
 
         for (uint i = 0; i < Room.Teams.Length; i++) {
             UI::TableNextColumn();
             Team@ Team = Room.Teams[i];
             UIColor::Custom(UIColor::Brighten(Team.Color, 0.75));
             int teamIdXdd = Team.Id;
-            if (UI::Button("Join##" + Team.Id)) startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, Team);
+            if (UI::Button("Join##bingojoin" + Team.Id)) startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, Team);
             UI::SameLine();
             UI::Text("\\$" + UIColor::GetHex(Team.Color) + Team.Name);
             UIColor::Reset();
@@ -280,7 +280,7 @@ namespace Window {
         }
 
         uint RowIndex = 0;
-        while (true){
+        while (true) {
             // Iterate forever until no players in any team remain
             UI::TableNextRow();
             uint FinishedTeams = 0;
