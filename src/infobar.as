@@ -12,7 +12,7 @@ namespace InfoBar {
         auto team = Room.GetSelf().Team;
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar);
 
-        UI::PushFont(Font::Monospace);
+        UI::PushFont(Font::MonospaceBig);
         if (Room.EndState.EndTime == 0) {
             UI::Text(Time::Format(Time::Now - StartTime, false, true, true));
         } else {

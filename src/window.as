@@ -6,6 +6,7 @@ namespace Window {
     bool Visible;
     bool JoinCodeVisible;
     bool RoomCodeVisible;
+    bool RoomCodeHovered;
     string JoinCodeInput;
 
     void Render() {
@@ -75,6 +76,11 @@ namespace Window {
     }
 
     void CreateTab() {
+        SettingsView();
+        CreateRoomButton();
+    }
+
+    void SettingsView() {
         SettingsSection("Room Settings");
         RoomConfig.HasPlayerLimit = UI::Checkbox("##maxplayers", RoomConfig.HasPlayerLimit);
         UI::BeginDisabled(!RoomConfig.HasPlayerLimit);
@@ -154,11 +160,10 @@ namespace Window {
 
             UI::EndCombo();
         }
-
-        CreateRoomButton();
     }
+
     void CreateRoomButton() {
-        UI::Dummy(vec2(0, 10));
+        UI::NewLine();
         UI::BeginDisabled(!Config::CanPlay);
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Create Room")) {
@@ -169,7 +174,7 @@ namespace Window {
     }
 
     void SettingsSection(string&in text) {
-        UI::Dummy(vec2(0, 10));
+        UI::NewLine();
         UI::Markdown("**" + text + "**");
     }
 
@@ -211,33 +216,65 @@ namespace Window {
     }
 
     void RoomView() {
-        UIColor::DarkRed();
-        if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-            startnew(Network::LeaveRoom);
-        }
-        UIColor::Reset();
+        // UIColor::DarkRed();
+        // if (UI::Button(Icons::Kenney::Exit + " Leave")) {
+        //     startnew(Network::LeaveRoom);
+        // }
+        // UIColor::Reset();
 
-        if (Room.LocalPlayerIsHost) {
-            UIColor::DarkGreen();
-            bool StartDisabled = (Room.Players.Length < 2 && !Settings::DevMode) || Room.MapsLoadingStatus != LoadStatus::LoadSuccess;
-            UI::BeginDisabled(StartDisabled);
+        // if (Room.LocalPlayerIsHost) {
+        //     UIColor::DarkGreen();
+        //     bool StartDisabled = (Room.Players.Length < 2 && !Settings::DevMode) || Room.MapsLoadingStatus != LoadStatus::LoadSuccess;
+        //     UI::BeginDisabled(StartDisabled);
             
-            UI::SameLine();
-            if (UI::Button(Icons::PlayCircleO + " Start")) {
-                startnew(Network::StartGame);
-            }
-            UI::EndDisabled();
-            UIColor::Reset();
+        //     UI::SameLine();
+        //     if (UI::Button(Icons::PlayCircleO + " Start")) {
+        //         startnew(Network::StartGame);
+        //     }
+        //     UI::EndDisabled();
+        //     UIColor::Reset();
+        // }
+
+        //UI::SameLine();
+        string playerStatus = StatusLabel(Icons::Users, Room.Players.Length + (Room.Config.HasPlayerLimit ? "/" + Room.Config.MaxPlayers : ""));
+        UI::Text(playerStatus);
+        if (UI::IsItemHovered()) {
+            StatusTooltip("", Room.Players.Length + (Room.Players.Length == 1 ? " player" : " players"));
+        }
+    
+        UI::SameLine();
+        string roomCodeStatus = StatusLabel((RoomCodeHovered ? "\\$ff8" : "") + Icons::Kenney::Key, RoomCodeVisible ? Room.JoinCode : "******");
+        UI::PushFont(Font::Monospace);
+        UI::Text(roomCodeStatus);
+        UI::PopFont();
+        if (UI::IsItemClicked()) RoomCodeVisible = !RoomCodeVisible;
+        RoomCodeHovered = UI::IsItemHovered();
+        if (RoomCodeHovered) {
+            StatusTooltip("Room Code", RoomCodeVisible ? Room.JoinCode : "\\$aaaHidden  (Click to reveal)");
         }
 
         UI::SameLine();
-        UI::Text(
-            Room.Name +
-            " - " + Room.Players.Length +
-            (Room.Config.HasPlayerLimit ? "/" + Room.Config.MaxPlayers : "") +
-            " player" +
-            (Room.Config.HasPlayerLimit || Room.Players.Length != 1 ? "s" : "")
-        );
+        float windowWidth = UI::GetWindowSize().x;
+        float titleWidth = Draw::MeasureString(Room.Name, Font::Bold).x;
+        float titlePadding = LayoutTools::GetPadding(windowWidth, titleWidth, 0.5);
+        UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
+        UI::PushFont(Font::Bold);
+        UI::Text(Room.Name);
+        UI::PopFont();
+
+        if (Room.LocalPlayerIsHost) {
+            UI::SameLine();
+            float buttonPadding = LayoutTools::GetPadding(windowWidth, 140, 1.0);
+            UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
+            UIColor::Gray();
+            if (UI::Button(Icons::Cog + " Change Settings")) {
+                SettingsWindow::Visible = !SettingsWindow::Visible;
+            }
+            UIColor::Reset();
+            UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 2));
+        }
+        UI::Separator();
+
         if (Room.MapsLoadingStatus != LoadStatus::LoadSuccess) {
             if (Room.MapsLoadingStatus == LoadStatus::Loading) {
                 UI::Text("\\$ff0" + Icons::HourglassHalf + " \\$zFetching maps from TMX...");
@@ -247,16 +284,6 @@ namespace Window {
         } else {
             UI::Text(""); // Blank space to avoid layout shifts
         }
-
-        UI::Text("\\$ff0Map Selection: \\$z" + stringof(Room.Config.MapSelection));
-        UI::Text("\\$ff0Target Medal: \\$z" + stringof(Room.Config.TargetMedal));
-        UI::Text("\\$ff0Time Limit: \\$z" + (Room.Config.MinutesLimit == 0 ? "Unlimited" : tostring(Room.Config.MinutesLimit) + " minutes"));
-
-        UI::Text("\\$ff0Room Code: \\$z" + (RoomCodeVisible ? Room.JoinCode : "######"));
-        UI::SameLine();
-        if (UI::Button(RoomCodeVisible ? "Hide" : "Show")) RoomCodeVisible = !RoomCodeVisible;
-        UI::SameLine();
-        if (UI::Button(Icons::Clipboard + " Copy")) IO::SetClipboard(Room.JoinCode);
 
         UI::BeginTable("Bingo_TeamTable", Room.Teams.Length + (Room.MoreTeamsAvaliable() ? 1 : 0));
 
@@ -301,6 +328,22 @@ namespace Window {
         UI::EndTable();
     }
 
+    string StatusLabel(const string&in icon, const string&in text) {
+        return icon + " " + text;
+    }
+
+    void StatusTooltip(const string&in key, const string&in value) {
+        UI::BeginTooltip();
+        if (key != "") {
+            UI::PushFont(Font::Bold);
+            UI::Text(key + ":");
+            UI::PopFont();
+            UI::SameLine();
+        }
+        UI::Text(value);
+        UI::EndTooltip();
+    }
+
     void Countdown() {
         UI::PushFont(Font::Header);
         int SecondsRemaining = StartCountdown / 1000 + 1;
@@ -343,4 +386,23 @@ Player@ PlayerCell(Team team, int index) {
         }
     }
     return null;
+}
+
+namespace SettingsWindow {
+    bool Visible;
+
+    void Render() {
+        if (!Visible) return;
+        UI::Begin(Icons::Th + " Room Settings", Visible, UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
+        Window::SettingsView();
+        UI::NewLine();
+
+        UIColor::Cyan();
+        if (UI::Button(Icons::CheckCircle + " Update Settings")) {
+
+        }
+        UIColor::Reset();
+        UI::NewLine();
+        UI::End();
+    }
 }

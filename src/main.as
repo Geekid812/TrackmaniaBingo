@@ -2,7 +2,7 @@ const string WindowName = Icons::Th + " \\$zBingo";
 const string MenuItemName = "\\$ff0" + WindowName;
 
 void Main() {
-    Font::Init();
+    startnew(Font::Init);
     Config::FetchConfig();
     Network::Init();
 
@@ -27,6 +27,7 @@ void Render() {
 
 void RenderInterface() {
     Window::Render();
+    SettingsWindow::Render();
 }
 
 // TODO: refactor so this is not using the Update callback
