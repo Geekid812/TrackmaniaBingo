@@ -379,11 +379,8 @@ namespace Network {
     }
 
     void LeaveRoom(){
-        auto Body = Json::Object();
-        Body["client_secret"] = Secret;
-        // Send leave notification or server would wait for reconnection
-        Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/leave", Json::Write(Body), false);
-        CloseConnection();
+        FireEvent("LeaveRoom", Json::Object());
+        Reset();
     }
 
     void JoinTeam(Team Team) {
