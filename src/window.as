@@ -319,19 +319,25 @@ namespace Window {
         for (uint i = 0; i < Room.Teams.Length; i++) {
             UI::TableNextColumn();
             Team@ Team = Room.Teams[i];
-            UIColor::Custom(UIColor::Brighten(Team.Color, 0.75));
-            int teamIdXdd = Team.Id;
-            if (UI::Button("Join##bingojoin" + Team.Id)) startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, Team);
-            UI::SameLine();
-            UI::Text("\\$" + UIColor::GetHex(Team.Color) + Team.Name);
-            UIColor::Reset();
 
             float seperatorSize = UI::GetContentRegionMax().x - UI::GetCursorPos().x - 50;
-            UI::BeginChild("bingoteamsep" + i, vec2(seperatorSize, 4));
+            UI::BeginChild("bingoteamsep" + i, vec2(seperatorSize, UI::GetTextLineHeightWithSpacing() + 4));
+            UI::Text("\\$" + UIColor::GetHex(Team.Color) + Team.Name);
+
             UI::PushStyleColor(UI::Col::Separator, UIColor::GetAlphaColor(Team.Color, .8));
             UI::Separator();
             UI::PopStyleColor();
             UI::EndChild();
+
+            if (UI::IsItemHovered()) {
+                UI::BeginTooltip();
+                UI::Text("\\$" + UIColor::GetHex(Team.Color) + Team.Name + " Team" + (Room.GetSelf().Team != Team ? "  \\$888(Click to join)" : ""));
+                UI::EndTooltip();
+            }
+
+            if (UI::IsItemClicked()) {
+                startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, Team);
+            }
         }
 
         if (Room.MoreTeamsAvaliable()) {
