@@ -119,8 +119,9 @@ namespace Network {
             NetworkHandlers::UpdateRoom(Body);
         } else if (Body["event"] == "RoomConfigUpdate") {
             uint oldGridSize = Room.Config.GridSize;
+            MapMode oldMode = Room.Config.MapSelection;
             Room.Config = Deserialize(Body);
-            if (oldGridSize < Room.Config.GridSize) Room.MapsLoadingStatus = LoadStatus::Loading;
+            if (oldGridSize < Room.Config.GridSize || oldMode != Room.Config.MapSelection) Room.MapsLoadingStatus = LoadStatus::Loading;
         } else if (Body["event"] == "MapsLoadResult") {
             Room.MapsLoadingStatus = bool(Body["loaded"]) ? LoadStatus::LoadSuccess : LoadStatus::LoadFail;
         } else if (Body["method"] == "GAME_START") {
