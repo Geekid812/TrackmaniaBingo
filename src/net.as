@@ -111,12 +111,16 @@ namespace Network {
             uint SequenceCode = Body["seq"];
             Response@ res = Response(SequenceCode, Body);
             Received.InsertLast(res);
+            yield();
             return;
         }
+        if (@Room == null) return;
         if (Body["event"] == "RoomUpdate") {
-            if (@Room != null) NetworkHandlers::UpdateRoom(Body);
+            NetworkHandlers::UpdateRoom(Body);
         } else if (Body["event"] == "RoomConfigUpdate") {
-            if (@Room != null) Room.Config = Deserialize(Body);
+            Room.Config = Deserialize(Body);
+        } else if (Body["event"] == "MapsLoadResult") {
+            Room.MapsLoadingStatus = bool(Body["loaded"]) ? LoadStatus::LoadSuccess : LoadStatus::LoadFail;
         } else if (Body["method"] == "GAME_START") {
             @Room.MapList = {};
             if (Body["maplist"].Length < 25) return; // Prevents a crash, user needs to retry later
@@ -347,10 +351,8 @@ namespace Network {
         Room.MapsLoadingStatus = LoadStatus::Loading;
     }
 
-    void CreateTeam(){
-        auto Body = Json::Object();
-        Body["client_secret"] = Secret;
-        Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/team-create", Json::Write(Body), false);
+    void CreateTeam() {
+        Network::Post("CreateTeam", Json::Object());
     }
 
     void JoinRoom() {
