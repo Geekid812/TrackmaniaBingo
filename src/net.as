@@ -118,7 +118,9 @@ namespace Network {
         if (Body["event"] == "RoomUpdate") {
             NetworkHandlers::UpdateRoom(Body);
         } else if (Body["event"] == "RoomConfigUpdate") {
+            uint oldGridSize = Room.Config.GridSize;
             Room.Config = Deserialize(Body);
+            if (oldGridSize < Room.Config.GridSize) Room.MapsLoadingStatus = LoadStatus::Loading;
         } else if (Body["event"] == "MapsLoadResult") {
             Room.MapsLoadingStatus = bool(Body["loaded"]) ? LoadStatus::LoadSuccess : LoadStatus::LoadFail;
         } else if (Body["method"] == "GAME_START") {
@@ -396,7 +398,6 @@ namespace Network {
         if (Response.HasKey("error")) {
             UI::ShowNotification(Icons::Times + string(Response["error"]));  
         } else {
-            Room.Config = RoomConfig;
             SettingsWindow::Visible = false;
         }
     }
