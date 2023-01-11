@@ -114,7 +114,9 @@ namespace Network {
             return;
         }
         if (Body["event"] == "RoomUpdate") {
-            NetworkHandlers::UpdateRoom(Body);
+            if (@Room != null) NetworkHandlers::UpdateRoom(Body);
+        } else if (Body["event"] == "RoomConfigUpdate") {
+            if (@Room != null) Room.Config = Deserialize(Body);
         } else if (Body["method"] == "GAME_START") {
             @Room.MapList = {};
             if (Body["maplist"].Length < 25) return; // Prevents a crash, user needs to retry later
@@ -375,6 +377,25 @@ namespace Network {
 
             Window::JoinCodeVisible = false;
             Window::RoomCodeVisible = false;
+        }
+    }
+
+    void EditRoomSettings() {
+        auto Body = Json::Object();
+        Body["config"] = Serialize(RoomConfig);
+
+        auto Response = Post("EditRoomConfig", Body, true);
+        if (Response is null) {
+            trace("Network: EditRoomSettings - No reply from server.");
+            Reset();
+            return;
+        }
+        
+        if (Response.HasKey("error")) {
+            UI::ShowNotification(Icons::Times + string(Response["error"]));  
+        } else {
+            Room.Config = RoomConfig;
+            SettingsWindow::Visible = false;
         }
     }
 

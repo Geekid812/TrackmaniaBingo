@@ -38,7 +38,7 @@ namespace Window {
         if (Network::RequestInProgress) {
             Disabled = true;
         }
-        if (Disabled) UI::BeginDisabled();
+        UI::BeginDisabled(Disabled);
 
         if (@Room != null) {
             RoomView();
@@ -71,7 +71,7 @@ namespace Window {
             UI::EndTabBar();
         }
 
-        if (Disabled) UI::EndDisabled();
+        UI::EndDisabled();
         UI::End();
     }
 
@@ -275,6 +275,35 @@ namespace Window {
         }
         UI::Separator();
 
+        array<string> roomInfo = {
+            StatusLabel(Icons::Th, tostring(Room.Config.GridSize) + "x" + tostring(Room.Config.GridSize)),
+            StatusLabel(Icons::Map, tostring(Room.Config.MapSelection)),
+            StatusLabel(Icons::Bullseye, stringof(Room.Config.TargetMedal)),
+            StatusLabel(Icons::Hourglass, Room.Config.MinutesLimit == 0 ? "∞" : tostring(Room.Config.MinutesLimit) + ":00")
+        };
+        string combinedInfo = string::Join(roomInfo, " ");
+        float infoPadding = LayoutTools::GetPadding(windowWidth, Draw::MeasureString(combinedInfo).x, 0.5);
+        UI::SetCursorPos(vec2(infoPadding, UI::GetCursorPos().y));
+
+        for (uint i = 0; i < roomInfo.Length; i++) {
+            UI::Text(roomInfo[i]);
+
+            if (UI::IsItemHovered()) {
+                if (i == 0) {
+                    StatusTooltip("Grid Size", tostring(Room.Config.GridSize) + "x" + tostring(Room.Config.GridSize));
+                } else if (i == 1) {
+                    StatusTooltip("Map Selection", stringof(Room.Config.MapSelection));
+                } else if (i == 2) {
+                    StatusTooltip("Target Medal", stringof(Room.Config.TargetMedal));
+                } else {
+                    StatusTooltip("Time Limit", Room.Config.MinutesLimit == 0 ? "Disabled" : tostring(Room.Config.MinutesLimit) + " minutes");
+                }
+            }
+
+            UI::SameLine();
+        }
+        UI::NewLine();
+
         if (Room.MapsLoadingStatus != LoadStatus::LoadSuccess) {
             if (Room.MapsLoadingStatus == LoadStatus::Loading) {
                 UI::Text("\\$ff0" + Icons::HourglassHalf + " \\$zFetching maps from TMX...");
@@ -296,6 +325,13 @@ namespace Window {
             UI::SameLine();
             UI::Text("\\$" + UIColor::GetHex(Team.Color) + Team.Name);
             UIColor::Reset();
+
+            float seperatorSize = UI::GetContentRegionMax().x - UI::GetCursorPos().x - 50;
+            UI::BeginChild("bingoteamsep" + i, vec2(seperatorSize, 4));
+            UI::PushStyleColor(UI::Col::Separator, UIColor::GetAlphaColor(Team.Color, .8));
+            UI::Separator();
+            UI::PopStyleColor();
+            UI::EndChild();
         }
 
         if (Room.MoreTeamsAvaliable()) {
@@ -326,10 +362,13 @@ namespace Window {
             RowIndex += 1;
         }
         UI::EndTable();
+
+        // Leave room if window was closed
+        if (!Visible) Network::LeaveRoom();
     }
 
     string StatusLabel(const string&in icon, const string&in text) {
-        return icon + " " + text;
+        return icon + " \\$z" + text;
     }
 
     void StatusTooltip(const string&in key, const string&in value) {
@@ -399,7 +438,7 @@ namespace SettingsWindow {
 
         UIColor::Cyan();
         if (UI::Button(Icons::CheckCircle + " Update Settings")) {
-
+            startnew(Network::EditRoomSettings);
         }
         UIColor::Reset();
         UI::NewLine();
