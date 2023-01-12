@@ -2,6 +2,7 @@
 namespace Config {
     string StatusMessage;
     bool CanPlay;
+    int CompetitionTimelimit;
 
     void FetchConfig() {
         auto req = Net::HttpGet("https://openplanet.dev/plugin/trackmaniabingo/config/status");
@@ -11,5 +12,6 @@ namespace Config {
         auto json = Json::Parse(req.String());
         StatusMessage = json["message"];
         CanPlay = json["canPlay"];
+        CompetitionTimelimit = json["competitionTimelimit"];
     }
 }
