@@ -108,7 +108,7 @@ namespace Network {
                 ));
             }
 
-            StartCountdown = Settings::DevMode ? 1000 : 5000;
+            StartCountdown = 5000;
         } else if (Body["method"] == "CLAIM_CELL") {
             Map@ ClaimedMap = Room.MapList[Body["cellid"]];
             RunResult Result = RunResult(int(Body["time"]), Medal(int(Body["medal"])));
@@ -134,9 +134,10 @@ namespace Network {
             }
                 
         } else if (Body["method"] == "GAME_END") {
+            if (Room.EndState.HasEnded()) return;
             Team team = Room.GetTeamWithId(int(Body["team_id"]));
             string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
-            UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
+            UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z takes 1st place!", vec4(.6, .6, 0, 1), 20000);
 
             Room.EndState.BingoDirection = BingoDirection(int(Body["bingodir"]));
             Room.EndState.Offset = Body["offset"];

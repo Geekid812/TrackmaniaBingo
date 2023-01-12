@@ -192,7 +192,7 @@ enum LoadStatus {
 
 // Game tick function
 void Tick(int dt) {
-    if (Room.InGame && !Room.EndState.HasEnded()) {
+    if (Room.InGame) {
         Playground::CheckMedals();
     }
 
