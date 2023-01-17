@@ -220,26 +220,6 @@ namespace Window {
     }
 
     void RoomView() {
-        // UIColor::DarkRed();
-        // if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-        //     startnew(Network::LeaveRoom);
-        // }
-        // UIColor::Reset();
-
-        // if (Room.LocalPlayerIsHost) {
-        //     UIColor::DarkGreen();
-        //     bool StartDisabled = (Room.Players.Length < 2 && !Settings::DevMode) || Room.MapsLoadingStatus != LoadStatus::LoadSuccess;
-        //     UI::BeginDisabled(StartDisabled);
-            
-        //     UI::SameLine();
-        //     if (UI::Button(Icons::PlayCircleO + " Start")) {
-        //         startnew(Network::StartGame);
-        //     }
-        //     UI::EndDisabled();
-        //     UIColor::Reset();
-        // }
-
-        //UI::SameLine();
         string playerStatus = StatusLabel(Icons::Users, Room.Players.Length + (Room.Config.HasPlayerLimit ? "/" + Room.Config.MaxPlayers : ""));
         UI::Text(playerStatus);
         if (UI::IsItemHovered()) {
@@ -388,6 +368,25 @@ namespace Window {
             RowIndex += 1;
         }
         UI::EndTable();
+
+        UIColor::DarkRed();
+        if (UI::Button(Icons::Kenney::Exit + " Leave")) {
+            startnew(Network::LeaveRoom);
+        }
+        UIColor::Reset();
+
+        if (Room.LocalPlayerIsHost) {
+            UIColor::DarkGreen();
+            bool StartDisabled = (Room.Players.Length < 2 && !Settings::DevMode) || Room.MapsLoadingStatus != LoadStatus::LoadSuccess;
+            UI::BeginDisabled(StartDisabled);
+            
+            UI::SameLine();
+            if (UI::Button(Icons::PlayCircleO + " Start")) {
+                startnew(Network::StartGame);
+            }
+            UI::EndDisabled();
+            UIColor::Reset();
+        }
 
         // Leave room if window was closed
         if (!Visible) Network::LeaveRoom();

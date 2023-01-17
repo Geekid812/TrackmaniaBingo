@@ -122,6 +122,10 @@ namespace Network {
             yield();
             return;
         }
+        if (!Body.HasKey("event")) {
+            warn("Invalid message, discarding.");
+            return;
+        }
         if (@Room == null) return;
         if (Body["event"] == "RoomUpdate") {
             NetworkHandlers::UpdateRoom(Body);
@@ -132,20 +136,19 @@ namespace Network {
             if (oldGridSize < Room.Config.GridSize || oldMode != Room.Config.MapSelection) Room.MapsLoadingStatus = LoadStatus::Loading;
         } else if (Body["event"] == "MapsLoadResult") {
             Room.MapsLoadingStatus = bool(Body["loaded"]) ? LoadStatus::LoadSuccess : LoadStatus::LoadFail;
-        } else if (Body["method"] == "GAME_START") {
+        } else if (Body["event"] == "GameStart") {
             @Room.MapList = {};
-            if (Body["maplist"].Length < 25) return; // Prevents a crash, user needs to retry later
-            for (uint i = 0; i < Body["maplist"].Length; i++) {
-                auto JsonMap = Body["maplist"][i];
+            for (uint i = 0; i < Body["maps"].Length; i++) {
+                auto JsonMap = Body["maps"][i];
                 Room.MapList.InsertLast(Map(
                     JsonMap["name"],
-                    JsonMap["author"],
-                    JsonMap["tmxid"],
+                    JsonMap["author_name"],
+                    JsonMap["track_id"],
                     JsonMap["uid"]
                 ));
             }
 
-            StartCountdown = Settings::DevMode ? 1000 : 5000;
+            StartCountdown = 3000; // TODO
         } else if (Body["method"] == "CLAIM_CELL") {
             Map@ ClaimedMap = Room.MapList[Body["cellid"]];
             RunResult Result = RunResult(int(Body["time"]), Medal(int(Body["medal"])));
@@ -426,9 +429,7 @@ namespace Network {
     }
 
     void StartGame() {
-        auto Body = Json::Object();
-        Body["client_secret"] = Secret;
-        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/start", Json::Write(Body), true);
+        Post("StartGame", Json::Object(), true);
     }
 
     bool ClaimCell(string&in uid, RunResult result) {
