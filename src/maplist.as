@@ -21,8 +21,9 @@ namespace MapList {
             auto Map = Room.MapList[i];
             UI::TableNextColumn();
 
-            auto StartPos = UI::GetCursorPos() + UI::GetWindowPos() - vec2(8, 7);
+            auto StartPos = UI::GetCursorPos() + UI::GetWindowPos() - vec2(8, 7) - vec2(0, UI::GetScrollY());
 
+            UI::BeginGroup();
             vec2 ThumbnailSize = vec2(160, 116);
             //if (Settings::TinyBoard) ThumbnailSize = vec2(100, 72);
             if (@Map.MapImage.m_texture != null) {
@@ -33,9 +34,21 @@ namespace MapList {
                 UI::Dummy(ThumbnailSize);
             }
 
-            UI::BeginChild("bingomap" + i, vec2(160., UI::GetTextLineHeight()));
+            UI::BeginChild("bingomapname" + i, vec2(160., UI::GetTextLineHeight()));
             UI::Text(Map.Name);
             UI::EndChild();
+
+            UI::EndGroup();
+            bool MapHovered = UI::IsItemHovered();
+            if (MapHovered) {
+                UI::BeginTooltip();
+                UI::Text(Map.Name);
+                UI::EndTooltip();
+            }
+            if (UI::IsItemClicked()) {
+                MapList::Visible = false;
+                Playground::LoadMap(Map.TmxID);
+            }
 
             // if (Map.ClaimedRun.Time != -1) {
             //     UI::TextDisabled(Settings::TinyBoard ? Map.ClaimedRun.DisplayTime() : Map.ClaimedRun.Display());
@@ -54,10 +67,11 @@ namespace MapList {
             // }
             // UIColor::Reset();
 
-            auto Size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(8, 6) - StartPos;
+            auto Size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(8, 6) - StartPos - vec2(0, UI::GetScrollY());
             vec4 Rect = vec4(StartPos.x, StartPos.y + (Settings::TinyBoard ? 4 : 0), 216, Size.y - (Settings::TinyBoard ? 8 : 0));
             if (Map.ClaimedTeam !is null)
                 DrawList.AddRectFilled(Rect, UIColor::GetAlphaColor(Map.ClaimedTeam.Color, 0.1));
+            if (MapHovered) DrawList.AddRectFilled(Rect, vec4(.5, .5, .5, .1));
         }
         if (Settings::TinyBoard) UI::PopFont();
 
