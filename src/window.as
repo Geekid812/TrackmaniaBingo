@@ -90,7 +90,9 @@ namespace Window {
         UI::EndDisabled();
 
         RoomConfig.RandomizeTeams = UI::Checkbox("Randomize Teams", RoomConfig.RandomizeTeams);
-        RoomConfig.InGameChat = UI::Checkbox("In-Game Chat", RoomConfig.InGameChat);
+        
+        // This doesn't exist... yet
+        if (false) RoomConfig.InGameChat = UI::Checkbox("In-Game Chat", RoomConfig.InGameChat);
 
         SettingsSection("Game Settings");
         if (UI::BeginCombo("Grid Size", tostring(RoomConfig.GridSize) + "x" + tostring(RoomConfig.GridSize))) {
