@@ -14,6 +14,7 @@ namespace Window {
     void Render() {
         if (!Visible) return;
         UI::Begin(WindowName, Visible);
+        UI::PushFont(Font::Regular);
 
         if (!Permissions::PlayLocalMap()) {
             NoPermissions();
@@ -74,6 +75,7 @@ namespace Window {
         }
 
         UI::EndDisabled();
+        UI::PopFont();
         UI::End();
     }
 
@@ -179,7 +181,9 @@ namespace Window {
 
     void SettingsSection(string&in text) {
         UI::NewLine();
-        UI::Markdown("**" + text + "**");
+        UI::PushFont(Font::Bold);
+        UI::Text(text);
+        UI::PopFont();
     }
 
     void JoinTab() {
@@ -220,7 +224,7 @@ namespace Window {
     }
 
     void RoomView() {
-        string playerStatus = StatusLabel(Icons::Users, Room.Players.Length + (Room.Config.HasPlayerLimit ? "/" + Room.Config.MaxPlayers : ""));
+        string playerStatus = StatusLabel(Icons::Users + " ", Room.Players.Length + (Room.Config.HasPlayerLimit ? "/" + Room.Config.MaxPlayers : ""));
         UI::Text(playerStatus);
         if (UI::IsItemHovered()) {
             StatusTooltip("", Room.Players.Length + (Room.Players.Length == 1 ? " player" : " players"));
@@ -264,7 +268,7 @@ namespace Window {
 
         if (Room.LocalPlayerIsHost) {
             UI::SameLine();
-            float buttonPadding = LayoutTools::GetPadding(windowWidth, 140, 1.0);
+            float buttonPadding = LayoutTools::GetPadding(windowWidth, 150, 1.0);
             UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
             UIColor::Gray();
             if (UI::Button(Icons::Cog + " Change Settings")) {
@@ -462,6 +466,7 @@ namespace SettingsWindow {
     void Render() {
         if (!Visible) return;
         UI::Begin(Icons::Th + " Room Settings", Visible, UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
+        UI::PushFont(Font::Regular);
         Window::SettingsView();
         UI::NewLine();
 
@@ -471,6 +476,7 @@ namespace SettingsWindow {
         }
         UIColor::Reset();
         UI::NewLine();
+        UI::PopFont();
         UI::End();
     }
 }
