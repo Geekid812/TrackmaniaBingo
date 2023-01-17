@@ -106,6 +106,14 @@ namespace Network {
         return _protocol.State == ConnectionState::Connected;
     }
 
+    void TestConnection() {
+        uint64 start = Time::Now;
+        auto response = Post("Ping", Json::Object(), false);
+        uint64 end = Time::Now - start;
+        bool result = response !is null;
+        trace("TestConnection: " + tostring(result) + " in " + end + "ms");
+    }
+
     void Handle(Json::Value@ Body) {
         if (Body.HasKey("seq")) {
             uint SequenceCode = Body["seq"];

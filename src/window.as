@@ -436,6 +436,10 @@ namespace Window {
         if (UI::Button(Icons::Signal + " Force Disconnect")) {
             startnew(Network::OnDisconnect);
         }
+        UI::SameLine();
+        if (UI::Button(Icons::Globe + " Test Connection")) {
+            startnew(Network::TestConnection);
+        }
         UIColor::Reset();
     }
 }
