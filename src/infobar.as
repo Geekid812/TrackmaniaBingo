@@ -20,6 +20,7 @@ namespace InfoBar {
         }
         UI::PopFont();
 
+        UI::PushFont(Font::Regular);
         UI::SameLine();
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(6, 5));
         string MapListText = "Open Map List";
@@ -53,6 +54,7 @@ namespace InfoBar {
                 }
             }
         }
+        UI::PopFont();
 
         vec2 WindowSize = UI::GetWindowSize();
         UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - WindowSize.x) / 2, int(Board::Position.y) + int(Board::BoardSize) + BoardMargin), UI::Cond::Always);
