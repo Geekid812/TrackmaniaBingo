@@ -18,6 +18,7 @@ namespace Window {
 
         if (!Permissions::PlayLocalMap()) {
             NoPermissions();
+            UI::PopFont();
             UI::End();
             return;
         }
@@ -29,6 +30,7 @@ namespace Window {
 
         if (@Room != null && Room.InGame) {
             InGame();
+            UI::PopFont();
             UI::End();
             return;
         }
