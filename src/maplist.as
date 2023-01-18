@@ -42,7 +42,20 @@ namespace MapList {
             bool MapHovered = UI::IsItemHovered();
             if (MapHovered) {
                 UI::BeginTooltip();
+                UI::PushFont(Font::Subtitle);
                 UI::Text(Map.Name);
+                UI::PopFont();
+
+                UI::PushFont(Font::Regular);
+                UI::TextDisabled("By " + Map.Author);
+                UI::NewLine();
+                if (Map.ClaimedTeam !is null) {
+                    UI::Text("Claimed by \\$" + UIColor::GetHex(Map.ClaimedTeam.Color) + Map.ClaimedPlayerName);
+                    UI::Text(Map.ClaimedRun.Display());
+                } else {
+                    UI::TextDisabled("This map has not been claimed yet!");
+                }
+                UI::PopFont();
                 UI::EndTooltip();
             }
             if (UI::IsItemClicked()) {
