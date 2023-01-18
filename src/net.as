@@ -149,30 +149,31 @@ namespace Network {
             }
 
             StartCountdown = 3000; // TODO
-        } else if (Body["method"] == "CLAIM_CELL") {
-            Map@ ClaimedMap = Room.MapList[Body["cellid"]];
-            RunResult Result = RunResult(int(Body["time"]), Medal(int(Body["medal"])));
-            Team team = Room.GetTeamWithId(int(Body["team_id"]));
+        } else if (Body["event"] == "CellClaim") {
+            Map@ ClaimedMap = Room.MapList[Body["cell_id"]];
+            RunResult Result = RunResult(int(Body["claim"]["time"]), Medal(int(Body["claim"]["medal"])));
+            Team team = Room.GetTeamWithId(int(Body["claim"]["player"]["team"]));
+
+            bool IsImprove = ClaimedMap.ClaimedTeam !is null && ClaimedMap.ClaimedTeam.Id == team.Id;
+            bool IsReclaim = ClaimedMap.ClaimedTeam !is null && ClaimedMap.ClaimedTeam.Id != team.Id;
+            string DeltaTime = ClaimedMap.ClaimedRun.Time == -1 ? "" : "-" + Time::Format(ClaimedMap.ClaimedRun.Time - Result.Time);
+            string PlayerName = Body["claim"]["player"]["name"];
             @ClaimedMap.ClaimedTeam = @team;
             ClaimedMap.ClaimedRun = Result;
+            ClaimedMap.ClaimedPlayerName = PlayerName;
 
-            string PlayerName = Body["playername"];
-            string MapName = Body["mapname"];
+            string MapName = ClaimedMap.Name;
             string TeamName = team.Name;
-            bool IsReclaim = Body["delta"] != -1;
-            bool IsImprovement = Body["improve"];
-            string DeltaFormatted = "-" + Time::Format(Body["delta"]);
             vec4 TeamColor = UIColor::Brighten(UIColor::GetAlphaColor(team.Color, 0.1), 0.75);
-            vec4 DimColor = TeamColor / 1.5;
+            vec4 DimmedColor = TeamColor / 1.5;
             
-            if (!IsReclaim) {
+            if (IsReclaim) {
+                UI::ShowNotification(Icons::Retweet + " Map Reclaimed", PlayerName + " has reclaimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display() + " (" + DeltaTime + ")", TeamColor, 15000);
+            } else if (IsImprove) {
+                UI::ShowNotification(Icons::ClockO + " Time Improved", PlayerName + " has improved " + TeamName + " Team's time on \\$fd8" + MapName + "\\$z\n" + Result.Display() + " (" + DeltaTime + ")", DimmedColor, 15000);
+            } else { // Normal claim
                 UI::ShowNotification(Icons::Bookmark + " Map Claimed", PlayerName + " has claimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display(), TeamColor, 15000);
-            } else if (IsImprovement) {
-                UI::ShowNotification(Icons::ClockO + " Time Improved", PlayerName + " has improved " + TeamName + " Team's time on \\$fd8" + MapName + "\\$z\n" + Result.Display() + " (" + DeltaFormatted + ")", DimColor, 15000);
-            } else { // Reclaim
-                UI::ShowNotification(Icons::Retweet + " Map Reclaimed", PlayerName + " has reclaimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display() + " (" + DeltaFormatted + ")", TeamColor, 15000);
-            }
-                
+            }   
         } else if (Body["method"] == "GAME_END") {
             Team team = Room.GetTeamWithId(int(Body["team_id"]));
             string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
@@ -414,7 +415,7 @@ namespace Network {
         }
     }
 
-    void LeaveRoom(){
+    void LeaveRoom() {
         FireEvent("LeaveRoom", Json::Object());
         Reset();
     }
@@ -437,9 +438,8 @@ namespace Network {
         Body["uid"] = uid;
         Body["time"] = result.Time;
         Body["medal"] = result.Medal;
-        Body["client_secret"] = Secret;
-        auto Request = Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/claim", Json::Write(Body), false);
-        return @Request != null;
+        auto Request = Network::Post("ClaimCell", Body, false);
+        return Request !is null;
     }
 
     // Network identifier

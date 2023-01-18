@@ -115,6 +115,7 @@ class Map {
     int TmxID = -1; // Used to compare whether a map is valid
     string Uid;
     Team@ ClaimedTeam = null;
+    string ClaimedPlayerName;
     RunResult ClaimedRun;
     CachedImage@ Thumbnail;
     CachedImage@ MapImage;
