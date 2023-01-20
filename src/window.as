@@ -445,6 +445,10 @@ namespace Window {
         if (UI::Button(Icons::Globe + " Test Connection")) {
             startnew(Network::TestConnection);
         }
+        UI::SameLine();
+        if (UI::Button(Icons::Plug + " Sync Client")) {
+            startnew(Network::Sync);
+        }
         UIColor::Reset();
     }
 }

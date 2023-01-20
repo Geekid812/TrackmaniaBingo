@@ -137,17 +137,7 @@ namespace Network {
         } else if (Body["event"] == "MapsLoadResult") {
             Room.MapsLoadingStatus = bool(Body["loaded"]) ? LoadStatus::LoadSuccess : LoadStatus::LoadFail;
         } else if (Body["event"] == "GameStart") {
-            @Room.MapList = {};
-            for (uint i = 0; i < Body["maps"].Length; i++) {
-                auto JsonMap = Body["maps"][i];
-                Room.MapList.InsertLast(Map(
-                    JsonMap["name"],
-                    JsonMap["author_name"],
-                    JsonMap["track_id"],
-                    JsonMap["uid"]
-                ));
-            }
-
+            NetworkHandlers::LoadMaps(Body["maps"]);
             StartCountdown = 3000; // TODO
         } else if (Body["event"] == "CellClaim") {
             Map@ ClaimedMap = Room.MapList[Body["cell_id"]];
@@ -440,6 +430,24 @@ namespace Network {
         Body["medal"] = result.Medal;
         auto Request = Network::Post("ClaimCell", Body, false);
         return Request !is null;
+    }
+
+    void Sync() {
+        auto response = Network::Post("Sync", Json::Object(), false);
+        if (response is null) {
+            trace("Sync: No reply from server.");
+        }
+        @Room = GameRoom();
+        Room.Name = response["room_name"];
+        Room.Config = Deserialize(response["config"]);
+        Room.JoinCode = response["join_code"];
+        Room.LocalPlayerIsHost = response["host"];
+        NetworkHandlers::UpdateRoom(response["status"]);
+        NetworkHandlers::LoadMaps(response["maps"]);
+        if (response.HasKey("game_data")) {
+            NetworkHandlers::LoadGameData(response["game_data"]);
+            Room.InGame = true;
+        }
     }
 
     // Network identifier
