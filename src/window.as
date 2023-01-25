@@ -54,6 +54,11 @@ namespace Window {
 
             UI::BeginTabBar("Bingo_TabBar");
 
+            if (UI::BeginTabItem(Icons::Home + " Home")) {
+                HomeTab();
+                UI::EndTabItem();
+            }
+
             if (UI::BeginTabItem(Icons::ShareSquareO + " Join Room")) {
                 JoinTab();
                 UI::EndTabItem();
@@ -64,21 +69,43 @@ namespace Window {
                 UI::EndTabItem();
             }
 
-            UI::PushStyleColor(UI::Col::Tab, vec4(0.1, 0.1, 0.2, 1.));
-            UI::PushStyleColor(UI::Col::TabHovered, vec4(0.1, 0.2, 0.5, 1.));
-            UI::PushStyleColor(UI::Col::TabActive, vec4(0.2, 0.3, 0.7, 1.));
-            if (UI::BeginTabItem(Icons::InfoCircle + " About")) {
-                InfoTab();
-                UI::EndTabItem();
-            }
-            UI::PopStyleColor(3);
-
             UI::EndTabBar();
         }
 
         UI::EndDisabled();
         UI::PopFont();
         UI::End();
+    }
+
+    void HomeTab() {
+        string header = "Trackmania Bingo: Version " + Meta::ExecutingPlugin().Version;
+        float titlePadding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(header, Font::Header, 32).x, 0.5);
+        UI::PushFont(Font::Header);
+        UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
+        UI::Text(header);
+        UI::PopFont();
+
+        UI::Text(Icons::Plug + " Plugin created by \\$ff0TheGeekid");
+        UI::Text(Icons::Github + " Source code:");
+        UI::SameLine();
+        UI::Markdown("[Geekid812/TrackmaniaBingo](https://github.com/Geekid812/TrackmaniaBingo)");
+        UI::Text(Icons::Bug + " Bug tracker:");
+        UI::SameLine();
+        UI::Markdown("[Report an Issue](https://github.com/Geekid812/TrackmaniaBingo/issues)");
+        UI::Text(Icons::DiscordAlt + " Discord server:");
+        UI::SameLine();
+        UI::Markdown("[Trackmania Bingo](https://discord.gg/pJbeqptsEa)");
+
+        UI::NewLine();
+        for (uint i = 0; i < Config::News.Length; i++) {
+            auto news = Config::News[i];
+            UI::PushFont(Font::Subtitle);
+            UI::Text(news.title + "\t\\$888" + news.postinfo);
+            UI::PopFont();
+            UI::Separator();
+            UI::Markdown(news.content);
+            UI::NewLine();
+        }
     }
 
     void CreateTab() {
@@ -198,31 +225,6 @@ namespace Window {
             startnew(Network::JoinRoom);
         }
         if (!Config::CanPlay) UI::EndDisabled();
-    }
-
-    void InfoTab() {
-        UI::PushFont(Font::Header);
-        UI::Text("Trackmania Bingo");
-        UI::PopFont();
-        UI::Text(Icons::Plug + " Plugin created by \\$ff0TheGeekid");
-        UI::Text(Icons::Github + " Source code:");
-        UI::SameLine();
-        UI::Markdown("[Geekid812/TrackmaniaBingo](https://github.com/Geekid812/TrackmaniaBingo)");
-        UI::Text(Icons::Bug + " Bug tracker:");
-        UI::SameLine();
-        UI::Markdown("[Report an Issue](https://github.com/Geekid812/TrackmaniaBingo/issues)");
-        UI::Text(Icons::DiscordAlt + " Discord server:");
-        UI::SameLine();
-        UI::Markdown("[Trackmania Bingo](https://discord.gg/pJbeqptsEa)");
-        UI::Text("");
-
-        Changelog();
-        UI::Text("");
-
-        UI::Markdown("## How to play");
-        UI::TextWrapped("In this mode, two or more teams compete be the first to complete a row, column or diagonal on the game board. Each cell on this board corresponds to a track that players can claim for their team by achieving a specific medal on that track.");
-        UI::TextWrapped("Once a track has been claimed, in order to reclaim it, other teams must beat the time that was set on that track. Try to play strategically to be the first team to achieve a bingo!");
-        UI::Text("Good luck and have fun!");
     }
 
     void RoomView() {
