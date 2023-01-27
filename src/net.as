@@ -72,7 +72,12 @@ namespace Network {
 
     void HandleHandshakeCode(HandshakeCode code) {
         if (code == HandshakeCode::Ok) return;
-        if (code == HandshakeCode::IncompatibleVersion) {
+        if (code == HandshakeCode::CanReconnect) {
+            // The server indicates that reconnecting is possible
+            trace("Network: Received reconnection handshake code, attempting to reconnect.");
+            UI::ShowNotification(Icons::Globe + " Reconnecting...");
+            startnew(Sync);
+        } else if (code == HandshakeCode::IncompatibleVersion) {
             // Update required
         } else if (code == HandshakeCode::AuthFailure) {
             // Auth servers are not reachable
@@ -436,6 +441,7 @@ namespace Network {
         auto response = Network::Post("Sync", Json::Object(), false);
         if (response is null) {
             trace("Sync: No reply from server.");
+            return;
         }
         @Room = GameRoom();
         Room.Name = response["room_name"];

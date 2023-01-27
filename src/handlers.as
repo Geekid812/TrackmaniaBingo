@@ -43,10 +43,9 @@ namespace NetworkHandlers {
         for (uint i = 0; i < data["cells"].Length; i++) {
             Json::Value@ cell = data["cells"][i];
             if (cell["claim"].GetType() == Json::Type::Null) continue;
-            Map gameMap = Room.MapList[i];
-            gameMap.ClaimedRun = RunResult(cell["claim"]["time"], Medal(int(cell["claim"]["medal"])));
-            gameMap.ClaimedPlayerName = cell["claim"]["player"]["name"];
-            @gameMap.ClaimedTeam = Room.GetTeamWithId(cell["claim"]["player"]["team"]);
+            Room.MapList[i].ClaimedRun = RunResult(cell["claim"]["time"], Medal(int(cell["claim"]["medal"])));
+            Room.MapList[i].ClaimedPlayerName = cell["claim"]["player"]["name"];
+            @Room.MapList[i].ClaimedTeam = Room.GetTeamWithId(cell["claim"]["player"]["team"]);
         }
     }
 }

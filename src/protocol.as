@@ -75,15 +75,14 @@ class Protocol {
             return -1;
         }
 
-        if (StatusCode == 0) {
+        if (StatusCode == 0 || StatusCode == 5) {
             trace("Protocol: Handshake reply validated. Connection has been established!");
             State = ConnectionState::Connected;
-            return 0;
         } else {
             trace("Protocol: Received non-zero code " + StatusCode + " in handshake.");
             Fail();
-            return StatusCode;
         }
+        return StatusCode;
     }
 
     private bool InnerSend(const string&in data) {
@@ -156,6 +155,7 @@ enum HandshakeCode {
     IncompatibleVersion = 2,
     AuthFailure = 3,
     AuthRefused = 4,
+    CanReconnect = 5,
 }
 
 enum ConnectionState {
