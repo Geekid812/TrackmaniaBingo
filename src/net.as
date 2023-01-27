@@ -316,6 +316,12 @@ namespace Network {
         RequestInProgress = blocking;
         Json::Value@ Reply = ExpectReply(Sequence, timeout);
         RequestInProgress = false;
+
+        if (Reply !is null && Reply.HasKey("error")) {
+            trace("Request [" + Type + "]: Error: " + string(Reply["error"]));
+            UI::ShowNotification("", Icons::Times + " " + string(Reply["error"]), vec4(.8, 0., 0., 1.), 5000);
+            return null;
+        }
         return Reply;
     }
 
@@ -438,6 +444,7 @@ namespace Network {
     }
 
     void Sync() {
+        trace("Network: Syncing with server...");
         auto response = Network::Post("Sync", Json::Object(), false);
         if (response is null) {
             trace("Sync: No reply from server.");
