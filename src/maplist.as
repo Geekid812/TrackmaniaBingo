@@ -1,6 +1,7 @@
 namespace MapList {
     const string WindowName = Icons::Th + " \\$zMap List";
     bool Visible;
+    float UiScale = 1.0f;
 
     void Render() {
         if (!Visible) return;
@@ -8,6 +9,8 @@ namespace MapList {
         UI::Begin(WindowName, Visible, UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoCollapse);
         UI::PushFont(Font::Condensed);
         auto DrawList = UI::GetWindowDrawList();
+
+        UiScale = UI::SliderFloat("Grid UI Size", UiScale, 0.2, 2.0, "%.1f");
 
         UI::PushStyleVar(UI::StyleVar::CellPadding, Settings::TinyBoard ? vec2(4, 4) : vec2(8, 8));
         UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2(2, 2));
@@ -24,8 +27,7 @@ namespace MapList {
             auto StartPos = UI::GetCursorPos() + UI::GetWindowPos() - vec2(8, 7) - vec2(0, UI::GetScrollY());
 
             UI::BeginGroup();
-            vec2 ThumbnailSize = vec2(160, 116);
-            //if (Settings::TinyBoard) ThumbnailSize = vec2(100, 72);
+            vec2 ThumbnailSize = vec2(160 * UiScale, 116 * UiScale);
             if (@Map.MapImage.m_texture != null) {
                 UI::Image(Map.MapImage.m_texture, ThumbnailSize);
             } else if (@Map.Thumbnail.m_texture != null) {
@@ -34,7 +36,7 @@ namespace MapList {
                 UI::Dummy(ThumbnailSize);
             }
 
-            UI::BeginChild("bingomapname" + i, vec2(160., UI::GetTextLineHeight()));
+            UI::BeginChild("bingomapname" + i, vec2(160. * UiScale, UI::GetTextLineHeight()));
             UI::Text(Map.Name);
             UI::EndChild();
 
