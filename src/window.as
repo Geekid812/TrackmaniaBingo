@@ -61,11 +61,13 @@ namespace Window {
 
             if (UI::BeginTabItem(Icons::ShareSquareO + " Join Room")) {
                 JoinTab();
+                ConnectingIndicator();
                 UI::EndTabItem();
             }
 
             if (UI::BeginTabItem(Icons::PlusSquare + " Create Room")) {
                 CreateTab();
+                ConnectingIndicator();
                 UI::EndTabItem();
             }
 
@@ -111,6 +113,22 @@ namespace Window {
     void CreateTab() {
         SettingsView();
         CreateRoomButton();
+    }
+
+    void ConnectingIndicator() {
+        if (Network::GetState() != ConnectionState::Connected) {
+            UI::SameLine();
+            UI::Text(GetConnectingIcon() + " Connecting to server...");
+        }
+    }
+
+    string GetConnectingIcon() {
+        int sequence = int(PluginTime / 333) % 3;
+        if (sequence == 0)
+            return Icons::Kenney::SignalLow;
+        if (sequence == 1)
+            return Icons::Kenney::SignalMedium;
+        return Icons::Kenney::SignalHigh;
     }
 
     void SettingsView() {
@@ -199,7 +217,8 @@ namespace Window {
 
     void CreateRoomButton() {
         UI::NewLine();
-        UI::BeginDisabled(!Config::CanPlay);
+        bool disabled = !Config::CanPlay || Network::GetState() != ConnectionState::Connected;
+        UI::BeginDisabled(disabled);
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Create Room")) {
             startnew(Network::CreateRoom);
@@ -220,11 +239,12 @@ namespace Window {
         UI::SameLine();
         JoinCodeVisible = UI::Checkbox("Show code", JoinCodeVisible);
 
-        if (!Config::CanPlay) UI::BeginDisabled();
+        bool disabled = !Config::CanPlay || Network::GetState() != ConnectionState::Connected;
+        if (disabled) UI::BeginDisabled();
         if (UI::Button("Join Room") && JoinCodeInput.Length >= 6) {
             startnew(Network::JoinRoom);
         }
-        if (!Config::CanPlay) UI::EndDisabled();
+        if (disabled) UI::EndDisabled();
     }
 
     void RoomView() {
