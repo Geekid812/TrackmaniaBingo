@@ -119,6 +119,7 @@ class Protocol {
                     return "";
                 }
                 MsgSize = Size;
+                trace("Protocol: expecting size " + Size);
             }
         }
 
