@@ -39,7 +39,7 @@ Json::Value@ Serialize(RoomConfiguration Config) {
     Value["medal"] = Config.TargetMedal;
     Value["time_limit"] = Config.MinutesLimit;
 
-    if (Config.MapSelection == MapMode::Mappack) Value["mappack_id"] = tostring(Config.MappackId);
+    if (Config.MapSelection == MapMode::Mappack) Value["mappack_id"] = Config.MappackId;
     return Value;
 }
 
@@ -54,6 +54,6 @@ RoomConfiguration Deserialize(Json::Value@ Value) {
     Config.TargetMedal = Medal(int(Value["medal"]));
     Config.MinutesLimit = uint(Value["time_limit"]);
 
-    if (Value.HasKey("mappack_id")) Config.MappackId = Text::ParseUInt(Value["mappack_id"]);
+    if (Value.HasKey("mappack_id")) Config.MappackId = uint(Value["mappack_id"]);
     return Config;
 }

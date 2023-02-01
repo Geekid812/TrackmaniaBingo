@@ -24,4 +24,28 @@ namespace NetworkHandlers {
             ));
         }
     }
+
+    void LoadMaps(Json::Value@ mapList) {
+        @Room.MapList = {};
+        for (uint i = 0; i < mapList.Length; i++) {
+            auto JsonMap = mapList[i];
+            Room.MapList.InsertLast(Map(
+                JsonMap["name"],
+                JsonMap["author_name"],
+                JsonMap["track_id"],
+                JsonMap["uid"]
+            ));
+        }
+    }
+
+    void LoadGameData(Json::Value@ data) {
+        InfoBar::StartTime = Time::Now - uint(data["start_time"]);
+        for (uint i = 0; i < data["cells"].Length; i++) {
+            Json::Value@ cell = data["cells"][i];
+            if (cell["claim"].GetType() == Json::Type::Null) continue;
+            Room.MapList[i].ClaimedRun = RunResult(cell["claim"]["time"], Medal(int(cell["claim"]["medal"])));
+            Room.MapList[i].ClaimedPlayerName = cell["claim"]["player"]["name"];
+            @Room.MapList[i].ClaimedTeam = Room.GetTeamWithId(cell["claim"]["player"]["team"]);
+        }
+    }
 }

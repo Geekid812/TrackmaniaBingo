@@ -72,7 +72,12 @@ namespace Network {
 
     void HandleHandshakeCode(HandshakeCode code) {
         if (code == HandshakeCode::Ok) return;
-        if (code == HandshakeCode::IncompatibleVersion) {
+        if (code == HandshakeCode::CanReconnect) {
+            // The server indicates that reconnecting is possible
+            trace("Network: Received reconnection handshake code, attempting to reconnect.");
+            UI::ShowNotification(Icons::Globe + " Reconnecting...");
+            startnew(Sync);
+        } else if (code == HandshakeCode::IncompatibleVersion) {
             // Update required
         } else if (code == HandshakeCode::AuthFailure) {
             // Auth servers are not reachable
@@ -135,19 +140,14 @@ namespace Network {
             Room.Config = Deserialize(Body);
             if (oldGridSize < Room.Config.GridSize || oldMode != Room.Config.MapSelection) Room.MapsLoadingStatus = LoadStatus::Loading;
         } else if (Body["event"] == "MapsLoadResult") {
-            Room.MapsLoadingStatus = bool(Body["loaded"]) ? LoadStatus::LoadSuccess : LoadStatus::LoadFail;
-        } else if (Body["event"] == "GameStart") {
-            @Room.MapList = {};
-            for (uint i = 0; i < Body["maps"].Length; i++) {
-                auto JsonMap = Body["maps"][i];
-                Room.MapList.InsertLast(Map(
-                    JsonMap["name"],
-                    JsonMap["author_name"],
-                    JsonMap["track_id"],
-                    JsonMap["uid"]
-                ));
+            if (Body["error"].GetType() != Json::Type::Null) {
+                Room.MapsLoadingStatus = LoadStatus::LoadFail;
+                Room.LoadFailInfo = Body["error"];
+            } else {
+                Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
             }
-
+        } else if (Body["event"] == "GameStart") {
+            NetworkHandlers::LoadMaps(Body["maps"]);
             StartCountdown = 3000; // TODO
         } else if (Body["event"] == "CellClaim") {
             Map@ ClaimedMap = Room.MapList[Body["cell_id"]];
@@ -174,13 +174,13 @@ namespace Network {
             } else { // Normal claim
                 UI::ShowNotification(Icons::Bookmark + " Map Claimed", PlayerName + " has claimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display(), TeamColor, 15000);
             }   
-        } else if (Body["method"] == "GAME_END") {
-            Team team = Room.GetTeamWithId(int(Body["team_id"]));
+        } else if (Body["event"] == "AnnounceBingo") {
+            Team team = Room.GetTeamWithId(int(Body["team"]));
             string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
             UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
 
-            Room.EndState.BingoDirection = BingoDirection(int(Body["bingodir"]));
-            Room.EndState.Offset = Body["offset"];
+            Room.EndState.BingoDirection = BingoDirection(int(Body["direction"]));
+            Room.EndState.Offset = Body["index"];
             Room.EndState.EndTime = Time::Now;
         } else if (Body["method"] == "MAPS_LOAD_STATUS") {
             Room.MapsLoadingStatus = LoadStatus(int(Body["status"]));
@@ -321,6 +321,12 @@ namespace Network {
         RequestInProgress = blocking;
         Json::Value@ Reply = ExpectReply(Sequence, timeout);
         RequestInProgress = false;
+
+        if (Reply !is null && Reply.HasKey("error")) {
+            trace("Request [" + Type + "]: Error: " + string(Reply["error"]));
+            UI::ShowNotification("", Icons::Times + " " + string(Reply["error"]), vec4(.8, 0., 0., 1.), 5000);
+            return null;
+        }
         return Reply;
     }
 
@@ -440,6 +446,26 @@ namespace Network {
         Body["medal"] = result.Medal;
         auto Request = Network::Post("ClaimCell", Body, false);
         return Request !is null;
+    }
+
+    void Sync() {
+        trace("Network: Syncing with server...");
+        auto response = Network::Post("Sync", Json::Object(), false);
+        if (response is null) {
+            trace("Sync: No reply from server.");
+            return;
+        }
+        @Room = GameRoom();
+        Room.Name = response["room_name"];
+        Room.Config = Deserialize(response["config"]);
+        Room.JoinCode = response["join_code"];
+        Room.LocalPlayerIsHost = response["host"];
+        NetworkHandlers::UpdateRoom(response["status"]);
+        NetworkHandlers::LoadMaps(response["maps"]);
+        if (response.HasKey("game_data")) {
+            NetworkHandlers::LoadGameData(response["game_data"]);
+            Room.InGame = true;
+        }
     }
 
     // Network identifier
