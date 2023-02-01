@@ -15,6 +15,7 @@ class GameRoom {
     int MaxTeams = 999; // Gets overriden by server
     array<Map>@ MapList = {};
     LoadStatus MapsLoadingStatus = LoadStatus::Loading;
+    string LoadFailInfo;
     string HostName;
     bool LocalPlayerIsHost;
     EndState EndState;

@@ -140,7 +140,12 @@ namespace Network {
             Room.Config = Deserialize(Body);
             if (oldGridSize < Room.Config.GridSize || oldMode != Room.Config.MapSelection) Room.MapsLoadingStatus = LoadStatus::Loading;
         } else if (Body["event"] == "MapsLoadResult") {
-            Room.MapsLoadingStatus = bool(Body["loaded"]) ? LoadStatus::LoadSuccess : LoadStatus::LoadFail;
+            if (Body["error"].GetType() != Json::Type::Null) {
+                Room.MapsLoadingStatus = LoadStatus::LoadFail;
+                Room.LoadFailInfo = Body["error"];
+            } else {
+                Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
+            }
         } else if (Body["event"] == "GameStart") {
             NetworkHandlers::LoadMaps(Body["maps"]);
             StartCountdown = 3000; // TODO
@@ -169,13 +174,13 @@ namespace Network {
             } else { // Normal claim
                 UI::ShowNotification(Icons::Bookmark + " Map Claimed", PlayerName + " has claimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display(), TeamColor, 15000);
             }   
-        } else if (Body["method"] == "GAME_END") {
-            Team team = Room.GetTeamWithId(int(Body["team_id"]));
+        } else if (Body["event"] == "AnnounceBingo") {
+            Team team = Room.GetTeamWithId(int(Body["team"]));
             string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
             UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
 
-            Room.EndState.BingoDirection = BingoDirection(int(Body["bingodir"]));
-            Room.EndState.Offset = Body["offset"];
+            Room.EndState.BingoDirection = BingoDirection(int(Body["direction"]));
+            Room.EndState.Offset = Body["index"];
             Room.EndState.EndTime = Time::Now;
         } else if (Body["method"] == "MAPS_LOAD_STATUS") {
             Room.MapsLoadingStatus = LoadStatus(int(Body["status"]));

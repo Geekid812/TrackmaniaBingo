@@ -316,7 +316,7 @@ namespace Window {
             if (Room.MapsLoadingStatus == LoadStatus::Loading) {
                 UI::Text("\\$ff0" + Icons::HourglassHalf + " \\$zFetching maps from TMX...");
             } else {
-                UI::Text("\\$ff0" + Icons::ExclamationTriangle + " \\$ff6Maps could not be loaded from TMX. The game cannot be started.");
+                UI::Text("\\$ff0" + Icons::ExclamationTriangle + " \\$ff6Maps could not be loaded from TMX. The game cannot be started.\nResponse from server: \\$f80" + Room.LoadFailInfo);
             }
         } else {
             UI::Text(""); // Blank space to avoid layout shifts
