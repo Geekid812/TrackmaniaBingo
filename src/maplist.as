@@ -65,11 +65,7 @@ namespace MapList {
             }
             if (UI::IsItemClicked()) {
                 MapList::Visible = false;
-                //Playground::LoadMap(Map.TmxID);
-                Playground::MapClaimData.Retries = 3;
-                Playground::MapClaimData.MapUid = Map.Uid;
-                Playground::MapClaimData.MapResult = RunResult(0, Medal::Author);
-                startnew(Playground::ClaimMedalCoroutine);
+                Playground::LoadMap(Map.TmxID);
             }
 
             // if (Map.ClaimedRun.Time != -1) {
