@@ -10,7 +10,7 @@ namespace InfoBar {
         if (@Room == null || !Room.InGame) return;
         
         auto team = Room.GetSelf().Team;
-        UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar);
+        UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
         UI::PushFont(Font::MonospaceBig);
         if (Room.EndState.EndTime == 0) {
