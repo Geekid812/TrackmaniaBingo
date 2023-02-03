@@ -4,7 +4,11 @@ const string MenuItemName = "\\$ff0" + WindowName;
 void Main() {
     startnew(Font::Init);
     Config::FetchConfig();
-    Network::Init();
+
+    // Plugin was connected to a game when it was forcefully closed or game crashed
+    if (WasConnected) {
+        Network::Init();
+    }
 
     while (true) {
         Network::Loop();
@@ -15,6 +19,10 @@ void Main() {
 void RenderMenu() {
     if (UI::MenuItem(MenuItemName, "", Window::Visible)) {
         Window::Visible = !Window::Visible;
+        // Connect to server when opening plugin window the first time
+        if (Window::Visible && !Network::IsInitialized) {
+            startnew(Network::Init);
+        }
     }
 }
 

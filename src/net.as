@@ -6,6 +6,8 @@ namespace Network {
     Net::Socket@ EventStream = Net::Socket();
     // Suspend UI while a blocking request is happening
     bool RequestInProgress = false;
+    // Indicator if Network::Init() has been called 
+    bool IsInitialized = false;
     // Loop running indicator
     bool IsLooping = false;
     // Connection indicator
@@ -33,13 +35,18 @@ namespace Network {
     }
 
     void Init() {
+        IsInitialized = true;
         _protocol = Protocol();
         TokenExpireDate = 0;
         IsOffline = false;
         SequenceNext = 0;
         Received = {};
         FetchAuthToken();
-        OpenConnection();
+        IsOffline = !OpenConnection();
+    }
+
+    ConnectionState GetState() {
+        return _protocol.State;
     }
 
     void FetchAuthToken() {
@@ -71,7 +78,10 @@ namespace Network {
     }
 
     void HandleHandshakeCode(HandshakeCode code) {
-        if (code == HandshakeCode::Ok) return;
+        if (code == HandshakeCode::Ok) {
+            WasConnected = false;
+            return;
+        }
         if (code == HandshakeCode::CanReconnect) {
             // The server indicates that reconnecting is possible
             trace("Network: Received reconnection handshake code, attempting to reconnect.");
@@ -149,6 +159,8 @@ namespace Network {
         } else if (Body["event"] == "GameStart") {
             NetworkHandlers::LoadMaps(Body["maps"]);
             StartCountdown = 3000; // TODO
+            WasConnected = true;
+            Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
         } else if (Body["event"] == "CellClaim") {
             Map@ ClaimedMap = Room.MapList[Body["cell_id"]];
             RunResult Result = RunResult(int(Body["claim"]["time"]), Medal(int(Body["claim"]["medal"])));
@@ -182,6 +194,7 @@ namespace Network {
             Room.EndState.BingoDirection = BingoDirection(int(Body["direction"]));
             Room.EndState.Offset = Body["index"];
             Room.EndState.EndTime = Time::Now;
+            WasConnected = false;
         } else if (Body["method"] == "MAPS_LOAD_STATUS") {
             Room.MapsLoadingStatus = LoadStatus(int(Body["status"]));
         } else if (Body["method"] == "ROOM_CLOSED"){
@@ -453,6 +466,7 @@ namespace Network {
         auto response = Network::Post("Sync", Json::Object(), false);
         if (response is null) {
             trace("Sync: No reply from server.");
+            WasConnected = false;
             return;
         }
         @Room = GameRoom();

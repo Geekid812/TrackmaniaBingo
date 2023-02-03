@@ -51,6 +51,7 @@ namespace Window {
             if (Config::StatusMessage != "") {
                 UI::Text("\\$z" + Icons::InfoCircle + " \\$ff0" + Config::StatusMessage);
             }
+            OfflineIndicator();
 
             UI::BeginTabBar("Bingo_TabBar");
 
@@ -111,6 +112,29 @@ namespace Window {
     void CreateTab() {
         SettingsView();
         CreateRoomButton();
+        ConnectingIndicator();
+    }
+
+    void ConnectingIndicator() {
+        if (Network::GetState() != ConnectionState::Connected && !Network::IsOffline) {
+            UI::SameLine();
+            UI::Text("\\$58f" + GetConnectingIcon() + " \\$zConnecting to server...");
+        }
+    }
+
+    void OfflineIndicator() {
+        if (Network::IsOffline) {
+            UI::Text("\\$f44" + Icons::Exclamation + " \\$zOffline mode: Could not connect to server.");
+        }
+    }
+
+    string GetConnectingIcon() {
+        int sequence = int(Time::Now / 333) % 3;
+        if (sequence == 0)
+            return Icons::Kenney::SignalLow;
+        if (sequence == 1)
+            return Icons::Kenney::SignalMedium;
+        return Icons::Kenney::SignalHigh;
     }
 
     void SettingsView() {
@@ -199,7 +223,8 @@ namespace Window {
 
     void CreateRoomButton() {
         UI::NewLine();
-        UI::BeginDisabled(!Config::CanPlay);
+        bool disabled = !Config::CanPlay || Network::GetState() != ConnectionState::Connected;
+        UI::BeginDisabled(disabled);
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Create Room")) {
             startnew(Network::CreateRoom);
@@ -220,11 +245,13 @@ namespace Window {
         UI::SameLine();
         JoinCodeVisible = UI::Checkbox("Show code", JoinCodeVisible);
 
-        if (!Config::CanPlay) UI::BeginDisabled();
+        bool disabled = !Config::CanPlay || Network::GetState() != ConnectionState::Connected;
+        if (disabled) UI::BeginDisabled();
         if (UI::Button("Join Room") && JoinCodeInput.Length >= 6) {
             startnew(Network::JoinRoom);
         }
-        if (!Config::CanPlay) UI::EndDisabled();
+        if (disabled) UI::EndDisabled();
+        ConnectingIndicator();
     }
 
     void RoomView() {
