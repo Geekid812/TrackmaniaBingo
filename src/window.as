@@ -10,6 +10,7 @@ namespace Window {
     bool ClipboardHovered;
     bool ClipboardCopied;
     string JoinCodeInput;
+    FeaturedMappack@ SelectedPack;
 
     void Render() {
         if (!Visible) return;
@@ -162,24 +163,38 @@ namespace Window {
 
             UI::EndCombo();
         }
-        if (UI::BeginCombo("Map Selection", stringof(RoomConfig.MapSelection))) {
+        if (UI::BeginCombo("Map Selection", @SelectedPack != null ? SelectedPack.name : stringof(RoomConfig.MapSelection))) {
             if (UI::Selectable(stringof(MapMode::TOTD), RoomConfig.MapSelection == MapMode::TOTD)) {
                 RoomConfig.MapSelection = MapMode::TOTD;
+                @SelectedPack = null;
             }
 
             if (UI::Selectable(stringof(MapMode::MXRandom), RoomConfig.MapSelection == MapMode::MXRandom)) {
                 RoomConfig.MapSelection = MapMode::MXRandom;
+                @SelectedPack = null;
             }
 
-            if (UI::Selectable(stringof(MapMode::Mappack), RoomConfig.MapSelection == MapMode::Mappack)) {
+            if (UI::Selectable(stringof(MapMode::Mappack), RoomConfig.MapSelection == MapMode::Mappack && @SelectedPack == null)) {
                 RoomConfig.MapSelection = MapMode::Mappack;
+                @SelectedPack = null;
+            }
+
+            for (uint i = 0; i < Config::featuredMappacks.Length; i++) {
+                FeaturedMappack pack = Config::featuredMappacks[i];
+                if (UI::Selectable("\\$ff8Featured Mappack: \\$z" + pack.name, @SelectedPack != null && SelectedPack.tmxid == pack.tmxid)) {
+                    RoomConfig.MapSelection = MapMode::Mappack;
+                    RoomConfig.MappackId = pack.tmxid;
+                    @SelectedPack = pack;
+                }
             }
 
             UI::EndCombo();
         }
 
         if (RoomConfig.MapSelection == MapMode::Mappack) {
+            UI::BeginDisabled(@SelectedPack != null);
             RoomConfig.MappackId = UI::InputInt("TMX Mappack ID", RoomConfig.MappackId, 0);
+            UI::EndDisabled();
         }
 
         if (UI::BeginCombo("Target Medal", stringof(RoomConfig.TargetMedal))) {

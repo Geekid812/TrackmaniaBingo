@@ -3,6 +3,7 @@ namespace Config {
     string StatusMessage;
     bool CanPlay;
     NewsItem[] News;
+    FeaturedMappack[] featuredMappacks;
     uint64 LastUpdate;
 
     void FetchConfig() {
@@ -27,6 +28,14 @@ namespace Config {
             News.InsertLast(NewsItem(jsonItem["title"], jsonItem["postinfo"], jsonItem["content"]));
         }
 
+        featuredMappacks = {};
+        string[] mappackNames = json["featuredMappacks"].GetKeys();
+        for (uint i = 0; i < mappackNames.Length; i++) {
+            string packName = mappackNames[i];
+            uint packId = json["featuredMappacks"][packName];
+            featuredMappacks.InsertLast(FeaturedMappack(packName, packId));
+        }
+
         LastUpdate = Time::Now;
         trace("Config: Update was successful.");
     }
@@ -43,5 +52,18 @@ namespace Config {
             this.postinfo = postinfo;
             this.content = content;
         }
+    }
+
+}
+
+class FeaturedMappack {
+    string name;
+    uint tmxid;
+
+    FeaturedMappack() {}
+
+    FeaturedMappack(const string&in name, uint tmxid) {
+        this.name = name;
+        this.tmxid = tmxid;
     }
 }

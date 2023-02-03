@@ -16,7 +16,7 @@ class RoomConfiguration {
 enum MapMode {
     TOTD,
     MXRandom,
-    Mappack
+    Mappack,
 }
 
 string stringof(MapMode mode) {
@@ -26,7 +26,7 @@ string stringof(MapMode mode) {
     if (mode == MapMode::MXRandom) {
         return "Random Map (TMX)";
     }
-    return "Selected Mappack";
+    return "Custom Mappack";
 }
 
 Json::Value@ Serialize(RoomConfiguration Config) {
