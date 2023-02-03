@@ -61,13 +61,11 @@ namespace Window {
 
             if (UI::BeginTabItem(Icons::ShareSquareO + " Join Room")) {
                 JoinTab();
-                ConnectingIndicator();
                 UI::EndTabItem();
             }
 
             if (UI::BeginTabItem(Icons::PlusSquare + " Create Room")) {
                 CreateTab();
-                ConnectingIndicator();
                 UI::EndTabItem();
             }
 
@@ -113,6 +111,7 @@ namespace Window {
     void CreateTab() {
         SettingsView();
         CreateRoomButton();
+        ConnectingIndicator();
     }
 
     void ConnectingIndicator() {
@@ -245,6 +244,7 @@ namespace Window {
             startnew(Network::JoinRoom);
         }
         if (disabled) UI::EndDisabled();
+        ConnectingIndicator();
     }
 
     void RoomView() {
