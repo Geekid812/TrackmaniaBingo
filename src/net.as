@@ -409,6 +409,7 @@ namespace Network {
             Room.Config = Deserialize(Response["config"]);
             Room.JoinCode = Window::JoinCodeInput;
             Room.LocalPlayerIsHost = false;
+            Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
             NetworkHandlers::UpdateRoom(Response["status"]);
 
             Window::JoinCodeVisible = false;
