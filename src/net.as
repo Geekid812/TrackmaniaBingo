@@ -158,7 +158,7 @@ namespace Network {
             }
         } else if (Body["event"] == "GameStart") {
             NetworkHandlers::LoadMaps(Body["maps"]);
-            StartCountdown = 3000; // TODO
+            Room.StartTime = Time::Now;
             WasConnected = true;
             Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
         } else if (Body["event"] == "CellClaim") {

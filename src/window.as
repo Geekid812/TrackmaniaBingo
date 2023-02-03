@@ -36,7 +36,7 @@ namespace Window {
         }
 
         bool Disabled = false;
-        if (StartCountdown > 0) {
+        if (@Room != null && !Room.InGame && Room.StartTime != 0) {
             Countdown();
             Disabled = true;
         }
@@ -445,7 +445,7 @@ namespace Window {
 
     void Countdown() {
         UI::PushFont(Font::Header);
-        int SecondsRemaining = StartCountdown / 1000 + 1;
+        int SecondsRemaining = (Room.StartTime + CountdownTime - Time::Now) / 1000 + 1;
         UI::Text("Game starting in " + SecondsRemaining + "...");
         UI::PopFont();
         UI::NewLine();

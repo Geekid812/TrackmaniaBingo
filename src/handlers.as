@@ -39,7 +39,7 @@ namespace NetworkHandlers {
     }
 
     void LoadGameData(Json::Value@ data) {
-        InfoBar::StartTime = Time::Now - uint(data["start_time"]);
+        Room.StartTime = Time::Now - uint(data["start_time"]);
         for (uint i = 0; i < data["cells"].Length; i++) {
             Json::Value@ cell = data["cells"][i];
             if (cell["claim"].GetType() == Json::Type::Null) continue;

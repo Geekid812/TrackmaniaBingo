@@ -7,16 +7,16 @@ RoomConfiguration RoomConfig;
 // Name of the local player
 string LocalUsername;
 
-// Milliseconds time until game starts (displayed while loading maps)
-int StartCountdown;
-
 // Persisently saved: whether the game has crashed during a game
 [Setting hidden]
 bool WasConnected = false;
 
+const uint64 CountdownTime = 3000;
+
 class GameRoom {
     string Name;
     bool InGame;
+    uint64 StartTime;
     RoomConfiguration Config;
     string JoinCode;
     array<Team>@ Teams = {};
@@ -83,7 +83,7 @@ class GameRoom {
 
     bool MoreTeamsAvaliable(){
         // Non hosts should not see that more teams can be created
-        return Teams.Length < uint(Math::Min(MaxTeams, Config.HasPlayerLimit ? Config.MaxPlayers : MaxTeams)) && Room.LocalPlayerIsHost && StartCountdown <= 0;
+        return Teams.Length < uint(Math::Min(MaxTeams, Config.HasPlayerLimit ? Config.MaxPlayers : MaxTeams)) && Room.LocalPlayerIsHost && Room.StartTime == 0;
     }
 }
 
@@ -185,20 +185,16 @@ enum LoadStatus {
 }
 
 // Game tick function
-void Tick(int dt) {
+void Tick() {
     if (@Room == null) return;
     if (Room.InGame && !Room.EndState.HasEnded()) {
         Playground::CheckMedals();
     }
 
-    // Update countdown
-    if (StartCountdown > 0) {
-        StartCountdown -= dt;
-        if (dt >= StartCountdown) {
-            Room.InGame = true;
-            Window::Visible = false;
-            MapList::Visible = true;
-            InfoBar::StartTime = Time::Now;
-        }
+    // start game if start countdown ended
+    if (!Room.InGame && Room.StartTime != 0 && Room.StartTime + CountdownTime < Time::Now) {
+        Room.InGame = true;
+        Window::Visible = false;
+        MapList::Visible = true;
     }
 }

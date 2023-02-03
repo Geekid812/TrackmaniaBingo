@@ -38,7 +38,6 @@ void RenderInterface() {
     SettingsWindow::Render();
 }
 
-// TODO: refactor so this is not using the Update callback
 void Update(float dt) {
-    Tick(int(dt));
+    Tick();
 }

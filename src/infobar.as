@@ -3,7 +3,6 @@ namespace InfoBar {
     // Margin between the board and the "info bar", in pixels
     const int BoardMargin = 8;
 
-    uint64 StartTime;
     bool SettingsOpen;
 
     void Render() {
@@ -14,9 +13,9 @@ namespace InfoBar {
 
         UI::PushFont(Font::MonospaceBig);
         if (Room.EndState.EndTime == 0) {
-            UI::Text(Time::Format(Time::Now - StartTime, false, true, true));
+            UI::Text(Time::Format(Time::Now - Room.StartTime - CountdownTime, false, true, true));
         } else {
-            UI::Text("\\$fb0" + Time::Format(Room.EndState.EndTime - StartTime, false, true, true));
+            UI::Text("\\$fb0" + Time::Format(Room.EndState.EndTime - Room.StartTime - CountdownTime, false, true, true));
         }
         UI::PopFont();
 
