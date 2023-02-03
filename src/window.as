@@ -129,7 +129,7 @@ namespace Window {
     }
 
     string GetConnectingIcon() {
-        int sequence = int(PluginTime / 333) % 3;
+        int sequence = int(Time::Now / 333) % 3;
         if (sequence == 0)
             return Icons::Kenney::SignalLow;
         if (sequence == 1)

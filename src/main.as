@@ -1,8 +1,6 @@
 const string WindowName = Icons::Th + " \\$zBingo";
 const string MenuItemName = "\\$ff0" + WindowName;
 
-float PluginTime = 0.0;
-
 void Main() {
     startnew(Font::Init);
     Config::FetchConfig();
@@ -42,6 +40,5 @@ void RenderInterface() {
 
 // TODO: refactor so this is not using the Update callback
 void Update(float dt) {
-    PluginTime += dt;
     Tick(int(dt));
 }
