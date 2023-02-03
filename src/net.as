@@ -160,6 +160,7 @@ namespace Network {
             NetworkHandlers::LoadMaps(Body["maps"]);
             StartCountdown = 3000; // TODO
             Settings::WasConnected = true;
+            Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
         } else if (Body["event"] == "CellClaim") {
             Map@ ClaimedMap = Room.MapList[Body["cell_id"]];
             RunResult Result = RunResult(int(Body["claim"]["time"]), Medal(int(Body["claim"]["medal"])));
