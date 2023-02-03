@@ -51,6 +51,7 @@ namespace Window {
             if (Config::StatusMessage != "") {
                 UI::Text("\\$z" + Icons::InfoCircle + " \\$ff0" + Config::StatusMessage);
             }
+            OfflineIndicator();
 
             UI::BeginTabBar("Bingo_TabBar");
 
@@ -115,9 +116,15 @@ namespace Window {
     }
 
     void ConnectingIndicator() {
-        if (Network::GetState() != ConnectionState::Connected) {
+        if (Network::GetState() != ConnectionState::Connected && !Network::IsOffline) {
             UI::SameLine();
             UI::Text("\\$58f" + GetConnectingIcon() + " \\$zConnecting to server...");
+        }
+    }
+
+    void OfflineIndicator() {
+        if (Network::IsOffline) {
+            UI::Text("\\$f44" + Icons::Exclamation + " \\$zOffline mode: Could not connect to server.");
         }
     }
 

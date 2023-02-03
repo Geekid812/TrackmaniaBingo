@@ -42,7 +42,7 @@ namespace Network {
         SequenceNext = 0;
         Received = {};
         FetchAuthToken();
-        OpenConnection();
+        IsOffline = !OpenConnection();
     }
 
     ConnectionState GetState() {
