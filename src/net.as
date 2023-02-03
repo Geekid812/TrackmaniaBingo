@@ -12,10 +12,6 @@ namespace Network {
     bool IsLooping = false;
     // Connection indicator
     bool IsConnected = false;
-    // Secret token provided by the server
-    string Secret;
-    // Secret token used during reconnection sync
-    string ReconnectToken;
 
     Protocol _protocol;
     string AuthToken;
@@ -72,7 +68,7 @@ namespace Network {
             return false;
         }
         handshake.AuthToken = AuthToken;
-        int code = _protocol.Connect(Settings::BackendURL, Settings::TcpPort, handshake);
+        int code = _protocol.Connect(Settings::BackendAddress, Settings::BackendPort, handshake);
         if (code != -1) HandleHandshakeCode(HandshakeCode(code));
         return _protocol.State == ConnectionState::Connected;
     }
@@ -209,52 +205,8 @@ namespace Network {
     }
 
     void OnDisconnect() {
-        Reset();
-
-        // Not a clean disconnect
-        UI::ShowNotification(Icons::ExclamationCircle + " You have been disconnected! Attempting to reconnect...");
-        print("Disconnected! Client is attemping reconnection...");
-        yield(); // Wait for old loop cleanup
-
-        int RetryBackoff = 5000;
-        uint RetryAttempts = 1;
-        bool ReconnectSuccess = false; 
-        while (RetryAttempts <= 5 && !ReconnectSuccess) {
-            if (TryConnect()) {
-                trace("Syncing with server...");
-                if (true) {
-                    UI::ShowNotification("", Icons::Check + " Reconnected!", vec4(.2, .2, .9, 1));
-                    print("Reconnection succeeded!");
-                    ReconnectSuccess = true;
-                    break;
-                } else {
-                    trace("Syncing did not succeed.");
-                }
-            }
-
-            // Reconnect failure
-            string ReconnectionInfo;
-            if (RetryAttempts == 5) {
-                ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s).";
-                RetryBackoff = 5000;
-            } else {
-                ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s). Retrying in " + (RetryBackoff / 1000) + " seconds.";
-            }
-            trace(ReconnectionInfo);
-            UI::ShowNotification(Icons::ExclamationCircle + " " + ReconnectionInfo, RetryBackoff - 500);
-            if (RetryAttempts == 5) break;
-
-            RequestInProgress = true;
-            sleep(RetryBackoff);
-            RetryAttempts += 1;
-            RetryBackoff += 5000;
-            UI::ShowNotification(Icons::ExclamationCircle + " Attempting to reconnect...", Math::Min(Settings::ConnectionTimeout - 500, 10000));
-        }
-
-        if (!ReconnectSuccess) {
-            UI::ShowNotification("", Icons::Times + " Reconnection has failed!", vec4(.6, .1, .1, 1), 10000);
-            warn("Reconnection has failed!");
-        }
+        trace("OnDisconnect was called but not implemented.");
+        // TODO
     }
 
     void Reset() {
@@ -264,19 +216,6 @@ namespace Network {
         IsLooping = false;
         @Room = null;
         MapList::Visible = false;
-        ReconnectToken = Secret;
-    }
-
-    bool TryConnect() {
-        RequestInProgress = true;
-        if (!IsLooping) {
-            IsLooping = true;
-            startnew(Network::Loop);
-            while (!IsConnected && IsLooping) yield();
-        }
-
-        RequestInProgress = false;
-        return IsConnected;
     }
 
     Net::HttpRequest@ PostRequest(string&in Url, string&in Body, bool Blocking) {
