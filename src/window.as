@@ -117,7 +117,7 @@ namespace Window {
     void ConnectingIndicator() {
         if (Network::GetState() != ConnectionState::Connected) {
             UI::SameLine();
-            UI::Text(GetConnectingIcon() + " Connecting to server...");
+            UI::Text("\\$58f" + GetConnectingIcon() + " \\$zConnecting to server...");
         }
     }
 
