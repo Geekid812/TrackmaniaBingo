@@ -13,7 +13,4 @@ namespace Settings {
 
     [Setting name="Developer Mode" category="Debug"]
     bool DevMode = false;
-
-    [Setting hidden]
-    bool WasConnected = false;
 }

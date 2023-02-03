@@ -1,9 +1,18 @@
 // Global active room
 GameRoom@ Room;
+
+// Local room configuration
 RoomConfiguration RoomConfig;
+
+// Name of the local player
 string LocalUsername;
+
 // Milliseconds time until game starts (displayed while loading maps)
 int StartCountdown;
+
+// Persisently saved: whether the game has crashed during a game
+[Setting hidden]
+bool WasConnected = false;
 
 class GameRoom {
     string Name;

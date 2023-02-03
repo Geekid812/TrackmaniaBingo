@@ -6,7 +6,7 @@ void Main() {
     Config::FetchConfig();
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
-    if (Settings::WasConnected) {
+    if (WasConnected) {
         Network::Init();
     }
 
