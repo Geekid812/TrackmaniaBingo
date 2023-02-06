@@ -39,5 +39,5 @@ void RenderInterface() {
 }
 
 void Update(float dt) {
-    Tick();
+    Game::Tick();
 }

@@ -184,17 +184,19 @@ enum LoadStatus {
     LoadFail
 }
 
-// Game tick function
-void Tick() {
-    if (@Room == null) return;
-    if (Room.InGame && !Room.EndState.HasEnded()) {
-        Playground::CheckMedals();
-    }
+namespace Game {
+    // Game tick function
+    void Tick() {
+        if (@Room == null) return;
+        if (Room.InGame && !Room.EndState.HasEnded()) {
+            Playground::CheckMedals();
+        }
 
-    // start game if start countdown ended
-    if (!Room.InGame && Room.StartTime != 0 && Room.StartTime + CountdownTime < Time::Now) {
-        Room.InGame = true;
-        Window::Visible = false;
-        MapList::Visible = true;
+        // start game if start countdown ended
+        if (!Room.InGame && Room.StartTime != 0 && Room.StartTime + CountdownTime < Time::Now) {
+            Room.InGame = true;
+            Window::Visible = false;
+            MapList::Visible = true;
+        }
     }
 }
