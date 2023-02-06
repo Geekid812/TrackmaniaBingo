@@ -62,7 +62,7 @@ namespace Network {
 
     bool OpenConnection() {
         auto handshake = HandshakeData();
-        handshake.ClientVersion = Meta::ExecutingPlugin().Version;
+        handshake.ClientVersion = Meta::ExecutingPlugin().Version.Split("-")[0];
         if (Time::Now > TokenExpireDate) {
             trace("Network: could not open a connection: authentication token is not valid.");
             return false;
