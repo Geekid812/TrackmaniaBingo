@@ -86,6 +86,7 @@ namespace Playground {
 
     // Watching task that claims cells when certain medals are achieved
     void CheckMedals() {
+        if (@Room == null) return;
         if (MapClaimData.Retries > 0) return; // Request in progress
         RunResult Result = GetRunResult();
         if (Result.Time == -1) return;
@@ -96,7 +97,7 @@ namespace Playground {
         int CurrentTime = GameMap.ClaimedRun.Time;
         if (CurrentTime != -1 && CurrentTime <= Result.Time) return;
 
-        Medal TargetMedal = Room.TargetMedal;
+        Medal TargetMedal = Room.Config.TargetMedal;
         if (Result.Medal <= TargetMedal) {
             // Map should be claimed
             MapClaimData.Retries = 3;
@@ -108,13 +109,14 @@ namespace Playground {
     }
 
     RunResult@ GetCurrentTimeToBeat() {
+        if (@Room == null) return null;
         CGameCtnChallenge@ Map = GetCurrentMap();
         if (@Map == null) return null;
         Map GameMap = Room.GetMapWithUid(Map.EdChallengeId);
         if (GameMap.TmxID == -1) return null;
         if (GameMap.ClaimedRun.Time != -1) return GameMap.ClaimedRun;
 
-        return RunResult(GetMedalTime(Map, Room.TargetMedal), Room.TargetMedal);
+        return RunResult(GetMedalTime(Map, Room.Config.TargetMedal), Room.Config.TargetMedal);
     }
 
     Medal CalculateMedal(int time, int author, int gold, int silver, int bronze) {

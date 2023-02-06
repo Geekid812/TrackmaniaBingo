@@ -3,23 +3,26 @@ namespace InfoBar {
     // Margin between the board and the "info bar", in pixels
     const int BoardMargin = 8;
 
-    uint64 StartTime;
     bool SettingsOpen;
 
     void Render() {
-        if (!Room.InGame) return;
+        if (@Room == null || !Room.InGame) return;
         
         auto team = Room.GetSelf().Team;
-        UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar);
+        UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
-        UI::PushFont(Font::Monospace);
-        if (Room.EndState.EndTime == 0) {
-            UI::Text(Time::Format(Time::Now - StartTime, false, true, true));
-        } else {
-            UI::Text("\\$fb0" + Time::Format(Room.EndState.EndTime - StartTime, false, true, true));
-        }
+        UI::PushFont(Font::MonospaceBig);
+        string colorPrefix = Room.EndState.HasEnded() ? "\\$fb0" : "";
+
+        // Time since the game has started (post-countdown)
+        uint64 stopwatchTime = Time::ClampedMillisecondsElapsed();
+        // If playing with a time limit, timer counts down to 0
+        if (Room.Config.MinutesLimit != 0) stopwatchTime = Time::GetTimelimitMilliseconds() - stopwatchTime;
+        
+        UI::Text(colorPrefix + Time::Format(stopwatchTime, false, true, true));
         UI::PopFont();
 
+        UI::PushFont(Font::Regular);
         UI::SameLine();
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(6, 5));
         string MapListText = "Open Map List";
@@ -40,7 +43,7 @@ namespace InfoBar {
         UIColor::Reset();
         UI::PopStyleVar();
 
-        if (!Room.EndState.HasEnded()) {
+        if (@Room != null && !Room.EndState.HasEnded()) {
             RunResult@ RunToBeat = Playground::GetCurrentTimeToBeat();
             Team@ ClaimedTeam = Room.GetCurrentMap().ClaimedTeam;
             if (@RunToBeat != null) {
@@ -53,6 +56,7 @@ namespace InfoBar {
                 }
             }
         }
+        UI::PopFont();
 
         vec2 WindowSize = UI::GetWindowSize();
         UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - WindowSize.x) / 2, int(Board::Position.y) + int(Board::BoardSize) + BoardMargin), UI::Cond::Always);

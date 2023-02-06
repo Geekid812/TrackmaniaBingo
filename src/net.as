@@ -6,141 +6,191 @@ namespace Network {
     Net::Socket@ EventStream = Net::Socket();
     // Suspend UI while a blocking request is happening
     bool RequestInProgress = false;
+    // Indicator if Network::Init() has been called 
+    bool IsInitialized = false;
     // Loop running indicator
     bool IsLooping = false;
     // Connection indicator
     bool IsConnected = false;
-    // Secret token provided by the server
-    string Secret;
-    // Secret token used during reconnection sync
-    string ReconnectToken;
+
+    Protocol _protocol;
+    string AuthToken;
+    uint64 TokenExpireDate;
+    bool IsOffline;
+    uint SequenceNext;
+    array<Response@> Received;
+
+    class Response {
+        uint Sequence;
+        Json::Value@ Body;
+
+        Response(uint seq, Json::Value@ body) {
+            Sequence = seq;
+            @Body = body;
+        }
+    }
+
+    void Init() {
+        IsInitialized = true;
+        _protocol = Protocol();
+        TokenExpireDate = 0;
+        IsOffline = false;
+        SequenceNext = 0;
+        Received = {};
+        FetchAuthToken();
+        IsOffline = !OpenConnection();
+    }
+
+    ConnectionState GetState() {
+        return _protocol.State;
+    }
+
+    void FetchAuthToken() {
+        trace("Network: fetching a new authentication token...");
+        Auth::PluginAuthTask@ task = Auth::GetToken();
+        while (!task.Finished()) { yield(); }
+        
+        string token = task.Token();
+        if (token != "") {
+            AuthToken = token;
+            TokenExpireDate = Time::Now + (5 * 60 * 1000); // Valid for 5 minutes
+            trace("Network: received new authentication token.");
+        } else {
+            trace("Network: did not receive a valid token. This could be a connection issue.");
+        }
+    }
+
+    bool OpenConnection() {
+        auto handshake = HandshakeData();
+        handshake.ClientVersion = Meta::ExecutingPlugin().Version.Split("-")[0];
+        if (Time::Now > TokenExpireDate) {
+            trace("Network: could not open a connection: authentication token is not valid.");
+            return false;
+        }
+        handshake.AuthToken = AuthToken;
+        int code = _protocol.Connect(Settings::BackendAddress, Settings::BackendPort, handshake);
+        if (code != -1) HandleHandshakeCode(HandshakeCode(code));
+        return _protocol.State == ConnectionState::Connected;
+    }
+
+    void HandleHandshakeCode(HandshakeCode code) {
+        if (code == HandshakeCode::Ok) {
+            WasConnected = false;
+            return;
+        }
+        if (code == HandshakeCode::CanReconnect) {
+            // The server indicates that reconnecting is possible
+            trace("Network: Received reconnection handshake code, attempting to reconnect.");
+            UI::ShowNotification(Icons::Globe + " Reconnecting...");
+            startnew(Sync);
+        } else if (code == HandshakeCode::IncompatibleVersion) {
+            // Update required
+        } else if (code == HandshakeCode::AuthFailure) {
+            // Auth servers are not reachable
+        } else {
+            // Plugin error (this should not happen)
+        }
+    }
 
     void Loop() {
-        trace("Connecting to "+ Settings::BackendURL + ":" + Settings::TcpPort);
-        if (!EventStream.Connect(Settings::BackendURL, Settings::TcpPort)) {
-            trace("Failed to open TCP connection.");
-            IsLooping = false;
-            return;
-        }
-        // Sleep a bit because for some reason the server takes
-        // time to register the TCP connection
-        sleep(100);
+        if (_protocol.State != ConnectionState::Connected) return;
         
-        // Wait to receive secret token
-        uint TimeoutAt = Time::Now + Settings::ConnectionTimeout;
-        while (EventStream.Available() == 0 && Time::Now < TimeoutAt) { yield(); }
-        
-        // Check for timeout
-        if (Time::Now >= TimeoutAt) {
-            trace("Timed out on token reception.");
-            IsLooping = false;
-            return;
-        }
-
-        string InitialResponse = EventStream.ReadRaw(EventStream.Available());
-        if (InitialResponse.Length < SECRET_LENGTH) {
-            trace("Received an unexpected token: " + InitialResponse);
-            IsLooping = false;
-            return;
-        }
-        // OK
-        IsConnected = true;
-        Secret = InitialResponse.SubStr(0, SECRET_LENGTH);
-        if (Settings::DevMode) trace("Token response: " + InitialResponse + " | Token set to: " + Secret);
-        trace("Connection established. Remote IP: " + EventStream.GetRemoteIP());
-        while (true) {
-            while (EventStream.Available() == 0) {
-                if (!IsLooping) break; // Manual disconnect
-                if (EventStream.CanRead()) {
-                    // Client is disconnected
-                    OnDisconnect();
-                    break;
-                }
-                yield();
+        string Message = _protocol.Recv();
+        while (Message != "") {
+            trace("Network: Received message: " + Message);
+            Json::Value Json;
+            try {
+                Json = Json::Parse(Message);
+            } catch {
+                trace("Network: Failed to parse received message. Got: " + Message);
+                _protocol.Fail();
+                break;
             }
-            if (EventStream.Available() == 0) break; // Close loop if disconnected
-            string Message = EventStream.ReadRaw(EventStream.Available());
-            trace("Received: " + Message);
-            string[]@ Events = Message.Split("\u0004"); // Control character to seperate messages
-            for (uint i = 0; i < Events.Length - 1; i++) {
-                if (Events[i] == "PING") continue; // Just a simple ping
-                Handle(Json::Parse(Events[i]));
-            }
-        }
 
-        IsLooping = false;
-        IsConnected = false;
+            Handle(Json);
+
+            Message = _protocol.Recv();
+        }
+    }
+
+    bool Connected() {
+        return _protocol.State == ConnectionState::Connected;
+    }
+
+    void TestConnection() {
+        uint64 start = Time::Now;
+        auto response = Post("Ping", Json::Object(), false);
+        uint64 end = Time::Now - start;
+        bool result = response !is null;
+        trace("TestConnection: " + tostring(result) + " in " + end + "ms");
     }
 
     void Handle(Json::Value@ Body) {
-        if (Body["method"] == "ROOM_UPDATE") {
-            string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
-            @Room.Teams = {};
-            auto JsonTeams = Body["teams"];
-            for (uint i = 0; i < JsonTeams.Length; i++){
-                auto JsonTeam = JsonTeams[i];
-                Room.Teams.InsertLast(Team(
-                    JsonTeam["id"],
-                    JsonTeam["name"], 
-                    vec3(JsonTeam["color"]["r"], JsonTeam["color"]["g"], JsonTeam["color"]["b"])
-                ));
+        if (Body.HasKey("seq")) {
+            uint SequenceCode = Body["seq"];
+            Response@ res = Response(SequenceCode, Body);
+            Received.InsertLast(res);
+            yield();
+            return;
+        }
+        if (!Body.HasKey("event")) {
+            warn("Invalid message, discarding.");
+            return;
+        }
+        if (@Room == null) return;
+        if (Body["event"] == "RoomUpdate") {
+            NetworkHandlers::UpdateRoom(Body);
+        } else if (Body["event"] == "RoomConfigUpdate") {
+            uint oldGridSize = Room.Config.GridSize;
+            MapMode oldMode = Room.Config.MapSelection;
+            Room.Config = Deserialize(Body);
+            if (oldGridSize < Room.Config.GridSize || oldMode != Room.Config.MapSelection) Room.MapsLoadingStatus = LoadStatus::Loading;
+        } else if (Body["event"] == "MapsLoadResult") {
+            if (Body["error"].GetType() != Json::Type::Null) {
+                Room.MapsLoadingStatus = LoadStatus::LoadFail;
+                Room.LoadFailInfo = Body["error"];
+            } else {
+                Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
             }
+        } else if (Body["event"] == "GameStart") {
+            NetworkHandlers::LoadMaps(Body["maps"]);
+            Room.StartTime = Time::Now;
+            WasConnected = true;
+            Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
+        } else if (Body["event"] == "CellClaim") {
+            Map@ ClaimedMap = Room.MapList[Body["cell_id"]];
+            RunResult Result = RunResult(int(Body["claim"]["time"]), Medal(int(Body["claim"]["medal"])));
+            Team team = Room.GetTeamWithId(int(Body["claim"]["player"]["team"]));
 
-            @Room.Players = {};
-            for (uint i = 0; i < Body["members"].Length; i++) {
-                auto JsonPlayer = Body["members"][i];
-                Room.Players.InsertLast(Player(
-                    JsonPlayer["name"],
-                    Room.GetTeamWithId(int(JsonPlayer["team_id"])),
-                    JsonPlayer["name"] == LocalUsername
-                ));
-            }
-        } else if (Body["method"] == "GAME_START") {
-            @Room.MapList = {};
-            if (Body["maplist"].Length < 25) return; // Prevents a crash, user needs to retry later
-            for (uint i = 0; i < Body["maplist"].Length; i++) {
-                auto JsonMap = Body["maplist"][i];
-                Room.MapList.InsertLast(Map(
-                    JsonMap["name"],
-                    JsonMap["author"],
-                    JsonMap["tmxid"],
-                    JsonMap["uid"]
-                ));
-            }
-
-            StartCountdown = Settings::DevMode ? 1000 : 5000;
-        } else if (Body["method"] == "CLAIM_CELL") {
-            Map@ ClaimedMap = Room.MapList[Body["cellid"]];
-            RunResult Result = RunResult(int(Body["time"]), Medal(int(Body["medal"])));
-            Team team = Room.GetTeamWithId(int(Body["team_id"]));
+            bool IsImprove = ClaimedMap.ClaimedTeam !is null && ClaimedMap.ClaimedTeam.Id == team.Id;
+            bool IsReclaim = ClaimedMap.ClaimedTeam !is null && ClaimedMap.ClaimedTeam.Id != team.Id;
+            string DeltaTime = ClaimedMap.ClaimedRun.Time == -1 ? "" : "-" + Time::Format(ClaimedMap.ClaimedRun.Time - Result.Time);
+            string PlayerName = Body["claim"]["player"]["name"];
             @ClaimedMap.ClaimedTeam = @team;
             ClaimedMap.ClaimedRun = Result;
+            ClaimedMap.ClaimedPlayerName = PlayerName;
 
-            string PlayerName = Body["playername"];
-            string MapName = Body["mapname"];
+            string MapName = ClaimedMap.Name;
             string TeamName = team.Name;
-            bool IsReclaim = Body["delta"] != -1;
-            bool IsImprovement = Body["improve"];
-            string DeltaFormatted = "-" + Time::Format(Body["delta"]);
             vec4 TeamColor = UIColor::Brighten(UIColor::GetAlphaColor(team.Color, 0.1), 0.75);
-            vec4 DimColor = TeamColor / 1.5;
+            vec4 DimmedColor = TeamColor / 1.5;
             
-            if (!IsReclaim) {
+            if (IsReclaim) {
+                UI::ShowNotification(Icons::Retweet + " Map Reclaimed", PlayerName + " has reclaimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display() + " (" + DeltaTime + ")", TeamColor, 15000);
+            } else if (IsImprove) {
+                UI::ShowNotification(Icons::ClockO + " Time Improved", PlayerName + " has improved " + TeamName + " Team's time on \\$fd8" + MapName + "\\$z\n" + Result.Display() + " (" + DeltaTime + ")", DimmedColor, 15000);
+            } else { // Normal claim
                 UI::ShowNotification(Icons::Bookmark + " Map Claimed", PlayerName + " has claimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display(), TeamColor, 15000);
-            } else if (IsImprovement) {
-                UI::ShowNotification(Icons::ClockO + " Time Improved", PlayerName + " has improved " + TeamName + " Team's time on \\$fd8" + MapName + "\\$z\n" + Result.Display() + " (" + DeltaFormatted + ")", DimColor, 15000);
-            } else { // Reclaim
-                UI::ShowNotification(Icons::Retweet + " Map Reclaimed", PlayerName + " has reclaimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + Result.Display() + " (" + DeltaFormatted + ")", TeamColor, 15000);
-            }
-                
-        } else if (Body["method"] == "GAME_END") {
-            Team team = Room.GetTeamWithId(int(Body["team_id"]));
+            }   
+        } else if (Body["event"] == "AnnounceBingo") {
+            Team team = Room.GetTeamWithId(int(Body["team"]));
             string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
             UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
 
-            Room.EndState.BingoDirection = BingoDirection(int(Body["bingodir"]));
-            Room.EndState.Offset = Body["offset"];
+            Room.EndState.BingoDirection = BingoDirection(int(Body["direction"]));
+            Room.EndState.Offset = Body["index"];
             Room.EndState.EndTime = Time::Now;
+            WasConnected = false;
         } else if (Body["method"] == "MAPS_LOAD_STATUS") {
             Room.MapsLoadingStatus = LoadStatus(int(Body["status"]));
         } else if (Body["method"] == "ROOM_CLOSED"){
@@ -155,127 +205,8 @@ namespace Network {
     }
 
     void OnDisconnect() {
-        Reset();
-
-        // Not a clean disconnect
-        UI::ShowNotification(Icons::ExclamationCircle + " You have been disconnected! Attempting to reconnect...");
-        print("Disconnected! Client is attemping reconnection...");
-        yield(); // Wait for old loop cleanup
-
-        int RetryBackoff = 5000;
-        uint RetryAttempts = 1;
-        bool ReconnectSuccess = false; 
-        while (RetryAttempts <= 5 && !ReconnectSuccess) {
-            if (TryConnect()) {
-                trace("Syncing with server...");
-                if (Sync()) {
-                    UI::ShowNotification("", Icons::Check + " Reconnected!", vec4(.2, .2, .9, 1));
-                    print("Reconnection succeeded!");
-                    ReconnectSuccess = true;
-                    break;
-                } else {
-                    trace("Syncing did not succeed.");
-                }
-            }
-
-            // Reconnect failure
-            string ReconnectionInfo;
-            if (RetryAttempts == 5) {
-                ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s).";
-                RetryBackoff = 5000;
-            } else {
-                ReconnectionInfo = "Reconnection failed " + RetryAttempts + " time(s). Retrying in " + (RetryBackoff / 1000) + " seconds.";
-            }
-            trace(ReconnectionInfo);
-            UI::ShowNotification(Icons::ExclamationCircle + " " + ReconnectionInfo, RetryBackoff - 500);
-            if (RetryAttempts == 5) break;
-
-            RequestInProgress = true;
-            sleep(RetryBackoff);
-            RetryAttempts += 1;
-            RetryBackoff += 5000;
-            UI::ShowNotification(Icons::ExclamationCircle + " Attempting to reconnect...", Math::Min(Settings::ConnectionTimeout - 500, 10000));
-        }
-
-        if (!ReconnectSuccess) {
-            UI::ShowNotification("", Icons::Times + " Reconnection has failed!", vec4(.6, .1, .1, 1), 10000);
-            warn("Reconnection has failed!");
-        }
-    }
-
-    bool Sync() {
-        auto Body = Json::Object();
-        Body["client_secret"] = Secret;
-        Body["reconnect"] = ReconnectToken;
-        Net::HttpRequest@ Request = Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/sync", Json::Write(Body), true);
-        if (Request is null) return false;
-        if (Request.ResponseCode() == 204) {
-            trace("Empty response from sync.");
-            CloseConnection();
-            UI::ShowNotification(Icons::ExclamationCircle + " The room you were connected to has ended.");
-            return true;
-        }
-
-        trace("Reconnection sync: " + Request.String());
-        string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
-        auto JsonSync = Json::Parse(Request.String());
-        Room.Active = true;
-        Room.HostName = JsonSync["host"];
-        Room.MapSelection = MapMode(int(JsonSync["selection"]));
-        Room.TargetMedal = Medal(int(JsonSync["medal"]));
-        Room.MaxPlayers = JsonSync["size"];
-        Room.MapsLoadingStatus = LoadStatus(int(JsonSync["status"]));
-
-        @Room.Teams = {};
-        auto JsonTeams = JsonSync["teams"];
-        for (uint i = 0; i < JsonTeams.Length; i++){
-            auto JsonTeam = JsonTeams[i];
-            Room.Teams.InsertLast(Team(
-                JsonTeam["id"], 
-                JsonTeam["name"],
-                vec3(JsonTeam["color"]["r"], JsonTeam["color"]["g"], JsonTeam["color"]["b"])
-            ));
-        }
-
-        @Room.Players = {};
-        for (uint i = 0; i < JsonSync["players"].Length; i++) {
-            auto JsonPlayer = JsonSync["players"][i];
-            Room.Players.InsertLast(Player(
-                JsonPlayer["name"],
-                Room.GetTeamWithId(int(JsonPlayer["team_id"])),
-                JsonPlayer["name"] == LocalUsername
-            ));
-        }
-
-        int StartTimestamp = JsonSync["started"];
-        if (StartTimestamp == -1) {
-            Room.InGame = false;
-            return true;
-        }
-
-        Room.InGame = true;
-        InfoBar::StartTime = Time::Now - StartTimestamp;
-
-        @Room.MapList = {};
-        for (uint i = 0; i < JsonSync["boardstate"].Length; i++) {
-            auto JsonMap = JsonSync["boardstate"][i];
-            Map GameMap = Map(
-                JsonMap["name"],
-                JsonMap["author"],
-                JsonMap["tmxid"],
-                JsonMap["uid"]
-            );
-
-            if (JsonMap["claim"].GetType() != Json::Type::Null) {
-                @GameMap.ClaimedTeam = Room.GetTeamWithId(int(JsonMap["claim"]["team_id"]));
-                GameMap.ClaimedRun = RunResult(
-                    JsonMap["claim"]["time"],
-                    Medal(int(JsonMap["claim"]["medal"]))
-                );
-            }
-            Room.MapList.InsertLast(GameMap);
-        }
-        return true;
+        trace("OnDisconnect was called but not implemented.");
+        // TODO
     }
 
     void Reset() {
@@ -283,24 +214,8 @@ namespace Network {
         @EventStream = Net::Socket();
         IsConnected = false;
         IsLooping = false;
-        Room.Active = false;
-        Room.InGame = false;
-        Room.EndState = EndState();
-        Room.MapsLoadingStatus = LoadStatus::Loading;
+        @Room = null;
         MapList::Visible = false;
-        ReconnectToken = Secret;
-    }
-
-    bool TryConnect() {
-        RequestInProgress = true;
-        if (!IsLooping) {
-            IsLooping = true;
-            startnew(Network::Loop);
-            while (!IsConnected && IsLooping) yield();
-        }
-
-        RequestInProgress = false;
-        return IsConnected;
     }
 
     Net::HttpRequest@ PostRequest(string&in Url, string&in Body, bool Blocking) {
@@ -318,7 +233,6 @@ namespace Network {
         } else if (Status / 100 != 2) { // Not a 2XX status code
             trace(Url + " received status code " + Status);
             if (Status == 426) { // Upgrade required
-                UI::ShowNotification(Icons::ArrowCircleOUp + " Update required!", "Please update the Bingo plugin to continue playing.", vec4(.2, .2, .9, 1));
             } else { // Default case
                 UI::ShowNotification(Icons::Times + " Connection Error", "An error occured while communicating with the server. (Error " + Status + ")", vec4(.6, 0, 0, 1));  
             }
@@ -328,47 +242,81 @@ namespace Network {
         return Request;
     }
 
-    void CreateRoom() {
-        if (!TryConnect()) {
-            UI::ShowNotification(Icons::QuestionCircle + " Could not connect to the server. Please check your connection.");
-            return;
+    int AddSequenceValue(Json::Value@ val) {
+        uint seq = SequenceNext;
+        val["seq"] = seq;
+        SequenceNext += 1;
+        return seq;
+    }
+
+    Json::Value@ ExpectReply(uint SequenceCode, uint timeout = 5000) {
+        uint64 TimeoutDate = Time::Now + timeout;
+        Json::Value@ Message = null;
+        while (Time::Now < TimeoutDate && @Message == null) {
+            yield();
+            for (uint i = 0; i < Received.Length; i++) {
+                if (Received[i].Sequence == SequenceCode) {
+                    @Message = Received[i].Body;
+                    Received.RemoveAt(i);
+                    break;       
+                }
+            }
         }
+        return Message;
+    }
 
-        string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
-        auto Body = Json::Object();
-        Body["size"] = Room.MaxPlayers;
-        Body["selection"] = Room.MapSelection;
-        Body["medal"] = Room.TargetMedal;
-        Body["name"] = LocalUsername;
-        Body["client_secret"] = Secret;
-        Body["version"] = Meta::ExecutingPlugin().Version;
+    Json::Value@ Post(string&in Type, Json::Value@ Body, bool blocking = false, uint timeout = 5000) {
+        Body["request"] = Type;
+        uint Sequence = AddSequenceValue(Body);
+        string Text = Json::Write(Body);
+        if (!_protocol.Send(Text)) return null; // TODO: connection fault?
+        RequestInProgress = blocking;
+        Json::Value@ Reply = ExpectReply(Sequence, timeout);
+        RequestInProgress = false;
 
-        if (Room.MapSelection == MapMode::Mappack) Body["mappack_id"] = tostring(Room.MappackId);
+        if (Reply !is null && Reply.HasKey("error")) {
+            trace("Request [" + Type + "]: Error: " + string(Reply["error"]));
+            UI::ShowNotification("", Icons::Times + " " + string(Reply["error"]), vec4(.8, 0., 0., 1.), 5000);
+            return null;
+        }
+        return Reply;
+    }
 
-        auto Request = PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/create", Json::Write(Body), true);
-        if (Request is null) {
+    void FireEvent(string&in Type, Json::Value@ Body) {
+        Body["event"] = Type;
+        string Text = Json::Write(Body);
+        if (!_protocol.Send(Text)) return; // TODO: connection fault?
+    }
+
+    void CreateRoom() {
+        auto Body = Serialize(RoomConfig);
+
+        Json::Value@ Response = Post("CreateRoom", Body, true);
+        if (Response is null) {
+            trace("Network: CreateRoom - No reply from server.");
             Reset();
             return;
         }
 
-        string json = Request.String();
-        auto response = Json::Parse(json);
-        string RoomCode = response["room_code"];
-        Room.MaxTeams = int(response["max_teams"]);
+        // The room was created. Setting up room status (local player is host)
+        @Room = GameRoom();
+        Room.Config = RoomConfig;
+        string RoomCode = Response["join_code"];
+        Room.MaxTeams = int(Response["max_teams"]);
         Window::RoomCodeVisible = false;
 
         Room.Teams = {};
-        auto JsonTeams = response["teams"];
-        for (uint i = 0; i < JsonTeams.Length; i++){
+        auto JsonTeams = Response["teams"];
+        for (uint i = 0; i < JsonTeams.Length; i++) {
             auto JsonTeam = JsonTeams[i];
             Room.Teams.InsertLast(Team(
                 JsonTeam["id"], 
                 JsonTeam["name"],
-                vec3(JsonTeam["color"]["r"], JsonTeam["color"]["g"], JsonTeam["color"]["b"])
+                vec3(JsonTeam["color"][0] / 255., JsonTeam["color"][1] / 255., JsonTeam["color"][2] / 255.)
             ));
         }
 
-        Room.Active = true;
+        Room.Name = Response["name"];
         Room.LocalPlayerIsHost = true;
         Room.HostName = LocalUsername;
         Room.JoinCode = RoomCode;
@@ -376,63 +324,59 @@ namespace Network {
         Room.MapsLoadingStatus = LoadStatus::Loading;
     }
 
-    void CreateTeam(){
-        auto Body = Json::Object();
-        Body["client_secret"] = Secret;
-        Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/team-create", Json::Write(Body), false);
+    void CreateTeam() {
+        Network::Post("CreateTeam", Json::Object());
     }
 
     void JoinRoom() {
-        if (!TryConnect()) {
-            UI::ShowNotification(Icons::QuestionCircle + " Could not connect to the server. Please check your connection.");
-            return;
-        }
-
-        string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
         auto Body = Json::Object();
-        Body["name"] = LocalUsername;
-        Body["code"] = Room.JoinCode;
-        Body["client_secret"] = Secret;
-        Body["version"] = Meta::ExecutingPlugin().Version;
+        Body["join_code"] = Window::JoinCodeInput;
 
-        auto Request = Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/join", Json::Write(Body), true);
-        if (Request is null) {
+        auto Response = Post("JoinRoom", Body, true);
+        if (Response is null) {
+            trace("Network: JoinRoom - No reply from server.");
             Reset();
             return;
         }
         
-        bool ShouldClose = true;
-        if (Request.ResponseCode() == 204) {
-            UI::ShowNotification(Icons::Times + " No room was found with code " + Room.JoinCode + ".");  
-        } else if (Request.ResponseCode() == 298) {
-            UI::ShowNotification(Icons::Times + " Sorry, this room is already full.");
-        } else if (Request.ResponseCode() == 299) {
-            UI::ShowNotification(Icons::Times + " Sorry, the game has already started in this room.");  
+        if (Response.HasKey("error")) {
+            UI::ShowNotification(Icons::Times + string(Response["error"]));  
         } else {
             // Success!
-            auto JsonRoom = Json::Parse(Request.String());
-
+            @Room = GameRoom();
+            Room.Name = Response["name"];
+            Room.Config = Deserialize(Response["config"]);
+            Room.JoinCode = Window::JoinCodeInput;
             Room.LocalPlayerIsHost = false;
-            Room.MaxPlayers = JsonRoom["size"];
-            Room.MapSelection = MapMode(int(JsonRoom["selection"]));
-            Room.TargetMedal = Medal(int(JsonRoom["medal"]));
-            Room.HostName = JsonRoom["host"];
-            Room.MapsLoadingStatus = LoadStatus(int(JsonRoom["status"]));
+            Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
+            NetworkHandlers::UpdateRoom(Response["status"]);
 
-            Room.Active = true;
-            ShouldClose = false;
             Window::JoinCodeVisible = false;
             Window::RoomCodeVisible = false;
         }
-        if (ShouldClose) Network::Reset();
     }
 
-    void LeaveRoom(){
+    void EditRoomSettings() {
         auto Body = Json::Object();
-        Body["client_secret"] = Secret;
-        // Send leave notification or server would wait for reconnection
-        Network::PostRequest(Settings::BackendURL + ":" + Settings::HttpPort + "/leave", Json::Write(Body), false);
-        CloseConnection();
+        Body["config"] = Serialize(RoomConfig);
+
+        auto Response = Post("EditRoomConfig", Body, true);
+        if (Response is null) {
+            trace("Network: EditRoomSettings - No reply from server.");
+            Reset();
+            return;
+        }
+        
+        if (Response.HasKey("error")) {
+            UI::ShowNotification(Icons::Times + string(Response["error"]));  
+        } else {
+            SettingsWindow::Visible = false;
+        }
+    }
+
+    void LeaveRoom() {
+        FireEvent("LeaveRoom", Json::Object());
+        Reset();
     }
 
     void JoinTeam(Team Team) {
@@ -441,14 +385,11 @@ namespace Network {
 
         auto Body = Json::Object();
         Body["team_id"] = Team.Id;
-        Body["client_secret"] = Secret;
-        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/team-update", Json::Write(Body), false);
+        FireEvent("ChangeTeam", Body);
     }
 
     void StartGame() {
-        auto Body = Json::Object();
-        Body["client_secret"] = Secret;
-        Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/start", Json::Write(Body), true);
+        Post("StartGame", Json::Object(), true);
     }
 
     bool ClaimCell(string&in uid, RunResult result) {
@@ -456,9 +397,33 @@ namespace Network {
         Body["uid"] = uid;
         Body["time"] = result.Time;
         Body["medal"] = result.Medal;
-        Body["client_secret"] = Secret;
-        auto Request = Network::PostRequest("http://" + Settings::BackendURL + ":" + Settings::HttpPort + "/claim", Json::Write(Body), false);
-        return @Request != null;
+        auto Request = Network::Post("ClaimCell", Body, false);
+        return Request !is null;
+    }
+
+    void Sync() {
+        trace("Network: Syncing with server...");
+        auto response = Network::Post("Sync", Json::Object(), false);
+        if (response is null) {
+            trace("Sync: No reply from server.");
+            WasConnected = false;
+            return;
+        }
+        @Room = GameRoom();
+        Room.Name = response["room_name"];
+        Room.Config = Deserialize(response["config"]);
+        Room.JoinCode = response["join_code"];
+        Room.LocalPlayerIsHost = response["host"];
+        NetworkHandlers::UpdateRoom(response["status"]);
+        NetworkHandlers::LoadMaps(response["maps"]);
+        if (response.HasKey("game_data")) {
+            NetworkHandlers::LoadGameData(response["game_data"]);
+            Room.InGame = true;
+        }
+    }
+
+    void NotifyCountdownEnd() {
+        FireEvent("CountdownEnd", Json::Object());
     }
 
     // Network identifier

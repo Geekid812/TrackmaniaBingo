@@ -1,21 +1,28 @@
 // Global active room
-GameRoom Room;
-// Milliseconds time until game starts (displayed while loading maps)
-int StartCountdown;
+GameRoom@ Room;
+
+// Local room configuration
+RoomConfiguration RoomConfig;
+
+// Name of the local player
+string LocalUsername;
+
+// Persisently saved: whether the game has crashed during a game
+[Setting hidden]
+bool WasConnected = false;
 
 class GameRoom {
-    bool Active;
+    string Name;
     bool InGame;
+    uint64 StartTime;
+    RoomConfiguration Config;
     string JoinCode;
     array<Team>@ Teams = {};
     array<Player>@ Players = {};
-    int MaxPlayers;
     int MaxTeams = 999; // Gets overriden by server
-    MapMode MapSelection;
-    int MappackId;
-    Medal TargetMedal;
     array<Map>@ MapList = {};
     LoadStatus MapsLoadingStatus = LoadStatus::Loading;
+    string LoadFailInfo;
     string HostName;
     bool LocalPlayerIsHost;
     EndState EndState;
@@ -74,7 +81,7 @@ class GameRoom {
 
     bool MoreTeamsAvaliable(){
         // Non hosts should not see that more teams can be created
-        return Teams.Length < uint(Math::Min(MaxTeams, MaxPlayers)) && Room.LocalPlayerIsHost && StartCountdown <= 0;
+        return Teams.Length < uint(Math::Min(MaxTeams, Config.HasPlayerLimit ? Config.MaxPlayers : MaxTeams)) && Room.LocalPlayerIsHost && Room.StartTime == 0;
     }
 }
 
@@ -116,6 +123,7 @@ class Map {
     int TmxID = -1; // Used to compare whether a map is valid
     string Uid;
     Team@ ClaimedTeam = null;
+    string ClaimedPlayerName;
     RunResult ClaimedRun;
     CachedImage@ Thumbnail;
     CachedImage@ MapImage;
@@ -138,7 +146,7 @@ class EndState {
     uint64 EndTime;
 
     bool HasEnded() {
-        return this.BingoDirection != BingoDirection::None;
+        return this.EndTime != 0;
     }
 }
 
@@ -161,22 +169,6 @@ class RunResult {
     }
 }
 
-enum MapMode {
-    TOTD,
-    MXRandom,
-    Mappack
-}
-
-string stringof(MapMode mode) {
-    if (mode == MapMode::TOTD) {
-        return "Track of the Day";
-    }
-    if (mode == MapMode::MXRandom) {
-        return "Random Map (TMX)";
-    }
-    return "Selected Mappack";
-}
-
 enum BingoDirection {
     None,
     Horizontal,
@@ -190,20 +182,24 @@ enum LoadStatus {
     LoadFail
 }
 
-// Game tick function
-void Tick(int dt) {
-    if (Room.InGame && !Room.EndState.HasEnded()) {
-        Playground::CheckMedals();
-    }
+namespace Game {
+    // Game tick function
+    void Tick() {
+        if (@Room == null) return;
+        if (Room.InGame && !Room.EndState.HasEnded()) {
+            Playground::CheckMedals();
+        
+            // check if countdown time is up
+            if (Room.Config.MinutesLimit != 0 && Time::MillisecondsRemaining() == 0) {
+                Network::NotifyCountdownEnd();
+            }
+        }
 
-    // Update countdown
-    if (StartCountdown > 0) {
-        StartCountdown -= dt;
-        if (dt >= StartCountdown) {
+        // start game if start countdown ended
+        if (!Room.InGame && Room.StartTime != 0 && Room.StartTime + CountdownTime < Time::Now) {
             Room.InGame = true;
             Window::Visible = false;
             MapList::Visible = true;
-            InfoBar::StartTime = Time::Now;
         }
     }
 }

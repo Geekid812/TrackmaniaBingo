@@ -1,5 +1,10 @@
 [meta]
-version = "2.0"
+version = "3.0-dev"
 name = "Bingo"
 author = "TheGeekid"
 category = "Game"
+siteid = 271
+
+[script]
+exports = ["src/export/definitions.as"]
+shared_exports = ["src/export/shared.as"]

@@ -9,10 +9,11 @@ namespace Board {
     const vec4 BingoStrokeColor = vec4(1, 0.6, 0, 0.9);
 
     void Draw() {
-        if (!Room.InGame) return;
+        if (@Room == null || !Room.InGame) return;
 
-        float BorderSize = BoardSize / 120.;
-        float CellSize = (BoardSize - BorderSize * 6.) / 5.;
+        uint CellsPerRow = Room.Config.GridSize;
+        float BorderSize = BoardSize / (30. * CellsPerRow);
+        float CellSize = (BoardSize - BorderSize * (float(CellsPerRow) + 1.)) / float(CellsPerRow);
         nvg::BeginPath();
 
         // Board
@@ -22,22 +23,22 @@ namespace Board {
         // Borders
         // Columns
         nvg::FillColor(vec4(.9, .9, .9, 1.));
-        for (uint i = 0; i < 6; i++) {
+        for (uint i = 0; i <= CellsPerRow; i++) {
             nvg::BeginPath();
             nvg::Rect(Position.x + float(i) * (CellSize + BorderSize), Position.y, BorderSize, BoardSize);
             nvg::Fill();
         }
         // Rows
-        for (uint i = 0; i < 6; i++) {
+        for (uint i = 0; i <= CellsPerRow; i++) {
             nvg::BeginPath();
             nvg::Rect(Position.x, Position.y + float(i) * (CellSize + BorderSize), BoardSize, BorderSize);
             nvg::Fill();
         }
 
         // Cell Fill Color
-        for (uint i = 0; i < 5; i++) {
-            for (uint j = 0; j < 5; j++) {
-                auto Map = Room.MapList[j * 5 + i];
+        for (uint i = 0; i < CellsPerRow; i++) {
+            for (uint j = 0; j < CellsPerRow; j++) {
+                auto Map = Room.MapList[j * CellsPerRow + i];
                 nvg::BeginPath();
                 vec4 color;
                 if (Map.ClaimedTeam is null)
@@ -54,8 +55,8 @@ namespace Board {
         CGameCtnChallenge@ CurrentMap = Playground::GetCurrentMap();
         int CellId = (@CurrentMap != null) ? Room.GetMapCellId(CurrentMap.EdChallengeId) : -1;
         if (CellId != -1) {
-            int Row = CellId / 5;
-            int Col = CellId % 5;
+            int Row = CellId / CellsPerRow;
+            int Col = CellId % CellsPerRow;
             nvg::BeginPath();
             nvg::FillColor(CellHighlightColor);
             nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * Row, CellSize + BorderSize * 2, BorderSize);
@@ -76,19 +77,19 @@ namespace Board {
         int i = Room.EndState.Offset;
         nvg::StrokeColor(BingoStrokeColor);
         nvg::StrokeWidth(StrokeWidth);
-        if (Room.EndState.BingoDirection == BingoDirection::Horizontal) {
+        if (Direction == BingoDirection::Horizontal) {
             float yPos = Position.y + BorderSize + (CellSize / 2) + i * (CellSize + BorderSize);
             nvg::BeginPath();
             nvg::MoveTo(vec2(Position.x - BorderSize, yPos));
             nvg::LineTo(vec2(Position.x + BoardSize + BorderSize, yPos));
             nvg::Stroke();
-        } else if (Room.EndState.BingoDirection == BingoDirection::Vertical) {
+        } else if (Direction == BingoDirection::Vertical) {
             float xPos = Position.x + BorderSize + (CellSize / 2) + i * (CellSize + BorderSize);
             nvg::BeginPath();
             nvg::MoveTo(vec2(xPos, Position.y - BorderSize));
             nvg::LineTo(vec2(xPos, Position.y + BoardSize + BorderSize));
             nvg::Stroke();
-        } else if (Room.EndState.BingoDirection == BingoDirection::Diagonal) {
+        } else if (Direction == BingoDirection::Diagonal) {
             nvg::BeginPath();
             nvg::MoveTo(vec2(Position.x - BorderSize, Position.y - BorderSize + i * (BoardSize + 2 * BorderSize)));
             nvg::LineTo(vec2(Position.x + BoardSize + BorderSize, Position.y - BorderSize + (1 - i) * (BoardSize + 2 * BorderSize)));
