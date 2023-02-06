@@ -5,7 +5,8 @@ namespace Board {
     vec2 Position;
 
     const float StrokeWidth = 8.;
-    const vec4 CellHighlightColor = vec4(0.9, 0.8, 0, 0.9);
+    const float CellHighlightPadding = 2.5; // Multiplier for BorderSize, inside offset
+    const vec4 CellHighlightColor = vec4(1, 1, 0, 0.9);
     const vec4 BingoStrokeColor = vec4(1, 0.6, 0, 0.9);
 
     void Draw() {
@@ -52,6 +53,8 @@ namespace Board {
         }
 
         // Cell highlight
+        const float highlightWidth = BorderSize * CellHighlightPadding;
+        const float highlightMarginOffset = BorderSize * (CellHighlightPadding - 1.);
         CGameCtnChallenge@ CurrentMap = Playground::GetCurrentMap();
         int CellId = (@CurrentMap != null) ? Room.GetMapCellId(CurrentMap.EdChallengeId) : -1;
         if (CellId != -1) {
@@ -59,16 +62,16 @@ namespace Board {
             int Col = CellId % CellsPerRow;
             nvg::BeginPath();
             nvg::FillColor(CellHighlightColor);
-            nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * Row, CellSize + BorderSize * 2, BorderSize);
+            nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * Row, CellSize + BorderSize * 2, highlightWidth);
             nvg::Fill();
             nvg::BeginPath();
-            nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * (Row + 1), CellSize + BorderSize * 2, BorderSize);
+            nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * (Row + 1) - highlightMarginOffset, CellSize + BorderSize * 2, highlightWidth);
             nvg::Fill();
             nvg::BeginPath();
-            nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * Row, BorderSize, CellSize + BorderSize * 2);
+            nvg::Rect(Position.x + (CellSize + BorderSize) * Col, Position.y + (CellSize + BorderSize) * Row, highlightWidth, CellSize + BorderSize * 2);
             nvg::Fill();
             nvg::BeginPath();
-            nvg::Rect(Position.x + (CellSize + BorderSize) * (Col + 1), Position.y + (CellSize + BorderSize) * Row, BorderSize, CellSize + BorderSize * 2);
+            nvg::Rect(Position.x + (CellSize + BorderSize) * (Col + 1) - highlightMarginOffset, Position.y + (CellSize + BorderSize) * Row, highlightWidth, CellSize + BorderSize * 2);
             nvg::Fill();
         }
 
