@@ -4,3 +4,7 @@ name = "Bingo"
 author = "TheGeekid"
 category = "Game"
 siteid = 271
+
+[script]
+exports = ["src/export/definitions.as"]
+shared_exports = ["src/export/shared.as"]
