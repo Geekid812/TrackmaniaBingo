@@ -48,7 +48,7 @@ namespace InfoBar {
         UIColor::Reset();
         UI::PopStyleVar();
 
-        if (!Room.EndState.HasEnded()) {
+        if (@Room != null && !Room.EndState.HasEnded()) {
             RunResult@ RunToBeat = Playground::GetCurrentTimeToBeat();
             Team@ ClaimedTeam = Room.GetCurrentMap().ClaimedTeam;
             if (@RunToBeat != null) {
