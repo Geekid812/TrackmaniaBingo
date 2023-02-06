@@ -7,10 +7,7 @@ Feel free to contribute to the development of this project by submitting an issu
 
 ### Backend
 
-The source code for the backend of this plugin is located in [Geekid812/bingoserver](https://github.com/Geekid812/bingoserver).
-It communicates via HTTP for client to server and TCP for server to client.
-
-__Deprecation notice:__ The Python backend is currently being rewritten because of many issues. A new implementation in Rust is underway at [Geekid812/Bingohost](https://github.com/Geekid812/Bingohost) and is targeted to be released with plugin version 3.0.
+The source code for the backend of this plugin is located in [Geekid812/Bingohost](https://github.com/Geekid812/Bingohost). It communicates with the client using a custom TCP-based protocol of JSON messages. See the server documentation for more details.
 
 ### Discord server
 Join us in our [Discord server](https://discord.gg/pJbeqptsEa) to get involved in the community!
