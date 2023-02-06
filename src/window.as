@@ -147,9 +147,8 @@ namespace Window {
         RoomConfig.MaxPlayers = Math::Clamp(UI::InputInt("Player Limit", RoomConfig.MaxPlayers), 2, 100);
         UI::EndDisabled();
 
-        RoomConfig.RandomizeTeams = UI::Checkbox("Randomize Teams", RoomConfig.RandomizeTeams);
-        
         // This doesn't exist... yet
+        if (false) RoomConfig.RandomizeTeams = UI::Checkbox("Randomize Teams", RoomConfig.RandomizeTeams);
         if (false) RoomConfig.InGameChat = UI::Checkbox("In-Game Chat", RoomConfig.InGameChat);
 
         SettingsSection("Game Settings");
