@@ -422,6 +422,10 @@ namespace Network {
         }
     }
 
+    void NotifyCountdownEnd() {
+        FireEvent("CountdownEnd", Json::Object());
+    }
+
     // Network identifier
     string GetLogin() {
         auto Network = cast<CTrackManiaNetwork>(GetApp().Network);

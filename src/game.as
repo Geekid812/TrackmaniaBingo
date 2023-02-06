@@ -11,8 +11,6 @@ string LocalUsername;
 [Setting hidden]
 bool WasConnected = false;
 
-const uint64 CountdownTime = 3000;
-
 class GameRoom {
     string Name;
     bool InGame;
@@ -190,6 +188,11 @@ namespace Game {
         if (@Room == null) return;
         if (Room.InGame && !Room.EndState.HasEnded()) {
             Playground::CheckMedals();
+        
+            // check if countdown time is up
+            if (Room.Config.MinutesLimit != 0 && Time::MillisecondsRemaining() == 0) {
+                Network::NotifyCountdownEnd();
+            }
         }
 
         // start game if start countdown ended

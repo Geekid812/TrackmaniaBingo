@@ -12,17 +12,12 @@ namespace InfoBar {
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
         UI::PushFont(Font::MonospaceBig);
-        string colorPrefix = "";
-        uint64 referenceTime = Time::Now;
-        if (Room.EndState.HasEnded()) {
-            colorPrefix = "\\$fb0";
-            referenceTime = Room.EndState.EndTime;
-        }
+        string colorPrefix = Room.EndState.HasEnded() ? "\\$fb0" : "";
 
-        // Time since the game has started (post-countdown), in milliseconds
-        uint64 stopwatchTime = referenceTime - Room.StartTime - CountdownTime;
+        // Time since the game has started (post-countdown)
+        uint64 stopwatchTime = Time::ClampedMillisecondsElapsed();
         // If playing with a time limit, timer counts down to 0
-        if (Room.Config.MinutesLimit != 0) stopwatchTime = Math::Max(Room.Config.MinutesLimit * 60 * 1000 - stopwatchTime, 0);
+        if (Room.Config.MinutesLimit != 0) stopwatchTime = Time::GetTimelimitMilliseconds() - stopwatchTime;
         
         UI::Text(colorPrefix + Time::Format(stopwatchTime, false, true, true));
         UI::PopFont();
