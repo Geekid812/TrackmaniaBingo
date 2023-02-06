@@ -286,21 +286,19 @@ namespace Window {
         if (RoomCodeHovered) {
             StatusTooltip("Room Code", RoomCodeVisible ? Room.JoinCode : "\\$aaaHidden  (Click to reveal)");
         }
-        if (RoomCodeVisible) {
-            UI::SameLine();
-            UI::Text((ClipboardHovered ? "\\$ff8" : "") + Icons::Clipboard);
-            ClipboardHovered = UI::IsItemHovered();
-            if (ClipboardHovered) {
-                UI::BeginTooltip();
-                UI::Text(ClipboardCopied ? "\\$8f8Room code copied!" : "\\$aaaClick to copy room code to clipboard");
-                UI::EndTooltip();
-            }
-            if (UI::IsItemClicked()) {
-                IO::SetClipboard(Room.JoinCode);
-                ClipboardCopied = true;
-            } else if (!ClipboardHovered) {
-                ClipboardCopied = false;
-            }
+        UI::SameLine();
+        UI::Text((ClipboardHovered ? "\\$ff8" : "") + Icons::Clipboard);
+        ClipboardHovered = UI::IsItemHovered();
+        if (ClipboardHovered) {
+            UI::BeginTooltip();
+            UI::Text(ClipboardCopied ? "\\$8f8Room code copied!" : "\\$aaaClick to copy room code to clipboard");
+            UI::EndTooltip();
+        }
+        if (UI::IsItemClicked()) {
+            IO::SetClipboard(Room.JoinCode);
+            ClipboardCopied = true;
+        } else if (!ClipboardHovered) {
+            ClipboardCopied = false;
         }
 
         UI::SameLine();
