@@ -148,7 +148,7 @@ class EndState {
     uint64 EndTime;
 
     bool HasEnded() {
-        return this.BingoDirection != BingoDirection::None;
+        return this.EndTime != 0;
     }
 }
 
