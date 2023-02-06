@@ -77,19 +77,19 @@ namespace Board {
         int i = Room.EndState.Offset;
         nvg::StrokeColor(BingoStrokeColor);
         nvg::StrokeWidth(StrokeWidth);
-        if (Room.EndState.BingoDirection == BingoDirection::Horizontal) {
+        if (Direction == BingoDirection::Horizontal) {
             float yPos = Position.y + BorderSize + (CellSize / 2) + i * (CellSize + BorderSize);
             nvg::BeginPath();
             nvg::MoveTo(vec2(Position.x - BorderSize, yPos));
             nvg::LineTo(vec2(Position.x + BoardSize + BorderSize, yPos));
             nvg::Stroke();
-        } else if (Room.EndState.BingoDirection == BingoDirection::Vertical) {
+        } else if (Direction == BingoDirection::Vertical) {
             float xPos = Position.x + BorderSize + (CellSize / 2) + i * (CellSize + BorderSize);
             nvg::BeginPath();
             nvg::MoveTo(vec2(xPos, Position.y - BorderSize));
             nvg::LineTo(vec2(xPos, Position.y + BoardSize + BorderSize));
             nvg::Stroke();
-        } else if (Room.EndState.BingoDirection == BingoDirection::Diagonal) {
+        } else if (Direction == BingoDirection::Diagonal) {
             nvg::BeginPath();
             nvg::MoveTo(vec2(Position.x - BorderSize, Position.y - BorderSize + i * (BoardSize + 2 * BorderSize)));
             nvg::LineTo(vec2(Position.x + BoardSize + BorderSize, Position.y - BorderSize + (1 - i) * (BoardSize + 2 * BorderSize)));
