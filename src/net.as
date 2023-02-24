@@ -68,8 +68,17 @@ namespace Network {
             return false;
         }
         handshake.AuthToken = AuthToken;
-        int code = _protocol.Connect(Settings::BackendAddress, Settings::BackendPort, handshake);
-        if (code != -1) HandleHandshakeCode(HandshakeCode(code));
+
+        int retries = 3;
+        while (_protocol.State != ConnectionState::Connected) {
+            int code = _protocol.Connect(Settings::BackendAddress, Settings::BackendPort, handshake);
+            if (code != -1) HandleHandshakeCode(HandshakeCode(code));
+
+            if (_protocol.State != ConnectionState::Connected) {
+                retries -= 1;
+                trace("Network: Failed to connect. " + retries + " retry attempts left.");
+            }
+        }
         return _protocol.State == ConnectionState::Connected;
     }
 
