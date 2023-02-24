@@ -22,7 +22,7 @@ class Protocol {
         MsgSize = 0;
     }
 
-    int Connect(const string&in host, uint16 port, HandshakeData handshake, uint timeout = 5000) {
+    int Connect(const string&in host, uint16 port, HandshakeData handshake) {
         State = ConnectionState::Connecting;
         @Socket = Net::Socket();
         MsgSize = 0;
@@ -36,11 +36,11 @@ class Protocol {
         trace("Protocol: Socket bound and ready to connect to " + host + ":" + port + ".");
 
         // Connection
-        uint64 TimeoutDate = Time::Now + timeout;
+        uint64 TimeoutDate = Time::Now + Settings::NetworkTimeout;
         uint64 InitialDate = Time::Now;
         while (!Socket.CanWrite() && Time::Now < TimeoutDate) { yield(); }
         if (!Socket.CanWrite()) {
-            trace("Protocol: Connection timed out after " + timeout + "ms.");
+            trace("Protocol: Connection timed out after " + Settings::NetworkTimeout + "ms.");
             Fail();
             return -1;
         }
@@ -54,9 +54,9 @@ class Protocol {
         }
         trace("Protocol: Opening handshake sent.");
 
-        string HandshakeReply = BlockRecv(timeout);
+        string HandshakeReply = BlockRecv(Settings::NetworkTimeout);
         if (HandshakeReply == "") {
-            trace("Protocol: Handshake reply reception timed out after " + timeout + "ms.");
+            trace("Protocol: Handshake reply reception timed out after " + Settings::NetworkTimeout + "ms.");
             Fail();
             return -1;
         }

@@ -6,7 +6,7 @@ namespace Settings {
     uint16 BackendPort = 6900;
     
     [Setting name="Connection Timeout" category="Debug"]
-    uint ConnectionTimeout = 5000;
+    uint NetworkTimeout = 10000;
 
     [Setting name="Developer Mode" category="Debug"]
     bool DevMode = false;
