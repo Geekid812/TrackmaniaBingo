@@ -15,7 +15,6 @@ class GameRoom {
     string Name;
     bool InGame;
     uint64 StartTime;
-    uint64 EndTime;
     RoomConfiguration Config;
     string JoinCode;
     array<Team>@ Teams = {};
