@@ -19,6 +19,8 @@ namespace Network {
     bool IsOffline;
     uint SequenceNext;
     array<Response@> Received;
+    uint64 LastPingSent;
+    uint64 LastPingReceived;
 
     class Response {
         uint Sequence;
@@ -39,6 +41,8 @@ namespace Network {
         Received = {};
         FetchAuthToken();
         IsOffline = !OpenConnection();
+        LastPingSent = Time::Now;
+        LastPingReceived = Time::Now;
     }
 
     ConnectionState GetState() {
@@ -70,7 +74,7 @@ namespace Network {
         handshake.AuthToken = AuthToken;
 
         int retries = 3;
-        while (_protocol.State != ConnectionState::Connected) {
+        while (_protocol.State != ConnectionState::Connected && retries > 0) {
             int code = _protocol.Connect(Settings::BackendAddress, Settings::BackendPort, handshake);
             if (code != -1) HandleHandshakeCode(HandshakeCode(code));
 
@@ -119,6 +123,25 @@ namespace Network {
             Handle(Json);
 
             Message = _protocol.Recv();
+        }
+
+        if (LastPingSent <= Time::Now - Settings::PingInterval) {
+            startnew(function() {
+                if (@Post("Ping", Json::Object(), false, Settings::NetworkTimeout) != null) {
+                    Network::LastPingReceived = Time::Now;
+                }
+            });
+            LastPingSent = Time::Now;
+        }
+
+        if (LastPingReceived <= Time::Now - Settings::PingInterval - Settings::NetworkTimeout) {
+            trace("Network: Disconnected! Attempting to reconnect...");
+            _protocol.State = ConnectionState::Closed;
+            if (!OpenConnection()) {
+                Reset();
+                UI::ShowNotification(Icons::Exclamation + " Bingo: You have been disconnected!", "Use the plugin interface to reconnect.", vec4(.9, .1, .1, 1.), 10000);
+                IsOffline = true;
+            }
         }
     }
 

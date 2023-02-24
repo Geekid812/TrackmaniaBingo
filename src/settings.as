@@ -8,6 +8,9 @@ namespace Settings {
     [Setting name="Connection Timeout" category="Debug"]
     uint NetworkTimeout = 10000;
 
+    [Setting name="Server Ping Interval" category="Debug"]
+    uint PingInterval = 30000;
+
     [Setting name="Developer Mode" category="Debug"]
     bool DevMode = false;
 }
