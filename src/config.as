@@ -19,7 +19,12 @@ namespace Config {
             trace("Config: Response parse failed. Status code: " + req.ResponseCode() + " | Body: " + req.String());
         }
 
-        StatusMessage = json["message"];
+        try {
+            StatusMessage = json["message"];
+        } catch {
+            warn("Config: Invalid JSON message. That proably means you are not connected.");
+            return;
+        }
         CanPlay = json["canPlay"];
 
         News = {};
