@@ -11,10 +11,15 @@ namespace Time {
 
     /**
      * Get the milliseconds elapsed since game start.
+     * Time does not increase after a game has ended.
      */
     uint64 MillisecondsElapsed() {
         if (@Room == null) return 0;
-        return Time::Now - Room.StartTime - CountdownTime;
+        uint64 curTime = Time::Now;
+        if (Room.EndState.HasEnded()) {
+            curTime = Room.EndState.EndTime;
+        }
+        return curTime - Room.StartTime - CountdownTime;
     }
 
     /**
