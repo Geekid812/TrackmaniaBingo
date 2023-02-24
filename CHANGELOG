@@ -1,16 +1,7 @@
-## Update 3.0
+## Update 3.1
 
-This update comes with a huge changelog:
+A small patch is coming your way! Includes the following fixes:
 
-- Complete network rewrite, which should greatly reduce the number of disconnection errors
-- Auto-reconnect: rejoin your game even after a crash!
-- UI revamp in many different menus: room creation, lobby, maplist and infobar
-- Time limits: for when you don't want your games to last too long
-- Grid sizes are now variable: from tiny 3x3 to a huge 8x8 grid!
-- The name of the player who claimed the map is now visible in the maplist
-- Change room settings from within the room
-- Openplanet authentification integration: all usernames are now verified by Openplanet's servers, so your friend can't fake his name and cause chaos in the lobby
-- Home menu: get the latest hot news for the gamemode
-- Featured mappacks: from time to time, you'll receive suggestions for curated mappacks to play in bingo
-- Basic plugin exports: small interface for other plugins to communicate with Bingo
-- Fix a crash related to the pause menu
+- Fix game timer not stopping when a game has ended
+- Added retries when connecting to the server
+- The client will regularly ping the server to check for a disconnection
