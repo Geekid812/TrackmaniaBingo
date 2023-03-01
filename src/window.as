@@ -126,6 +126,12 @@ namespace Window {
     void OfflineIndicator() {
         if (Network::IsOffline) {
             UI::Text("\\$f44" + Icons::Exclamation + " \\$zOffline mode: Could not connect to server.");
+            UI::SameLine();
+            UIColor::Red();
+            if (UI::Button(Icons::Repeat + " Retry")) {
+                startnew(Network::Connect);
+            }
+            UIColor::Reset();
         }
     }
 

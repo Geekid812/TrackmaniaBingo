@@ -36,13 +36,17 @@ namespace Network {
         IsInitialized = true;
         _protocol = Protocol();
         TokenExpireDate = 0;
-        IsOffline = false;
         SequenceNext = 0;
         Received = {};
-        FetchAuthToken();
-        IsOffline = !OpenConnection();
+        Connect();
         LastPingSent = Time::Now;
         LastPingReceived = Time::Now;
+    }
+
+    void Connect() {
+        IsOffline = false;
+        FetchAuthToken();
+        IsOffline = !OpenConnection();
     }
 
     ConnectionState GetState() {
