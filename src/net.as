@@ -39,14 +39,14 @@ namespace Network {
         SequenceNext = 0;
         Received = {};
         Connect();
-        LastPingSent = Time::Now;
-        LastPingReceived = Time::Now;
     }
 
     void Connect() {
         IsOffline = false;
         FetchAuthToken();
         IsOffline = !OpenConnection();
+        LastPingSent = Time::Now;
+        LastPingReceived = Time::Now;
     }
 
     ConnectionState GetState() {
