@@ -43,10 +43,11 @@ namespace Network {
         LastPingReceived = Time::Now;
     }
 
-    void Connect() {
+    bool Connect() {
         IsOffline = false;
         FetchAuthToken();
         IsOffline = !OpenConnection();
+        return !IsOffline;
     }
 
     ConnectionState GetState() {
@@ -141,7 +142,7 @@ namespace Network {
         if (LastPingReceived <= Time::Now - Settings::PingInterval - Settings::NetworkTimeout) {
             trace("Network: Disconnected! Attempting to reconnect...");
             _protocol.State = ConnectionState::Closed;
-            if (!OpenConnection()) {
+            if (!Connect()) {
                 Reset();
                 UI::ShowNotification(Icons::Exclamation + " Bingo: You have been disconnected!", "Use the plugin interface to reconnect.", vec4(.9, .1, .1, 1.), 10000);
                 IsOffline = true;
