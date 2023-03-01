@@ -37,7 +37,7 @@ namespace InfoBar {
         if (Room.EndState.HasEnded()) {
             UI::SameLine();
             if (UI::Button("Exit")) {
-                Network::Reset();
+                Network::LeaveRoom();
             }
         }
         UIColor::Reset();
