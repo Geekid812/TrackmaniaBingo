@@ -2,6 +2,7 @@
 
 A small patch is coming your way! Includes the following fixes:
 
+- Potential fix for a terrible double lobby bug
 - Fix game timer not stopping when a game has ended
 - Added retries when connecting to the server
 - The client will regularly ping the server to check for a disconnection
