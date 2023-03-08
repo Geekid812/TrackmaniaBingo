@@ -146,6 +146,8 @@ namespace Network {
                 Reset();
                 UI::ShowNotification(Icons::Exclamation + " Bingo: You have been disconnected!", "Use the plugin interface to reconnect.", vec4(.9, .1, .1, 1.), 10000);
                 IsOffline = true;
+            } else {
+                trace("Network: Reconnected to server.");
             }
         }
     }
