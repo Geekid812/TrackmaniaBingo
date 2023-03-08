@@ -139,16 +139,20 @@ namespace Network {
         }
 
         if (LastPingReceived <= Time::Now - Settings::PingInterval - Settings::NetworkTimeout) {
-            trace("Network: Disconnected! Attempting to reconnect...");
-            _protocol.State = ConnectionState::Closed;
-            Connect();
-            if (IsOffline) {
-                Reset();
-                UI::ShowNotification(Icons::Exclamation + " Bingo: You have been disconnected!", "Use the plugin interface to reconnect.", vec4(.9, .1, .1, 1.), 10000);
-                IsOffline = true;
-            } else {
-                trace("Network: Reconnected to server.");
-            }
+            OnDisconnect();
+        }
+    }
+
+    void OnDisconnect() {
+        trace("Network: Disconnected! Attempting to reconnect...");
+        _protocol.State = ConnectionState::Closed;
+        Connect();
+        if (IsOffline) {
+            Reset();
+            UI::ShowNotification(Icons::Exclamation + " Bingo: You have been disconnected!", "Use the plugin interface to reconnect.", vec4(.9, .1, .1, 1.), 10000);
+            IsOffline = true;
+        } else {
+            trace("Network: Reconnected to server.");
         }
     }
 
@@ -241,11 +245,6 @@ namespace Network {
     void CloseConnection() {
         Reset();
         trace("Connection closed cleanly.");
-    }
-
-    void OnDisconnect() {
-        trace("OnDisconnect was called but not implemented.");
-        // TODO
     }
 
     void Reset() {
