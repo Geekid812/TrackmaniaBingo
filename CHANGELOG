@@ -1,8 +1,3 @@
-## Update 3.1
+## Update 3.2
 
-A small patch is coming your way! Includes the following fixes:
-
-- Potential fix for a terrible double lobby bug
-- Fix game timer not stopping when a game has ended
-- Added retries when connecting to the server
-- The client will regularly ping the server to check for a disconnection
+This small update contains a fix for a disconnection loop bug that could happen when connecting to the server.
