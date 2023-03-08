@@ -44,9 +44,9 @@ namespace Network {
     void Connect() {
         IsOffline = false;
         FetchAuthToken();
-        IsOffline = !OpenConnection();
         LastPingSent = Time::Now;
         LastPingReceived = Time::Now;
+        IsOffline = !OpenConnection();
     }
 
     ConnectionState GetState() {
