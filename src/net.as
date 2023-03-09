@@ -129,7 +129,7 @@ namespace Network {
             Message = _protocol.Recv();
         }
 
-        if (LastPingSent <= Time::Now - Settings::PingInterval) {
+        if (LastPingSent + Settings::PingInterval <= Time::Now) {
             startnew(function() {
                 if (@Post("Ping", Json::Object(), false, Settings::NetworkTimeout) != null) {
                     Network::LastPingReceived = Time::Now;
@@ -138,7 +138,7 @@ namespace Network {
             LastPingSent = Time::Now;
         }
 
-        if (LastPingReceived <= Time::Now - Settings::PingInterval - Settings::NetworkTimeout) {
+        if (LastPingReceived + Settings::PingInterval + Settings::NetworkTimeout <= Time::Now) {
             OnDisconnect();
         }
     }
