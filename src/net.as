@@ -257,30 +257,6 @@ namespace Network {
         MapList::Visible = false;
     }
 
-    Net::HttpRequest@ PostRequest(string&in Url, string&in Body, bool Blocking) {
-        auto Request = Net::HttpPost(Url, Body);
-        Request.Start();
-        if (Blocking) RequestInProgress = true;
-        while (!Request.Finished()) { yield(); }
-        if (Blocking) RequestInProgress = false;
-
-        int Status = Request.ResponseCode();
-        if (Status == 0) {
-            trace(Url + " request failed");
-            UI::ShowNotification(Icons::Times + " Connection Failed", "The server could not be reached. Please check your connection. \n" + Request.Error(), vec4(.6, 0, 0, 1));
-            return null;
-        } else if (Status / 100 != 2) { // Not a 2XX status code
-            trace(Url + " received status code " + Status);
-            if (Status == 426) { // Upgrade required
-            } else { // Default case
-                UI::ShowNotification(Icons::Times + " Connection Error", "An error occured while communicating with the server. (Error " + Status + ")", vec4(.6, 0, 0, 1));  
-            }
-            return null; 
-        }
-
-        return Request;
-    }
-
     int AddSequenceValue(Json::Value@ val) {
         uint seq = SequenceNext;
         val["seq"] = seq;
@@ -305,7 +281,7 @@ namespace Network {
     }
 
     Json::Value@ Post(string&in Type, Json::Value@ Body, bool blocking = false, uint timeout = 5000) {
-        Body["request"] = Type;
+        Body["req"] = Type;
         uint Sequence = AddSequenceValue(Body);
         string Text = Json::Write(Body);
         if (!_protocol.Send(Text)) return null; // TODO: connection fault?

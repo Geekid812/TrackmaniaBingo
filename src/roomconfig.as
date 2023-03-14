@@ -1,6 +1,7 @@
 
 class RoomConfiguration {
     // Room Config
+    string Name;
     uint MaxPlayers = 2;
     bool HasPlayerLimit = false;
     bool RandomizeTeams = false;
@@ -31,6 +32,7 @@ string stringof(MapMode mode) {
 
 Json::Value@ Serialize(RoomConfiguration Config) {
     auto Value = Json::Object();
+    Value["name"] = Config.Name;
     Value["size"] = Config.HasPlayerLimit ? Config.MaxPlayers : 0;
     Value["randomize"] = Config.RandomizeTeams;
     Value["chat_enabled"] = Config.InGameChat;
@@ -45,6 +47,7 @@ Json::Value@ Serialize(RoomConfiguration Config) {
 
 RoomConfiguration Deserialize(Json::Value@ Value) {
     auto Config = RoomConfiguration();
+    Config.Name = Value["name"];
     Config.HasPlayerLimit = int(Value["size"]) != 0;
     Config.MaxPlayers = Value["size"];
     Config.RandomizeTeams = Value["randomize"];
