@@ -54,7 +54,7 @@ namespace Network {
     }
 
     void FetchAuthToken() {
-        trace("Network: fetching a new authentication token...");
+        trace("Auth: fetching a new authentication token...");
         Auth::PluginAuthTask@ task = Auth::GetToken();
         while (!task.Finished()) { yield(); }
         
@@ -62,9 +62,10 @@ namespace Network {
         if (token != "") {
             AuthToken = token;
             TokenExpireDate = Time::Now + (5 * 60 * 1000); // Valid for 5 minutes
-            trace("Network: received new authentication token.");
+            trace("Auth: received new authentication token.");
         } else {
-            trace("Network: did not receive a valid token. This could be a connection issue.");
+            warn("Auth: did not receive a valid token. This could be a connection issue.");
+            warn("Troubleshooter: If this issue persists, please restart your game.");
         }
     }
 
