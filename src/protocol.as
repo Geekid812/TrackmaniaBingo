@@ -2,11 +2,13 @@
 class HandshakeData {
     string ClientVersion;
     string AuthToken;
+    string Username;
 
     Json::Value ToJSON() {
         auto object = Json::Object();
         object["version"] = ClientVersion;
         object["token"] = AuthToken;
+        object["username"] = Username;
         return object;
     }
 }

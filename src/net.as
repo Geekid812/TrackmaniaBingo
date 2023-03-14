@@ -76,10 +76,11 @@ namespace Network {
             return false;
         }
         handshake.AuthToken = AuthToken;
+        handshake.Username = GetLocalLogin();
 
         int retries = 3;
         while (_protocol.State != ConnectionState::Connected && retries > 0) {
-            int code = _protocol.Connect(Settings::BackendAddress, Settings::BackendPort, handshake);
+            int code = _protocol.Connect(Settings::BackendAddress, Settings::NetworkPort, handshake);
             if (code != -1) HandleHandshakeCode(HandshakeCode(code));
 
             if (_protocol.State != ConnectionState::Connected) {
@@ -462,11 +463,5 @@ namespace Network {
 
     void NotifyCountdownEnd() {
         FireEvent("CountdownEnd", Json::Object());
-    }
-
-    // Network identifier
-    string GetLogin() {
-        auto Network = cast<CTrackManiaNetwork>(GetApp().Network);
-        return Network.PlayerInfo.Login;
     }
 }

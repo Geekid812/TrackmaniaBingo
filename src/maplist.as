@@ -68,23 +68,6 @@ namespace MapList {
                 Playground::LoadMap(Map.TmxID);
             }
 
-            // if (Map.ClaimedRun.Time != -1) {
-            //     UI::TextDisabled(Settings::TinyBoard ? Map.ClaimedRun.DisplayTime() : Map.ClaimedRun.Display());
-            // } else {
-            //     UI::TextDisabled("By " + Map.Author);
-            // }
-
-            // if (!Room.EndState.HasEnded()) {
-            //     UIColor::DarkGreen();
-            // } else {
-            //     UIColor::Cyan();
-            // }
-            // if (UI::Button((Settings::TinyBoard ? "" : Icons::Play + " ") + "Play")) {
-            //     MapList::Visible = false;
-            //     Playground::LoadMap(Map.TmxID);
-            // }
-            // UIColor::Reset();
-
             auto Size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(0, 8 * UiScale) - StartPos - vec2(0, UI::GetScrollY());
             vec4 Rect = vec4(StartPos.x, StartPos.y, 500, Size.y);
             if (Map.ClaimedTeam !is null)
