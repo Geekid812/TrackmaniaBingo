@@ -6,6 +6,7 @@ class RoomConfiguration {
     bool HasPlayerLimit = false;
     bool RandomizeTeams = false;
     bool InGameChat = false;
+    bool IsPublic = false;
     // Game Config
     uint GridSize = 5;
     MapMode MapSelection = MapMode::TOTD;

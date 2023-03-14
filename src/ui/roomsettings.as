@@ -3,34 +3,68 @@ namespace UIRoomSettings {
     const uint[] TimeLimitOptions = { 15, 30, 45, 60, 90, 120 };
     const uint GridSizeMin = 3;
     const uint GridSizeMax = 8;
+    const float CheckboxesAlignX = 180;
 
     FeaturedMappack@ SelectedPack;
 
     void RoomNameInput() {
-        UI::Text(Icons::Pencil + " Room Name:");
-        UI::SameLine();
-        UI::SetNextItemWidth(160);
+        UITools::AlignedLabel(Icons::Pencil + " Room Name");
+        UI::SetNextItemWidth(220);
         RoomConfig.Name = UI::InputText("##bingoroomname", RoomConfig.Name);
         if (RoomConfig.Name == "" && LocalUsername != "") {
             RoomConfig.Name = LocalUsername + "'s Bingo Room";
         }
     }
 
-    void SettingsView() {
-        SettingsSection(Icons::ListAlt + " Room Settings");
-        RoomNameInput();
-        RoomConfig.HasPlayerLimit = UI::Checkbox("##maxplayers", RoomConfig.HasPlayerLimit);
-        UI::BeginDisabled(!RoomConfig.HasPlayerLimit);
-        UI::SameLine();
+    void PlayerLimitToggle() {
+        UITools::AlignedLabel(Icons::User + " Enable Player Limit");
+        LayoutTools::MoveTo(CheckboxesAlignX);
+        RoomConfig.HasPlayerLimit = UI::Checkbox("##bingomaxplayers", RoomConfig.HasPlayerLimit);
+    }
+
+    void PlayerLimitInput() {
+        UITools::AlignedLabel(Icons::Users + " Maximum");
         UI::SetNextItemWidth(200);
-        RoomConfig.MaxPlayers = Math::Clamp(UI::InputInt("Player Limit", RoomConfig.MaxPlayers), 2, 100);
-        UI::EndDisabled();
+        RoomConfig.MaxPlayers = Math::Clamp(UI::InputInt(" players allowed", RoomConfig.MaxPlayers), 2, 1000);
+    }
+
+    void ChatToggle() {
+        UITools::AlignedLabel(Icons::Comment + " In-Game Chat");
+        LayoutTools::MoveTo(CheckboxesAlignX);
+        RoomConfig.InGameChat = UI::Checkbox("##bingochat", RoomConfig.InGameChat);
+    }
+
+    void AccessToggle() {
+        if (RoomConfig.IsPublic) {
+            UIColor::DarkGreen();
+            if (UI::Button(Icons::Unlock + " Public")) {
+                RoomConfig.IsPublic = false;
+            }
+            UIColor::Reset();
+        } else {
+            UIColor::Red();
+            if (UI::Button(Icons::Lock + " Private")) {
+                RoomConfig.IsPublic = true;
+            }
+            UIColor::Reset();
+        }
+    }
+
+    void SettingsView() {
+        SettingsSection("Room Settings");
+        RoomNameInput();
+        UI::SameLine();
+        AccessToggle();
+        PlayerLimitToggle();
+        ChatToggle();
+        if (RoomConfig.HasPlayerLimit) {
+            PlayerLimitInput();
+        }
 
         // This doesn't exist... yet
         if (false) RoomConfig.RandomizeTeams = UI::Checkbox("Randomize Teams", RoomConfig.RandomizeTeams);
-        if (false) RoomConfig.InGameChat = UI::Checkbox("In-Game Chat", RoomConfig.InGameChat);
 
-        SettingsSection(Icons::Gamepad + " Game Settings");
+        SettingsSection("Game Settings");
         if (UI::BeginCombo("Grid Size", tostring(RoomConfig.GridSize) + "x" + tostring(RoomConfig.GridSize))) {
             
             for (uint i = GridSizeMin; i <= GridSizeMax; i++) {
