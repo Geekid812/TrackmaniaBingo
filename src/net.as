@@ -236,11 +236,9 @@ namespace Network {
             Room.EndState.Offset = Body["index"];
             Room.EndState.EndTime = Time::Now;
             WasConnected = false;
-        } else if (Body["method"] == "MAPS_LOAD_STATUS") {
-            Room.MapsLoadingStatus = LoadStatus(int(Body["status"]));
-        } else if (Body["method"] == "ROOM_CLOSED"){
-            CloseConnection();
-            UI::ShowNotification(Icons::Info + " The host has disconnected.");
+        } else if (Body["event"] == "Trace") {
+            // Message is already logged to the console
+            // trace("Trace: " + string(Body["value"]));
         }
     }
 
