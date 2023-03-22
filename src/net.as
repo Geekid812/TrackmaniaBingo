@@ -290,7 +290,7 @@ namespace Network {
 
         if (Reply !is null && Reply.HasKey("error")) {
             trace("Request [" + Type + "]: Error: " + string(Reply["error"]));
-            UI::ShowNotification("", Icons::Times + " " + string(Reply["error"]), vec4(.8, 0., 0., 1.), 5000);
+            UI::ShowNotification("", Icons::Times + " Error in " + Type + ": " + string(Reply["error"]), vec4(.8, 0., 0., 1.), 10000);
             return null;
         }
         return Reply;
