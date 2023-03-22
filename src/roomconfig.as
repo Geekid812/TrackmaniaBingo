@@ -13,6 +13,8 @@ class RoomConfiguration {
     uint MappackId;
     Medal TargetMedal = Medal::Author;
     uint MinutesLimit = 0;
+    uint NoBingoMinutes = 0;
+    bool Overtime = false;
 }
 
 enum MapMode {
