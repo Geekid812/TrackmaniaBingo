@@ -180,7 +180,7 @@ namespace UIRoomSettings {
     }
 
     void SettingsView() {
-        SettingsSection("Room Settings");
+        UITools::SectionHeader("Room Settings");
         RoomNameInput();
         UI::SameLine();
         AccessToggle();
@@ -190,7 +190,7 @@ namespace UIRoomSettings {
             PlayerLimitInput();
         }
 
-        SettingsSection("Game Settings");
+        UITools::SectionHeader("Game Settings");
         MapModeSelector();
         TargetMedalSelector();
         if (RoomConfig.MapSelection == MapMode::Mappack) {
@@ -203,12 +203,5 @@ namespace UIRoomSettings {
             OvertimeToggle();
             if (RoomConfig.NoBingoMinutes != 0) TotalTimeIndicator();
         }
-    }
-
-    void SettingsSection(string&in text) {
-        UI::NewLine();
-        UI::PushFont(Font::Bold);
-        UI::Text(text);
-        UI::PopFont();
     }
 }

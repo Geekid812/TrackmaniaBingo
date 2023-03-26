@@ -59,6 +59,13 @@ namespace UITools {
         return InputResult(Math::Clamp(value, min, max), state);
     }
 
+    void SectionHeader(string&in text) {
+        UI::NewLine();
+        UI::PushFont(Font::Bold);
+        UI::Text(text);
+        UI::PopFont();
+    }
+
     void HelpTooltip(const string&in content) {
         UI::Text("\\$666" + Icons::QuestionCircle);
         if (UI::IsItemHovered()) {

@@ -344,7 +344,7 @@ namespace Network {
 
     void JoinRoom() {
         auto Body = Json::Object();
-        Body["join_code"] = Window::JoinCodeInput;
+        Body["join_code"] = UIRoomMenu::JoinCodeInput;
 
         auto Response = Post("JoinRoom", Body, true);
         if (Response is null) {
@@ -360,12 +360,12 @@ namespace Network {
             @Room = GameRoom();
             Room.Name = Response["name"];
             Room.Config = Deserialize(Response["config"]);
-            Room.JoinCode = Window::JoinCodeInput;
+            Room.JoinCode = UIRoomMenu::JoinCodeInput;
             Room.LocalPlayerIsHost = false;
             Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
             NetworkHandlers::UpdateRoom(Response["status"]);
 
-            Window::JoinCodeVisible = false;
+            UIRoomMenu::JoinCodeVisible = false;
             Window::RoomCodeVisible = false;
         }
     }

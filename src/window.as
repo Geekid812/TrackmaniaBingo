@@ -1,12 +1,10 @@
 
 namespace Window {
     bool Visible;
-    bool JoinCodeVisible;
     bool RoomCodeVisible;
     bool RoomCodeHovered;
     bool ClipboardHovered;
     bool ClipboardCopied;
-    string JoinCodeInput;
 
     void Render() {
         if (!Visible) return;
@@ -154,17 +152,7 @@ namespace Window {
 
     
     void JoinTab() {
-        JoinCodeInput = UI::InputText("Room Code", JoinCodeInput, false, UI::InputTextFlags::CharsUppercase | (JoinCodeVisible? 0 : UI::InputTextFlags::Password));
-        UI::SameLine();
-        JoinCodeVisible = UI::Checkbox("Show code", JoinCodeVisible);
-
-        bool disabled = !Config::CanPlay || Network::GetState() != ConnectionState::Connected;
-        if (disabled) UI::BeginDisabled();
-        if (UI::Button("Join Room") && JoinCodeInput.Length >= 6) {
-            startnew(Network::JoinRoom);
-        }
-        if (disabled) UI::EndDisabled();
-        ConnectingIndicator();
+        UIRoomMenu::RoomMenu();
     }
 
     void RoomView() {
