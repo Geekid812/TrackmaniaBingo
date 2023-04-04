@@ -209,12 +209,7 @@ namespace Window {
         }
         UI::Separator();
 
-        array<string> roomInfo = {
-            StatusLabel(Icons::Th, tostring(Room.Config.GridSize) + "x" + tostring(Room.Config.GridSize)),
-            StatusLabel(Icons::Map, tostring(Room.Config.MapSelection)),
-            StatusLabel(Icons::Bullseye, stringof(Room.Config.TargetMedal)),
-            StatusLabel(Icons::Hourglass, Room.Config.MinutesLimit == 0 ? "∞" : tostring(Room.Config.MinutesLimit) + ":00")
-        };
+        string[] roomInfo = RoomConfigInfo(Room.Config);
         string combinedInfo = string::Join(roomInfo, " ");
         float infoPadding = LayoutTools::GetPadding(windowWidth, Draw::MeasureString(combinedInfo).x, 0.5);
         UI::SetCursorPos(vec2(infoPadding, UI::GetCursorPos().y));
@@ -324,6 +319,15 @@ namespace Window {
 
         // Leave room if window was closed
         if (!Visible) Network::LeaveRoom();
+    }
+
+    string[] RoomConfigInfo(RoomConfiguration config) {
+        return {
+            StatusLabel(Icons::Th, tostring(config.GridSize) + "x" + tostring(config.GridSize)),
+            StatusLabel(Icons::Map, tostring(config.MapSelection)),
+            StatusLabel(Icons::Bullseye, stringof(config.TargetMedal)),
+            StatusLabel(Icons::Hourglass, config.MinutesLimit == 0 ? "∞" : tostring(config.MinutesLimit) + ":00")
+        };
     }
 
     string StatusLabel(const string&in icon, const string&in text) {

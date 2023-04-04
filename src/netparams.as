@@ -1,0 +1,5 @@
+
+
+namespace NetParams {
+    string JoinCode;
+}

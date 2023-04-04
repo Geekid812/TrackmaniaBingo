@@ -344,7 +344,7 @@ namespace Network {
 
     void JoinRoom() {
         auto Body = Json::Object();
-        Body["join_code"] = UIRoomMenu::JoinCodeInput;
+        Body["join_code"] = NetParams::JoinCode;
 
         auto Response = Post("JoinRoom", Body, true);
         if (Response is null) {
@@ -368,6 +368,22 @@ namespace Network {
             UIRoomMenu::JoinCodeVisible = false;
             Window::RoomCodeVisible = false;
         }
+    }
+
+    void GetPublicRooms() {
+        auto Response = Post("GetPublicRooms", Json::Object(), false);
+        if (Response is null) {
+            trace("Network: GetPublicRooms - No reply from server.");
+            UIRoomMenu::RoomsLoad = UIRoomMenu::LoadStatus::Error;
+            return;
+        }
+        
+        auto rooms = array<UIRoomMenu::PublicRoom>();
+        for (uint i = 0; i < Response["rooms"].Length; i++) {
+            rooms.InsertLast(UIRoomMenu::PublicRoom(Response["rooms"][i])); 
+        }
+        UIRoomMenu::Rooms = rooms;
+        UIRoomMenu::RoomsLoad = UIRoomMenu::LoadStatus::Ok;
     }
 
     void EditRoomSettings() {
