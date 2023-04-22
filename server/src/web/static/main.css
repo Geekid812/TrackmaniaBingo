@@ -1,0 +1,34 @@
+main {
+    margin: 4vh 6vw 4vh 6vw;
+    padding: 4vh 4vw 4vh 4vw;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 2px 0;
+}
+
+body {
+    font-family: 'Inter', serif;
+}
+
+:root {
+    background: linear-gradient(coral, chocolate);
+    min-height: 100%;
+}
+
+.btn,
+.btn:hover {
+    padding: 0 1.5rem;
+    transition: 200ms;
+}
+
+.close-button {
+    background-color: orangered;
+    border-color: orangered;
+}
+
+
+
+.info-button {
+    background-color: cornflowerblue;
+    border-color: cornflowerblue;
+}

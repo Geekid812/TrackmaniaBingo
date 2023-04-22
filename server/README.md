@@ -1,0 +1,1 @@
+# Bingohost: Trackmania Bingo server
