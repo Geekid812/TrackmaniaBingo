@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = ["orm"]
+members = ["orm", "transport"]
 
 [dependencies]
 # Generic library for handling async futures

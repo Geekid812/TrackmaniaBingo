@@ -1,0 +1,11 @@
+[package]
+name = "transport"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+futures-io = "0.3.28"
+serde = "1.0.160"
+serde_json = "1.0.96"
+tokio = "1.28.0"
+tokio-util = { version = "0.7.8", features = ["codec"] }
