@@ -1,48 +1,109 @@
-use std::time::Duration;
+use once_cell::sync::Lazy;
+use serde::Deserialize;
+use std::{collections::HashMap, time::Duration};
 
-use crate::util::version::Version;
-use tracing::Level;
+pub static CONFIG: Lazy<Config> = Lazy::new(|| {
+    let toml_content = std::fs::read_to_string("config.toml");
+    toml_content
+        .map(|s| toml::from_str(&s).expect("config file parsing error"))
+        .unwrap_or_default()
+});
 
-pub const LOG_LEVEL: Level = Level::DEBUG;
-pub const TCP_LISTENING_PORT: u16 = 8040;
-pub const MINIMUM_CLIENT_VERSION: Version = Version(4, 0);
+#[derive(Deserialize)]
+#[serde(default)]
+pub struct Config {
+    pub log_level: String,
+    pub tcp_port: u16,
+    pub min_client: String,
+    pub tmx_useragent: String,
+    pub secrets: Secrets,
+    pub mapqueue: MapsConfig,
+    pub game: GameConfig,
+    pub routes: RestConfig,
+}
 
-pub const MAP_QUEUE_SIZE: usize = 10;
-pub const MAP_QUEUE_CAPACITY: usize = 30;
-pub const TMX_FETCH_TIMEOUT: Duration = Duration::from_secs(20);
-pub const FETCH_INTERVAL: Duration = Duration::from_secs(4);
+#[derive(Deserialize)]
+pub struct Secrets {
+    pub openplanet_auth: Option<String>,
+    pub admin_key: Option<String>,
+}
 
-pub const AUTHENTICATION_API_SECRET: Option<&'static str> = option_env!("AUTH_SECRET");
-pub const TMX_USERAGENT: &'static str = env!("TMX_USERAGENT");
-pub const ADMIN_KEY: Option<&'static str> = option_env!("ADMIN_KEY");
+#[derive(Deserialize)]
+pub struct MapsConfig {
+    pub queue_size: usize,
+    pub queue_capacity: usize,
+    pub fetch_timeout: Duration,
+    pub fetch_interval: Duration,
+}
 
-pub const TEAMS: [(&'static str, &'static str); 6] = [
-    ("Red", "F81315"),
-    ("Green", "8BC34A"),
-    ("Blue", "0095FF"),
-    ("Cyan", "4DD0E1"),
-    ("Pink", "E04980"),
-    ("Yellow", "FFFF00"),
-];
+#[derive(Deserialize)]
+pub struct GameConfig {
+    pub teams: HashMap<String, String>,
+    pub mxrandom_max_author_time: Duration,
+}
 
-pub const JOINCODE_LENGTH: u32 = 6;
-pub const JOINCODE_CHARS: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+#[derive(Deserialize)]
+pub struct RestConfig {
+    pub openplanet: OpenplanetRoutes,
+    pub tmx: TmxRoutes,
+}
 
-pub const MAXIMUM_PACKET_SIZE: i32 = 2048;
+#[derive(Deserialize)]
+pub struct OpenplanetRoutes {
+    pub base: String,
+    pub auth_validate: String,
+}
 
-pub const MXRANDOM_MAX_AUTHOR_TIME: i32 = Duration::from_secs(5 * 60).as_millis() as i32;
+#[derive(Deserialize)]
+pub struct TmxRoutes {
+    pub base: String,
+    pub map_search: String,
+    pub mappack_maps: String,
+}
 
-pub mod routes {
-    pub mod openplanet {
-        pub const BASE: &'static str = "https://openplanet.dev";
-
-        pub const AUTH_VALIDATE: &'static str = "/api/auth/validate";
-    }
-
-    pub mod tmexchange {
-        pub const BASE: &'static str = "https://trackmania.exchange";
-
-        pub const MAP_SEARCH: &'static str = "/mapsearch2/search";
-        pub const MAPPACK_MAPS: &'static str = "/api/mappack/get_mappack_tracks/";
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            log_level: "INFO".to_owned(),
+            tcp_port: 3080,
+            min_client: "4.0".to_owned(),
+            tmx_useragent: "TrackmaniaBingo (development)".to_string(),
+            secrets: Secrets {
+                openplanet_auth: None,
+                admin_key: None,
+            },
+            mapqueue: MapsConfig {
+                queue_size: 10,
+                queue_capacity: 30,
+                fetch_timeout: Duration::from_secs(20),
+                fetch_interval: Duration::from_secs(4),
+            },
+            game: GameConfig {
+                teams: HashMap::from_iter(
+                    vec![
+                        ("Red", "F81315"),
+                        ("Green", "8BC34A"),
+                        ("Blue", "0095FF"),
+                        ("Cyan", "4DD0E1"),
+                        ("Pink", "E04980"),
+                        ("Yellow", "FFFF00"),
+                    ]
+                    .into_iter()
+                    .map(|(s1, s2)| (s1.to_owned(), s2.to_owned())),
+                ),
+                mxrandom_max_author_time: Duration::from_secs(5 * 60),
+            },
+            routes: RestConfig {
+                openplanet: OpenplanetRoutes {
+                    base: "https://openplanet.dev".to_owned(),
+                    auth_validate: "/api/auth/validate".to_owned(),
+                },
+                tmx: TmxRoutes {
+                    base: "https://trackmania.exchange".to_owned(),
+                    map_search: "/mapsearch2/search".to_owned(),
+                    mappack_maps: "/api/mappack/get_mappack_tracks/".to_owned(),
+                },
+            },
+        }
     }
 }

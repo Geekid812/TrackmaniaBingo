@@ -82,7 +82,7 @@ async fn recv(reader: &mut OwnedReadHalf) -> io::Result<String> {
     reader.read_exact(&mut buf).await?;
     let size = i32::from_le_bytes(buf);
 
-    if size < 1 || size > config::MAXIMUM_PACKET_SIZE {
+    if size < 1 {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             format!("Invalid packet size: {}", size),

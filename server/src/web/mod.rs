@@ -6,7 +6,7 @@ use serde::Serialize;
 use serde_json::json;
 use warp::{Filter, Rejection};
 
-use crate::config;
+use crate::CONFIG;
 
 mod actions;
 mod helpers;
@@ -61,7 +61,9 @@ fn authenticate() -> impl Filter<Extract = (), Error = Rejection> + Copy {
     warp::cookie("key")
         .or_else(|_| async { Ok::<(String,), Infallible>((String::new(),)) })
         .and_then(|key: String| async move {
-            if config::ADMIN_KEY.is_none() || key == config::ADMIN_KEY.unwrap() {
+            if CONFIG.secrets.admin_key.is_none()
+                || key == CONFIG.secrets.admin_key.clone().unwrap()
+            {
                 Ok(())
             } else {
                 Err(warp::reject::custom(reject::Forbidden))

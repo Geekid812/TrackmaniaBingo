@@ -3,7 +3,7 @@ use std::{
     sync::{atomic::AtomicU32, Arc},
 };
 use tokio::net::TcpSocket;
-use tracing::{info, warn};
+use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
 use crate::{client::LoopExit, context::ClientContext};
@@ -29,6 +29,7 @@ pub mod socket;
 pub mod sync;
 pub mod util;
 mod web;
+use config::CONFIG;
 
 pub static CLIENT_COUNT: AtomicU32 = AtomicU32::new(0);
 
@@ -36,7 +37,14 @@ pub static CLIENT_COUNT: AtomicU32 = AtomicU32::new(0);
 async fn main() {
     // Logging setup
     let subscriber = FmtSubscriber::builder()
-        .with_max_level(config::LOG_LEVEL)
+        .with_max_level(match CONFIG.log_level.to_uppercase().as_str() {
+            "TRACE" => Level::TRACE,
+            "DEBUG" => Level::DEBUG,
+            "INFO" => Level::INFO,
+            "WARN" => Level::WARN,
+            "ERROR" => Level::ERROR,
+            _ => panic!("Invalid log level"),
+        })
         .finish();
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber");
@@ -45,19 +53,19 @@ async fn main() {
     tokio::spawn(web::main());
 
     // Auth setup
-    use config::routes::openplanet as route;
+    let route = &CONFIG.routes.openplanet;
     let client = reqwest::Client::new();
     let authenticator = rest::auth::Authenticator::new(
         client,
-        (route::BASE.to_owned() + route::AUTH_VALIDATE)
+        (route.base.to_owned() + route.auth_validate.as_str())
             .parse()
             .expect("authentification route to be valid"),
     );
     let auth_arc = Arc::new(authenticator);
-    if config::AUTHENTICATION_API_SECRET.is_none() {
+    if CONFIG.secrets.openplanet_auth.is_none() {
         info!("Openplanet authentification is disabled. This is intended to be used only on unofficial servers!");
     }
-    if config::ADMIN_KEY.is_none() {
+    if CONFIG.secrets.admin_key.is_none() {
         warn!("Admin key is not set, access to the admin dashboard is unrestricted. This is not recommended!");
     }
 
@@ -70,7 +78,7 @@ async fn main() {
         .set_reuseaddr(true)
         .expect("socket to be able to be reused");
     socket
-        .bind(SocketAddr::from(([0, 0, 0, 0], config::TCP_LISTENING_PORT)))
+        .bind(SocketAddr::from(([0, 0, 0, 0], CONFIG.tcp_port)))
         .expect("socket address to bind");
     let listener = socket.listen(1024).expect("tcp listener to be created");
     info!(

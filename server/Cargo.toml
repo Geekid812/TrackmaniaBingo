@@ -61,10 +61,5 @@ handlebars = "4.3.6"
 # Date and time
 chrono = { version = "0.4.24", features = ["serde"] }
 
-# Depend on a patched tokio runtime to fix inconvenient trait implementations
-#[patch.crates-io]
-#tokio = { git = "https://github.com/Geekid812/tokio", branch = "tokio-1.23.x"}
-
-[features]
-preview = []
-live = []
+# Config parsing
+toml = "0.7.3"

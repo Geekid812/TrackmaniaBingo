@@ -3,7 +3,6 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    config::TEAMS,
     context::{ClientContext, GameContext},
     gamecommon::setup_room,
     gamemap,
@@ -51,7 +50,7 @@ impl Request for CreateRoom {
         Box::new(CreateRoomResponse {
             name: room.name().to_owned(),
             join_code: room.join_code().to_owned(),
-            max_teams: TEAMS.len(),
+            max_teams: crate::CONFIG.game.teams.len(),
             teams: room.teams(),
         })
     }

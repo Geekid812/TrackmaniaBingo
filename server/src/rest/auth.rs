@@ -4,8 +4,6 @@ use serde::Deserialize;
 use std::hash::Hash;
 use thiserror::Error;
 
-use crate::config::AUTHENTICATION_API_SECRET;
-
 pub struct Authenticator {
     client: Client,
     validate_route: Url,
@@ -20,9 +18,10 @@ impl Authenticator {
     }
 
     pub async fn validate(&self, token: String) -> Result<PlayerIdentity, ValidationError> {
-        let form_data = Form::new()
-            .text("token", token)
-            .text("secret", AUTHENTICATION_API_SECRET.unwrap());
+        let form_data = Form::new().text("token", token).text(
+            "secret",
+            crate::CONFIG.secrets.openplanet_auth.as_ref().unwrap(),
+        );
 
         let response: ResponseAuth = self
             .client

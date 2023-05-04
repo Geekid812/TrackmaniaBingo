@@ -10,27 +10,29 @@ use tokio::join;
 use tracing::{debug, error, warn};
 
 use crate::{
-    config,
+    config::CONFIG,
     gamemap::GameMap,
     gameroom::MapMode,
     rest::tmexchange::{self as tmxapi, MapError},
 };
 
-static MXRANDOM_MAP_QUEUE: Mutex<Lazy<Vec<GameMap>>> =
-    Mutex::new(Lazy::new(|| Vec::with_capacity(config::MAP_QUEUE_CAPACITY)));
-static TOTD_MAP_QUEUE: Mutex<Lazy<Vec<GameMap>>> =
-    Mutex::new(Lazy::new(|| Vec::with_capacity(config::MAP_QUEUE_CAPACITY)));
+static MXRANDOM_MAP_QUEUE: Mutex<Lazy<Vec<GameMap>>> = Mutex::new(Lazy::new(|| {
+    Vec::with_capacity(CONFIG.mapqueue.queue_capacity)
+}));
+static TOTD_MAP_QUEUE: Mutex<Lazy<Vec<GameMap>>> = Mutex::new(Lazy::new(|| {
+    Vec::with_capacity(CONFIG.mapqueue.queue_capacity)
+}));
 static CLIENT: Lazy<Client> = Lazy::new(load_tmx_client);
 
 fn load_tmx_client() -> Client {
     let mut headers = HeaderMap::new();
     headers.insert(
         "user-agent",
-        HeaderValue::from_static(config::TMX_USERAGENT),
+        HeaderValue::from_static(&CONFIG.tmx_useragent),
     );
 
     ClientBuilder::new()
-        .timeout(config::TMX_FETCH_TIMEOUT)
+        .timeout(CONFIG.mapqueue.fetch_timeout)
         .default_headers(headers)
         .build()
         .expect("tmx client to be built")
@@ -93,7 +95,7 @@ where
     Fut: Future<Output = Result<GameMap, MapError>>,
 {
     loop {
-        if queue.lock().len() < config::MAP_QUEUE_CAPACITY {
+        if queue.lock().len() < CONFIG.mapqueue.queue_capacity {
             match fetch_callback(&CLIENT).await {
                 Ok(map) => {
                     let mut lock = queue.lock();
@@ -112,7 +114,7 @@ where
                 },
             }
         }
-        tokio::time::sleep(config::FETCH_INTERVAL).await;
+        tokio::time::sleep(CONFIG.mapqueue.fetch_interval).await;
     }
 }
 

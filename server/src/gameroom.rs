@@ -7,7 +7,6 @@ use tracing::warn;
 
 use crate::{
     channel::Channel,
-    config::TEAMS,
     events::ServerEvent,
     gamedata::{ActiveGameData, BingoLine, MapCell},
     gamemap::GameMap,
@@ -124,21 +123,22 @@ impl GameRoom {
     }
 
     pub fn create_team(&mut self) -> Option<&GameTeam> {
+        let teams: Vec<(&String, &String)> = crate::CONFIG.game.teams.iter().collect();
         let team_count = self.teams.len();
-        if team_count >= TEAMS.len() {
-            warn!("attempted to create more than {} teams", TEAMS.len());
+        if team_count >= teams.len() {
+            warn!("attempted to create more than {} teams", teams.len());
             return None;
         }
 
         let mut rng = rand::thread_rng();
-        let mut idx = rng.gen_range(0..TEAMS.len());
-        while self.team_exsits_with_name(TEAMS[idx].0) {
-            idx = rng.gen_range(0..TEAMS.len());
+        let mut idx = rng.gen_range(0..teams.len());
+        while self.team_exsits_with_name(teams[idx].0) {
+            idx = rng.gen_range(0..teams.len());
         }
 
-        let color = RgbColor::from_hex(TEAMS[idx].1).ok()?;
+        let color = RgbColor::from_hex(teams[idx].1).ok()?;
         self.teams
-            .push(GameTeam::new(team_count, TEAMS[idx].0.to_owned(), color));
+            .push(GameTeam::new(team_count, teams[idx].0.to_owned(), color));
         self.room_update();
         self.teams.last()
     }

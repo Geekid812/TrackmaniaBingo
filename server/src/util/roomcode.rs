@@ -1,6 +1,7 @@
 use rand::{distributions::Uniform, prelude::Distribution};
 
-use crate::config::{JOINCODE_CHARS, JOINCODE_LENGTH};
+pub const JOINCODE_LENGTH: u32 = 6;
+pub const JOINCODE_CHARS: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 pub fn generate_roomcode() -> String {
     let mut rng = rand::thread_rng();

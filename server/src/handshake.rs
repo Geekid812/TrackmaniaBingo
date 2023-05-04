@@ -6,10 +6,10 @@ use serde_repr::Serialize_repr;
 use tokio::sync::mpsc::error::SendError;
 
 use crate::{
-    config,
     rest::auth::{Authenticator, PlayerIdentity, ValidationError},
     socket::{SocketAction, SocketReader, SocketWriter},
     util::version::Version,
+    CONFIG,
 };
 
 pub async fn read_handshake(
@@ -30,11 +30,13 @@ pub async fn read_handshake(
         Version::try_from(handshake.version).map_err(|_| HandshakeCode::InvalidVersion)?;
 
     // Client version check
-    if client_version < config::MINIMUM_CLIENT_VERSION {
+    if client_version
+        < Version::try_from(CONFIG.min_client.clone()).expect("invalid client version in config")
+    {
         return Err(HandshakeCode::IncompatibleVersion);
     }
 
-    if config::AUTHENTICATION_API_SECRET.is_none() {
+    if CONFIG.secrets.openplanet_auth.is_none() {
         // Auth disabled
         return Ok(PlayerIdentity {
             account_id: handshake.username.clone(),

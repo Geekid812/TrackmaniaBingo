@@ -4,14 +4,13 @@ use reqwest::{Client, Url};
 use serde::Deserialize;
 use thiserror::Error;
 
-use crate::config;
-use crate::config::routes::tmexchange;
 use crate::gamemap::GameMap;
+use crate::CONFIG;
 
 pub async fn get_randomtmx(client: &Client) -> Result<GameMap, MapError> {
     get_maps(
         client,
-        Url::from_str(&format!("{}{}", tmexchange::BASE, tmexchange::MAP_SEARCH))
+        Url::from_str(&(CONFIG.routes.tmx.base.clone() + &CONFIG.routes.tmx.map_search))
             .expect("map search url to be valid"),
         &[
             ("api", "on"),
@@ -20,7 +19,7 @@ pub async fn get_randomtmx(client: &Client) -> Result<GameMap, MapError> {
             ("etags", "23,37,40"),
             ("vehicles", "1"),
         ],
-        |m| m.author_time <= config::MXRANDOM_MAX_AUTHOR_TIME,
+        |m| m.author_time <= CONFIG.game.mxrandom_max_author_time.as_millis() as i32,
     )
     .await
 }
@@ -28,8 +27,11 @@ pub async fn get_randomtmx(client: &Client) -> Result<GameMap, MapError> {
 pub async fn get_totd(client: &Client) -> Result<GameMap, MapError> {
     get_maps(
         client,
-        Url::from_str(&format!("{}{}", tmexchange::BASE, tmexchange::MAP_SEARCH))
-            .expect("map search url to be valid"),
+        Url::from_str(&format!(
+            "{}{}",
+            CONFIG.routes.tmx.base, CONFIG.routes.tmx.map_search
+        ))
+        .expect("map search url to be valid"),
         &[("api", "on"), ("random", "1"), ("mode", "25")],
         |_| true,
     )
@@ -82,9 +84,7 @@ pub async fn get_mappack_tracks(
         .get(
             Url::from_str(&format!(
                 "{}{}{}",
-                tmexchange::BASE,
-                tmexchange::MAPPACK_MAPS,
-                tmxid
+                CONFIG.routes.tmx.base, CONFIG.routes.tmx.mappack_maps, tmxid
             ))
             .expect("mappack url to be valid"),
         )
