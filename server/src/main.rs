@@ -9,6 +9,7 @@ use tracing_subscriber::FmtSubscriber;
 pub mod core;
 pub mod integrations;
 pub mod orm;
+pub mod server;
 pub mod transport;
 pub mod web;
 
@@ -40,8 +41,6 @@ async fn main() {
     tokio::spawn(web::main());
 
     // Auth setup
-    let route = &CONFIG.routes.openplanet;
-    let client = reqwest::Client::new();
     let authenticator = integrations::openplanet::Authenticator::new(
         CONFIG.secrets.openplanet_auth.clone().unwrap(),
     );
@@ -77,11 +76,21 @@ async fn main() {
             .expect("incoming socket to be accepted");
 
         info!("accepted a connection");
-        let auth = auth_arc.clone();
         tokio::spawn(async move {
             let (tx, rx) = unbounded_channel();
-            let client = TcpNativeClient::new(incoming, rx);
-            // TODO: reimplement!
+            let mut client = TcpNativeClient::new(incoming, rx);
+
+            use server::handshake::*;
+            match do_handshake(&mut client).await {
+                Ok(identity) => accept_socket(
+                    &tx,
+                    HandshakeSuccess {
+                        username: identity.display_name,
+                        can_reconnect: false,
+                    },
+                ),
+                Err(e) => deny_socket(&tx, e),
+            }
         });
     }
 }

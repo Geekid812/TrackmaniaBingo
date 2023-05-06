@@ -5,4 +5,4 @@
 file = "src/orm/schema.rs"
 
 [migrations_directory]
-dir = "migrations"
+dir = "db/migrations"
