@@ -3,10 +3,13 @@ name = "bingohost"
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-members = ["orm", "transport"]
 
 [dependencies]
+serde = { version = "1.0.148", features = ["serde_derive"] }
+thiserror = "1.0.37"
+tracing = "0.1.37"
+chrono = { version = "0.4.24", features = ["serde"] }
+
 # Generic library for handling async futures
 futures = "0.3.25"
 
@@ -14,13 +17,7 @@ futures = "0.3.25"
 generational-arena = { version = "0.2.8", features = ["serde"] }
 
 # Random number generation
-rand = "0.8.5"
-
-# Async HTTP requests
-reqwest = { version = "0.11.13", features = ["json", "multipart"] }
-
-# Serialization framework
-serde = { version = "1.0.148", features = ["serde_derive"] }
+rand = {version = "0.8.5", features = ["small_rng"] }
 
 # Json support for serde
 serde_json = "1.0.89"
@@ -30,12 +27,6 @@ serde_repr = "0.1.9"
 
 # Serializable trait objects
 typetag = "0.2.5"
-
-# #[derive(Error)] macro
-thiserror = "1.0.37"
-
-# Logging facility
-tracing = "0.1.37"
 
 # Default log handler to print to standard output
 tracing-subscriber = "0.3.16"
@@ -52,14 +43,12 @@ parking_lot = "0.12.1"
 # Lazy static initialization
 once_cell = "1.17.1"
 
-# HTTP server
-warp = "0.3.3"
-
-# HTML templates
-handlebars = "4.3.6"
-
 # Date and time
-chrono = { version = "0.4.24", features = ["serde"] }
 
 # Config parsing
 toml = "0.7.3"
+reqwest = { version = "0.11.17", features = ["multipart", "json"] }
+diesel = { version = "2.0.4", features = ["sqlite"] }
+tokio-util = { version = "0.7.8", features = ["codec"] }
+warp = "0.3.5"
+handlebars = "4.3.6"

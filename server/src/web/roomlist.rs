@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
-use crate::{
-    gameroom::{GameRoom, RoomConfiguration},
+use crate::core::{
+    room::{GameRoom, RoomConfiguration},
     roomlist,
 };
 

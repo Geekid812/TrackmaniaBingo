@@ -2,34 +2,21 @@ use std::{
     net::SocketAddr,
     sync::{atomic::AtomicU32, Arc},
 };
-use tokio::net::TcpSocket;
+use tokio::{net::TcpSocket, sync::mpsc::unbounded_channel};
 use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
-use crate::{client::LoopExit, context::ClientContext};
+pub mod core;
+pub mod integrations;
+pub mod orm;
+pub mod transport;
+pub mod web;
 
-pub mod channel;
-pub mod client;
 pub mod config;
-pub mod context;
-pub mod events;
-pub mod gamecommon;
-pub mod gamedata;
-pub mod gamemap;
-pub mod gameroom;
-pub mod gameteam;
-pub mod handlers;
-pub mod handshake;
-pub mod mapqueue;
-pub mod reconnect;
-pub mod requests;
-pub mod rest;
-pub mod roomlist;
-pub mod socket;
-pub mod sync;
-pub mod util;
-mod web;
+
 use config::CONFIG;
+
+use crate::transport::client::tcpnative::TcpNativeClient;
 
 pub static CLIENT_COUNT: AtomicU32 = AtomicU32::new(0);
 
@@ -55,11 +42,8 @@ async fn main() {
     // Auth setup
     let route = &CONFIG.routes.openplanet;
     let client = reqwest::Client::new();
-    let authenticator = rest::auth::Authenticator::new(
-        client,
-        (route.base.to_owned() + route.auth_validate.as_str())
-            .parse()
-            .expect("authentification route to be valid"),
+    let authenticator = integrations::openplanet::Authenticator::new(
+        CONFIG.secrets.openplanet_auth.clone().unwrap(),
     );
     let auth_arc = Arc::new(authenticator);
     if CONFIG.secrets.openplanet_auth.is_none() {
@@ -70,7 +54,7 @@ async fn main() {
     }
 
     // Setup map fetch loop
-    tokio::spawn(mapqueue::run_loop());
+    //tokio::spawn(mapqueue::run_loop());
 
     // Socket creation
     let socket = TcpSocket::new_v4().expect("ipv4 socket to be created");
@@ -95,31 +79,9 @@ async fn main() {
         info!("accepted a connection");
         let auth = auth_arc.clone();
         tokio::spawn(async move {
-            let (writer, mut reader) = socket::spawn(incoming);
-            let ctx = match handshake::read_handshake(&mut reader, auth).await {
-                Ok(identity) => {
-                    let ctx = reconnect::recover(&identity);
-                    let data = handshake::HandshakeSuccess {
-                        username: identity.display_name.clone(),
-                        can_reconnect: ctx.is_some(),
-                    };
-                    drop(handshake::accept_socket(&writer, data));
-                    Some(ClientContext::new(identity, ctx, Arc::new(writer)))
-                }
-                Err(code) => {
-                    drop(handshake::deny_socket(&writer, code));
-                    None
-                }
-            };
-
-            if ctx.is_none() {
-                return;
-            }
-            let exit = client::run_loop(ctx.unwrap(), reader).await;
-
-            if let LoopExit::Linger(identity, game_ctx) = exit {
-                reconnect::add_lingering(&identity, game_ctx);
-            }
+            let (tx, rx) = unbounded_channel();
+            let client = TcpNativeClient::new(incoming, rx);
+            // TODO: reimplement!
         });
     }
 }
