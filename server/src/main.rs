@@ -82,10 +82,10 @@ async fn main() {
 
             use server::handshake::*;
             match do_handshake(&mut client).await {
-                Ok(identity) => accept_socket(
+                Ok(profile) => accept_socket(
                     &tx,
                     HandshakeSuccess {
-                        username: identity.display_name,
+                        profile,
                         can_reconnect: false,
                     },
                 ),

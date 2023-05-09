@@ -1,17 +1,19 @@
 use crate::orm::schema::players;
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use serde::Serialize;
 
-#[derive(Queryable, Selectable, Identifiable)]
+#[derive(Queryable, Selectable, Identifiable, Serialize)]
 #[diesel(table_name = players)]
 #[diesel(primary_key(uid))]
 pub struct Player {
-    pub uid: u32,
+    pub uid: i32,
     pub account_id: String,
     pub username: String,
-    pub created_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
     pub score: i32,
     pub deviation: i32,
     pub country_code: String,
-    pub client_token: String,
+    #[serde(skip_serializing)]
+    client_token: Option<String>,
 }

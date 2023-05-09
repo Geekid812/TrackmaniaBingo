@@ -48,9 +48,9 @@ once_cell = "1.17.1"
 # Config parsing
 toml = "0.7.3"
 reqwest = { version = "0.11.17", features = ["multipart", "json"] }
-diesel = { version = "2.0.4", features = ["sqlite"] }
+diesel = { version = "2.0.4", features = ["sqlite", "chrono"] }
 tokio-util = { version = "0.7.8", features = ["codec"] }
 warp = "0.3.5"
 handlebars = "4.3.6"
 bytes = "1.4.0"
-deadpool-diesel = {verion = "0.4.1", features = ["sqlite"] }
+deadpool-diesel = { version = "0.4.1", features = ["sqlite"] }

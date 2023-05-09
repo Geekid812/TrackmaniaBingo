@@ -1,22 +1,25 @@
-use std::sync::Arc;
 use std::time::Duration;
 
+use diesel::prelude::*;
+use diesel::result::Error::NotFound;
 use futures::{select, FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 use serde_repr::Serialize_repr;
 use tokio::time::sleep;
 use tokio::{pin, sync::mpsc::error::SendError};
+use tracing::error;
 
 use super::version::Version;
+use crate::orm;
+use crate::orm::models::player::Player;
 use crate::transport::client::tcpnative::write;
 use crate::{
-    integrations::openplanet::{Authenticator, PlayerIdentity, ValidationError},
     transport::{client::tcpnative::TcpNativeClient, Tx},
     CONFIG,
 };
 
-pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerIdentity, HandshakeCode> {
+pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<Player, HandshakeCode> {
     pin! {
         let next_message = client.inner.next().fuse();
         let timeout = sleep(Duration::from_secs(30)).fuse();
@@ -39,22 +42,30 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerIdentity
         return Err(HandshakeCode::IncompatibleVersion);
     }
 
-    // Match token to a valid user (TODO: this is a placeholder)
-    let found = Ok(PlayerIdentity {
-        account_id: "TEMP".to_owned(),
-        display_name: "TEMP".to_owned(),
-    });
-    let identity = match found {
-        Ok(i) => i,
+    // Match token to a valid user in storage
+    let player_record = orm::execute(|conn| {
+        use crate::orm::schema::players::dsl::*;
+        players
+            .filter(client_token.eq(handshake.token))
+            .first::<Player>(conn)
+    })
+    .await
+    .expect("database execute error");
+
+    let profile = match player_record {
+        Ok(player) => player,
         Err(e) => {
             return Err(match e {
-                ValidationError::BackendError(_) => HandshakeCode::AuthRefused,
-                ValidationError::RequestError(_) => HandshakeCode::AuthFailure,
+                NotFound => HandshakeCode::AuthRefused,
+                _ => {
+                    error!("Auth failure: {:?}", e);
+                    HandshakeCode::AuthFailure
+                }
             })
         }
     };
 
-    return Ok(identity);
+    return Ok(profile);
 }
 
 pub fn deny_socket(writer: &Tx, code: HandshakeCode) -> Result<(), SendError<String>> {
@@ -75,7 +86,6 @@ pub fn accept_socket(writer: &Tx, data: HandshakeSuccess) -> Result<(), SendErro
 struct HandshakeRequest {
     version: String,
     token: String,
-    username: String,
 }
 
 #[derive(Serialize)]
@@ -87,7 +97,7 @@ struct HandshakeResponse {
 
 #[derive(Serialize)]
 pub struct HandshakeSuccess {
-    pub username: String,
+    pub profile: Player,
     pub can_reconnect: bool,
 }
 

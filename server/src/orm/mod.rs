@@ -1,5 +1,5 @@
 pub mod models;
-mod schema;
+pub mod schema;
 
 use deadpool_diesel::{
     sqlite::{Manager, Object, Pool},
