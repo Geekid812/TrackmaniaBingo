@@ -1,3 +1,4 @@
+use std::io;
 use std::time::Duration;
 
 use diesel::prelude::*;
@@ -6,18 +7,14 @@ use futures::{select, FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 use serde_repr::Serialize_repr;
+use tokio::pin;
 use tokio::time::sleep;
-use tokio::{pin, sync::mpsc::error::SendError};
 use tracing::error;
 
 use super::version::Version;
 use crate::orm;
 use crate::orm::models::player::Player;
-use crate::transport::client::tcpnative::write;
-use crate::{
-    transport::{client::tcpnative::TcpNativeClient, Tx},
-    CONFIG,
-};
+use crate::{transport::client::tcpnative::TcpNativeClient, CONFIG};
 
 pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<Player, HandshakeCode> {
     pin! {
@@ -27,7 +24,13 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<Player, Handsh
     let handshake: HandshakeRequest = select! {
         msg = next_message => {
             if msg.is_none() { return Err(HandshakeCode::ReadError); }
-            from_str(&msg.unwrap().unwrap()).map_err(|_| HandshakeCode::ParseError)?
+            match &msg.unwrap() {
+                Ok(handshake_msg) => from_str(handshake_msg).map_err(|_| HandshakeCode::ParseError)?,
+                Err(e) => {
+                    error!("{}", e);
+                    return Err(HandshakeCode::ReadError);
+                },
+            }
         },
         _ = timeout => return Err(HandshakeCode::ReadError),
     };
@@ -68,18 +71,23 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<Player, Handsh
     return Ok(profile);
 }
 
-pub fn deny_socket(writer: &Tx, code: HandshakeCode) -> Result<(), SendError<String>> {
-    write(writer, &HandshakeResponse { code, data: None })
+pub async fn deny_socket(
+    client: &mut TcpNativeClient,
+    code: HandshakeCode,
+) -> Result<(), io::Error> {
+    client.write(&HandshakeResponse { code, data: None }).await
 }
 
-pub fn accept_socket(writer: &Tx, data: HandshakeSuccess) -> Result<(), SendError<String>> {
-    write(
-        writer,
-        &HandshakeResponse {
+pub async fn accept_socket(
+    client: &mut TcpNativeClient,
+    data: HandshakeSuccess,
+) -> Result<(), io::Error> {
+    client
+        .write(&HandshakeResponse {
             code: HandshakeCode::Ok,
             data: Some(data),
-        },
-    )
+        })
+        .await
 }
 
 #[derive(Deserialize)]

@@ -13,6 +13,7 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
 #[serde(default)]
 pub struct Config {
     pub log_level: String,
+    pub database_url: String,
     pub tcp_port: u16,
     pub min_client: String,
     pub tmx_useragent: String,
@@ -65,6 +66,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             log_level: "INFO".to_owned(),
+            database_url: "sqlite://db/main.db".to_owned(),
             tcp_port: 3080,
             min_client: "4.0".to_owned(),
             tmx_useragent: "TrackmaniaBingo (development)".to_string(),

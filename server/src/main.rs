@@ -37,6 +37,9 @@ async fn main() {
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber");
 
+    // Database setup
+    orm::start_database(&CONFIG.database_url);
+
     // Start web dashboard
     tokio::spawn(web::main());
 
@@ -82,14 +85,17 @@ async fn main() {
 
             use server::handshake::*;
             match do_handshake(&mut client).await {
-                Ok(profile) => accept_socket(
-                    &tx,
-                    HandshakeSuccess {
-                        profile,
-                        can_reconnect: false,
-                    },
-                ),
-                Err(e) => deny_socket(&tx, e),
+                Ok(profile) => {
+                    accept_socket(
+                        &mut client,
+                        HandshakeSuccess {
+                            profile,
+                            can_reconnect: false,
+                        },
+                    )
+                    .await
+                }
+                Err(e) => deny_socket(&mut client, e).await,
             }
         });
     }

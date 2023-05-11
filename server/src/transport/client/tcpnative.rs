@@ -1,4 +1,7 @@
+use std::io;
+
 use bytes::{Bytes, BytesMut};
+use futures::SinkExt;
 use serde::Serialize;
 use tokio::{net::TcpStream, sync::mpsc::error::SendError};
 use tokio_util::codec::{Decoder, Encoder, Framed, LengthDelimitedCodec};
@@ -20,10 +23,16 @@ impl TcpNativeClient {
             rx,
         }
     }
+
+    pub async fn write<T: Serialize>(&mut self, message: &T) -> Result<(), io::Error> {
+        self.inner
+            .send(serde_json::to_string(message).expect("Serialize should not error"))
+            .await
+    }
 }
 
 pub fn write<S: Serialize>(tx: &Tx, value: &S) -> Result<(), SendError<String>> {
-    tx.send(serde_json::to_string(value).expect("Serialize should not error in write"))
+    tx.send(serde_json::to_string(value).expect("Serialize should not error"))
 }
 
 pub struct StringCodec<C: Decoder + Encoder<Bytes>> {
