@@ -9,7 +9,7 @@ use super::{
     map::GameMap,
     room::{NetworkPlayer, PlayerData},
     team::{BaseTeam, TeamIdentifier},
-    util::uuid::uuid,
+    util::base64,
 };
 
 pub struct LiveMatch {
@@ -24,7 +24,7 @@ pub struct LiveMatch {
 impl LiveMatch {
     pub fn new(config: MatchConfiguration, maps: Vec<GameMap>, teams: Vec<GameTeam>) -> Self {
         Self {
-            uid: uuid(16),
+            uid: base64::generate(16),
             config,
             teams,
             cells: maps

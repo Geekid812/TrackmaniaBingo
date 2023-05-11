@@ -8,10 +8,13 @@ use warp::{Filter, Rejection};
 
 use crate::CONFIG;
 
+use self::routes::auth::auth_routes;
+
 mod actions;
 mod helpers;
 mod reject;
 mod roomlist;
+mod routes;
 
 static HANDLEBARS: Lazy<Handlebars<'static>> = Lazy::new(load_handlebars);
 
@@ -33,7 +36,9 @@ pub async fn main() {
         .map(actions::redirect_roomlist);
 
     let protected = index.or(roomlist).or(delete_room);
-    let routes = serve_static.or(authenticate().and(protected));
+    let routes = serve_static
+        .or(authenticate().and(protected))
+        .or(auth_routes());
     warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
 }
 

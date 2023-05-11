@@ -43,11 +43,6 @@ async fn main() {
     // Start web dashboard
     tokio::spawn(web::main());
 
-    // Auth setup
-    let authenticator = integrations::openplanet::Authenticator::new(
-        CONFIG.secrets.openplanet_auth.clone().unwrap(),
-    );
-    let auth_arc = Arc::new(authenticator);
     if CONFIG.secrets.openplanet_auth.is_none() {
         info!("Openplanet authentification is disabled. This is intended to be used only on unofficial servers!");
     }

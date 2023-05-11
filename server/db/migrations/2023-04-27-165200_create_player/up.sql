@@ -5,7 +5,7 @@ CREATE TABLE players (
 	created_at	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     score INTEGER NOT NULL DEFAULT 1000,
     deviation INTEGER NOT NULL DEFAULT 500,
-    country_code CHAR(3) NOT NULL,
+    country_code CHAR(3) NOT NULL DEFAULT "WOR",
 	client_token CHAR(32),
 	PRIMARY KEY("uid" AUTOINCREMENT)
 );

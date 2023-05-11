@@ -23,7 +23,7 @@ pub fn register_room<'a>(room: GameRoom) -> OwnedRoom {
 }
 
 pub fn get_new_roomcode() -> String {
-    let mut lock = ROOMS.lock();
+    let lock = ROOMS.lock();
     let mut join_code = generate_roomcode();
 
     while lock.get(&join_code).is_some() {
