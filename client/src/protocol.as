@@ -68,9 +68,7 @@ class Protocol {
         try {
             Json::Value@ Reply = Json::Parse(HandshakeReply);
             StatusCode = Reply["code"];
-            if (@Reply["username"] != null) {
-                LocalUsername = Reply["username"];
-            }
+            @Profile = PlayerProfile::Deserialize(Reply["profile"]);
         } catch {
             trace("Protocol: Handshake reply parse failed. Got: " + HandshakeReply);
             Fail();
