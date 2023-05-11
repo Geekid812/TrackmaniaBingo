@@ -57,17 +57,23 @@ namespace Window {
             UI::BeginTabBar("Bingo_TabBar");
 
             if (UI::BeginTabItem(Icons::Home + " Home")) {
+                UI::BeginChild("Home");
                 HomeTab();
+                UI::EndChild();
                 UI::EndTabItem();
             }
 
             if (UI::BeginTabItem(Icons::ShareSquareO + " Join Room")) {
+                UI::BeginChild("Join");
                 JoinTab();
+                UI::EndChild();
                 UI::EndTabItem();
             }
 
             if (UI::BeginTabItem(Icons::PlusSquare + " Create Room")) {
+                UI::BeginChild("Create");
                 CreateTab();
+                UI::EndChild();
                 UI::EndTabItem();
             }
 
