@@ -14,8 +14,9 @@ pub struct TcpNativeClient {
 
 impl TcpNativeClient {
     pub fn new(stream: TcpStream, rx: Rx) -> Self {
+        let length_codec = LengthDelimitedCodec::builder().little_endian().new_codec();
         Self {
-            inner: Framed::new(stream, StringCodec::new(LengthDelimitedCodec::new())),
+            inner: Framed::new(stream, StringCodec::new(length_codec)),
             rx,
         }
     }
