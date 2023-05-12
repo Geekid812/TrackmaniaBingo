@@ -57,17 +57,23 @@ namespace Window {
             UI::BeginTabBar("Bingo_TabBar");
 
             if (UI::BeginTabItem(Icons::Home + " Home")) {
+                UI::BeginChild("Home");
                 HomeTab();
+                UI::EndChild();
                 UI::EndTabItem();
             }
 
             if (UI::BeginTabItem(Icons::ShareSquareO + " Join Room")) {
+                UI::BeginChild("Join");
                 JoinTab();
+                UI::EndChild();
                 UI::EndTabItem();
             }
 
             if (UI::BeginTabItem(Icons::PlusSquare + " Create Room")) {
+                UI::BeginChild("Create");
                 CreateTab();
+                UI::EndChild();
                 UI::EndTabItem();
             }
 
@@ -316,15 +322,17 @@ namespace Window {
         UI::PopFont();
 
         if (Room.LocalPlayerIsHost) {
+            float scale = UI::GetScale();
+
             UI::SameLine();
-            float buttonPadding = LayoutTools::GetPadding(windowWidth, 150, 1.0);
-            UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
+            float buttonPadding = LayoutTools::GetPadding(windowWidth, 150 * scale, 1.0);
+            UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4 * scale));
             UIColor::Gray();
             if (UI::Button(Icons::Cog + " Change Settings")) {
                 SettingsWindow::Visible = !SettingsWindow::Visible;
             }
             UIColor::Reset();
-            UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 2));
+            UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 2) * scale);
         }
         UI::Separator();
 
