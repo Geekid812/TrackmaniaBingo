@@ -6,4 +6,14 @@ namespace TrackmaniaBingo {
         }
         return State::InRoom;
     }
+
+    bool IsBingoMapActive() {
+        Playground::GetCurrentTimeToBeat() != null;
+    }
+
+    int GetChallengeTargetTime() {
+        auto targetRun = Playground::GetCurrentTimeToBeat();
+        if (targetRun == null) return 0;
+        return targetRun.Time;
+    }
 }
