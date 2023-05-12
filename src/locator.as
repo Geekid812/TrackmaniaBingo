@@ -5,8 +5,8 @@ namespace BoardLocator {
 
         float scale = UI::GetScale();
 
-        UI::SetNextWindowPos((79 * Board::Unit()) / scale, Board::Unit() / scale, UI::Cond::FirstUseEver);
-        UI::SetNextWindowSize((20 * Board::Unit()) / scale, (20 * Board::Unit()) / scale, UI::Cond::FirstUseEver);
+        UI::SetNextWindowPos(int((79 * Board::Unit()) / scale), int(Board::Unit() / scale), UI::Cond::FirstUseEver);
+        UI::SetNextWindowSize(int((20 * Board::Unit()) / scale), int((20 * Board::Unit()) / scale), UI::Cond::FirstUseEver);
 
         UI::PushStyleColor(UI::Col::WindowBg, vec4(0, 0, 0, 0));
         UI::Begin("Board Locator", UI::WindowFlags::NoCollapse | UI::WindowFlags::NoTitleBar);

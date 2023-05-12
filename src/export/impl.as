@@ -8,12 +8,12 @@ namespace TrackmaniaBingo {
     }
 
     bool IsBingoMapActive() {
-        Playground::GetCurrentTimeToBeat() != null;
+        return @Playground::GetCurrentTimeToBeat() != null;
     }
 
     int GetChallengeTargetTime() {
         auto targetRun = Playground::GetCurrentTimeToBeat();
-        if (targetRun == null) return 0;
+        if (@targetRun == null) return 0;
         return targetRun.Time;
     }
 }
