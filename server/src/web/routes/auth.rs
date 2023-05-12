@@ -9,6 +9,7 @@ use warp::{Rejection, Reply};
 
 use crate::core::util::base64;
 use crate::integrations::openplanet::ValidationError;
+use crate::integrations::tmio::CountryIdentifier;
 use crate::orm;
 use crate::orm::schema::players;
 use crate::{config::CONFIG, integrations::openplanet::Authenticator};
@@ -20,6 +21,9 @@ static AUTHENTICATOR: Lazy<Option<Arc<Authenticator>>> = Lazy::new(|| {
         None
     }
 });
+
+static COUNTRY_IDENTIFIER: Lazy<Arc<CountryIdentifier>> =
+    Lazy::new(|| Arc::new(CountryIdentifier::new()));
 
 pub fn auth_routes() -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     let login = warp::get()
@@ -40,11 +44,20 @@ async fn login(token: Option<String>) -> impl warp::Reply {
             match AUTHENTICATOR.as_ref().unwrap().validate(token).await {
                 Ok(identity) => {
                     let token = base64::generate(32);
+                    let country_result = COUNTRY_IDENTIFIER
+                        .get_country_code(&identity.account_id)
+                        .await;
+
+                    if let Err(e) = &country_result {
+                        error!("country code error: {}", e);
+                    }
+                    let country_code = country_result.unwrap_or(None);
+
                     let player = NewPlayer {
                         account_id: identity.account_id,
                         username: identity.display_name,
                         client_token: token.clone(),
-                        country_code: None, // TODO: integrate TM.io to get country code
+                        country_code,
                     };
                     let result = orm::execute(move |conn| {
                         diesel::insert_into(players::table)

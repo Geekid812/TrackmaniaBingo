@@ -19,6 +19,7 @@ use config::CONFIG;
 
 use crate::transport::client::tcpnative::TcpNativeClient;
 
+pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 pub static CLIENT_COUNT: AtomicU32 = AtomicU32::new(0);
 
 #[tokio::main]

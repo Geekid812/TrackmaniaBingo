@@ -4,6 +4,7 @@ use reqwest::{multipart::Form, Client, ClientBuilder, Url};
 use serde::Deserialize;
 use std::str::FromStr;
 use thiserror::Error;
+use tracing::debug;
 
 const AUTH_VALIDATE: &'static str = "/api/auth/validate";
 
@@ -24,6 +25,7 @@ impl Authenticator {
     }
 
     pub async fn validate(&self, token: String) -> Result<PlayerIdentity, ValidationError> {
+        debug!("validating this token: {}", token);
         let form_data = Form::new()
             .text("token", token)
             .text("secret", self.secret.clone());
@@ -34,6 +36,8 @@ impl Authenticator {
             .multipart(form_data)
             .send()
             .await?
+            .error_for_status()
+            .map_err(ValidationError::RequestError)?
             .json()
             .await?;
 
