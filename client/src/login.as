@@ -21,7 +21,7 @@ namespace Login {
         }
 
         trace("Login: Attempting to login to " + Settings::BackendAddress + "...");
-        string url = "http://" + Settings::BackendAddress + ":8080/auth/login?token=" + Net::UrlEncode(authToken);
+        string url = "http://" + Settings::BackendAddress + ":" + Settings::HttpPort + "/auth/login?token=" + Net::UrlEncode(authToken);
         auto req = Net::HttpGet(url);
         while (!req.Finished()) { yield(); }
     
