@@ -3,6 +3,7 @@ const string MenuItemName = "\\$ff0" + WindowName;
 
 void Main() {
     startnew(Font::Init);
+    startnew(Login::EnsureLoggedIn);
     Config::FetchConfig();
 
     // Plugin was connected to a game when it was forcefully closed or game crashed

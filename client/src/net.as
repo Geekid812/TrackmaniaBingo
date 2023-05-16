@@ -1,6 +1,6 @@
 
 namespace Network {
-    const int SECRET_LENGTH = 16;
+    const int SECRET_LENGTH = 32;
 
     // Server TCP socket listening for events
     Net::Socket@ EventStream = Net::Socket();
@@ -14,8 +14,6 @@ namespace Network {
     bool IsConnected = false;
 
     Protocol _protocol;
-    string AuthToken;
-    uint64 TokenExpireDate;
     bool IsOffline;
     uint SequenceNext;
     array<Response@> Received;
@@ -35,7 +33,6 @@ namespace Network {
     void Init() {
         IsInitialized = true;
         _protocol = Protocol();
-        TokenExpireDate = 0;
         SequenceNext = 0;
         Received = {};
         Connect();
@@ -43,7 +40,6 @@ namespace Network {
 
     void Connect() {
         IsOffline = false;
-        FetchAuthToken();
         LastPingSent = Time::Now;
         LastPingReceived = Time::Now;
         IsOffline = !OpenConnection();
@@ -53,30 +49,9 @@ namespace Network {
         return _protocol.State;
     }
 
-    void FetchAuthToken() {
-        trace("Auth: fetching a new authentication token...");
-        Auth::PluginAuthTask@ task = Auth::GetToken();
-        while (!task.Finished()) { yield(); }
-        
-        string token = task.Token();
-        if (token != "") {
-            AuthToken = token;
-            TokenExpireDate = Time::Now + (5 * 60 * 1000); // Valid for 5 minutes
-            trace("Auth: received new authentication token.");
-        } else {
-            warn("Auth: did not receive a valid token. This could be a connection issue.");
-            warn("Troubleshooter: If this issue persists, please restart your game.");
-        }
-    }
-
     bool OpenConnection() {
         auto handshake = HandshakeData();
-        handshake.ClientVersion = Meta::ExecutingPlugin().Version.Split("-")[0];
-        if (Time::Now > TokenExpireDate) {
-            trace("Network: could not open a connection: authentication token is not valid.");
-            return false;
-        }
-        handshake.AuthToken = AuthToken;
+        handshake.ClientVersion = Meta::ExecutingPlugin().Version;
         handshake.Username = GetLocalLogin();
 
         int retries = 3;
@@ -132,16 +107,18 @@ namespace Network {
         }
 
         if (LastPingSent + Settings::PingInterval <= Time::Now) {
-            startnew(function() {
-                if (@Post("Ping", Json::Object(), false, Settings::NetworkTimeout) != null) {
-                    Network::LastPingReceived = Time::Now;
-                }
-            });
+            startnew(DoPing);
             LastPingSent = Time::Now;
         }
 
         if (LastPingReceived + Settings::PingInterval + Settings::NetworkTimeout <= Time::Now) {
             OnDisconnect();
+        }
+    }
+
+    void DoPing() {
+        if (@Post("Ping", Json::Object(), false, Settings::NetworkTimeout) != null) {
+            Network::LastPingReceived = Time::Now;
         }
     }
 
