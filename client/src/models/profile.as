@@ -7,6 +7,10 @@ class PlayerProfile {
     int score;
     int deviation;
     string countryCode;
+    int matchCount;
+    int wins;
+    int losses;
+    string title;
 }
 
 namespace PlayerProfile {
@@ -19,6 +23,10 @@ namespace PlayerProfile {
         value["score"] = profile.score;
         value["deviation"] = profile.deviation;
         value["country_code"] = profile.countryCode;
+        value["match_count"] = profile.matchCount;
+        value["wins"] = profile.wins;
+        value["losses"] = profile.losses;
+        value["title"] = profile.title;
 
         return value;
     }
@@ -32,6 +40,10 @@ namespace PlayerProfile {
         profile.score = value["score"];
         profile.deviation = value["deviation"];
         profile.countryCode = value["country_code"];
+        profile.matchCount = value["match_count"];
+        profile.wins = value["wins"];
+        profile.losses = value["losses"];
+        profile.title = value["title"];
 
         return profile;
     }

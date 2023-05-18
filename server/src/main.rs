@@ -1,7 +1,4 @@
-use std::{
-    net::SocketAddr,
-    sync::{atomic::AtomicU32, Arc},
-};
+use std::{net::SocketAddr, sync::atomic::AtomicU32};
 use tokio::{net::TcpSocket, sync::mpsc::unbounded_channel};
 use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;

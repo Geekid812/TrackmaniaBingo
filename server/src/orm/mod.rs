@@ -1,3 +1,4 @@
+pub mod composed;
 pub mod models;
 pub mod schema;
 

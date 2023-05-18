@@ -1,4 +1,4 @@
-use crate::core::util::serialize::serialize_time;
+use crate::core::util::serialize::{serialize_or_default, serialize_time};
 use crate::orm::schema::players;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -16,6 +16,13 @@ pub struct Player {
     pub score: i32,
     pub deviation: i32,
     pub country_code: String,
+    #[allow(unused)]
     #[serde(skip_serializing)]
     client_token: Option<String>,
+    #[serde(serialize_with = "serialize_or_default")]
+    pub title: Option<String>,
+}
+
+pub fn get(conn: &mut SqliteConnection, uid: i32) -> QueryResult<Player> {
+    players::table.find(uid).first::<Player>(conn)
 }

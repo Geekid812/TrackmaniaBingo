@@ -13,10 +13,11 @@ use tracing::error;
 
 use super::version::Version;
 use crate::orm;
+use crate::orm::composed::profile::{get_profile, PlayerProfile};
 use crate::orm::models::player::Player;
 use crate::{transport::client::tcpnative::TcpNativeClient, CONFIG};
 
-pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<Player, HandshakeCode> {
+pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile, HandshakeCode> {
     pin! {
         let next_message = client.inner.next().fuse();
         let timeout = sleep(Duration::from_secs(30)).fuse();
@@ -48,9 +49,10 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<Player, Handsh
     // Match token to a valid user in storage
     let player_record = orm::execute(|conn| {
         use crate::orm::schema::players::dsl::*;
-        players
+        let player = players
             .filter(client_token.eq(handshake.token))
-            .first::<Player>(conn)
+            .first::<Player>(conn)?;
+        get_profile(conn, player)
     })
     .await
     .expect("database execute error");
@@ -105,7 +107,7 @@ struct HandshakeResponse {
 
 #[derive(Serialize)]
 pub struct HandshakeSuccess {
-    pub profile: Player,
+    pub profile: PlayerProfile,
     pub can_reconnect: bool,
 }
 

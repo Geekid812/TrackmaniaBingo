@@ -2,12 +2,16 @@
 namespace Login {
 
     void EnsureLoggedIn() {
-        if (PersistantStorage::ClientToken == "") {
+        if (!IsLoggedIn()) {
             print("Login: No client token in store, attempting to authenticate.");
             Login();
         } else {
             trace("Login: Client is logged in.");
         }
+    }
+
+    bool IsLoggedIn() {
+        return PersistantStorage::ClientToken != "";
     }
 
     void Login() {

@@ -39,10 +39,20 @@ namespace Network {
     }
 
     void Connect() {
-        IsOffline = false;
+        SetOffline(false);
+
+        Login::EnsureLoggedIn();
+        if (!Login::IsLoggedIn()) {
+            SetOffline(true);
+            return;
+        }
         LastPingSent = Time::Now;
         LastPingReceived = Time::Now;
-        IsOffline = !OpenConnection();
+        SetOffline(!OpenConnection());
+    }
+
+    void SetOffline(bool offline) {
+        IsOffline = offline;
     }
 
     ConnectionState GetState() {
@@ -50,12 +60,12 @@ namespace Network {
     }
 
     bool OpenConnection() {
-        auto handshake = HandshakeData();
-        handshake.ClientVersion = Meta::ExecutingPlugin().Version;
-        handshake.Username = GetLocalLogin();
-
         int retries = 3;
         while (_protocol.State != ConnectionState::Connected && retries > 0) {
+            auto handshake = HandshakeData();
+            handshake.ClientVersion = Meta::ExecutingPlugin().Version;
+            handshake.Username = GetLocalLogin();
+            handshake.AuthToken = PersistantStorage::ClientToken;
             int code = _protocol.Connect(Settings::BackendAddress, Settings::NetworkPort, handshake);
             if (code != -1) HandleHandshakeCode(HandshakeCode(code));
 
@@ -79,8 +89,11 @@ namespace Network {
             startnew(Sync);
         } else if (code == HandshakeCode::IncompatibleVersion) {
             // Update required
-        } else if (code == HandshakeCode::AuthFailure) {
-            // Auth servers are not reachable
+            UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required to play Bingo. Please update the plugin to the latest version in the plugin manager.", vec4(.4, .4, 1., 1.), 10000);
+        } else if (code == HandshakeCode::AuthRefused || code == HandshakeCode::AuthFailure) {
+            // Auth error (we should try and update our logins)
+            trace("Network: Received auth error handshake code (" + code + "). Attempting to refresh credentials...");
+            Login::Login();
         } else {
             // Plugin error (this should not happen)
         }

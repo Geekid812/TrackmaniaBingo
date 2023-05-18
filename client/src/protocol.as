@@ -68,7 +68,9 @@ class Protocol {
         try {
             Json::Value@ Reply = Json::Parse(HandshakeReply);
             StatusCode = Reply["code"];
-            @Profile = PlayerProfile::Deserialize(Reply["profile"]);
+            if (Reply.HasKey("profile")) {
+                @Profile = PlayerProfile::Deserialize(Reply["profile"]);
+            }
         } catch {
             trace("Protocol: Handshake reply parse failed. Got: " + HandshakeReply);
             Fail();
@@ -119,7 +121,6 @@ class Protocol {
                     return "";
                 }
                 MsgSize = Size;
-                trace("Protocol: expecting size " + Size);
             }
         }
 
