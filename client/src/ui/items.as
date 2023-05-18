@@ -76,5 +76,5 @@ namespace UITools {
     }
 
     bool grzero(int x) { return x > 0; }
-    int toint(bool x) { return x ? 1 : 0;} 
+    int toint(bool x) { return x ? 1 : 0; } 
 }

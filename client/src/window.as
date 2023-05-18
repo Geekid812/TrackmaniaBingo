@@ -8,8 +8,17 @@ namespace Window {
 
     void Render() {
         if (!Visible) return;
-        UI::Begin(WindowName, Visible);
+        UI::PushStyleColor(UI::Col::TitleBg, UI::GetStyleColor(UI::Col::WindowBg));
+        UI::PushStyleColor(UI::Col::TitleBgActive, UI::GetStyleColor(UI::Col::WindowBg));
+        UI::Begin("##bingomain", Visible);
         UI::PushFont(Font::Regular);
+
+        UIHome::Render();
+
+        UI::PopFont();
+        UI::End();
+        UI::PopStyleColor(2);
+        return;
 
         if (!Permissions::PlayLocalMap()) {
             NoPermissions();

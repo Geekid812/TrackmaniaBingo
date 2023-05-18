@@ -36,6 +36,7 @@ void Render() {
 
 void RenderInterface() {
     Window::Render();
+    UINews::Render();
     SettingsWindow::Render();
 }
 
