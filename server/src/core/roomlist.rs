@@ -6,11 +6,16 @@ use std::{
 use once_cell::sync::Lazy;
 use parking_lot::{Mutex, MutexGuard};
 
-use super::{room::GameRoom, util::roomcode::generate_roomcode};
+use crate::transport::Channel;
+
+use super::{events::roomlist::RoomlistEvent, room::GameRoom, util::roomcode::generate_roomcode};
 
 pub type OwnedRoom = Arc<Mutex<GameRoom>>;
+pub type SharedRoom = Weak<Mutex<GameRoom>>;
 
 static ROOMS: Mutex<Lazy<HashMap<String, OwnedRoom>>> = Mutex::new(Lazy::new(|| HashMap::new()));
+static PUB_ROOMS_CHANNEL: Mutex<Lazy<Channel<RoomlistEvent>>> =
+    Mutex::new(Lazy::new(|| Channel::new()));
 pub type RoomsLock<'a> = MutexGuard<'a, Lazy<HashMap<String, OwnedRoom>>>;
 
 pub fn register_room<'a>(room: GameRoom) -> OwnedRoom {
@@ -52,6 +57,19 @@ pub fn remove_room(room: OwnedRoom) {
 
     if let Some(code) = to_remove {
         lock.remove(&code);
+    }
+}
+
+pub fn send_room_visibility(room: &GameRoom, visible: bool) {
+    let mut lock = PUB_ROOMS_CHANNEL.lock();
+    if !visible {
+        lock.broadcast(&RoomlistEvent::RoomUnlisted {
+            join_code: room.join_code().to_owned(),
+        });
+    } else {
+        lock.broadcast(&RoomlistEvent::RoomListed {
+            room: room.as_network(),
+        })
     }
 }
 

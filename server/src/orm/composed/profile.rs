@@ -6,7 +6,7 @@ use crate::orm::{
     schema::matches_players,
 };
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Debug)]
 pub struct PlayerProfile {
     #[serde(flatten)]
     pub player: Player,

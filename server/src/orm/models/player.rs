@@ -4,7 +4,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Serialize;
 
-#[derive(Queryable, Selectable, Identifiable, Serialize)]
+#[derive(Queryable, Selectable, Identifiable, Serialize, Clone, Debug)]
 #[diesel(table_name = players)]
 #[diesel(primary_key(uid))]
 pub struct Player {

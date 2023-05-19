@@ -14,6 +14,7 @@ pub mod config;
 
 use config::CONFIG;
 
+use crate::server::client;
 use crate::transport::client::tcpnative::TcpNativeClient;
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -77,18 +78,23 @@ async fn main() {
             let mut client = TcpNativeClient::new(incoming, rx);
 
             use server::handshake::*;
-            match do_handshake(&mut client).await {
+            let profile = match do_handshake(&mut client).await {
                 Ok(profile) => {
                     accept_socket(
                         &mut client,
                         HandshakeSuccess {
-                            profile,
+                            profile: profile.clone(),
                             can_reconnect: false,
                         },
                     )
                     .await
+                    .ok();
+                    Some(profile)
                 }
-                Err(e) => deny_socket(&mut client, e).await,
+                Err(e) => deny_socket(&mut client, e).await.ok().and(None),
+            };
+            if profile.is_none() {
+                return;
             }
         });
     }

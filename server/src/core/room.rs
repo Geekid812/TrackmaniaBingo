@@ -10,10 +10,11 @@ use super::{
     events::room::RoomEvent,
     identity::PlayerIdentity,
     livegame::MatchConfiguration,
+    roomlist,
     team::{BaseTeam, TeamIdentifier},
     util::color::RgbColor,
 };
-use crate::transport::Channel;
+use crate::{orm::composed::profile::PlayerProfile, transport::Channel};
 
 pub struct GameRoom {
     name: String,
@@ -61,6 +62,17 @@ impl GameRoom {
         &self.matchconfig
     }
 
+    pub fn as_network(&self) -> NetworkRoom {
+        NetworkRoom {
+            name: self.name.clone(),
+            join_code: self.join_code.clone(),
+            hostname: self.host_name(),
+            config: self.config.clone(),
+            matchconfig: self.matchconfig.clone(),
+            player_count: self.members.len() as i32,
+        }
+    }
+
     pub fn at_size_capacity(&self) -> bool {
         self.config.size != 0 && (self.members.len() as u32) < self.config.size
     }
@@ -102,11 +114,11 @@ impl GameRoom {
         self.members
             .iter()
             .find(|p| p.operator)
-            .map(|p| p.identity.display_name.clone())
+            .map(|p| p.profile.player.username.clone())
     }
 
-    pub fn get_player(&self, identity: PlayerIdentity) -> Option<&PlayerData> {
-        self.members.iter().find(|p| p.identity == identity)
+    pub fn get_player(&self, uid: i32) -> Option<&PlayerData> {
+        self.members.iter().find(|p| p.profile.player.uid == uid)
     }
 
     pub fn get_team(&self, identifier: TeamIdentifier) -> Option<&BaseTeam> {
@@ -140,10 +152,10 @@ impl GameRoom {
         self.teams.iter().any(|t| t.name == name)
     }
 
-    pub fn add_player(&mut self, identity: &PlayerIdentity, operator: bool) {
+    pub fn add_player(&mut self, profile: &PlayerProfile, operator: bool) {
         let team = self.teams[0].id; // TODO: sort into teams when joining
         self.members.push(PlayerData {
-            identity: identity.clone(),
+            profile: profile.clone(),
             team,
             operator,
             disconnected: false,
@@ -151,17 +163,21 @@ impl GameRoom {
         self.room_update();
     }
 
-    pub fn player_join(&mut self, identity: &PlayerIdentity) -> Result<(), JoinRoomError> {
+    pub fn has_started(&self) -> bool {
+        false // TODO
+    }
+
+    pub fn player_join(&mut self, profile: &PlayerProfile) -> Result<(), JoinRoomError> {
         if self.at_size_capacity() {
             return Err(JoinRoomError::PlayerLimitReached);
         }
         // TODO: reimplement room started check
-        Ok(self.add_player(identity, false))
+        Ok(self.add_player(profile, false))
     }
 
-    pub fn player_remove(&mut self, identity: &PlayerIdentity) {
+    pub fn player_remove(&mut self, uid: i32) {
         for i in 0..self.members.len() {
-            if &self.members[i].identity == identity {
+            if self.members[i].profile.player.uid == uid {
                 self.members.remove(i);
                 break;
             }
@@ -169,14 +185,14 @@ impl GameRoom {
         self.room_update();
     }
 
-    pub fn change_team(&mut self, identity: &PlayerIdentity, team: TeamIdentifier) -> bool {
+    pub fn change_team(&mut self, uid: i32, team: TeamIdentifier) -> bool {
         if !self.team_exsits(team) {
             return false;
         }
         if let Some(data) = self
             .members
             .iter_mut()
-            .filter(|m| &m.identity == identity)
+            .filter(|m| m.profile.player.uid == uid)
             .next()
         {
             data.team = team;
@@ -186,6 +202,9 @@ impl GameRoom {
     }
 
     pub fn set_config(&mut self, config: RoomConfiguration) {
+        if config.public != self.config.public {
+            roomlist::send_room_visibility(self, config.public);
+        }
         self.config = config;
         self.config_update();
     }
@@ -238,7 +257,7 @@ pub enum JoinRoomError {
 }
 
 pub struct PlayerData {
-    pub identity: PlayerIdentity,
+    pub profile: PlayerProfile,
     pub team: TeamIdentifier,
     pub operator: bool,
     pub disconnected: bool,
@@ -253,7 +272,7 @@ pub struct NetworkPlayer {
 impl From<&PlayerData> for NetworkPlayer {
     fn from(value: &PlayerData) -> Self {
         Self {
-            name: value.identity.display_name.clone(),
+            name: value.profile.player.username.clone(),
             team: value.team,
         }
     }
@@ -263,4 +282,14 @@ impl From<&PlayerData> for NetworkPlayer {
 pub struct NetworkTeam {
     pub info: BaseTeam,
     pub members: Vec<NetworkPlayer>,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct NetworkRoom {
+    pub name: String,
+    pub join_code: String,
+    pub hostname: Option<String>,
+    pub config: RoomConfiguration,
+    pub matchconfig: MatchConfiguration,
+    pub player_count: i32,
 }

@@ -1,12 +1,12 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::util::color::RgbColor;
 
 static TEAMID: AtomicUsize = AtomicUsize::new(0);
 
-#[derive(Copy, Clone, PartialEq, Eq, Serialize, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Debug, Hash, Deserialize)]
 pub struct TeamIdentifier(usize);
 
 #[derive(Clone, Serialize, Debug)]

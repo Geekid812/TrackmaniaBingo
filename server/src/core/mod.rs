@@ -1,4 +1,5 @@
 pub mod events;
+pub mod gamecommon;
 pub mod identity;
 pub mod livegame;
 pub mod map;

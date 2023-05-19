@@ -24,10 +24,13 @@ impl TcpNativeClient {
         }
     }
 
-    pub async fn write<T: Serialize>(&mut self, message: &T) -> Result<(), io::Error> {
-        self.inner
-            .send(serde_json::to_string(message).expect("Serialize should not error"))
+    pub async fn serialize<T: Serialize>(&mut self, message: &T) -> Result<(), io::Error> {
+        self.write(serde_json::to_string(message).expect("Serialize should not error"))
             .await
+    }
+
+    pub async fn write(&mut self, message: String) -> Result<(), io::Error> {
+        self.inner.send(message).await
     }
 }
 

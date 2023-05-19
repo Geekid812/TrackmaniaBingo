@@ -1,11 +1,11 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
 use serde::Serialize;
 
 use super::Tx;
 
 pub struct Channel<T: Serialize> {
-    peers: HashMap<String, Tx>,
+    peers: HashMap<String, Arc<Tx>>,
     _data: PhantomData<T>,
 }
 
@@ -17,7 +17,7 @@ impl<T: Serialize> Channel<T> {
         }
     }
 
-    pub fn subscribe(&mut self, address: String, subscriber: Tx) {
+    pub fn subscribe(&mut self, address: String, subscriber: Arc<Tx>) {
         self.peers.insert(address, subscriber);
     }
 

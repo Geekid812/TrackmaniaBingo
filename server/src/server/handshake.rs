@@ -77,7 +77,9 @@ pub async fn deny_socket(
     client: &mut TcpNativeClient,
     code: HandshakeCode,
 ) -> Result<(), io::Error> {
-    client.write(&HandshakeResponse { code, data: None }).await
+    client
+        .serialize(&HandshakeResponse { code, data: None })
+        .await
 }
 
 pub async fn accept_socket(
@@ -85,7 +87,7 @@ pub async fn accept_socket(
     data: HandshakeSuccess,
 ) -> Result<(), io::Error> {
     client
-        .write(&HandshakeResponse {
+        .serialize(&HandshakeResponse {
             code: HandshakeCode::Ok,
             data: Some(data),
         })
