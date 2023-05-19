@@ -5,6 +5,13 @@ namespace Window {
     bool RoomCodeHovered;
     bool ClipboardHovered;
     bool ClipboardCopied;
+    WindowTab ActiveTab;
+
+    enum WindowTab {
+        Home,
+        Play,
+        Create
+    }
 
     void Render() {
         if (!Visible) return;
@@ -13,7 +20,39 @@ namespace Window {
         UI::Begin("##bingomain", Visible);
         UI::PushFont(Font::Regular);
 
-        UIHome::Render();
+        UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 10));
+        if (@Profile != null) {
+            UIProfile::RenderProfile(Profile);
+        }
+        UI::Dummy(vec2(0, 10));
+
+        UIColor::Crimson();
+        UI::BeginTabBar("Bingo_TabBar");
+        if (UI::BeginTabItem(Icons::Home + " Home")) {
+            ActiveTab = WindowTab::Home;
+            UI::BeginChild("bingohome");
+            UIHome::Render();
+            UI::EndChild();
+            UI::EndTabItem();
+        }
+
+        if (UI::BeginTabItem(Icons::PlayCircle + " Play")) {
+            ActiveTab = WindowTab::Play;
+            UI::BeginChild("bingojoin");
+            JoinTab();
+            UI::EndChild();
+            UI::EndTabItem();
+        }
+
+        if (UI::BeginTabItem(Icons::PlusSquare + " Create")) {
+            ActiveTab = WindowTab::Create;
+            UI::BeginChild("bingocreate");
+            CreateTab();
+            UI::EndChild();
+            UI::EndTabItem();
+        }
+        UI::EndTabBar();
+        UIColor::Reset();
 
         UI::PopFont();
         UI::End();

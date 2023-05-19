@@ -190,6 +190,7 @@ namespace UIRoomSettings {
             PlayerLimitInput();
         }
 
+        UI::NewLine();
         UITools::SectionHeader("Game Settings");
         MapModeSelector();
         TargetMedalSelector();

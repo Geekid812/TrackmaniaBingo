@@ -60,7 +60,6 @@ namespace UITools {
     }
 
     void SectionHeader(string&in text) {
-        UI::NewLine();
         UI::PushFont(Font::Bold);
         UI::Text(text);
         UI::PopFont();

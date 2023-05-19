@@ -4,61 +4,62 @@ namespace UIColor {
     string[] HexChars = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"};
 
     void Red() {
-        UI::PushStyleColor(UI::Col::Button, vec4(1., .2, .2, 1.));
-        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(1., .4, .4, 1.));
-        UI::PushStyleColor(UI::Col::ButtonActive, vec4(1., .6, .6, 1.));   
+        Color(vec4(1., .2, .2, 1.), vec4(1., .4, .4, 1.), vec4(1., .6, .6, 1.));
     }
 
     void Blue() {
-        UI::PushStyleColor(UI::Col::Button, vec4(.2, .2, 1., 1.));
-        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(.4, .4, 1., 1.));
-        UI::PushStyleColor(UI::Col::ButtonActive, vec4(.6, .6, 1., 1.));
+        Color(vec4(.2, .2, 1., 1.), vec4(.4, .4, 1., 1.), vec4(.6, .6, 1., 1.));
     }
 
     void DarkGreen() {
-        UI::PushStyleColor(UI::Col::Button, vec4(.1, .5, .1, 1.));
-        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(.2, .5, .2, 1.));
-        UI::PushStyleColor(UI::Col::ButtonActive, vec4(.3, .5, .3, 1.));
+        Color(vec4(.1, .5, .1, 1.), vec4(.2, .5, .2, 1.), vec4(.3, .5, .3, 1.));
     }
 
     void DarkRed() {
-        UI::PushStyleColor(UI::Col::Button, vec4(.5, .1, .1, 1.));
-        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(.5, .2, .2, 1.));
-        UI::PushStyleColor(UI::Col::ButtonActive, vec4(.5, .3, .3, 1.));   
+        Color(vec4(.5, .1, .1, 1.), vec4(.5, .2, .2, 1.), vec4(.5, .3, .3, 1.));
     }
 
     void Cyan() {
-        UI::PushStyleColor(UI::Col::Button, vec4(.0, .6, .6, 1.));
-        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(.0, .7, .7, 1.));
-        UI::PushStyleColor(UI::Col::ButtonActive, vec4(.0, .8, .8, 1.));
+        Color(vec4(.0, .6, .6, 1.), vec4(.0, .7, .7, 1.), vec4(.0, .8, .8, 1.));
     }
 
     void Lime() {
-        UI::PushStyleColor(UI::Col::Button, vec4(.4, .7, .4, 1.));
-        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(.5, .8, .5, 1.));
-        UI::PushStyleColor(UI::Col::ButtonActive, vec4(.6, .9, .6, 1.));
+        Color(vec4(.4, .7, .4, 1.), vec4(.5, .8, .5, 1.), vec4(.6, .9, .6, 1.));
     }
 
     void Gray() {
-        UI::PushStyleColor(UI::Col::Button, vec4(.2, .2, .2, 1.));
-        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(.3, .3, .3, 1.));
-        UI::PushStyleColor(UI::Col::ButtonActive, vec4(.4, .4, .4, 1.));   
+        Color(vec4(.2, .2, .2, 1.), vec4(.3, .3, .3, 1.), vec4(.4, .4, .4, 1.));
     }
 
     void Dark() {
-        UI::PushStyleColor(UI::Col::Button, vec4(.1, .1, .1, .8));
-        UI::PushStyleColor(UI::Col::ButtonHovered, vec4(.2, .2, .2, .8));
-        UI::PushStyleColor(UI::Col::ButtonActive, vec4(.3, .3, .3, .8));   
+        Color(vec4(.1, .1, .1, .8), vec4(.2, .2, .2, .8), vec4(.3, .3, .3, .8)); 
+    }
+
+    void Orange() {
+        Color(vec4(.7, .4, .1, 1.), vec4(.8, .5, .1, 1.), vec4(.9, .6, .1, 1.));
+    }
+
+    void Crimson() {
+        Color(vec4(.75, .25, .25, 1.), vec4(.9, .35, .35, 1.), vec4(.95, .4, .4, 1.));
+    }
+
+    void Color(vec4 base, vec4 accent, vec4 active) {
+        UI::PushStyleColor(UI::Col::CheckMark, base);
+        UI::PushStyleColor(UI::Col::Button, base);
+        UI::PushStyleColor(UI::Col::ButtonHovered, accent);
+        UI::PushStyleColor(UI::Col::ButtonActive, active);
+        UI::PushStyleColor(UI::Col::Tab, base);
+        UI::PushStyleColor(UI::Col::TabHovered, accent);
+        UI::PushStyleColor(UI::Col::TabActive, active);
+        UI::PushStyleColor(UI::Col::FrameBgHovered, Brighten(base, .4));
     }
 
     void Custom(vec3 color){
-        UI::PushStyleColor(UI::Col::Button, GetAlphaColor(Brighten(color, .8), 1));
-        UI::PushStyleColor(UI::Col::ButtonHovered, GetAlphaColor(Brighten(color, .9), 1));
-        UI::PushStyleColor(UI::Col::ButtonActive, GetAlphaColor(Brighten(color, 1), 1));
+        Color(GetAlphaColor(Brighten(color, .8), 1), GetAlphaColor(Brighten(color, .9), 1), GetAlphaColor(Brighten(color, 1), 1));
     }
 
     void Reset() {
-        UI::PopStyleColor(3);
+        UI::PopStyleColor(8);
     }
 
     vec4 GetAlphaColor(vec3 color, float alpha) {

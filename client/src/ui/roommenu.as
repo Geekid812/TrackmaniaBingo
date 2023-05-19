@@ -116,6 +116,12 @@ namespace UIRoomMenu {
     }
 
     void RoomMenu() {
+        UITools::SectionHeader("Public Rooms");
+        if (Network::GetState() == ConnectionState::Connected) {
+            PublicRoomList();
+        }
+
+        UI::NewLine();
         UITools::SectionHeader("Join a Private Room");
         RoomCodeInput();
 
@@ -124,10 +130,5 @@ namespace UIRoomMenu {
         UI::EndDisabled();
 
         Window::ConnectingIndicator();
-
-        UITools::SectionHeader("Public Rooms");
-        if (Network::GetState() == ConnectionState::Connected) {
-            PublicRoomList();
-        }
     }
 }

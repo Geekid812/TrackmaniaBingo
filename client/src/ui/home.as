@@ -1,17 +1,11 @@
 namespace UIHome {
     void Render() {
         UI::SetWindowSize(vec2(550, 700), UI::Cond::FirstUseEver);
-        UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 10));
         Title();
         UI::Dummy(vec2(0, 20));
         UINews::NewsItem(Config::News[0]);
         if (Config::News.Length > 1) {
             MoreNewsButton();
-        }
-
-        if (@Profile != null) {
-            UI::Dummy(vec2(0, 20));
-            UIProfile::RenderProfile(Profile);
         }
     }
 
