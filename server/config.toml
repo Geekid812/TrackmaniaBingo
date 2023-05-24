@@ -1,4 +1,0 @@
-log_level = "debug"
-
-[secrets]
-openplanet_auth = "CaXZFsGoww99zTQVwgofEEQcz0ButBt0Hr/KoWAt"
