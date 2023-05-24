@@ -6,6 +6,7 @@ use crate::{
         livegame::MatchConfiguration,
         room::{GameRoom, NetworkTeam, RoomConfiguration},
         roomlist,
+        team::BaseTeam,
     },
     //gamemap,
     server::context::{ClientContext, GameContext},
@@ -27,7 +28,7 @@ pub struct CreateRoomResponse {
     pub name: String,
     pub join_code: String,
     pub max_teams: usize,
-    pub teams: Vec<NetworkTeam>,
+    pub teams: Vec<BaseTeam>,
 }
 
 #[typetag::deserialize]
@@ -39,7 +40,12 @@ impl Request for CreateRoom {
             // TODO: on player removed?
         }
         let roomcode = roomlist::get_new_roomcode();
-        let new_room = GameRoom::create(self.config, self.matchconfig, self.name, roomcode);
+        let new_room = GameRoom::create(
+            self.config.clone(),
+            self.matchconfig.clone(),
+            self.name.clone(),
+            roomcode,
+        );
         let room_arc = roomlist::register_room(new_room);
         let mut room = room_arc.lock();
 
@@ -52,13 +58,13 @@ impl Request for CreateRoom {
         room.add_player(&ctx.profile, true);
         let game_ctx = GameContext::new(&ctx, &room_arc);
         room.channel()
-            .subscribe(ctx.profile.player.account_id, ctx.writer);
+            .subscribe(ctx.profile.player.uid, ctx.writer.clone());
         ctx.game = Some(game_ctx);
         Box::new(CreateRoomResponse {
             name: room.name().to_owned(),
             join_code: room.join_code().to_owned(),
             max_teams: crate::CONFIG.game.teams.len(),
-            teams: room.teams(),
+            teams: room.teams().clone(),
         })
     }
 }

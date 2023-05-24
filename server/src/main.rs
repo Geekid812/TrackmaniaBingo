@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::{net::SocketAddr, sync::atomic::AtomicU32};
 use tokio::{net::TcpSocket, sync::mpsc::unbounded_channel};
 use tracing::{info, warn, Level};
@@ -15,6 +16,7 @@ pub mod config;
 use config::CONFIG;
 
 use crate::server::client;
+use crate::server::context::ClientContext;
 use crate::transport::client::tcpnative::TcpNativeClient;
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -96,6 +98,9 @@ async fn main() {
             if profile.is_none() {
                 return;
             }
+            let ctx = ClientContext::new(profile.unwrap(), None, Arc::new(tx));
+            client::run_loop(ctx, client).await;
+            info!("dropping connection");
         });
     }
 }

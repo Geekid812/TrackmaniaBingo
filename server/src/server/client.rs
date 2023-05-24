@@ -13,9 +13,20 @@ pub async fn run_loop(mut ctx: ClientContext, mut client: TcpNativeClient) -> Lo
         let next_sending = client.rx.recv().fuse();
         select! {
             opt = next_message => match opt {
-                Some(result) => match handle_recv(&mut ctx, result) {
-                    Some(exit) => return exit,
-                    None => ()
+                Some(result) => {
+                    let handled = handle_recv(&mut ctx, result);
+                    if !handled {
+                        // Client disconnected
+                        if let Some(game_ctx) = ctx.game {
+                            if game_ctx.room().map_or(false, |r| r.lock().has_started()) {
+                                return LoopExit::Linger(
+                                    ctx.profile.player.account_id.clone(),
+                                    game_ctx,
+                                );
+                            }
+                        }
+                        return LoopExit::Close;
+                    }
                 },
                 None => {
                     error!("Received None in run_loop");
@@ -32,21 +43,10 @@ pub async fn run_loop(mut ctx: ClientContext, mut client: TcpNativeClient) -> Lo
     }
 }
 
-fn handle_recv(ctx: &mut ClientContext, result: Result<String, io::Error>) -> Option<LoopExit> {
+fn handle_recv(ctx: &mut ClientContext, result: Result<String, io::Error>) -> bool {
     let msg = match result {
         Ok(msg) => msg,
-        Err(e) => {
-            // Client disconnected
-            if let Some(game_ctx) = ctx.game {
-                if game_ctx.room().map_or(false, |r| r.lock().has_started()) {
-                    return Some(LoopExit::Linger(
-                        ctx.profile.player.account_id.clone(),
-                        game_ctx,
-                    ));
-                }
-            }
-            return Some(LoopExit::Close);
-        }
+        Err(e) => return false,
     };
     debug!("received: {}", msg);
 
@@ -59,12 +59,12 @@ fn handle_recv(ctx: &mut ClientContext, result: Result<String, io::Error>) -> Op
             debug!("response: {}", &res_text);
             let sent = ctx.writer.send(res_text);
             if sent.is_err() {
-                return Some(LoopExit::Close); // Explicit disconnect
+                return false; // Explicit disconnect
             }
         }
         Err(e) => warn!("Unknown message received: {e}"),
     };
-    None
+    true
 }
 
 pub enum LoopExit {

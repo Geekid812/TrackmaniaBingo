@@ -273,7 +273,10 @@ namespace Network {
         Body["req"] = Type;
         uint Sequence = AddSequenceValue(Body);
         string Text = Json::Write(Body);
-        if (!_protocol.Send(Text)) return null; // TODO: connection fault?
+        if (!_protocol.Send(Text)) {
+            warn("Network: Post preemptively failed!");
+            return null;
+        } // TODO: connection fault?
         RequestInProgress = blocking;
         Json::Value@ Reply = ExpectReply(Sequence, timeout);
         RequestInProgress = false;

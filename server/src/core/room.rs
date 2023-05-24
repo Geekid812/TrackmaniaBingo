@@ -89,7 +89,11 @@ impl GameRoom {
         self.members.iter().map(NetworkPlayer::from).collect()
     }
 
-    pub fn teams(&self) -> Vec<NetworkTeam> {
+    pub fn teams(&self) -> &Vec<BaseTeam> {
+        &self.teams
+    }
+
+    pub fn team_members(&self) -> Vec<NetworkTeam> {
         let mut map: HashMap<TeamIdentifier, Vec<NetworkPlayer>> = HashMap::new();
         self.members.iter().for_each(|p| {
             map.entry(p.team).or_default().push(NetworkPlayer::from(p));
@@ -106,7 +110,7 @@ impl GameRoom {
 
     pub fn status(&self) -> RoomStatus {
         RoomStatus {
-            teams: self.teams(),
+            teams: self.team_members(),
         }
     }
 

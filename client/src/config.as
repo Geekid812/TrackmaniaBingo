@@ -26,7 +26,7 @@ namespace Config {
             warn("Config: Invalid JSON message. That proably means you are not connected.");
             return;
         }
-        //CanPlay = json["canPlay"];
+        CanPlay = json["canPlay"];
 
         News = {};
         for (uint i = 0; i < json["news"].Length; i++) {
