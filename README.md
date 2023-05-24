@@ -1,4 +1,4 @@
-# [Trackmania Bingo](.github/img/bingo_thumbnail.png)
+# ![Trackmania Bingo](.github/img/bingo_thumbnail.png)
 
 > **[Trackmania Bingo](https://openplanet.dev/plugin/trackmaniabingo)** is a new gamemode where two or more teams compete be the first to complete a row, column or diagonal on the game board. Each cell on this board corresponds to a track that players can claim for their team by achieving a specific medal on that track.
 
