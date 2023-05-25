@@ -1,6 +1,7 @@
 
 namespace Window {
     bool Visible;
+
     bool RoomCodeVisible;
     bool RoomCodeHovered;
     bool ClipboardHovered;
@@ -13,19 +14,18 @@ namespace Window {
         Create
     }
 
-    void Render() {
-        if (!Visible) return;
-        UI::PushStyleColor(UI::Col::TitleBg, UI::GetStyleColor(UI::Col::WindowBg));
-        UI::PushStyleColor(UI::Col::TitleBgActive, UI::GetStyleColor(UI::Col::WindowBg));
-        UI::Begin("##bingomain", Visible);
-        UI::PushFont(Font::Regular);
+    void WindowMain() {
+        if (!Permissions::PlayLocalMap()) {
+            NoPermissions();
+            return;
+        }
 
         UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 10));
         if (@Profile != null) {
             UIProfile::RenderProfile(Profile);
         }
         UI::Dummy(vec2(0, 10));
-
+        
         UIColor::Crimson();
         UI::BeginTabBar("Bingo_TabBar");
         if (UI::BeginTabItem(Icons::Home + " Home")) {
@@ -53,103 +53,20 @@ namespace Window {
         }
         UI::EndTabBar();
         UIColor::Reset();
-
-        UI::PopFont();
-        UI::End();
-        UI::PopStyleColor(2);
-        return;
-
-        if (!Permissions::PlayLocalMap()) {
-            NoPermissions();
-            UI::PopFont();
-            UI::End();
-            return;
-        }
-
-        if (Settings::DevMode) {
-            DevControls();
-            UI::Separator();
-        }
-
-        if (@Room != null && Room.InGame) {
-            InGame();
-            UI::PopFont();
-            UI::End();
-            return;
-        }
-
-        bool Disabled = false;
-        if (@Room != null && !Room.InGame && Room.StartTime != 0) {
-            Countdown();
-            Disabled = true;
-        }
-        if (Network::RequestInProgress) {
-            Disabled = true;
-        }
-        UI::BeginDisabled(Disabled);
-
-        if (@Room != null) {
-            RoomView();
-        } else {
-            if (Config::StatusMessage != "") {
-                UI::Text("\\$z" + Icons::InfoCircle + " \\$ff0" + Config::StatusMessage);
-            }
-            OfflineIndicator();
-
-            UI::BeginTabBar("Bingo_TabBar");
-
-            if (UI::BeginTabItem(Icons::Home + " Home")) {
-                HomeTab();
-                UI::EndTabItem();
-            }
-
-            if (UI::BeginTabItem(Icons::ShareSquareO + " Join Room")) {
-                JoinTab();
-                UI::EndTabItem();
-            }
-
-            if (UI::BeginTabItem(Icons::PlusSquare + " Create Room")) {
-                CreateTab();
-                UI::EndTabItem();
-            }
-
-            UI::EndTabBar();
-        }
-
-        UI::EndDisabled();
-        UI::PopFont();
-        UI::End();
     }
 
-    void HomeTab() {
-        string header = "Trackmania Bingo: Version " + Meta::ExecutingPlugin().Version;
-        float titlePadding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(header, Font::Header, 32).x, 0.5);
-        UI::PushFont(Font::Header);
-        UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
-        UI::Text(header);
+    void Render() {
+        if (!Visible) return;
+        UI::PushStyleColor(UI::Col::TitleBg, UI::GetStyleColor(UI::Col::WindowBg));
+        UI::PushStyleColor(UI::Col::TitleBgActive, UI::GetStyleColor(UI::Col::WindowBg));
+        UI::PushFont(Font::Regular);
+        UI::Begin("##bingomain", Visible);
+
+        WindowMain();
+
+        UI::End();
         UI::PopFont();
-
-        UI::Text(Icons::Plug + " Plugin created by \\$ff0TheGeekid");
-        UI::Text(Icons::Github + " Source code:");
-        UI::SameLine();
-        UI::Markdown("[Geekid812/TrackmaniaBingo](https://github.com/Geekid812/TrackmaniaBingo)");
-        UI::Text(Icons::Bug + " Bug tracker:");
-        UI::SameLine();
-        UI::Markdown("[Report an Issue](https://github.com/Geekid812/TrackmaniaBingo/issues)");
-        UI::Text(Icons::DiscordAlt + " Discord server:");
-        UI::SameLine();
-        UI::Markdown("[Trackmania Bingo](https://discord.gg/pJbeqptsEa)");
-
-        UI::NewLine();
-        for (uint i = 0; i < Config::News.Length; i++) {
-            auto news = Config::News[i];
-            UI::PushFont(Font::Subtitle);
-            UI::Text(news.title + "\t\\$888" + news.postinfo);
-            UI::PopFont();
-            UI::Separator();
-            UI::Markdown(news.content);
-            UI::NewLine();
-        }
+        UI::PopStyleColor(2);
     }
 
     void CreateTab() {
@@ -204,7 +121,7 @@ namespace Window {
     }
 
     void RoomView() {
-        string playerStatus = StatusLabel(Icons::Users + " ", Room.Players.Length + (Room.Config.HasPlayerLimit ? "/" + Room.Config.MaxPlayers : ""));
+        string playerStatus = StatusLabel(Icons::Users + " ", UIGameRoom::PlayerCount());
         UI::Text(playerStatus);
         if (UI::IsItemHovered()) {
             StatusTooltip("", Room.Players.Length + (Room.Players.Length == 1 ? " player" : " players"));
@@ -237,12 +154,6 @@ namespace Window {
 
         UI::SameLine();
         float windowWidth = UI::GetWindowSize().x;
-        float titleWidth = Draw::MeasureString(Room.Name, Font::Bold).x;
-        float titlePadding = LayoutTools::GetPadding(windowWidth, titleWidth, 0.5);
-        UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
-        UI::PushFont(Font::Bold);
-        UI::Text(Room.Name);
-        UI::PopFont();
 
         if (Room.LocalPlayerIsHost) {
             UI::SameLine();
@@ -366,7 +277,7 @@ namespace Window {
         }
 
         // Leave room if window was closed
-        if (!Visible) Network::LeaveRoom();
+        //if (!Visible) Network::LeaveRoom();
     }
 
     string[] RoomConfigInfo(RoomConfiguration config) {

@@ -70,6 +70,8 @@ class Protocol {
             StatusCode = Reply["code"];
             if (Reply.HasKey("profile")) {
                 @Profile = PlayerProfile::Deserialize(Reply["profile"]);
+                PersistantStorage::LocalProfile = Json::Write(Reply["profile"]);
+                LocalUsername = Profile.username;
             }
         } catch {
             trace("Protocol: Handshake reply parse failed. Got: " + HandshakeReply);

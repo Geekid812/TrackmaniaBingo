@@ -311,6 +311,8 @@ namespace Network {
         string RoomCode = Response["join_code"];
         Room.MaxTeams = int(Response["max_teams"]);
         Window::RoomCodeVisible = false;
+        Window::Visible = false;
+        UIGameRoom::Visible = true;
 
         Room.Teams = {};
         auto JsonTeams = Response["teams"];

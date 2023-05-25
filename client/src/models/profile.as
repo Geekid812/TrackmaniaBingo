@@ -14,7 +14,7 @@ class PlayerProfile {
 }
 
 namespace PlayerProfile {
-    Json::Value Deserialize(PlayerProfile profile) {
+    Json::Value Serialize(PlayerProfile profile) {
         auto value = Json::Object();
         value["uid"] = profile.uid;
         value["account_id"] = profile.accountId;

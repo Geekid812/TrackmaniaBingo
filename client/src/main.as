@@ -4,6 +4,7 @@ const string MenuItemName = "\\$ff0" + WindowName;
 void Main() {
     startnew(Font::Init);
     startnew(Login::EnsureLoggedIn);
+    PersistantStorage::LoadPersistentItems();
     Config::FetchConfig();
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
@@ -28,6 +29,7 @@ void RenderMenu() {
 }
 
 void Render() {
+    UIGameRoom::Render();
     BoardLocator::Render();
     Board::Draw();
     InfoBar::Render();
