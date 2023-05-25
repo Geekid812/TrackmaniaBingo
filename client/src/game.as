@@ -1,6 +1,3 @@
-// Name of the local player
-string LocalUsername;
-
 // Persisently saved: whether the game has crashed during a game
 [Setting hidden]
 bool WasConnected = false;
@@ -73,6 +70,14 @@ class GameRoom {
         return players;
     }
 
+    Player@ GetPlayer(int uid) {
+        for (uint i = 0; i < Room.Players.Length; i++){
+            auto player = Room.Players[i];
+            if (player.profile.uid == uid) return player;
+        }
+        return null;
+    }
+
     bool MoreTeamsAvaliable(){
         // Non hosts should not see that more teams can be created
         return Teams.Length < uint(Math::Min(MaxTeams, Config.HasPlayerLimit ? Config.MaxPlayers : MaxTeams)) && Room.LocalPlayerIsHost && Room.StartTime == 0;
@@ -98,14 +103,16 @@ class Team {
 }
 
 class Player {
+    PlayerProfile profile;
     string Name;
     Team Team;
     bool IsSelf;
 
     Player() { }
 
-    Player(string&in name, Team team, bool self) {
-        this.Name = name;
+    Player(PlayerProfile profile, Team team, bool self) {
+        this.profile = profile;
+        this.Name = profile.username;
         this.Team = team;
         this.IsSelf = self;
     }

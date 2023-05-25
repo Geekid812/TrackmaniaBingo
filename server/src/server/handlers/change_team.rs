@@ -13,11 +13,7 @@ impl Request for ChangeTeam {
     fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             let mut lock = room.lock();
-            if lock.change_team(ctx.profile.player.uid, self.team_id) {
-                lock.room_update();
-            } else {
-                ctx.trace("invalid team id, ignored");
-            }
+            lock.change_team(ctx.profile.player.uid, self.team_id);
         } else {
             ctx.trace("not in a room, ignored");
         }

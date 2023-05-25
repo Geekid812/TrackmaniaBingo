@@ -173,8 +173,8 @@ namespace Network {
             return;
         }
         if (@Room == null) return;
-        if (Body["event"] == "RoomUpdate") {
-            NetworkHandlers::UpdateRoom(Body);
+        if (Body["event"] == "PlayerUpdate") {
+            NetworkHandlers::PlayerUpdate(Body);
         } else if (Body["event"] == "RoomConfigUpdate") {
             uint oldGridSize = Room.Config.GridSize;
             MapMode oldMode = Room.Config.MapSelection;
@@ -329,7 +329,7 @@ namespace Network {
         Room.LocalPlayerIsHost = true;
         Room.HostName = LocalUsername;
         Room.JoinCode = RoomCode;
-        @Room.Players = { Player(LocalUsername, Room.Teams[0], true) };
+        @Room.Players = { Player(Profile, Room.Teams[0], true) };
         Room.MapsLoadingStatus = LoadStatus::Loading;
     }
 
@@ -358,7 +358,7 @@ namespace Network {
             Room.JoinCode = UIRoomMenu::JoinCodeInput;
             Room.LocalPlayerIsHost = false;
             Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
-            NetworkHandlers::UpdateRoom(Response["status"]);
+            //NetworkHandlers::UpdateRoom(Response["status"]);
 
             UIRoomMenu::JoinCodeVisible = false;
             Window::RoomCodeVisible = false;
@@ -410,7 +410,9 @@ namespace Network {
 
         auto Body = Json::Object();
         Body["team_id"] = Team.Id;
-        FireEvent("ChangeTeam", Body);
+        startnew(function(ref@ body) {
+            Post("ChangeTeam", cast<Json::Value@>(body));
+        }, Body);
     }
 
     void StartGame() {
@@ -439,7 +441,7 @@ namespace Network {
         Room.Config = Deserialize(response["config"]);
         Room.JoinCode = response["join_code"];
         Room.LocalPlayerIsHost = response["host"];
-        NetworkHandlers::UpdateRoom(response["status"]);
+        //NetworkHandlers::UpdateRoom(response["status"]);
         NetworkHandlers::LoadMaps(response["maps"]);
         if (response.HasKey("game_data")) {
             NetworkHandlers::LoadGameData(response["game_data"]);

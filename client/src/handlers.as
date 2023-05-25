@@ -1,8 +1,7 @@
 
 
 namespace NetworkHandlers {
-    void UpdateRoom(Json::Value@ Status) {
-        string LocalUsername = cast<CTrackManiaNetwork@>(GetApp().Network).PlayerInfo.Name;
+    void TeamsUpdate(Json::Value@ Status) {
         @Room.Teams = {};
         auto JsonTeams = Status["teams"];
         for (uint i = 0; i < JsonTeams.Length; i++){
@@ -13,15 +12,15 @@ namespace NetworkHandlers {
                 vec3(JsonTeam["color"][0] / 255., JsonTeam["color"][1] / 255., JsonTeam["color"][2] / 255.)
             ));
         }
+    }
 
-        @Room.Players = {};
-        for (uint i = 0; i < Status["members"].Length; i++) {
-            auto JsonPlayer = Status["members"][i];
-            Room.Players.InsertLast(Player(
-                JsonPlayer["name"],
-                Room.GetTeamWithId(int(JsonPlayer["team"])),
-                JsonPlayer["name"] == LocalUsername
-            ));
+    void PlayerUpdate(Json::Value@ Status) {
+        auto uids = Status["updates"].GetKeys();
+        for (uint i = 0; i < uids.Length; i++) {
+            int uid = Text::ParseInt(uids[i]);
+            Player@ player = Room.GetPlayer(uid);
+            if (player is null) continue;
+            player.Team = Room.GetTeamWithId(int(Status["updates"].Get(tostring(uid))));
         }
     }
 

@@ -93,25 +93,22 @@ impl GameRoom {
         &self.teams
     }
 
-    pub fn team_members(&self) -> Vec<NetworkTeam> {
-        let mut map: HashMap<TeamIdentifier, Vec<NetworkPlayer>> = HashMap::new();
+    pub fn team_members(&self) -> HashMap<TeamIdentifier, Vec<i32>> {
+        let mut map: HashMap<TeamIdentifier, Vec<i32>> = HashMap::new();
         self.members.iter().for_each(|p| {
-            map.entry(p.team).or_default().push(NetworkPlayer::from(p));
+            map.entry(p.team).or_default().push(p.profile.player.uid);
         });
 
-        self.teams
-            .iter()
-            .map(|t| NetworkTeam {
-                info: t.clone(),
-                members: map.remove(&t.id).unwrap_or_default(),
-            })
-            .collect()
+        map
     }
 
-    pub fn status(&self) -> RoomStatus {
-        RoomStatus {
-            teams: self.team_members(),
-        }
+    fn players_to_teams(players: Vec<PlayerData>) -> HashMap<i32, TeamIdentifier> {
+        let mut map: HashMap<i32, TeamIdentifier> = HashMap::new();
+        players.iter().for_each(|p| {
+            map.insert(p.profile.player.uid, p.team);
+        });
+
+        map
     }
 
     pub fn host_name(&self) -> Option<String> {
@@ -144,7 +141,7 @@ impl GameRoom {
 
         let color = teams[idx].1;
         self.teams.push(BaseTeam::new(teams[idx].0.clone(), color));
-        self.room_update();
+        //self.room_update();
         self.teams.last()
     }
 
@@ -164,7 +161,7 @@ impl GameRoom {
             operator,
             disconnected: false,
         });
-        self.room_update();
+        //self.room_update();
     }
 
     pub fn has_started(&self) -> bool {
@@ -186,7 +183,7 @@ impl GameRoom {
                 break;
             }
         }
-        self.room_update();
+        //self.room_update();
     }
 
     pub fn change_team(&mut self, uid: i32, team: TeamIdentifier) -> bool {
@@ -200,8 +197,9 @@ impl GameRoom {
             .next()
         {
             data.team = team;
+            let updated = vec![data.clone()];
+            self.player_update(updated);
         }
-        self.room_update();
         true
     }
 
@@ -218,9 +216,11 @@ impl GameRoom {
         self.matchconfig_update();
     }
 
-    pub fn room_update(&mut self) {
-        self.channel
-            .broadcast(&RoomEvent::PlayerUpdate(self.status()));
+    pub fn player_update(&mut self, players: Vec<PlayerData>) {
+        let update = PlayerUpdates {
+            updates: Self::players_to_teams(players),
+        };
+        self.channel.broadcast(&RoomEvent::PlayerUpdate(update));
     }
 
     pub fn config_update(&mut self) {
@@ -246,8 +246,8 @@ pub struct RoomConfiguration {
 }
 
 #[derive(Serialize)]
-pub struct RoomStatus {
-    pub teams: Vec<NetworkTeam>,
+pub struct PlayerUpdates {
+    pub updates: HashMap<i32, TeamIdentifier>,
 }
 
 #[derive(Error, Debug)]
@@ -260,6 +260,7 @@ pub enum JoinRoomError {
     HasStarted,
 }
 
+#[derive(Debug, Clone)]
 pub struct PlayerData {
     pub profile: PlayerProfile,
     pub team: TeamIdentifier,

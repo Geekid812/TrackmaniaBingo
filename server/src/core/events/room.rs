@@ -2,13 +2,13 @@ use serde::Serialize;
 
 use crate::core::{
     livegame::MatchConfiguration,
-    room::{RoomConfiguration, RoomStatus},
+    room::{PlayerUpdates, RoomConfiguration},
 };
 
 #[derive(Serialize)]
 #[serde(tag = "event")]
 pub enum RoomEvent {
-    PlayerUpdate(RoomStatus),
+    PlayerUpdate(PlayerUpdates),
     ConfigUpdate(RoomConfiguration),
     MatchConfigUpdate(MatchConfiguration),
     CloseRoom { message: String },
