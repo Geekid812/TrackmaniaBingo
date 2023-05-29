@@ -1,8 +1,7 @@
 use serde::Serialize;
 
 use crate::core::{
-    livegame::MatchConfiguration,
-    room::{PlayerUpdates, RoomConfiguration},
+    livegame::MatchConfiguration, models::room::RoomConfiguration, room::PlayerUpdates,
 };
 
 #[derive(Serialize)]

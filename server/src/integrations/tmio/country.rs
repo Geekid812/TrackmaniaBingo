@@ -1,16 +1,14 @@
 // Getting the country code of a player via the trackmania.io API
 
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
-use once_cell::sync::Lazy;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client, Url,
 };
-use rustc_version_runtime::version;
 use tracing::debug;
 
-use crate::{integrations::USER_AGENT, VERSION};
+use crate::integrations::USER_AGENT;
 
 const ROUTE_PLAYER: &'static str = "/api/player/";
 

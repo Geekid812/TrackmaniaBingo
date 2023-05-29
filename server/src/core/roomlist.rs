@@ -67,9 +67,7 @@ pub fn send_room_visibility(room: &GameRoom, visible: bool) {
             join_code: room.join_code().to_owned(),
         });
     } else {
-        lock.broadcast(&RoomlistEvent::RoomListed {
-            room: room.as_network(),
-        })
+        lock.broadcast(&RoomlistEvent::RoomListed { room: room.into() })
     }
 }
 

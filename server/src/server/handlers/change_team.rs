@@ -1,4 +1,4 @@
-use crate::{core::team::TeamIdentifier, server::context::ClientContext};
+use crate::{core::models::team::TeamIdentifier, server::context::ClientContext};
 use serde::Deserialize;
 
 use super::{generic, Request, Response};

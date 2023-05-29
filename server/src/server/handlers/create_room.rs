@@ -4,15 +4,15 @@ use crate::{
     core::{
         gamecommon::setup_room,
         livegame::MatchConfiguration,
-        room::{GameRoom, NetworkTeam, RoomConfiguration},
+        models::{room::RoomConfiguration, team::BaseTeam},
+        room::GameRoom,
         roomlist,
-        team::BaseTeam,
     },
     //gamemap,
     server::context::{ClientContext, GameContext},
 };
 
-use super::{generic, Request, Response};
+use super::{Request, Response};
 
 #[derive(Deserialize, Debug)]
 pub struct CreateRoom {
@@ -64,7 +64,7 @@ impl Request for CreateRoom {
             name: room.name().to_owned(),
             join_code: room.join_code().to_owned(),
             max_teams: crate::CONFIG.game.teams.len(),
-            teams: room.teams().clone(),
+            teams: room.teams().into_iter().map(BaseTeam::to_owned).collect(),
         })
     }
 }

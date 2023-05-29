@@ -2,9 +2,9 @@ use crate::core::util::serialize::{serialize_or_default, serialize_time};
 use crate::orm::schema::players;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Queryable, Selectable, Identifiable, Serialize, Clone, Debug)]
+#[derive(Queryable, Selectable, Identifiable, Serialize, Deserialize, Clone, Debug)]
 #[diesel(table_name = players)]
 #[diesel(primary_key(uid))]
 pub struct Player {

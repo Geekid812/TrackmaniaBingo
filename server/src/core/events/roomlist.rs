@@ -1,11 +1,11 @@
 use serde::Serialize;
 
-use crate::core::room::NetworkRoom;
+use crate::core::models::room::GameRoom;
 
 #[derive(Serialize)]
 #[serde(tag = "event")]
 pub enum RoomlistEvent {
-    PublicRooms { rooms: Vec<NetworkRoom> },
+    PublicRooms { rooms: Vec<GameRoom> },
     RoomUnlisted { join_code: String },
-    RoomListed { room: NetworkRoom },
+    RoomListed { room: GameRoom },
 }

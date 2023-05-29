@@ -1,6 +1,6 @@
 // Interacting with the Openplanet Auth API
 
-use reqwest::{multipart::Form, Client, ClientBuilder, Url};
+use reqwest::{multipart::Form, Client, Url};
 use serde::Deserialize;
 use std::str::FromStr;
 use thiserror::Error;

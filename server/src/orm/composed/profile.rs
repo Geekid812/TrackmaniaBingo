@@ -1,12 +1,12 @@
 use diesel::{BelongingToDsl, QueryDsl, RunQueryDsl, SqliteConnection};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::orm::{
     models::{matches::PlayerToMatch, player::Player},
     schema::matches_players,
 };
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerProfile {
     #[serde(flatten)]
     pub player: Player,

@@ -2,16 +2,20 @@ use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
 use rand::Rng;
-use serde::{Deserialize, Serialize};
+use serde::{Serialize, Serializer};
 use thiserror::Error;
 use tracing::warn;
 
 use super::{
     events::room::RoomEvent,
-    identity::PlayerIdentity,
     livegame::MatchConfiguration,
+    models::{
+        self,
+        player::RoomPlayer,
+        room::{RoomConfiguration, RoomTeam},
+        team::{BaseTeam, TeamIdentifier},
+    },
     roomlist,
-    team::{BaseTeam, TeamIdentifier},
     util::color::RgbColor,
 };
 use crate::{orm::composed::profile::PlayerProfile, transport::Channel};
@@ -21,8 +25,9 @@ pub struct GameRoom {
     join_code: String,
     config: RoomConfiguration,
     matchconfig: MatchConfiguration,
-    members: Vec<PlayerData>,
-    teams: Vec<BaseTeam>,
+    members: HashMap<i32, PlayerData>,
+    teams: HashMap<TeamIdentifier, BaseTeam>,
+    teams_id: usize,
     channel: Channel<RoomEvent>,
     created: DateTime<Utc>,
 }
@@ -39,8 +44,9 @@ impl GameRoom {
             join_code,
             config,
             matchconfig,
-            members: Vec::new(),
-            teams: Vec::new(),
+            members: HashMap::new(),
+            teams: HashMap::new(),
+            teams_id: 0,
             channel: Channel::new(),
             created: Utc::now(),
         }
@@ -62,19 +68,8 @@ impl GameRoom {
         &self.matchconfig
     }
 
-    pub fn as_network(&self) -> NetworkRoom {
-        NetworkRoom {
-            name: self.name.clone(),
-            join_code: self.join_code.clone(),
-            hostname: self.host_name(),
-            config: self.config.clone(),
-            matchconfig: self.matchconfig.clone(),
-            player_count: self.members.len() as i32,
-        }
-    }
-
     pub fn at_size_capacity(&self) -> bool {
-        self.config.size != 0 && (self.members.len() as u32) < self.config.size
+        self.config.size != 0 && (self.members.len() as u32) >= self.config.size
     }
 
     pub fn channel(&mut self) -> &mut Channel<RoomEvent> {
@@ -85,27 +80,37 @@ impl GameRoom {
         &self.created
     }
 
-    pub fn players(&self) -> Vec<NetworkPlayer> {
-        self.members.iter().map(NetworkPlayer::from).collect()
+    pub fn players(&self) -> Vec<&PlayerData> {
+        self.members.values().collect()
     }
 
-    pub fn teams(&self) -> &Vec<BaseTeam> {
-        &self.teams
+    pub fn teams(&self) -> Vec<&BaseTeam> {
+        self.teams.values().collect()
     }
 
-    pub fn team_members(&self) -> HashMap<TeamIdentifier, Vec<i32>> {
+    pub fn teams_as_model(&self) -> Vec<RoomTeam> {
+        self.team_members()
+            .into_iter()
+            .map(|(tid, players)| RoomTeam {
+                base: self
+                    .teams
+                    .get(&tid)
+                    .expect("teams should be valid")
+                    .to_owned(),
+                members: players
+                    .iter()
+                    .map(|id| {
+                        RoomPlayer::from(self.members.get(id).expect("members should be valid"))
+                    })
+                    .collect(),
+            })
+            .collect()
+    }
+
+    fn team_members(&self) -> HashMap<TeamIdentifier, Vec<i32>> {
         let mut map: HashMap<TeamIdentifier, Vec<i32>> = HashMap::new();
-        self.members.iter().for_each(|p| {
+        self.members.values().for_each(|p| {
             map.entry(p.team).or_default().push(p.profile.player.uid);
-        });
-
-        map
-    }
-
-    fn players_to_teams(players: Vec<PlayerData>) -> HashMap<i32, TeamIdentifier> {
-        let mut map: HashMap<i32, TeamIdentifier> = HashMap::new();
-        players.iter().for_each(|p| {
-            map.insert(p.profile.player.uid, p.team);
         });
 
         map
@@ -113,17 +118,21 @@ impl GameRoom {
 
     pub fn host_name(&self) -> Option<String> {
         self.members
-            .iter()
+            .values()
             .find(|p| p.operator)
             .map(|p| p.profile.player.username.clone())
     }
 
     pub fn get_player(&self, uid: i32) -> Option<&PlayerData> {
-        self.members.iter().find(|p| p.profile.player.uid == uid)
+        self.members.get(&uid)
+    }
+
+    pub fn get_player_mut(&mut self, uid: i32) -> Option<&mut PlayerData> {
+        self.members.get_mut(&uid)
     }
 
     pub fn get_team(&self, identifier: TeamIdentifier) -> Option<&BaseTeam> {
-        self.teams.iter().find(|t| t.id == identifier)
+        self.teams.get(&identifier)
     }
 
     pub fn create_team(&mut self, teams: &Vec<(String, RgbColor)>) -> Option<&BaseTeam> {
@@ -140,28 +149,37 @@ impl GameRoom {
         }
 
         let color = teams[idx].1;
-        self.teams.push(BaseTeam::new(teams[idx].0.clone(), color));
-        //self.room_update();
-        self.teams.last()
+        let team = BaseTeam::new(self.teams_id, teams[idx].0.clone(), color);
+        self.teams_id += 1;
+        let team_id = team.id;
+        self.teams.insert(team_id, team);
+        self.teams.get(&team_id)
     }
 
     fn team_exsits(&self, id: TeamIdentifier) -> bool {
-        self.teams.iter().any(|t| t.id == id)
+        self.teams.get(&id).is_some()
     }
 
     fn team_exsits_with_name(&self, name: &str) -> bool {
-        self.teams.iter().any(|t| t.name == name)
+        self.teams.values().any(|t| t.name == name)
     }
 
     pub fn add_player(&mut self, profile: &PlayerProfile, operator: bool) {
-        let team = self.teams[0].id; // TODO: sort into teams when joining
-        self.members.push(PlayerData {
-            profile: profile.clone(),
-            team,
-            operator,
-            disconnected: false,
-        });
-        //self.room_update();
+        let team = self
+            .teams
+            .values()
+            .next()
+            .expect("0 teams in self.teams")
+            .id; // TODO: sort into teams when joining
+        self.members.insert(
+            profile.player.uid,
+            PlayerData {
+                profile: profile.clone(),
+                team,
+                operator,
+                disconnected: false,
+            },
+        );
     }
 
     pub fn has_started(&self) -> bool {
@@ -177,28 +195,17 @@ impl GameRoom {
     }
 
     pub fn player_remove(&mut self, uid: i32) {
-        for i in 0..self.members.len() {
-            if self.members[i].profile.player.uid == uid {
-                self.members.remove(i);
-                break;
-            }
-        }
-        //self.room_update();
+        self.members.remove(&uid);
     }
 
     pub fn change_team(&mut self, uid: i32, team: TeamIdentifier) -> bool {
         if !self.team_exsits(team) {
             return false;
         }
-        if let Some(data) = self
-            .members
-            .iter_mut()
-            .filter(|m| m.profile.player.uid == uid)
-            .next()
-        {
+        if let Some(data) = self.members.get_mut(&uid) {
             data.team = team;
-            let updated = vec![data.clone()];
-            self.player_update(updated);
+            let uid = data.profile.player.uid;
+            self.player_update(vec![(uid, team)]);
         }
         true
     }
@@ -216,9 +223,9 @@ impl GameRoom {
         self.matchconfig_update();
     }
 
-    pub fn player_update(&mut self, players: Vec<PlayerData>) {
+    pub fn player_update(&mut self, players: Vec<(i32, TeamIdentifier)>) {
         let update = PlayerUpdates {
-            updates: Self::players_to_teams(players),
+            updates: HashMap::from_iter(players.into_iter()),
         };
         self.channel.broadcast(&RoomEvent::PlayerUpdate(update));
     }
@@ -238,11 +245,13 @@ impl GameRoom {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct RoomConfiguration {
-    pub public: bool,
-    pub size: u32,
-    pub randomize: bool,
+impl Serialize for GameRoom {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        models::room::GameRoom::from(self).serialize(serializer)
+    }
 }
 
 #[derive(Serialize)]
