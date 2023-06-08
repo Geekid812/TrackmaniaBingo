@@ -1,8 +1,11 @@
-use crate::config::CONFIG;
+use std::sync::Arc;
 
-use super::{room::GameRoom, util::color::RgbColor};
+use crate::{config::CONFIG, server};
 
-pub fn setup_room(room: &mut GameRoom) {
+use super::{roomlist::OwnedRoom, util::color::RgbColor};
+
+pub fn setup_room(room_arc: &OwnedRoom) {
+    let mut room = room_arc.lock();
     let teams = CONFIG
         .game
         .teams
@@ -11,4 +14,10 @@ pub fn setup_room(room: &mut GameRoom) {
         .collect(); // TODO: clean up, don't reinitialize every function call
     room.create_team(&teams).expect("creating initial 1st team");
     room.create_team(&teams).expect("creating initial 2nd team");
+
+    server::mapcache::load_maps(
+        Arc::downgrade(&room_arc),
+        room.matchconfig().clone(),
+        room.get_load_marker(),
+    );
 }

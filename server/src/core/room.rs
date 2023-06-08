@@ -18,7 +18,10 @@ use super::{
     roomlist,
     util::color::RgbColor,
 };
-use crate::{orm::composed::profile::PlayerProfile, transport::Channel};
+use crate::{
+    orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
+    transport::Channel,
+};
 
 pub struct GameRoom {
     name: String,
@@ -30,6 +33,8 @@ pub struct GameRoom {
     teams_id: usize,
     channel: Channel<RoomEvent>,
     created: DateTime<Utc>,
+    load_marker: u32,
+    loaded_maps: Vec<MapRecord>,
 }
 
 impl GameRoom {
@@ -49,6 +54,8 @@ impl GameRoom {
             teams_id: 0,
             channel: Channel::new(),
             created: Utc::now(),
+            load_marker: 0,
+            loaded_maps: Vec::new(),
         }
     }
 
@@ -182,6 +189,16 @@ impl GameRoom {
         );
     }
 
+    pub fn get_load_marker(&self) -> u32 {
+        self.load_marker
+    }
+
+    pub fn maps_load_callback(&mut self, maps: Vec<MapRecord>, userdata: u32) {
+        if userdata == self.load_marker {
+            self.loaded_maps = maps;
+        }
+    }
+
     pub fn has_started(&self) -> bool {
         false // TODO
     }
@@ -219,6 +236,9 @@ impl GameRoom {
     }
 
     pub fn set_matchconfig(&mut self, config: MatchConfiguration) {
+        if config.selection != self.matchconfig.selection {
+            // reload maps
+        }
         self.matchconfig = config;
         self.matchconfig_update();
     }

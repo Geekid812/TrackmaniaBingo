@@ -1,4 +1,5 @@
 pub mod composed;
+pub mod dsl;
 pub mod mapcache;
 pub mod models;
 pub mod schema;

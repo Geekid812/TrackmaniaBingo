@@ -54,7 +54,7 @@ impl Request for CreateRoom {
         //    return Box::new(generic::Error::from(err));
         //}
 
-        setup_room(&mut room);
+        setup_room(&room_arc);
         room.add_player(&ctx.profile, true);
         let game_ctx = GameContext::new(&ctx, &room_arc);
         room.channel()
