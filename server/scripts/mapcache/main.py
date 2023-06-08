@@ -59,7 +59,7 @@ def create_db(cur):
     cur.execute("""
     CREATE TABLE IF NOT EXISTS "maps" (
         "tmxid"	INTEGER NOT NULL,
-        "uid"	CHAR(28) NOT NULL UNIQUE,
+        "uid"	CHAR(28) UNIQUE,
         "userid"	INTEGER NOT NULL,
         "userlogin"	CHAR(23) NOT NULL,
         "username"	TEXT NOT NULL,
