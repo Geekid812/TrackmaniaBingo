@@ -2,3 +2,4 @@
 db/*.db
 /legacy
 config.toml
+mapcache.db
