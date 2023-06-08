@@ -40,6 +40,7 @@ async fn main() {
 
     // Database setup
     orm::start_database(&CONFIG.database_url);
+    orm::mapcache::start_database(&CONFIG.mapcache_url);
 
     // Start web dashboard
     tokio::spawn(web::main());
