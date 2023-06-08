@@ -1,4 +1,4 @@
-use crate::transport::Channel;
+use crate::{orm::mapcache::record::MapRecord, transport::Channel};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use serde_repr::Serialize_repr;
@@ -9,6 +9,8 @@ use super::{
     models::{
         self,
         livegame::Medal,
+        player::Player,
+        room::RoomTeam,
         team::{BaseTeam, TeamIdentifier},
     },
     room::{NetworkPlayer, PlayerData},
@@ -27,18 +29,33 @@ pub struct LiveMatch {
 }
 
 impl LiveMatch {
-    pub fn new(config: MatchConfiguration, maps: Vec<GameMap>, teams: Vec<GameTeam>) -> Self {
+    pub fn new(
+        config: MatchConfiguration,
+        maps: Vec<MapRecord>,
+        teams: Vec<GameTeam>,
+        channel: Option<Channel<GameEvent>>,
+    ) -> Self {
+        let mut channel = channel.unwrap_or_else(Channel::new);
+        channel.broadcast(&GameEvent::MatchStart { maps: maps.clone() });
+
         Self {
             uid: base64::generate(16),
             config,
             teams,
             cells: maps
                 .into_iter()
-                .map(|map| GameCell { map, claim: None })
+                .map(|map| GameCell {
+                    map: GameMap::from(map),
+                    claim: None,
+                })
                 .collect(),
             started: Utc::now(),
-            channel: Channel::new(),
+            channel,
         }
+    }
+
+    pub fn uid(&self) -> &String {
+        &self.uid
     }
 
     pub fn check_for_bingos(&self, grid_size: usize) -> Vec<BingoLine> {
@@ -114,8 +131,17 @@ impl LiveMatch {
 }
 
 pub struct GameTeam {
-    pub info: BaseTeam,
-    pub members: Vec<PlayerData>,
+    base: BaseTeam,
+    members: Vec<Player>,
+}
+
+impl From<RoomTeam> for GameTeam {
+    fn from(value: RoomTeam) -> Self {
+        Self {
+            base: value.base,
+            members: value.members,
+        }
+    }
 }
 
 pub struct GameCell {

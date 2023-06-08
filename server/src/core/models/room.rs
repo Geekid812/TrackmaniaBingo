@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::room;
 
-use super::{livegame::MatchConfiguration, player::RoomPlayer, team::BaseTeam};
+use super::{livegame::MatchConfiguration, player::Player, team::BaseTeam};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GameRoom {
@@ -32,7 +32,7 @@ impl From<&room::GameRoom> for GameRoom {
 pub struct RoomTeam {
     #[serde(flatten)]
     pub base: BaseTeam,
-    pub members: Vec<RoomPlayer>,
+    pub members: Vec<Player>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

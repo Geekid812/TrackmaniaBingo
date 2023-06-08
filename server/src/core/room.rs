@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Weak},
+};
 
 use chrono::{DateTime, Utc};
 use rand::Rng;
@@ -7,12 +10,12 @@ use thiserror::Error;
 use tracing::warn;
 
 use super::{
-    directory,
-    events::room::RoomEvent,
-    livegame::MatchConfiguration,
+    directory::{self, Owned, Shared},
+    events::{game::GameEvent, room::RoomEvent},
+    livegame::{GameTeam, LiveMatch, MatchConfiguration},
     models::{
         self,
-        player::RoomPlayer,
+        player::Player,
         room::{RoomConfiguration, RoomTeam},
         team::{BaseTeam, TeamIdentifier},
     },
@@ -35,6 +38,7 @@ pub struct GameRoom {
     created: DateTime<Utc>,
     load_marker: u32,
     loaded_maps: Vec<MapRecord>,
+    active_match: Option<Shared<LiveMatch>>,
 }
 
 impl GameRoom {
@@ -56,6 +60,7 @@ impl GameRoom {
             created: Utc::now(),
             load_marker: 0,
             loaded_maps: Vec::new(),
+            active_match: None,
         }
     }
 
@@ -91,6 +96,10 @@ impl GameRoom {
         self.members.values().collect()
     }
 
+    pub fn active_match(&self) -> &Option<Shared<LiveMatch>> {
+        &self.active_match
+    }
+
     pub fn teams(&self) -> Vec<&BaseTeam> {
         self.teams.values().collect()
     }
@@ -106,9 +115,7 @@ impl GameRoom {
                     .to_owned(),
                 members: players
                     .iter()
-                    .map(|id| {
-                        RoomPlayer::from(self.members.get(id).expect("members should be valid"))
-                    })
+                    .map(|id| Player::from(self.members.get(id).expect("members should be valid")))
                     .collect(),
             })
             .collect()
@@ -200,7 +207,10 @@ impl GameRoom {
     }
 
     pub fn has_started(&self) -> bool {
-        false // TODO
+        self.active_match
+            .as_ref()
+            .map(|weak| weak.strong_count() > 0)
+            .unwrap_or(false)
     }
 
     pub fn player_join(&mut self, profile: &PlayerProfile) -> Result<(), JoinRoomError> {
@@ -262,6 +272,21 @@ impl GameRoom {
 
     pub fn close_room(&mut self, message: String) {
         self.channel.broadcast(&RoomEvent::CloseRoom { message });
+    }
+
+    pub fn start_match(&mut self) -> Owned<LiveMatch> {
+        let active_match = LiveMatch::new(
+            self.matchconfig.clone(),
+            self.loaded_maps.clone(),
+            self.teams_as_model()
+                .into_iter()
+                .map(GameTeam::from)
+                .collect(),
+            Some(Channel::<GameEvent>::from(&self.channel)),
+        );
+        let match_arc = directory::MATCHES.register(active_match.uid().to_owned(), active_match);
+        self.active_match = Some(Arc::downgrade(&match_arc));
+        match_arc
     }
 }
 

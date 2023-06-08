@@ -6,6 +6,7 @@ mod change_team;
 mod create_room;
 mod generic;
 mod ping;
+mod start_match;
 
 #[typetag::deserialize(tag = "req")]
 pub trait Request: Debug {

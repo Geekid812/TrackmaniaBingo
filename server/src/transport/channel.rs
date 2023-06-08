@@ -9,6 +9,15 @@ pub struct Channel<T: Serialize> {
     _data: PhantomData<T>,
 }
 
+impl<T: Serialize, U: Serialize> From<&Channel<U>> for Channel<T> {
+    fn from(value: &Channel<U>) -> Self {
+        Self {
+            peers: value.peers.clone(),
+            _data: PhantomData,
+        }
+    }
+}
+
 impl<T: Serialize> Channel<T> {
     pub fn new() -> Self {
         Self {
