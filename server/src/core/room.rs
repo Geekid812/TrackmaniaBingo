@@ -7,6 +7,7 @@ use thiserror::Error;
 use tracing::warn;
 
 use super::{
+    directory,
     events::room::RoomEvent,
     livegame::MatchConfiguration,
     models::{
@@ -15,7 +16,6 @@ use super::{
         room::{RoomConfiguration, RoomTeam},
         team::{BaseTeam, TeamIdentifier},
     },
-    roomlist,
     util::color::RgbColor,
 };
 use crate::{
@@ -229,7 +229,7 @@ impl GameRoom {
 
     pub fn set_config(&mut self, config: RoomConfiguration) {
         if config.public != self.config.public {
-            roomlist::send_room_visibility(self, config.public);
+            directory::send_room_visibility(self, config.public);
         }
         self.config = config;
         self.config_update();

@@ -1,3 +1,4 @@
+pub mod directory;
 pub mod events;
 pub mod gamecommon;
 pub mod identity;
@@ -5,5 +6,4 @@ pub mod livegame;
 pub mod map;
 pub mod models;
 pub mod room;
-pub mod roomlist;
 pub mod util;

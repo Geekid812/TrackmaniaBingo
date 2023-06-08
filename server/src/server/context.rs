@@ -3,7 +3,10 @@ use std::sync::{Arc, Weak};
 use tracing::debug;
 
 use crate::{
-    core::roomlist::{OwnedRoom, SharedRoom},
+    core::{
+        directory::{Owned, Shared},
+        room::GameRoom,
+    },
     orm::composed::profile::PlayerProfile,
     transport::Tx,
 };
@@ -23,7 +26,7 @@ impl ClientContext {
         }
     }
 
-    pub fn game_room(&self) -> Option<OwnedRoom> {
+    pub fn game_room(&self) -> Option<Owned<GameRoom>> {
         self.game.as_ref().and_then(|gamectx| gamectx.room())
     }
 
@@ -38,13 +41,13 @@ impl ClientContext {
 }
 
 pub struct GameContext {
-    room: SharedRoom,
+    room: Shared<GameRoom>,
     profile: PlayerProfile,
     pub writer: Arc<Weak<Tx>>,
 }
 
 impl GameContext {
-    pub fn new(ctx: &ClientContext, room: &OwnedRoom) -> Self {
+    pub fn new(ctx: &ClientContext, room: &Owned<GameRoom>) -> Self {
         Self {
             room: Arc::downgrade(room),
             profile: ctx.profile.clone(),
@@ -55,7 +58,7 @@ impl GameContext {
         self.room.strong_count() > 0
     }
 
-    pub fn room(&self) -> Option<OwnedRoom> {
+    pub fn room(&self) -> Option<Owned<GameRoom>> {
         self.room.upgrade()
     }
 }

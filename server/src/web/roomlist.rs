@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
-use crate::core::{models::room::RoomConfiguration, room::GameRoom, roomlist};
+use crate::core::{directory, models::room::RoomConfiguration, room::GameRoom};
 
 #[derive(Serialize, Debug)]
 pub struct RoomListTemplate {
@@ -34,7 +34,8 @@ impl From<&GameRoom> for TemplateRoom {
 }
 
 pub fn get_template_data() -> RoomListTemplate {
-    let rooms: Vec<TemplateRoom> = roomlist::lock()
+    let rooms: Vec<TemplateRoom> = directory::ROOMS
+        .lock()
         .iter()
         .map(|(_, room)| TemplateRoom::from(&*room.lock()))
         .collect();

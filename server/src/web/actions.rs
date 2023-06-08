@@ -2,11 +2,11 @@ use tracing::debug;
 use warp::http::StatusCode;
 use warp::Reply;
 
-use crate::core::roomlist;
+use crate::core::directory;
 
 pub fn close_room(join_code: String) {
     debug!("deleting room {}", join_code);
-    roomlist::remove_code(join_code);
+    directory::ROOMS.remove(join_code);
 }
 
 pub fn redirect_roomlist(reply: impl Reply) -> impl Reply {

@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use crate::{config::CONFIG, server};
 
-use super::{roomlist::OwnedRoom, util::color::RgbColor};
+use super::{directory::Owned, room::GameRoom, util::color::RgbColor};
 
-pub fn setup_room(room_arc: &OwnedRoom) {
+pub fn setup_room(room_arc: &Owned<GameRoom>) {
     let mut room = room_arc.lock();
     let teams = CONFIG
         .game

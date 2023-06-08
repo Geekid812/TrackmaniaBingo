@@ -2,11 +2,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{
+        directory,
         gamecommon::setup_room,
         livegame::MatchConfiguration,
         models::{room::RoomConfiguration, team::BaseTeam},
         room::GameRoom,
-        roomlist,
     },
     //gamemap,
     server::context::{ClientContext, GameContext},
@@ -39,20 +39,15 @@ impl Request for CreateRoom {
             room.lock().player_remove(ctx.profile.player.uid);
             // TODO: on player removed?
         }
-        let roomcode = roomlist::get_new_roomcode();
+        let roomcode = directory::get_new_roomcode();
         let new_room = GameRoom::create(
             self.config.clone(),
             self.matchconfig.clone(),
             self.name.clone(),
-            roomcode,
+            roomcode.clone(),
         );
-        let room_arc = roomlist::register_room(new_room);
+        let room_arc = directory::ROOMS.register(roomcode, new_room);
         let mut room = room_arc.lock();
-
-        //if let Some(err) = gamemap::init_maps(&room_arc, &mut room) {
-        //    roomlist::remove_room(room_arc.clone());
-        //    return Box::new(generic::Error::from(err));
-        //}
 
         setup_room(&room_arc);
         room.add_player(&ctx.profile, true);

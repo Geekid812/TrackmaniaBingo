@@ -3,13 +3,14 @@ use futures::Future;
 use tracing::error;
 
 use crate::config::CONFIG;
+use crate::core::room::GameRoom;
 use crate::orm::dsl::RandomDsl;
 use crate::{
-    core::{livegame::MatchConfiguration, models::livegame::MapMode, roomlist::SharedRoom},
+    core::{directory::Shared, livegame::MatchConfiguration, models::livegame::MapMode},
     orm::mapcache::{self, record::MapRecord},
 };
 
-pub fn load_maps(room: SharedRoom, config: MatchConfiguration, userdata: u32) {
+pub fn load_maps(room: Shared<GameRoom>, config: MatchConfiguration, userdata: u32) {
     let fut = match config.selection {
         MapMode::RandomTMX => {
             cache_load_mxrandom(config.grid_size as usize * config.grid_size as usize)
@@ -20,7 +21,7 @@ pub fn load_maps(room: SharedRoom, config: MatchConfiguration, userdata: u32) {
 }
 
 async fn fetch_and_load<F: Future<Output = Result<Vec<MapRecord>, anyhow::Error>>>(
-    room: SharedRoom,
+    room: Shared<GameRoom>,
     fut: F,
     userdata: u32,
 ) {
