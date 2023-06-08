@@ -1,0 +1,9 @@
+[Unit]
+Description=mapcache background job
+
+[Timer]
+OnUnitActiveSec=24h
+OnBootSec=24h
+
+[Install]
+WantedBy=timers.target

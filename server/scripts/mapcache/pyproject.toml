@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "mapcache"
+version = "1.0.0"
+description = "simple TrackmaniaExchange map metadata exporter."
+authors = ["Geekid"]
+license = "GPLv3"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.28.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

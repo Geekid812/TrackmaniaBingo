@@ -1,0 +1,6 @@
+[Unit]
+Description=Update the TrackmaniaExchange mapcache in the background
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash {SCRIPT_PATH}/run.sh
