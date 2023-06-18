@@ -120,6 +120,12 @@ namespace Network {
 
     void Loop() {
         if (!IsConnected()) return;
+
+        if (!ShouldStayConnected()) {
+            trace("Network: Plugin not active, disconnecting from the server.");
+            CloseConnection();
+            return;
+        }
         
         string message = _protocol.Recv();
         while (message != "") {
@@ -146,6 +152,10 @@ namespace Network {
         if (Timings::LastPingReceived + Settings::PingInterval + Settings::NetworkTimeout <= Time::Now) {
             OnDisconnect();
         }
+    }
+
+    bool ShouldStayConnected() {
+        return UIMainWindow::Visible || @Room != null || @Match != null;
     }
 
     void DoPing() {
