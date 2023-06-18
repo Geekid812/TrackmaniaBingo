@@ -1,7 +1,6 @@
-
 namespace UIGameRoom {
     bool Visible;
-    bool IncludePlayerCount;
+    bool IncludePlayerCountInTitle;
     bool RoomCodeVisible;
     bool RoomCodeHovered;
     bool ClipboardHovered;
@@ -16,13 +15,19 @@ namespace UIGameRoom {
         UI::PushStyleVar(UI::StyleVar::WindowTitleAlign, vec2(0.5, 0.5));
         UI::PushFont(Font::Bold);
         UI::SetNextWindowSize(600, 400, UI::Cond::Always);
-        bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCount ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, UI::WindowFlags::NoResize);
+        bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, UI::WindowFlags::NoResize);
         if (windowOpen) {
             UI::PushFont(Font::Regular);
             RenderContent();
             UI::PopFont();
         }
-        IncludePlayerCount = !windowOpen;
+        if (!Visible) {
+            // Room window was closed, should disconnect the player.
+            // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
+            // So for now, the player will get yeeted out.
+            Network::LeaveRoom();
+        }
+        IncludePlayerCountInTitle = !windowOpen;
 
         UI::End();
         UI::PopFont();
