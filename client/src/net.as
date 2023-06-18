@@ -321,6 +321,7 @@ namespace Network {
         // The room was created. Setting up room status (local player is host)
         @Room = GameRoom();
         Room.config = RoomConfig;
+        Room.matchConfig = MatchConfig;
         string roomCode = response["join_code"];
         Room.maxTeams = int(response["max_teams"]);
         UIRoomMenu::JoinCodeVisible = false;
