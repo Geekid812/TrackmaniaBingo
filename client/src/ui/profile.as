@@ -1,6 +1,6 @@
 
 namespace UIProfile {
-    const string playerFlagUrl = "https://trackmania.io/img/flags/";
+    const string PLAYER_FLAG_URL = "https://trackmania.io/img/flags/";
     PlayerProfile@ openProfiles;
 
     void RenderProfile(PlayerProfile profile) {
@@ -19,7 +19,7 @@ namespace UIProfile {
     }
 
     void CountryFlag(const string&in countryCode, vec2 size) {
-        auto flagImage = Images::CachedFromURL(playerFlagUrl + countryCode + ".jpg");
+        auto flagImage = Images::CachedFromURL(PLAYER_FLAG_URL + countryCode + ".jpg");
         if (@flagImage.m_texture != null) {
             UI::Image(flagImage.m_texture, size);
         } else {

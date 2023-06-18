@@ -1,51 +1,51 @@
 
 namespace Playground {
     // Data for map claim coroutine (see CheckMedals())
-    MapClaimStatus MapClaimData;
+    MapClaimStatus mapClaimData;
 
     class MapClaimStatus {
-        int Retries;
-        string MapUid;
-        RunResult MapResult;
+        int retries;
+        string mapUid;
+        RunResult mapResult;
     }
 
-    void LoadMap(int TmxID) {
-        startnew(LoadMapCoroutine, CoroutineData(TmxID));
+    void LoadMap(int tmxId) {
+        startnew(LoadMapCoroutine, CoroutineData(tmxId));
     }
 
     class CoroutineData {
-        int Id;
+        int id;
 
-        CoroutineData(int id) { this.Id = id; }
+        CoroutineData(int id) { this.id = id; }
     }
 
     // This code is mostly taken from Greep's RMC
     void LoadMapCoroutine(ref@ Data) {
-        int TmxID = cast<CoroutineData>(Data).Id;
-        auto App = cast<CTrackMania>(GetApp());
-        bool MenuDisplayed = App.ManiaPlanetScriptAPI.ActiveContext_InGameMenuDisplayed;
-        if (MenuDisplayed) {
+        int tmxId = cast<CoroutineData>(Data).id;
+        auto app = cast<CTrackMania>(GetApp());
+        bool menuDisplayed = app.ManiaPlanetScriptAPI.ActiveContext_InGameMenuDisplayed;
+        if (menuDisplayed) {
             // Close the in-game menu via ::Quit to avoid TM hanging / crashing. Also takes us back to the main menu.
-            App.Network.PlaygroundInterfaceScriptHandler.CloseInGameMenu(CGameScriptHandlerPlaygroundInterface::EInGameMenuResult::Quit);
+            app.Network.PlaygroundInterfaceScriptHandler.CloseInGameMenu(CGameScriptHandlerPlaygroundInterface::EInGameMenuResult::Quit);
         } else {
             // Go to main menu and wait until map loading is ready
-            App.BackToMainMenu();
+            app.BackToMainMenu();
         }
 
         // Wait for the active module to be the main menu, and be ready. If getting back to the main menu fails, this will block until the user quits the map.
-        while (App.Switcher.ModuleStack.Length == 0 || cast<CTrackManiaMenus>(App.Switcher.ModuleStack[0]) is null) {
+        while (app.Switcher.ModuleStack.Length == 0 || cast<CTrackManiaMenus>(app.Switcher.ModuleStack[0]) is null) {
             yield();
         }
-        while (!App.ManiaTitleControlScriptAPI.IsReady) {
+        while (!app.ManiaTitleControlScriptAPI.IsReady) {
             yield();
         }
 
-        App.ManiaTitleControlScriptAPI.PlayMap("https://trackmania.exchange/maps/download/" + TmxID, "", "");
+        app.ManiaTitleControlScriptAPI.PlayMap("https://trackmania.exchange/maps/download/" + tmxId, "", "");
     }
 
     CGameCtnChallenge@ GetCurrentMap() {
-        auto App = cast<CTrackMania>(GetApp());
-        return App.RootMap;
+        auto app = cast<CTrackMania>(GetApp());
+        return app.RootMap;
     }
 
     // Once again, this is mostly from RMC
@@ -53,70 +53,70 @@ namespace Playground {
     RunResult GetRunResult() {
         // This is GetCurrentMap(), but because App is used in the function,
         // we redefine it here
-        auto App = cast<CTrackMania>(GetApp());
-        auto Map = App.RootMap;
+        auto app = cast<CTrackMania>(GetApp());
+        auto map = app.RootMap;
 
-        auto Playground = cast<CGamePlayground>(App.CurrentPlayground);
-        if (Map is null || Playground is null) return RunResult();
+        auto playground = cast<CGamePlayground>(app.CurrentPlayground);
+        if (map is null || playground is null) return RunResult();
 
-        int AuthorTime = Map.TMObjective_AuthorTime;
-        int GoldTime = Map.TMObjective_GoldTime;
-        int SilverTime = Map.TMObjective_SilverTime;
-        int BronzeTime = Map.TMObjective_BronzeTime;
-        int Time = -1;
+        int authorTime = map.TMObjective_AuthorTime;
+        int goldTime = map.TMObjective_GoldTime;
+        int silverTime = map.TMObjective_SilverTime;
+        int bronzeTime = map.TMObjective_BronzeTime;
+        int time = -1;
 
-        auto PlaygroundScript = cast<CSmArenaRulesMode>(App.PlaygroundScript);
-        if (PlaygroundScript is null || Playground.GameTerminals.Length == 0) return RunResult();
+        auto playgroundScript = cast<CSmArenaRulesMode>(app.PlaygroundScript);
+        if (playgroundScript is null || playground.GameTerminals.Length == 0) return RunResult();
 
-        CSmPlayer@ Player = cast<CSmPlayer>(Playground.GameTerminals[0].ControlledPlayer);
-        if (Playground.GameTerminals[0].UISequence_Current != SGamePlaygroundUIConfig::EUISequence::Finish || Player is null) return RunResult();
+        CSmPlayer@ player = cast<CSmPlayer>(playground.GameTerminals[0].ControlledPlayer);
+        if (playground.GameTerminals[0].UISequence_Current != SGamePlaygroundUIConfig::EUISequence::Finish || player is null) return RunResult();
 
-        CSmScriptPlayer@ PlayerScriptAPI = cast<CSmScriptPlayer>(Player.ScriptAPI);
-        auto Ghost = PlaygroundScript.Ghost_RetrieveFromPlayer(PlayerScriptAPI);
-        if (Ghost is null) return RunResult();
+        CSmScriptPlayer@ playerScriptAPI = cast<CSmScriptPlayer>(player.ScriptAPI);
+        auto ghost = playgroundScript.Ghost_RetrieveFromPlayer(playerScriptAPI);
+        if (ghost is null) return RunResult();
 
-        if (Ghost.Result.Time > 0 && Ghost.Result.Time < 4294967295) Time = Ghost.Result.Time;
-        PlaygroundScript.DataFileMgr.Ghost_Release(Ghost.Id);
+        if (ghost.Result.Time > 0 && ghost.Result.Time < 4294967295) time = ghost.Result.Time;
+        playgroundScript.DataFileMgr.Ghost_Release(ghost.Id);
 
-        if (Time != -1) {
-            return RunResult(Time, CalculateMedal(Time, AuthorTime, GoldTime, SilverTime, BronzeTime));
+        if (time != -1) {
+            return RunResult(time, CalculateMedal(time, authorTime, goldTime, silverTime, bronzeTime));
         }
         return RunResult();
     }
 
     // Watching task that claims cells when certain medals are achieved
     void CheckMedals() {
-        if (@Room == null) return;
-        if (MapClaimData.Retries > 0) return; // Request in progress
-        RunResult Result = GetRunResult();
-        if (Result.Time == -1) return;
+        if (@Match == null) return;
+        if (mapClaimData.retries > 0) return; // Request in progress
+        RunResult result = GetRunResult();
+        if (result.time == -1) return;
 
-        auto MapNod = GetCurrentMap();
-        auto GameMap = Room.GetMapWithUid(MapNod.EdChallengeId); // Hi, Ed!
-        if (GameMap.TmxID == -1) return;
-        int CurrentTime = GameMap.ClaimedRun.Time;
-        if (CurrentTime != -1 && CurrentTime <= Result.Time) return;
+        auto mapNod = GetCurrentMap();
+        auto mapCell = Match.GetMapWithUid(mapNod.EdChallengeId);
+        if (mapCell.map.tmxid == -1) return;
+        int currentTime = mapCell.LeadingRun().recordedRun.time;
+        if (currentTime != -1 && currentTime <= result.time) return;
 
-        Medal TargetMedal = Room.Config.TargetMedal;
-        if (Result.Medal <= TargetMedal) {
+        Medal targetMedal = Match.config.targetMedal;
+        if (result.medal <= targetMedal) {
             // Map should be claimed
-            MapClaimData.Retries = 3;
-            MapClaimData.MapUid = GameMap.Uid;
-            MapClaimData.MapResult = Result;
-            trace("Claiming map '" + GameMap.Uid + "' with time of " + Result.Time + " (previous time: " + CurrentTime + ")");
+            mapClaimData.retries = 3;
+            mapClaimData.mapUid = mapCell.map.uid;
+            mapClaimData.mapResult = result;
+            trace("Claiming map '" + mapCell.map.uid + "' with time of " + result.time + " (previous time: " + currentTime + ")");
             startnew(ClaimMedalCoroutine);
         }
     }
 
     RunResult@ GetCurrentTimeToBeat() {
-        if (@Room == null) return null;
-        CGameCtnChallenge@ Map = GetCurrentMap();
-        if (@Map == null) return null;
-        Map GameMap = Room.GetMapWithUid(Map.EdChallengeId);
-        if (GameMap.TmxID == -1) return null;
-        if (GameMap.ClaimedRun.Time != -1) return GameMap.ClaimedRun;
+        if (@Match == null) return null;
+        CGameCtnChallenge@ map = GetCurrentMap();
+        if (@map == null) return null;
+        MapCell cell = Match.GetMapWithUid(map.EdChallengeId);
+        if (cell.map.tmxid == -1) return null;
+        if (cell.IsClaimed()) return cell.LeadingRun().recordedRun;
 
-        return RunResult(GetMedalTime(Map, Room.Config.TargetMedal), Room.Config.TargetMedal);
+        return RunResult(GetMedalTime(map, Match.config.targetMedal), Match.config.targetMedal);
     }
 
     Medal CalculateMedal(int time, int author, int gold, int silver, int bronze) {
@@ -137,20 +137,20 @@ namespace Playground {
     }
 
     void ClaimMedalCoroutine() {
-        bool Ok = false;
-        while (MapClaimData.Retries > 0) {
-            bool Success = Network::ClaimCell(MapClaimData.MapUid, MapClaimData.MapResult);
-            MapClaimData.Retries -= 1;
+        bool ok = false;
+        while (mapClaimData.retries > 0) {
+            bool Success = Network::ClaimCell(mapClaimData.mapUid, mapClaimData.mapResult);
+            mapClaimData.retries -= 1;
             if (Success) {
                 trace("Map successfully claimed.");
-                Ok = true;
+                ok = true;
                 break;
             }
-            else trace("Map claim failed, retrying... (" + MapClaimData.Retries + " attempts left)");
+            else trace("Map claim failed, retrying... (" + mapClaimData.retries + " attempts left)");
         }
-        if (!Ok) {
+        if (!ok) {
             warn("Warning! Failed to claim a map after several retries.");
         }
-        MapClaimData.Retries = 0;
+        mapClaimData.retries = 0;
     }
 }

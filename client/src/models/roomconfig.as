@@ -1,67 +1,34 @@
 
 class RoomConfiguration {
-    // Room Config
-    string Name;
-    uint MaxPlayers = 2;
-    bool HasPlayerLimit = false;
-    bool RandomizeTeams = false;
-    bool InGameChat = false;
-    bool IsPublic = false;
-    // Game Config
-    uint GridSize = 5;
-    MapMode MapSelection = MapMode::TOTD;
-    uint MappackId;
-    Medal TargetMedal = Medal::Author;
-    uint MinutesLimit = 0;
-    uint NoBingoMinutes = 0;
-    bool Overtime = false;
+    string name;
+    uint maxPlayers = 2;
+    bool hasPlayerLimit = false;
+    bool randomizeTeams = false;
+    bool inGameChat = false;
+    bool isPublic = false;
 }
 
-enum MapMode {
-    TOTD,
-    MXRandom,
-    Mappack,
-}
+namespace RoomConfiguration {
+    Json::Value@ Serialize(RoomConfiguration config) {
+        auto value = Json::Object();
+        value["name"] = config.name;
+        value["public"] = config.isPublic;
+        value["size"] = config.hasPlayerLimit ? config.maxPlayers : 0;
+        value["randomize"] = config.randomizeTeams;
+        value["chat_enabled"] = config.inGameChat;
 
-string stringof(MapMode mode) {
-    if (mode == MapMode::TOTD) {
-        return "Track of the Day";
+        return value;
     }
-    if (mode == MapMode::MXRandom) {
-        return "Random Map (TMX)";
+
+    RoomConfiguration Deserialize(Json::Value@ value) {
+        auto config = RoomConfiguration();
+        config.name = value["name"];
+        config.isPublic = value["public"];
+        config.hasPlayerLimit = int(value["size"]) != 0;
+        config.maxPlayers = value["size"];
+        config.randomizeTeams = value["randomize"];
+        config.inGameChat = value["chat_enabled"];
+
+        return config;
     }
-    return "Custom Mappack";
-}
-
-Json::Value@ Serialize(RoomConfiguration Config) {
-    auto Value = Json::Object();
-    Value["name"] = Config.Name;
-    Value["public"] = Config.IsPublic;
-    Value["size"] = Config.HasPlayerLimit ? Config.MaxPlayers : 0;
-    Value["randomize"] = Config.RandomizeTeams;
-    Value["chat_enabled"] = Config.InGameChat;
-    Value["grid_size"] = Config.GridSize;
-    Value["selection"] = Config.MapSelection;
-    Value["medal"] = Config.TargetMedal;
-    Value["time_limit"] = Config.MinutesLimit;
-
-    if (Config.MapSelection == MapMode::Mappack) Value["mappack_id"] = Config.MappackId;
-    return Value;
-}
-
-RoomConfiguration Deserialize(Json::Value@ Value) {
-    auto Config = RoomConfiguration();
-    Config.Name = Value["name"];
-    Config.IsPublic = Value["public"];
-    Config.HasPlayerLimit = int(Value["size"]) != 0;
-    Config.MaxPlayers = Value["size"];
-    Config.RandomizeTeams = Value["randomize"];
-    Config.InGameChat = Value["chat_enabled"];
-    Config.GridSize = Value["grid_size"];
-    Config.MapSelection = MapMode(int(Value["selection"]));
-    Config.TargetMedal = Medal(int(Value["medal"]));
-    Config.MinutesLimit = uint(Value["time_limit"]);
-
-    if (Value.HasKey("mappack_id")) Config.MappackId = uint(Value["mappack_id"]);
-    return Config;
 }

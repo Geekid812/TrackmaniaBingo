@@ -15,18 +15,20 @@ namespace UIRoomMenu {
     class PublicRoom {
         string name;
         string hostname;
-        string join_code;
-        int player_count;
+        string joinCode;
+        int playerCount;
         RoomConfiguration config;
+        MatchConfiguration matchConfig;
 
         PublicRoom() {}
 
         PublicRoom(Json::Value@ val) {
             name = val["name"];
             hostname = val["hostname"];
-            join_code = val["join_code"];
-            player_count = val["player_count"];
-            config = Deserialize(val["config"]);
+            joinCode = val["join_code"];
+            playerCount = val["player_count"];
+            config = RoomConfiguration::Deserialize(val["config"]);
+            matchConfig = MatchConfiguration::Deserialize(val["match_config"]);
         }
     }
 
@@ -90,18 +92,18 @@ namespace UIRoomMenu {
                 UI::Text(room.name);
                 UI::PopFont();
 
-                string righttext = Icons::Users + " " + room.player_count + (room.config.MaxPlayers != 0 ? "/" + room.config.MaxPlayers : "") + "\t\t" + Icons::User + " " + room.hostname;
+                string righttext = Icons::Users + " " + room.playerCount + (room.config.maxPlayers != 0 ? "/" + room.config.maxPlayers : "") + "\t\t" + Icons::User + " " + room.hostname;
                 float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(righttext).x, 1.0);
                 UI::SetCursorPos(base + vec2(padding, 0.));
                 UI::Text(righttext);
 
                 base = UI::GetCursorPos();
-                UI::Text(string::Join(Window::RoomConfigInfo(room.config), "\t"));
+                UI::Text(string::Join(UIGameRoom::MatchConfigInfo(room.matchConfig), "\t"));
                 padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(Icons::Play + "\tJoin\t").x, 1.0);
                 UI::SetCursorPos(base + vec2(padding, 0.));
                 UIColor::DarkGreen();
                 if (UI::Button(Icons::Play + " Join")) {
-                    NetParams::JoinCode = room.join_code;
+                    NetParams::JoinCode = room.joinCode;
                     startnew(Network::JoinRoom);
                 }
                 UIColor::Reset();
@@ -129,6 +131,6 @@ namespace UIRoomMenu {
         JoinPrivateRoomButton();
         UI::EndDisabled();
 
-        Window::ConnectingIndicator();
+        UIMainWindow::ConnectingIndicator();
     }
 }

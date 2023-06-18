@@ -3,7 +3,7 @@ namespace UIHome {
         UI::SetWindowSize(vec2(550, 700), UI::Cond::FirstUseEver);
         Title();
         UI::Dummy(vec2(0, 20));
-        UINews::NewsItem(Config::News[0]);
+        if (Config::News.Length > 0) UINews::NewsItem(Config::News[0]);
         if (Config::News.Length > 1) {
             MoreNewsButton();
         }

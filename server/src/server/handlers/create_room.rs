@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 
 use crate::{
     core::{
@@ -47,9 +48,9 @@ impl Request for CreateRoom {
             roomcode.clone(),
         );
         let room_arc = directory::ROOMS.register(roomcode, new_room);
-        let mut room = room_arc.lock();
-
         setup_room(&room_arc);
+
+        let mut room = room_arc.lock();
         room.add_player(&ctx.profile, true);
         let game_ctx = GameContext::new(&ctx, &room_arc);
         room.channel()

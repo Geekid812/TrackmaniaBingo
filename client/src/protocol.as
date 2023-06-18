@@ -1,36 +1,36 @@
 // Implementation of a full TCP custom protocol, similar to websockets
 class HandshakeData {
-    string ClientVersion;
-    string AuthToken;
-    string Username;
+    string clientVersion;
+    string authToken;
+    string username;
 
     Json::Value ToJSON() {
         auto object = Json::Object();
-        object["version"] = ClientVersion;
-        object["token"] = AuthToken;
-        object["username"] = Username;
+        object["version"] = clientVersion;
+        object["token"] = authToken;
+        object["username"] = username;
         return object;
     }
 }
 
 class Protocol {
-    Net::Socket@ Socket;
-    ConnectionState State;
-    int MsgSize;
+    Net::Socket@ socket;
+    ConnectionState state;
+    int msgSize;
 
     Protocol() {
-        @Socket = null;
-        State = ConnectionState::Closed;
-        MsgSize = 0;
+        @socket = null;
+        state = ConnectionState::Closed;
+        msgSize = 0;
     }
 
     int Connect(const string&in host, uint16 port, HandshakeData handshake) {
-        State = ConnectionState::Connecting;
-        @Socket = Net::Socket();
-        MsgSize = 0;
+        state = ConnectionState::Connecting;
+        @socket = Net::Socket();
+        msgSize = 0;
         
         // Socket Creation
-        if (!Socket.Connect(host, port)) {
+        if (!socket.Connect(host, port)) {
             trace("Protocol: Could not create socket to connect to " + host + ":" + port + ".");
             Fail();
             return -1;
@@ -38,15 +38,15 @@ class Protocol {
         trace("Protocol: Socket bound and ready to connect to " + host + ":" + port + ".");
 
         // Connection
-        uint64 TimeoutDate = Time::Now + Settings::NetworkTimeout;
-        uint64 InitialDate = Time::Now;
-        while (!Socket.CanWrite() && Time::Now < TimeoutDate) { yield(); }
-        if (!Socket.CanWrite()) {
+        uint64 timeoutDate = Time::Now + Settings::NetworkTimeout;
+        uint64 initialDate = Time::Now;
+        while (!socket.CanWrite() && Time::Now < timeoutDate) { yield(); }
+        if (!socket.CanWrite()) {
             trace("Protocol: Connection timed out after " + Settings::NetworkTimeout + "ms.");
             Fail();
             return -1;
         }
-        trace("Protocol: Connected to server after " + (Time::Now - InitialDate) + "ms.");
+        trace("Protocol: Connected to server after " + (Time::Now - initialDate) + "ms.");
 
         // Opening Handshake
         if (!InnerSend(Json::Write(handshake.ToJSON()))) {
@@ -56,65 +56,65 @@ class Protocol {
         }
         trace("Protocol: Opening handshake sent.");
 
-        string HandshakeReply = BlockRecv(Settings::NetworkTimeout);
-        if (HandshakeReply == "") {
+        string handshakeReply = BlockRecv(Settings::NetworkTimeout);
+        if (handshakeReply == "") {
             trace("Protocol: Handshake reply reception timed out after " + Settings::NetworkTimeout + "ms.");
             Fail();
             return -1;
         }
 
         // Handshake Check
-        int StatusCode;
+        int statusCode;
         try {
-            Json::Value@ Reply = Json::Parse(HandshakeReply);
-            StatusCode = Reply["code"];
+            Json::Value@ Reply = Json::Parse(handshakeReply);
+            statusCode = Reply["code"];
             if (Reply.HasKey("profile")) {
                 @Profile = PlayerProfile::Deserialize(Reply["profile"]);
                 PersistantStorage::LocalProfile = Json::Write(Reply["profile"]);
                 LocalUsername = Profile.username;
             }
         } catch {
-            trace("Protocol: Handshake reply parse failed. Got: " + HandshakeReply);
+            trace("Protocol: Handshake reply parse failed. Got: " + handshakeReply);
             Fail();
             return -1;
         }
 
-        if (StatusCode == 0 || StatusCode == 5) {
+        if (statusCode == 0 || statusCode == 5) {
             trace("Protocol: Handshake reply validated. Connection has been established!");
-            State = ConnectionState::Connected;
+            state = ConnectionState::Connected;
         } else {
-            trace("Protocol: Received non-zero code " + StatusCode + " in handshake.");
+            trace("Protocol: Received non-zero code " + statusCode + " in handshake.");
             Fail();
         }
-        return StatusCode;
+        return statusCode;
     }
 
     private bool InnerSend(const string&in data) {
         MemoryBuffer@ buf = MemoryBuffer(4);
         buf.Write(data.Length);
         buf.Seek(0);
-        return Socket.WriteRaw(buf.ReadString(4) + data);
+        return socket.WriteRaw(buf.ReadString(4) + data);
     }
 
     bool Send(const string&in data) {
-        if (State != ConnectionState::Connected) return false;
+        if (state != ConnectionState::Connected) return false;
         return InnerSend(data);
     }
 
     string BlockRecv(uint timeout) {
-        uint TimeoutDate = Time::Now + timeout;
-        string Message = "";
-        while (Message == "" && State != ConnectionState::Closed && Time::Now < TimeoutDate) { yield(); Message = Recv(); }
-        return Message;
+        uint timeoutDate = Time::Now + timeout;
+        string message = "";
+        while (message == "" && state != ConnectionState::Closed && Time::Now < timeoutDate) { yield(); message = Recv(); }
+        return message;
     }
 
     string Recv() {
-        if (State == ConnectionState::Closed) return "";
+        if (state == ConnectionState::Closed) return "";
 
-        if (MsgSize == 0) {
-            if (Socket.Available() >= 4) {
+        if (msgSize == 0) {
+            if (socket.Available() >= 4) {
                 MemoryBuffer@ buf = MemoryBuffer(4);
-                buf.Write(Socket.ReadRaw(4));
+                buf.Write(socket.ReadRaw(4));
                 buf.Seek(0);
                 int Size = buf.ReadInt32();
                 if (Size <= 0) {
@@ -122,14 +122,14 @@ class Protocol {
                     Fail();
                     return "";
                 }
-                MsgSize = Size;
+                msgSize = Size;
             }
         }
 
-        if (MsgSize != 0) {
-            if (Socket.Available() >= MsgSize) {
-                string Message = Socket.ReadRaw(MsgSize);
-                MsgSize = 0;
+        if (msgSize != 0) {
+            if (socket.Available() >= msgSize) {
+                string Message = socket.ReadRaw(msgSize);
+                msgSize = 0;
                 return Message;
             }
         }
@@ -138,13 +138,13 @@ class Protocol {
     }
 
     void Fail() {
-        if (State == ConnectionState::Closed) return;
+        if (state == ConnectionState::Closed) return;
         trace("Protocol: Connection fault. Closing.");
-        if (@Socket != null && Socket.CanWrite()) Socket.Close();
+        if (@socket != null && socket.CanWrite()) socket.Close();
 
-        State = ConnectionState::Closed;
-        @Socket = null;
-        MsgSize = 0;
+        state = ConnectionState::Closed;
+        @socket = null;
+        msgSize = 0;
     }
 }
 

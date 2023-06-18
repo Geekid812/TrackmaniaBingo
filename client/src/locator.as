@@ -1,7 +1,7 @@
 
 namespace BoardLocator {
     void Render() {
-        if (@Room == null || !Room.InGame) return;
+        if (@Match == null) return;
         UI::SetNextWindowPos(int(79 * Board::Unit()), int(Board::Unit()), UI::Cond::FirstUseEver);
         UI::SetNextWindowSize(int(20 * Board::Unit()), int(20 * Board::Unit()), UI::Cond::FirstUseEver);
 

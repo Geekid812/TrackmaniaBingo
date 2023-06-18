@@ -1,12 +1,12 @@
-const uint64 CountdownTime = 3000;
+const uint64 COUNTDOWN_TIME = 3000;
 
 namespace Time {
     /**
-     * Get the room's timelimit in milliseconds.
+     * Get the match's timelimit in milliseconds.
      */
     uint64 GetTimelimitMilliseconds() {
-        if (@Room == null) return 0;
-        return Room.Config.MinutesLimit * 60 * 1000;
+        if (@Match == null) return 0;
+        return Match.config.minutesLimit * 60 * 1000;
     }
 
     /**
@@ -14,19 +14,19 @@ namespace Time {
      * Time does not increase after a game has ended.
      */
     uint64 MillisecondsElapsed() {
-        if (@Room == null) return 0;
+        if (@Match == null) return 0;
         uint64 curTime = Time::Now;
-        if (Room.EndState.HasEnded()) {
-            curTime = Room.EndState.EndTime;
+        if (Match.endState.HasEnded()) {
+            curTime = Match.endState.EndTime;
         }
-        return curTime - Room.StartTime - CountdownTime;
+        return curTime - Match.startTimestamp - COUNTDOWN_TIME;
     }
 
     /**
      * Get the milliseconds remaining if playing on a time limit.
      */
     uint64 MillisecondsRemaining() {
-        if (@Room == null) return 0;
+        if (@Match == null) return 0;
         return GetTimelimitMilliseconds() - ClampedMillisecondsElapsed();
     }
 
@@ -34,8 +34,8 @@ namespace Time {
      * Get the milliseconds elapsed since game start, but never exceeds the time limit.
      */
     uint64 ClampedMillisecondsElapsed() {
-        if (@Room == null) return 0;
-        if (Room.Config.MinutesLimit == 0) return MillisecondsElapsed();
+        if (@Match == null) return 0;
+        if (Match.config.minutesLimit == 0) return MillisecondsElapsed();
         return Math::Clamp(MillisecondsElapsed(), 0, GetTimelimitMilliseconds());
     }
 }

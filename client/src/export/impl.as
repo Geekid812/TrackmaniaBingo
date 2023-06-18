@@ -1,9 +1,7 @@
 namespace TrackmaniaBingo {
     State GetState() {
-        if (@Room == null) return Window::Visible ? State::PluginMenu : State::None;
-        if (Room.InGame) {
-            return Room.EndState.HasEnded() ? State::PostGame : State::InGame;
-        }
-        return State::InRoom;
+        if (@Match != null) return Match.endState.HasEnded() ? State::PostGame : State::InGame;
+        if (@Room != null) return State::InRoom;
+        return UIMainWindow::Visible ? State::PluginMenu : State::None;
     }
 }

@@ -3,7 +3,7 @@ namespace Config {
     string StatusMessage;
     bool CanPlay;
     NewsItem[] News;
-    FeaturedMappack[] featuredMappacks;
+    FeaturedMappack[] FeaturedMappacks;
     uint64 LastUpdate;
 
     void FetchConfig() {
@@ -39,7 +39,7 @@ namespace Config {
             News.InsertLast(NewsItem(jsonItem["title"], jsonItem["content"], linkKeys, linkRefs, jsonItem["ts"]));
         }
 
-        featuredMappacks = {};
+        FeaturedMappacks = {};
         // string[] mappackNames = json["featuredMappacks"].GetKeys();
         // for (uint i = 0; i < mappackNames.Length; i++) {
         //     string packName = mappackNames[i];

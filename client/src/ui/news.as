@@ -50,19 +50,19 @@ namespace UINews {
     }
 
     string RelativeTime(int64 delta) {
-        const int weekSeconds = 60 * 60 * 24 * 7;
-        const int daySeconds = 60 * 60 * 24;
-        const int hourSeconds = 60 * 60;
-        const int minuteSeconds = 60;
+        const int WEEK_SECONDS = 60 * 60 * 24 * 7;
+        const int DAY_SECONDS = 60 * 60 * 24;
+        const int HOUR_SECONDS = 60 * 60;
+        const int MINUTE_SECONDS = 60;
 
-        int weeks = delta / weekSeconds;
-        delta %= weekSeconds;
-        int days = delta / daySeconds;
-        delta %= daySeconds;
-        int hours = delta / hourSeconds;
-        delta %= hourSeconds;
-        int minutes = delta / minuteSeconds;
-        delta %= minuteSeconds;
+        int weeks = delta / WEEK_SECONDS;
+        delta %= WEEK_SECONDS;
+        int days = delta / DAY_SECONDS;
+        delta %= DAY_SECONDS;
+        int hours = delta / HOUR_SECONDS;
+        delta %= HOUR_SECONDS;
+        int minutes = delta / MINUTE_SECONDS;
+        delta %= MINUTE_SECONDS;
 
         if (weeks > 0) return weeks + " week" + (weeks > 1 ? "s" : "");
         if (days >= 3) return days + " days";

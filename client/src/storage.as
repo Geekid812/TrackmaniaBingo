@@ -6,6 +6,9 @@ namespace PersistantStorage {
     [Setting hidden]
     string LocalProfile = "";
 
+    [Setting hidden]
+    float MapListUiScale = 1.0f;
+
     void LoadPersistentItems() {
         try {
             if (LocalProfile != "") {

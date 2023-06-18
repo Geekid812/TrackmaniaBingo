@@ -9,7 +9,7 @@ void Main() {
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
     if (WasConnected) {
-        Network::Init();
+        Network::Connect();
     }
 
     while (true) {
@@ -19,11 +19,12 @@ void Main() {
 }
 
 void RenderMenu() {
-    if (UI::MenuItem(MenuItemName, "", Window::Visible)) {
-        Window::Visible = !Window::Visible;
+    if (UI::MenuItem(MenuItemName, "", UIMainWindow::Visible)) {
+        UIMainWindow::Visible = !UIMainWindow::Visible;
         // Connect to server when opening plugin window the first time
-        if (Window::Visible && !Network::IsInitialized) {
-            startnew(Network::Init);
+        if (UIMainWindow::Visible && Network::GetState() == ConnectionState::Closed) {
+            trace("Main: Plugin window opened, connecting to the servers.");
+            startnew(Network::Connect);
         }
     }
 }
@@ -33,11 +34,11 @@ void Render() {
     BoardLocator::Render();
     Board::Draw();
     InfoBar::Render();
-    MapList::Render();
+    UIMapList::Render();
 }
 
 void RenderInterface() {
-    Window::Render();
+    UIMainWindow::Render();
     UINews::Render();
     SettingsWindow::Render();
 }
