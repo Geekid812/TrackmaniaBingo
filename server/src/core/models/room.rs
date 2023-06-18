@@ -37,6 +37,7 @@ pub struct RoomTeam {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RoomConfiguration {
+    pub name: String,
     pub public: bool,
     pub size: u32,
     pub randomize: bool,

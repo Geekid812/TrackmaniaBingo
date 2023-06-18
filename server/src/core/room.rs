@@ -27,7 +27,6 @@ use crate::{
 };
 
 pub struct GameRoom {
-    name: String,
     join_code: String,
     config: RoomConfiguration,
     matchconfig: MatchConfiguration,
@@ -45,11 +44,9 @@ impl GameRoom {
     pub fn create(
         config: RoomConfiguration,
         matchconfig: MatchConfiguration,
-        name: String,
         join_code: String,
     ) -> Self {
         Self {
-            name,
             join_code,
             config,
             matchconfig,
@@ -65,7 +62,7 @@ impl GameRoom {
     }
 
     pub fn name(&self) -> &str {
-        &self.name
+        &self.config.name
     }
 
     pub fn join_code(&self) -> &str {

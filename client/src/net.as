@@ -297,7 +297,9 @@ namespace Network {
     }
 
     void CreateRoom() {
-        auto body = RoomConfiguration::Serialize(RoomConfig);
+        auto body = Json::Object();
+        body["config"] = RoomConfiguration::Serialize(RoomConfig);
+        body["match_config"] = MatchConfiguration::Serialize(MatchConfig);
 
         Json::Value@ response = Post("CreateRoom", body, true);
         if (response is null) {

@@ -17,11 +17,8 @@ use super::{Request, Response};
 
 #[derive(Deserialize, Debug)]
 pub struct CreateRoom {
-    name: String,
-    #[serde(flatten)]
     config: RoomConfiguration,
-    #[serde(flatten)]
-    matchconfig: MatchConfiguration,
+    match_config: MatchConfiguration,
 }
 
 #[derive(Serialize, Debug)]
@@ -43,8 +40,7 @@ impl Request for CreateRoom {
         let roomcode = directory::get_new_roomcode();
         let new_room = GameRoom::create(
             self.config.clone(),
-            self.matchconfig.clone(),
-            self.name.clone(),
+            self.match_config.clone(),
             roomcode.clone(),
         );
         let room_arc = directory::ROOMS.register(roomcode, new_room);
