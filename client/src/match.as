@@ -4,8 +4,8 @@ class LiveMatch {
     array<MapCell>@ gameMaps = {};
     array<Team>@ teams = {};
     array<Player>@ players = {};
-    uint64 startTimestamp = 0;
-    uint64 endTimestamp = 0;
+    uint64 startTime = 0;
+    uint64 endTime = 0;
     EndState endState;
 
     Player@ GetSelf(){
@@ -79,7 +79,7 @@ class MapCell {
     MapCell() { }
 
     MapCell(GameMap map) {
-        this.map = map;
+        @this.map = map;
         @this.thumbnail = Images::CachedFromURL("https://trackmania.exchange/maps/screenshot_normal/" + map.tmxid);
         @this.mapImage = Images::CachedFromURL("https://trackmania.exchange/maps/" + map.tmxid + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
     }
@@ -146,7 +146,7 @@ namespace Game {
     void Tick() {
         if (@Match == null) return;
         if (!Match.endState.HasEnded()) {
-            Playground::CheckMedals();
+            Playground::CheckRunFinished();
         
             // check if countdown time is up
             if (Match.config.minutesLimit != 0 && Time::MillisecondsRemaining() == 0) {

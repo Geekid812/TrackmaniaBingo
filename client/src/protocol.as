@@ -66,11 +66,11 @@ class Protocol {
         // Handshake Check
         int statusCode;
         try {
-            Json::Value@ Reply = Json::Parse(handshakeReply);
-            statusCode = Reply["code"];
-            if (Reply.HasKey("profile")) {
-                @Profile = PlayerProfile::Deserialize(Reply["profile"]);
-                PersistantStorage::LocalProfile = Json::Write(Reply["profile"]);
+            Json::Value@ reply = Json::Parse(handshakeReply);
+            statusCode = reply["code"];
+            if (reply.HasKey("profile")) {
+                @Profile = PlayerProfile::Deserialize(reply["profile"]);
+                PersistantStorage::LocalProfile = Json::Write(reply["profile"]);
                 LocalUsername = Profile.username;
             }
         } catch {
@@ -166,5 +166,4 @@ enum ConnectionState {
     Closed,
     Connecting,
     Connected,
-    Closing
 }

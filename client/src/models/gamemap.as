@@ -47,7 +47,7 @@ namespace GameMap {
         map.uploadedTimestamp = value["uploaded_at"];
         map.updatedTimestamp = value["updated_at"];
         map.tags = value["tags"];
-        map.style = value["style"];
+        if (value["style"].GetType() != Json::Type::Null) map.style = value["style"];
         return map;
     }
 }

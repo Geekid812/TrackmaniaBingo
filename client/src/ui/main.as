@@ -93,11 +93,12 @@ namespace UIMainWindow {
         UIRoomSettings::SettingsView();
         CreateRoomButton();
         ConnectingIndicator();
+        UITools::ErrorMessage("CreateRoom");
     }
 
     void CreateRoomButton() {
         UI::NewLine();
-        bool disabled = !Config::CanPlay || Network::GetState() != ConnectionState::Connected;
+        bool disabled = !Config::CanPlay || !Network::IsConnected() || Network::IsUISuspended();
         UI::BeginDisabled(disabled);
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Create Room")) {

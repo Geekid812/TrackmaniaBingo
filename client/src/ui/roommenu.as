@@ -127,7 +127,7 @@ namespace UIRoomMenu {
         UITools::SectionHeader("Join a Private Room");
         RoomCodeInput();
 
-        UI::BeginDisabled(!Config::CanPlay || Network::GetState() != ConnectionState::Connected);
+        UI::BeginDisabled(!Config::CanPlay || !Network::IsConnected() || Network::IsUISuspended());
         JoinPrivateRoomButton();
         UI::EndDisabled();
 

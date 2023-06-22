@@ -74,6 +74,23 @@ namespace UITools {
         }
     }
 
+    void ErrorMessage(const string&in type) {
+        string err = Network::GetError(type);
+        if (err != "") {
+            string message = "\\$ff8" + err;
+            if (err == "timeout") message = "\\$888It looks like the server is not responding.\nIf this is an issue, try reconnecting to the server.";
+            UI::Text(message);
+
+            if (err == "timeout") {
+                UI::SameLine();
+                if (UI::Button(Icons::Globe + " Reconnect")) startnew(function()  {
+                    Network::CloseConnection();
+                    Network::Connect();
+                });
+            }
+        }
+    }
+
     bool grzero(int x) { return x > 0; }
     int toint(bool x) { return x ? 1 : 0; } 
 }

@@ -24,6 +24,17 @@ namespace NetworkHandlers {
         }
     }
 
+    void MatchStart(Json::Value@ match) {
+        @Match = LiveMatch();
+        Match.startTime = Time::Now + uint64(match["start_ms"]);
+        Match.teams = Room.teams;
+        Match.players = Room.players;
+        Match.config = Room.matchConfig;
+        LoadMaps(match["maps"]);
+        WasConnected = true;
+        Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
+    }
+
     void LoadMaps(Json::Value@ mapList) {
         @Match.gameMaps = {};
         for (uint i = 0; i < mapList.Length; i++) {

@@ -1,4 +1,3 @@
-const uint64 COUNTDOWN_TIME = 3000;
 
 namespace Time {
     /**
@@ -19,7 +18,7 @@ namespace Time {
         if (Match.endState.HasEnded()) {
             curTime = Match.endState.EndTime;
         }
-        return curTime - Match.startTimestamp - COUNTDOWN_TIME;
+        return curTime - Match.startTime;
     }
 
     /**

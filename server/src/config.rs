@@ -1,6 +1,8 @@
+use chrono::Duration;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
-use std::{collections::HashMap, time::Duration};
+use serde_with::DurationSeconds;
+use std::collections::HashMap;
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     let toml_content = std::fs::read_to_string("config.toml");
@@ -30,18 +32,25 @@ pub struct Secrets {
     pub admin_key: Option<String>,
 }
 
+#[serde_with::serde_as]
 #[derive(Deserialize)]
 pub struct MapsConfig {
     pub queue_size: usize,
     pub queue_capacity: usize,
+    #[serde_as(as = "DurationSeconds<i64>")]
     pub fetch_timeout: Duration,
+    #[serde_as(as = "DurationSeconds<i64>")]
     pub fetch_interval: Duration,
 }
 
+#[serde_with::serde_as]
 #[derive(Deserialize)]
 pub struct GameConfig {
     pub teams: HashMap<String, String>,
+    #[serde_as(as = "DurationSeconds<i64>")]
     pub mxrandom_max_author_time: Duration,
+    #[serde_as(as = "DurationSeconds<i64>")]
+    pub start_countdown: Duration,
 }
 
 #[derive(Deserialize)]
@@ -79,8 +88,8 @@ impl Default for Config {
             mapqueue: MapsConfig {
                 queue_size: 10,
                 queue_capacity: 30,
-                fetch_timeout: Duration::from_secs(20),
-                fetch_interval: Duration::from_secs(4),
+                fetch_timeout: Duration::seconds(20),
+                fetch_interval: Duration::seconds(4),
             },
             game: GameConfig {
                 teams: HashMap::from_iter(
@@ -95,7 +104,8 @@ impl Default for Config {
                     .into_iter()
                     .map(|(s1, s2)| (s1.to_owned(), s2.to_owned())),
                 ),
-                mxrandom_max_author_time: Duration::from_secs(5 * 60),
+                mxrandom_max_author_time: Duration::minutes(5),
+                start_countdown: Duration::seconds(5),
             },
             routes: RestConfig {
                 openplanet: OpenplanetRoutes {

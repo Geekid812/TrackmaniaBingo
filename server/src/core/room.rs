@@ -22,6 +22,7 @@ use super::{
     util::color::RgbColor,
 };
 use crate::{
+    config::CONFIG,
     orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
     transport::Channel,
 };
@@ -272,15 +273,18 @@ impl GameRoom {
     }
 
     pub fn start_match(&mut self) -> Owned<LiveMatch> {
-        let active_match = LiveMatch::new(
+        let start_date = Utc::now() + CONFIG.game.start_countdown;
+        let mut active_match = LiveMatch::new(
             self.matchconfig.clone(),
             self.loaded_maps.clone(),
             self.teams_as_model()
                 .into_iter()
                 .map(GameTeam::from)
                 .collect(),
+            start_date,
             Some(Channel::<GameEvent>::from(&self.channel)),
         );
+        active_match.broadcast_start();
         let match_arc = directory::MATCHES.register(active_match.uid().to_owned(), active_match);
         self.active_match = Some(Arc::downgrade(&match_arc));
         match_arc

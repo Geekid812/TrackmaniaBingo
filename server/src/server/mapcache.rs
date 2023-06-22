@@ -41,7 +41,7 @@ async fn cache_load_mxrandom(count: usize) -> Result<Vec<MapRecord>, anyhow::Err
     mapcache::execute(move |conn| {
         use crate::orm::mapcache::schema::maps::dsl::*;
 
-        maps.filter(author_time.le(CONFIG.game.mxrandom_max_author_time.as_millis() as i32))
+        maps.filter(author_time.le(CONFIG.game.mxrandom_max_author_time.num_milliseconds() as i32))
             .randomize(count as i32)
             .load::<MapRecord>(conn)
     })

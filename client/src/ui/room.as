@@ -18,6 +18,7 @@ namespace UIGameRoom {
         bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, UI::WindowFlags::NoResize);
         if (windowOpen) {
             UI::PushFont(Font::Regular);
+            Countdown();
             RenderContent();
             UI::PopFont();
         }
@@ -183,6 +184,7 @@ namespace UIGameRoom {
             }
             UI::EndDisabled();
             UIColor::Reset();
+            UITools::ErrorMessage("StartMatch");
         }
 
         // Leave room if window was closed
@@ -217,7 +219,7 @@ namespace UIGameRoom {
     void Countdown() {
         if (@Match == null) return;
         UI::PushFont(Font::Header);
-        int secondsRemaining = (Match.startTimestamp + COUNTDOWN_TIME - Time::Now) / 1000 + 1;
+        int secondsRemaining = (Match.startTime - Time::Now) / 1000 + 1;
         UI::Text("Game starting in " + secondsRemaining + "...");
         UI::PopFont();
         UI::NewLine();

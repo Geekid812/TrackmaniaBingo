@@ -6,13 +6,15 @@ namespace Network {
         // Disable UI interactions while a blocking request is happening
         bool SuspendUI = false;
         // Connection indicator
-        bool IsConnected = false;
+        bool ConnectionOpen = false;
         // Offline mode indicator
         bool OfflineMode = false;
         // Sequence counter
         uint SequenceNext = 0;
         // Temporary buffer of server request messages
         array<Response@> Received = {};
+        // Recent error messages
+        dictionary Errors = {};
     }
     namespace Timings {
         // Timestamp of last ping sent
@@ -37,10 +39,11 @@ namespace Network {
     void Reset() {
         _protocol = Protocol();
         Internal::SuspendUI = false;
-        Internal::IsConnected = false;
+        Internal::ConnectionOpen = false;
         Internal::OfflineMode = false;
         Internal::SequenceNext = 0;
         Internal::Received = {};
+        Internal::Errors = {};
         Timings::LastPingSent = 0;
         Timings::LastPingReceived = 0;
     }
@@ -56,7 +59,8 @@ namespace Network {
         Timings::LastPingSent = Time::Now;
         Timings::LastPingReceived = Time::Now;
         OpenConnection();
-        SetOfflineMode(!IsConnected());
+        Internal::ConnectionOpen = IsConnected();
+        SetOfflineMode(!Internal::ConnectionOpen);
     }
 
     bool IsOfflineMode() {
@@ -119,7 +123,10 @@ namespace Network {
     }
 
     void Loop() {
-        if (!IsConnected()) return;
+        if (!IsConnected()) {
+            if (Internal::ConnectionOpen) OnDisconnect();
+            return;
+        }
 
         if (!ShouldStayConnected()) {
             trace("Network: Plugin not active, disconnecting from the server.");
@@ -200,6 +207,8 @@ namespace Network {
         if (@Room == null) return;
         if (body["event"] == "PlayerUpdate") {
             NetworkHandlers::PlayerUpdate(body);
+        } else if (body["event"] == "MatchStart") {
+            NetworkHandlers::MatchStart(body);
         } /* else if (Body["event"] == "RoomConfigUpdate") {
             uint oldGridSize = Room.config.GridSize;
             MapMode oldMode = Room.config.MapSelection;
@@ -212,11 +221,6 @@ namespace Network {
             } else {
                 Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
             }
-        } else if (Body["event"] == "GameStart") {
-            NetworkHandlers::LoadMaps(Body["maps"]);
-            Room.StartTime = Time::Now;
-            WasConnected = true;
-            Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
         } else if (Body["event"] == "CellClaim") {
             MapCell@ claimedMap = Match.gameMaps[Body["cell_id"]];
             RunResult result = RunResult(int(Body["claim"]["time"]), Medal(int(Body["claim"]["medal"])));
@@ -294,16 +298,26 @@ namespace Network {
             warn("Network: Post preemptively failed!");
             return null;
         } // TODO: connection fault?
+        Internal::Errors.Delete(type);
         Internal::SuspendUI = blocking;
         Json::Value@ reply = ExpectReply(Sequence, timeout);
         if (blocking) Internal::SuspendUI = false;
 
         if (reply !is null && reply.HasKey("error")) {
-            trace("Request [" + type + "]: Error: " + string(reply["error"]));
-            UI::ShowNotification("", Icons::Times + " Error in " + type + ": " + string(reply["error"]), vec4(.8, 0., 0., 1.), 10000);
+            string err = string(reply["error"]);
+            trace("Request [" + type + "]: Error: " + err);
+            UI::ShowNotification("", Icons::Times + " Error in " + type + ": " + err, vec4(.8, 0., 0., 1.), 10000);
+            Internal::Errors[type] = err;
             return null;
         }
+        if (reply is null) Internal::Errors[type] = "timeout";
         return reply;
+    }
+
+    string GetError(string&in type) {
+        string err = "";
+        Internal::Errors.Get(type, err);
+        return err;
     }
 
     void CreateRoom() {
@@ -314,7 +328,6 @@ namespace Network {
         Json::Value@ response = Post("CreateRoom", body, true);
         if (response is null) {
             trace("Network: CreateRoom - No reply from server.");
-            Reset();
             return;
         }
 
@@ -356,7 +369,6 @@ namespace Network {
         auto response = Post("JoinRoom", body, true);
         if (response is null) {
             trace("Network: JoinRoom - No reply from server.");
-            Reset();
             return;
         }
         
@@ -398,7 +410,6 @@ namespace Network {
         auto response = Post("EditRoomConfig", body, true);
         if (response is null) {
             trace("Network: EditRoomSettings - No reply from server.");
-            Reset();
             return;
         }
         

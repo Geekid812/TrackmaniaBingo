@@ -1,4 +1,4 @@
-use crate::{orm::mapcache::record::MapRecord, transport::Channel};
+use crate::{config::CONFIG, orm::mapcache::record::MapRecord, transport::Channel};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use serde_repr::Serialize_repr;
@@ -33,10 +33,10 @@ impl LiveMatch {
         config: MatchConfiguration,
         maps: Vec<MapRecord>,
         teams: Vec<GameTeam>,
+        start_date: DateTime<Utc>,
         channel: Option<Channel<GameEvent>>,
     ) -> Self {
         let mut channel = channel.unwrap_or_else(Channel::new);
-        channel.broadcast(&GameEvent::MatchStart { maps: maps.clone() });
 
         Self {
             uid: base64::generate(16),
@@ -49,9 +49,16 @@ impl LiveMatch {
                     claim: None,
                 })
                 .collect(),
-            started: Utc::now(),
+            started: start_date,
             channel,
         }
+    }
+
+    pub fn broadcast_start(&mut self) {
+        self.channel.broadcast(&GameEvent::MatchStart {
+            start_ms: CONFIG.game.start_countdown,
+            maps: self.cells.iter().map(|c| c.map.record.clone()).collect(),
+        });
     }
 
     pub fn uid(&self) -> &String {

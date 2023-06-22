@@ -84,8 +84,8 @@ namespace Playground {
         return RunResult();
     }
 
-    // Watching task that claims cells when certain medals are achieved
-    void CheckMedals() {
+    // Watching task that claims cells when a run has ended
+    void CheckRunFinished() {
         if (@Match == null) return;
         if (mapClaimData.retries > 0) return; // Request in progress
         RunResult result = GetRunResult();
@@ -93,19 +93,14 @@ namespace Playground {
 
         auto mapNod = GetCurrentMap();
         auto mapCell = Match.GetMapWithUid(mapNod.EdChallengeId);
-        if (mapCell.map.tmxid == -1) return;
-        int currentTime = mapCell.LeadingRun().recordedRun.time;
-        if (currentTime != -1 && currentTime <= result.time) return;
+        if (@mapCell.map is null) return;
 
-        Medal targetMedal = Match.config.targetMedal;
-        if (result.medal <= targetMedal) {
-            // Map should be claimed
-            mapClaimData.retries = 3;
-            mapClaimData.mapUid = mapCell.map.uid;
-            mapClaimData.mapResult = result;
-            trace("Claiming map '" + mapCell.map.uid + "' with time of " + result.time + " (previous time: " + currentTime + ")");
-            startnew(ClaimMedalCoroutine);
-        }
+        // Map should be claimed
+        mapClaimData.retries = 3;
+        mapClaimData.mapUid = mapCell.map.uid;
+        mapClaimData.mapResult = result;
+        trace("Claiming map '" + mapCell.map.uid + "' with time of " + result.time);
+        startnew(ClaimMedalCoroutine);
     }
 
     RunResult@ GetCurrentTimeToBeat() {
@@ -113,7 +108,7 @@ namespace Playground {
         CGameCtnChallenge@ map = GetCurrentMap();
         if (@map == null) return null;
         MapCell cell = Match.GetMapWithUid(map.EdChallengeId);
-        if (cell.map.tmxid == -1) return null;
+        if (@cell.map is null) return null;
         if (cell.IsClaimed()) return cell.LeadingRun().recordedRun;
 
         return RunResult(GetMedalTime(map, Match.config.targetMedal), Match.config.targetMedal);
