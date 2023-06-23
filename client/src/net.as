@@ -340,6 +340,7 @@ namespace Network {
         UIRoomMenu::JoinCodeVisible = false;
         UIMainWindow::Visible = false;
         UIGameRoom::Visible = true;
+        UIGameRoom::GrabFocus = true;
 
         Room.teams = {};
         auto jsonTeams = response["teams"];

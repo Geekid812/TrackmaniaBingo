@@ -12,7 +12,7 @@ namespace Time {
      * Get the milliseconds elapsed since game start.
      * Time does not increase after a game has ended.
      */
-    uint64 MillisecondsElapsed() {
+    int64 MillisecondsElapsed() {
         if (@Match == null) return 0;
         uint64 curTime = Time::Now;
         if (Match.endState.HasEnded()) {
@@ -31,8 +31,9 @@ namespace Time {
 
     /**
      * Get the milliseconds elapsed since game start, but never exceeds the time limit.
+     * Can be negative during the countdown phase.
      */
-    uint64 ClampedMillisecondsElapsed() {
+    int64 ClampedMillisecondsElapsed() {
         if (@Match == null) return 0;
         if (Match.config.minutesLimit == 0) return MillisecondsElapsed();
         return Math::Clamp(MillisecondsElapsed(), 0, GetTimelimitMilliseconds());

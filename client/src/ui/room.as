@@ -5,6 +5,7 @@ namespace UIGameRoom {
     bool RoomCodeHovered;
     bool ClipboardHovered;
     bool ClipboardCopied;
+    bool GrabFocus;
 
     void Render() {
         if (@Room == null) Visible = false;
@@ -15,11 +16,14 @@ namespace UIGameRoom {
         UI::PushStyleVar(UI::StyleVar::WindowTitleAlign, vec2(0.5, 0.5));
         UI::PushFont(Font::Bold);
         UI::SetNextWindowSize(600, 400, UI::Cond::Always);
-        bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, UI::WindowFlags::NoResize);
+        bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, UI::WindowFlags::NoResize | (GrabFocus ? UI::WindowFlags::NoCollapse : 0));
         if (windowOpen) {
             UI::PushFont(Font::Regular);
-            Countdown();
+            bool gameIsStarting = @Match !is null;
+            UI::BeginDisabled(gameIsStarting);
             RenderContent();
+            UI::EndDisabled();
+            if (gameIsStarting) Countdown();
             UI::PopFont();
         }
         if (!Visible) {
@@ -29,6 +33,7 @@ namespace UIGameRoom {
             Network::LeaveRoom();
         }
         IncludePlayerCountInTitle = !windowOpen;
+        GrabFocus = false;
 
         UI::End();
         UI::PopFont();
@@ -217,13 +222,30 @@ namespace UIGameRoom {
     }
 
     void Countdown() {
-        if (@Match == null) return;
-        UI::PushFont(Font::Header);
+        if (Match.startTime < Time::Now) {
+            Visible = false;
+            UIMapList::Visible = true;
+            return;
+        }
+
+        vec2 windowSize = UI::GetWindowSize();
         int secondsRemaining = (Match.startTime - Time::Now) / 1000 + 1;
-        UI::Text("Game starting in " + secondsRemaining + "...");
+        string countdownText = "Game starting in " + secondsRemaining + "...";
+        vec2 textSize = Draw::MeasureString(countdownText, Font::Header, Font::Header.FontSize);
+        float padding = LayoutTools::GetPadding(windowSize.x, textSize.x, 1.0);
+        vec4 textColor = UI::GetStyleColor(UI::Col::Text);
+        float margin = 16;
+
+        int sinTimeValue = Match.startTime - Time::Now - 250;
+        float alphaValue = sinTimeValue * 2. * Math::PI;
+        textColor.w = (Math::Sin(alphaValue / 1000.) + 1) / 1.6;
+
+        UI::SetCursorPos(vec2(padding - margin, windowSize.y - textSize.y - margin));
+        UI::PushFont(Font::Header);
+        UI::PushStyleColor(UI::Col::Text, textColor);
+        UI::Text(countdownText);
+        UI::PopStyleColor();
         UI::PopFont();
-        UI::NewLine();
-        UI::Separator();
     }
 
     string PlayerCount() {

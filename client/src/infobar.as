@@ -6,14 +6,16 @@ namespace InfoBar {
     void Render() {
         if (@Match == null) return;
         
+        // Time since the game has started. If we are in countdown, don't show up yet
+        int64 stopwatchTime = Time::ClampedMillisecondsElapsed();
+        if (stopwatchTime < 0) return;
+
         auto team = Match.GetSelf().team;
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
         UI::PushFont(Font::MonospaceBig);
         string colorPrefix = Match.endState.HasEnded() ? "\\$fb0" : "";
 
-        // Time since the game has started (post-countdown)
-        uint64 stopwatchTime = Time::ClampedMillisecondsElapsed();
         // If playing with a time limit, timer counts down to 0
         if (Match.config.minutesLimit != 0) stopwatchTime = Time::GetTimelimitMilliseconds() - stopwatchTime;
         

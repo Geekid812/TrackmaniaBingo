@@ -8,6 +8,7 @@ namespace Board {
     const float CELL_HIGHLIGHT_PADDING = 2.5; // Multiplier for BorderSize, inside offset
     const vec4 CELL_HIGHLIGHT_COLOR = vec4(1, 1, 0, 0.9);
     const vec4 BINGO_STROKE_COLOR = vec4(1, 0.6, 0, 0.9);
+    const uint64 ANIMATION_START_TIME = 4000;
 
     void Draw() {
         if (@Match == null) return;
@@ -17,22 +18,33 @@ namespace Board {
         float cellSize = (BoardSize - borderSize * (float(cellsPerRow) + 1.)) / float(cellsPerRow);
         nvg::BeginPath();
 
+        int64 animationTime = Time::Now - Match.startTime + ANIMATION_START_TIME; 
+
         // Borders
+        float timePerBorder = 1. / (cellsPerRow + 1);
         // Columns
+        float columnsAnimProgress = Animation::GetProgress(animationTime, 0, 1500, Animation::Easing::SineOut);
+        if (columnsAnimProgress <= 0.) return;
         nvg::FillColor(vec4(.9, .9, .9, 1.));
         for (uint i = 0; i <= cellsPerRow; i++) {
+            float animProgress = Animation::GetProgress(columnsAnimProgress, i * timePerBorder, timePerBorder);
             nvg::BeginPath();
-            nvg::Rect(Position.x + float(i) * (cellSize + borderSize), Position.y, borderSize, BoardSize);
+            nvg::Rect(Position.x + float(i) * (cellSize + borderSize), Position.y, borderSize, BoardSize * animProgress);
             nvg::Fill();
         }
+
         // Rows
+        float rowsAnimProgress = Animation::GetProgress(animationTime, 500, 1500, Animation::Easing::SineOut);
+        if (rowsAnimProgress <= 0.) return;
         for (uint i = 0; i <= cellsPerRow; i++) {
+            float animProgress = Animation::GetProgress(rowsAnimProgress, i * timePerBorder, timePerBorder);
             nvg::BeginPath();
-            nvg::Rect(Position.x, Position.y + float(i) * (cellSize + borderSize), BoardSize, borderSize);
+            nvg::Rect(Position.x, Position.y + float(i) * (cellSize + borderSize), BoardSize * animProgress, borderSize);
             nvg::Fill();
         }
 
         // Cell Fill Color
+        float colorAnimProgress = Animation::GetProgress(animationTime, 2000, 500);
         for (uint i = 0; i < cellsPerRow; i++) {
             for (uint j = 0; j < cellsPerRow; j++) {
                 auto map = Match.gameMaps[j * cellsPerRow + i];
@@ -41,7 +53,7 @@ namespace Board {
                 if (map.IsClaimed())
                     color = UIColor::GetAlphaColor(map.LeadingRun().player.team.color, .8);
                 else 
-                    color = vec4(.3, .3, .3, .8);
+                    color = vec4(.3, .3, .3, .8 * colorAnimProgress);
                 nvg::FillColor(color);
                 nvg::Rect(Position.x + float(i) * (cellSize + borderSize) + borderSize, Position.y + float(j) * (cellSize + borderSize) + borderSize, cellSize, cellSize);
                 nvg::Fill();
