@@ -311,7 +311,7 @@ impl Serialize for GameRoom {
     where
         S: Serializer,
     {
-        models::room::GameRoom::from(self).serialize(serializer)
+        models::room::NetworkRoom::from(self).serialize(serializer)
     }
 }
 

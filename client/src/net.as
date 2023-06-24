@@ -375,11 +375,11 @@ namespace Network {
             return;
         }
         
-        auto rooms = array<UIRoomMenu::PublicRoom>();
+        auto rooms = array<NetworkRoom>();
         for (uint i = 0; i < response["rooms"].Length; i++) {
-            rooms.InsertLast(UIRoomMenu::PublicRoom(response["rooms"][i])); 
+            rooms.InsertLast(NetworkRoom::Deserialize(response["rooms"][i])); 
         }
-        UIRoomMenu::Rooms = rooms;
+        UIRoomMenu::PublicRooms = rooms;
         UIRoomMenu::RoomsLoad = UIRoomMenu::LoadStatus::Ok;
     }
 

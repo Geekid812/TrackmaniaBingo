@@ -5,6 +5,7 @@ use crate::server::context::ClientContext;
 mod change_team;
 mod create_room;
 mod generic;
+mod get_public_rooms;
 mod ping;
 mod start_match;
 mod submit_run;

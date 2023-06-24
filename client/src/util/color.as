@@ -87,4 +87,8 @@ namespace UIColor {
     vec4 Brighten(vec4 color, float amount) {
         return vec4(color.x * amount, color.y * amount, color.z * amount, color.w);
     }
+    
+    vec3 FromRgb(uint8 r, uint8 g, uint8 b) {
+        return vec3(r / 255., g / 255., b / 255.);
+    }
 }

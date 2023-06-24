@@ -3,33 +3,13 @@ namespace UIRoomMenu {
     string JoinCodeInput;
     bool JoinCodeVisible;
     LoadStatus RoomsLoad = LoadStatus::NotLoaded;
-    array<PublicRoom> Rooms;
+    array<NetworkRoom> PublicRooms;
 
     enum LoadStatus {
         NotLoaded,
         Loading,
         Ok,
         Error
-    }
-
-    class PublicRoom {
-        string name;
-        string hostname;
-        string joinCode;
-        int playerCount;
-        RoomConfiguration config;
-        MatchConfiguration matchConfig;
-
-        PublicRoom() {}
-
-        PublicRoom(Json::Value@ val) {
-            name = val["name"];
-            hostname = val["hostname"];
-            joinCode = val["join_code"];
-            playerCount = val["player_count"];
-            config = RoomConfiguration::Deserialize(val["config"]);
-            matchConfig = MatchConfiguration::Deserialize(val["match_config"]);
-        }
     }
 
     void RoomCodeInput() {
@@ -70,21 +50,25 @@ namespace UIRoomMenu {
             RoomsLoad = LoadStatus::Loading;
         }
 
+        float heightRemaining = UI::GetWindowSize().y - UI::GetCursorPos().y;
+        float offset = 140. * UI::GetScale();
+        UI::BeginChild("bingo_rooms", vec2(0, heightRemaining - offset), false);
+
         if (RoomsLoad == LoadStatus::Loading) {
             LoadingIndicator();
         } else if (RoomsLoad == LoadStatus::Error) {
             UI::Text("\\$888Public rooms failed to load.");
         } else {
-            if (Rooms.Length == 0) {
+            if (PublicRooms.Length == 0) {
                 UI::Text("\\$888There are no open public rooms at the moment.\nGo ahead and create one!");
+                UI::EndChild();
                 return;
             }
 
-            UI::BeginChild("bingo_rooms");
             UI::PushStyleColor(UI::Col::TableBorderLight, vec4(.9, 1));
             UI::BeginTable("bingo_publicrooms", 1, UI::TableFlags::BordersInnerH);
-            for (uint i = 0; i < Rooms.Length; i++) {
-                PublicRoom room = Rooms[i];
+            for (uint i = 0; i < PublicRooms.Length; i++) {
+                NetworkRoom room = PublicRooms[i];
                 UI::TableNextColumn();
                 UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 8));
                 vec2 base = UI::GetCursorPos();
@@ -92,7 +76,7 @@ namespace UIRoomMenu {
                 UI::Text(room.name);
                 UI::PopFont();
 
-                string righttext = Icons::Users + " " + room.playerCount + (room.config.maxPlayers != 0 ? "/" + room.config.maxPlayers : "") + "\t\t" + Icons::User + " " + room.hostname;
+                string righttext = Icons::Users + " " + room.playerCount + (room.config.maxPlayers != 0 ? "/" + room.config.maxPlayers : "") + "\t\t" + Icons::User + " " + room.hostName;
                 float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(righttext).x, 1.0);
                 UI::SetCursorPos(base + vec2(padding, 0.));
                 UI::Text(righttext);
@@ -113,8 +97,8 @@ namespace UIRoomMenu {
             UI::TableNextColumn();
             UI::EndTable();
             UI::PopStyleColor();
-            UI::EndChild();
         }
+        UI::EndChild();
     }
 
     void RoomMenu() {

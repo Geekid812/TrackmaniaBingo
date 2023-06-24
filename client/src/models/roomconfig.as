@@ -4,7 +4,6 @@ class RoomConfiguration {
     uint maxPlayers = 2;
     bool hasPlayerLimit = false;
     bool randomizeTeams = false;
-    bool inGameChat = false;
     bool isPublic = false;
 }
 
@@ -15,7 +14,6 @@ namespace RoomConfiguration {
         value["public"] = config.isPublic;
         value["size"] = config.hasPlayerLimit ? config.maxPlayers : 0;
         value["randomize"] = config.randomizeTeams;
-        value["chat_enabled"] = config.inGameChat;
 
         return value;
     }
@@ -27,7 +25,6 @@ namespace RoomConfiguration {
         config.hasPlayerLimit = int(value["size"]) != 0;
         config.maxPlayers = value["size"];
         config.randomizeTeams = value["randomize"];
-        config.inGameChat = value["chat_enabled"];
 
         return config;
     }
