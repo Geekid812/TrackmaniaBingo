@@ -1,14 +1,20 @@
 use serde::Deserialize;
 
-use crate::server::context::ClientContext;
+use crate::{
+    core::models::{livegame::MatchConfiguration, room::RoomConfiguration},
+    server::context::ClientContext,
+};
 
 use super::{generic, Request, Response};
 
 #[derive(Deserialize, Debug)]
-pub struct StartMatch;
+pub struct EditConfig {
+    config: RoomConfiguration,
+    match_config: MatchConfiguration,
+}
 
 #[typetag::deserialize]
-impl Request for StartMatch {
+impl Request for EditConfig {
     fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             let mut lock = room.lock();
@@ -17,10 +23,13 @@ impl Request for StartMatch {
                     error: "You are not a room operator.".to_owned(),
                 });
             }
-            lock.start_match();
+
+            lock.set_configs(self.config.clone(), self.match_config.clone());
+            Box::new(generic::Ok)
         } else {
-            ctx.trace("not in a room, ignored");
+            Box::new(generic::Error {
+                error: "Player is not in a room.".to_owned(),
+            })
         }
-        Box::new(generic::Ok)
     }
 }

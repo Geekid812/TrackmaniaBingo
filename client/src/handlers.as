@@ -9,7 +9,7 @@ namespace NetworkHandlers {
             Room.teams.InsertLast(Team(
                 JsonTeam["id"],
                 JsonTeam["name"], 
-                vec3(JsonTeam["color"][0] / 255., JsonTeam["color"][1] / 255., JsonTeam["color"][2] / 255.)
+                UIColor::FromRgb(JsonTeam["color"][0], JsonTeam["color"][1], JsonTeam["color"][2])
             ));
         }
     }
@@ -70,6 +70,26 @@ namespace NetworkHandlers {
                 UI::ShowNotification(Icons::Bookmark + " Map Claimed", PlayerName + " has claimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + result.Display(), TeamColor, 15000);
             }   
             */
+    }
+
+    void UpdateConfig(Json::Value@ data) {
+        Room.config = RoomConfiguration::Deserialize(data["config"]);
+        Room.matchConfig = MatchConfiguration::Deserialize(data["match_config"]);
+    }
+
+    void AddRoomListing(Json::Value@ room) {
+        UIRoomMenu::PublicRooms.InsertLast(NetworkRoom::Deserialize(room));
+    }
+
+    void RemoveRoomListing(Json::Value@ data) {
+        string joinCode = data["join_code"];
+        for (uint i = 0; i < UIRoomMenu::PublicRooms.Length; i++) {
+            NetworkRoom current = UIRoomMenu::PublicRooms[i];
+            if (current.joinCode == joinCode) {
+                UIRoomMenu::PublicRooms.RemoveAt(i);
+                return;
+            }
+        }
     }
 
     void LoadGameData(Json::Value@ data) {

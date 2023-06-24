@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::{
-    directory::{Owned, Shared},
+    directory::{self, Owned, Shared},
     models::{player::PlayerRef, team::TeamIdentifier},
     room::GameRoom,
     util::color::RgbColor,
@@ -32,6 +32,10 @@ pub fn setup_room(room_arc: &Owned<GameRoom>) {
         room.matchconfig().clone(),
         room.get_load_marker(),
     );
+
+    if room.config().public {
+        directory::send_room_visibility(&room, true);
+    }
 }
 
 #[derive(Debug, Clone)]

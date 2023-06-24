@@ -245,19 +245,33 @@ impl GameRoom {
     }
 
     pub fn set_config(&mut self, config: RoomConfiguration) {
-        if config.public != self.config.public {
-            directory::send_room_visibility(self, config.public);
-        }
-        self.config = config;
+        self.trigger_new_config(config);
         self.config_update();
     }
 
     pub fn set_matchconfig(&mut self, config: MatchConfiguration) {
+        self.trigger_new_matchconfig(config);
+        self.config_update();
+    }
+
+    fn trigger_new_config(&mut self, config: RoomConfiguration) {
+        if config.public != self.config.public {
+            directory::send_room_visibility(self, config.public);
+        }
+        self.config = config;
+    }
+
+    fn trigger_new_matchconfig(&mut self, config: MatchConfiguration) {
         if config.selection != self.matchconfig.selection {
             // reload maps
         }
         self.matchconfig = config;
-        self.matchconfig_update();
+    }
+
+    pub fn set_configs(&mut self, config: RoomConfiguration, matchconfig: MatchConfiguration) {
+        self.trigger_new_config(config);
+        self.trigger_new_matchconfig(matchconfig);
+        self.config_update();
     }
 
     pub fn player_update(&mut self, players: Vec<(i32, TeamIdentifier)>) {
@@ -268,13 +282,10 @@ impl GameRoom {
     }
 
     pub fn config_update(&mut self) {
-        self.channel
-            .broadcast(&RoomEvent::ConfigUpdate(self.config.clone()));
-    }
-
-    pub fn matchconfig_update(&mut self) {
-        self.channel
-            .broadcast(&RoomEvent::MatchConfigUpdate(self.matchconfig.clone()));
+        self.channel.broadcast(&RoomEvent::ConfigUpdate {
+            config: self.config.clone(),
+            match_config: self.matchconfig.clone(),
+        });
     }
 
     pub fn check_close(&mut self) {
@@ -291,6 +302,10 @@ impl GameRoom {
         self.members.values_mut().for_each(|p| {
             p.room_ctx.upgrade().map(|ctx| *ctx.lock() = None);
         });
+
+        if self.config.public {
+            directory::send_room_visibility(&self, false);
+        }
     }
 
     pub fn start_match(&mut self) -> Owned<LiveMatch> {

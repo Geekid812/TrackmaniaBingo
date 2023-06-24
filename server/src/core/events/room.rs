@@ -8,7 +8,11 @@ use crate::core::{
 #[serde(tag = "event")]
 pub enum RoomEvent {
     PlayerUpdate(PlayerUpdates),
-    ConfigUpdate(RoomConfiguration),
-    MatchConfigUpdate(MatchConfiguration),
-    CloseRoom { message: String },
+    ConfigUpdate {
+        config: RoomConfiguration,
+        match_config: MatchConfiguration,
+    },
+    CloseRoom {
+        message: String,
+    },
 }

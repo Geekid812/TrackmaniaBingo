@@ -1,16 +1,16 @@
 
+enum LoadStatus {
+    NotLoaded,
+    Loading,
+    Ok,
+    Error
+}
+
 namespace UIRoomMenu {
     string JoinCodeInput;
     bool JoinCodeVisible;
     LoadStatus RoomsLoad = LoadStatus::NotLoaded;
     array<NetworkRoom> PublicRooms;
-
-    enum LoadStatus {
-        NotLoaded,
-        Loading,
-        Ok,
-        Error
-    }
 
     void RoomCodeInput() {
         UITools::AlignedLabel("Room code");

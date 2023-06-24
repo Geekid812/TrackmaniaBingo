@@ -70,6 +70,11 @@ namespace UIMainWindow {
             UIRoomMenu::RoomMenu();
             UI::EndChild();
             UI::EndTabItem();
+        } else {
+            if (UIRoomMenu::RoomsLoad != LoadStatus::NotLoaded) {
+                UIRoomMenu::RoomsLoad = LoadStatus::NotLoaded;
+                startnew(Network::UnsubscribeRoomlist);
+            }
         }
 
         if (UI::BeginTabItem(Icons::PlusSquare + " Create")) {
@@ -178,7 +183,7 @@ namespace SettingsWindow {
 
         UIColor::Cyan();
         if (UI::Button(Icons::CheckCircle + " Update Settings")) {
-            startnew(Network::EditRoomSettings);
+            startnew(Network::EditConfig);
         }
         UIColor::Reset();
         UI::NewLine();

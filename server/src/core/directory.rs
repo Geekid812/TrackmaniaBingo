@@ -17,7 +17,7 @@ use super::{
 pub static ROOMS: Directory<String, GameRoom> = Directory::new();
 pub static MATCHES: Directory<String, LiveMatch> = Directory::new();
 
-static PUB_ROOMS_CHANNEL: Mutex<Lazy<Channel<RoomlistEvent>>> =
+pub static PUB_ROOMS_CHANNEL: Mutex<Lazy<Channel<RoomlistEvent>>> =
     Mutex::new(Lazy::new(|| Channel::new()));
 
 pub struct Directory<K, T> {

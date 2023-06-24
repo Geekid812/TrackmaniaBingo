@@ -4,6 +4,9 @@ namespace Settings {
 
     [Setting name="Backend TCP Port" category="Debug"]
     uint16 NetworkPort = 3080;
+
+    [Setting name="Backend HTTP Port" category="Debug"]
+    uint16 HttpPort = 8080;
     
     [Setting name="Connection Timeout" category="Debug"]
     uint NetworkTimeout = 10000;

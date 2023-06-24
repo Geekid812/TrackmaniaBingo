@@ -204,19 +204,19 @@ namespace Network {
             warn("Invalid message, discarding.");
             return;
         }
-        if (@Room == null) return;
         if (body["event"] == "PlayerUpdate") {
             NetworkHandlers::PlayerUpdate(body);
         } else if (body["event"] == "MatchStart") {
             NetworkHandlers::MatchStart(body);
         } else if (body["event"] == "RunSubmitted") {
             NetworkHandlers::RunSubmitted(body);
-        } /* else if (Body["event"] == "RoomConfigUpdate") {
-            uint oldGridSize = Room.config.GridSize;
-            MapMode oldMode = Room.config.MapSelection;
-            Room.config = Deserialize(Body);
-            if (oldGridSize < Room.config.GridSize || oldMode != Room.config.MapSelection) Room.MapsLoadingStatus = LoadStatus::Loading;
-        } else if (Body["event"] == "MapsLoadResult") {
+        } else if (body["event"] == "ConfigUpdate") {
+            NetworkHandlers::UpdateConfig(body);
+        } else if (body["event"] == "RoomListed") {
+            NetworkHandlers::AddRoomListing(body);
+        } else if (body["event"] == "RoomUnlisted") {
+            NetworkHandlers::RemoveRoomListing(body);
+        } /* else if (Body["event"] == "MapsLoadResult") {
             if (Body["error"].GetType() != Json::Type::Null) {
                 Room.MapsLoadingStatus = LoadStatus::LoadFail;
                 Room.LoadFailInfo = Body["error"];
@@ -237,7 +237,9 @@ namespace Network {
         } else if (Body["event"] == "Trace") {
             // Message is already logged to the console
             // trace("Trace: " + string(Body["value"]));
-        } */
+        } */ else {
+            warn("Network: Unknown event: " + string(body["event"]));
+        }
     }
 
     void CloseConnection() {
@@ -371,7 +373,7 @@ namespace Network {
         auto response = Post("GetPublicRooms", Json::Object(), false);
         if (response is null) {
             trace("Network: GetPublicRooms - No reply from server.");
-            UIRoomMenu::RoomsLoad = UIRoomMenu::LoadStatus::Error;
+            UIRoomMenu::RoomsLoad = LoadStatus::Error;
             return;
         }
         
@@ -380,24 +382,24 @@ namespace Network {
             rooms.InsertLast(NetworkRoom::Deserialize(response["rooms"][i])); 
         }
         UIRoomMenu::PublicRooms = rooms;
-        UIRoomMenu::RoomsLoad = UIRoomMenu::LoadStatus::Ok;
+        UIRoomMenu::RoomsLoad = LoadStatus::Ok;
     }
 
-    void EditRoomSettings() {
+    void UnsubscribeRoomlist() {
+        Post("UnsubscribeRoomlist", Json::Object(), false);
+    }
+
+    void EditConfig() {
         auto body = Json::Object();
         body["config"] = RoomConfiguration::Serialize(RoomConfig);
+        body["match_config"] = MatchConfiguration::Serialize(MatchConfig);
 
-        auto response = Post("EditRoomConfig", body, true);
+        auto response = Post("EditConfig", body, true);
         if (response is null) {
-            trace("Network: EditRoomSettings - No reply from server.");
+            trace("Network: EditConfig - No reply from server.");
             return;
         }
-        
-        if (response.HasKey("error")) {
-            UI::ShowNotification(Icons::Times + string(response["error"]));  
-        } else {
-            SettingsWindow::Visible = false;
-        }
+        SettingsWindow::Visible = false;
     }
 
     void LeaveRoom() {

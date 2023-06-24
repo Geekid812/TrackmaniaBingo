@@ -249,6 +249,7 @@ namespace UIGameRoom {
     }
 
     string PlayerCount() {
+        if (@Room is null) return "";
         return Room.players.Length + (Room.config.hasPlayerLimit ? "/" + Room.config.maxPlayers : "");
     }
 

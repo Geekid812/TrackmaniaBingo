@@ -143,12 +143,6 @@ enum BingoDirection {
     Diagonal
 }
 
-enum LoadStatus {
-    Loading,
-    LoadSuccess,
-    LoadFail
-}
-
 namespace Game {
     // Game tick function
     void Tick() {

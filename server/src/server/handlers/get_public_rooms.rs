@@ -1,11 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::{directory::ROOMS, models::room::NetworkRoom},
+    core::{
+        directory::{PUB_ROOMS_CHANNEL, ROOMS},
+        models::room::NetworkRoom,
+    },
     server::context::ClientContext,
 };
 
-use super::{generic, Request, Response};
+use super::{Request, Response};
 
 #[derive(Deserialize, Debug)]
 pub struct GetPublicRooms;
@@ -17,7 +20,10 @@ pub struct PublicRoomsList {
 
 #[typetag::deserialize]
 impl Request for GetPublicRooms {
-    fn handle(&self, _ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+        PUB_ROOMS_CHANNEL
+            .lock()
+            .subscribe(ctx.profile.player.uid, ctx.writer.clone());
         let rooms = ROOMS
             .lock()
             .values()
