@@ -1,10 +1,13 @@
 use futures::{FutureExt, StreamExt};
 use std::io;
+use std::sync::Arc;
 use tokio::select;
 use tracing::{debug, error, warn};
 
+use super::context::RoomContext;
 use super::requests::BaseRequest;
-use crate::server::context::{ClientContext, GameContext};
+use crate::core::directory::Owned;
+use crate::server::context::ClientContext;
 use crate::transport::client::tcpnative::TcpNativeClient;
 
 pub async fn run_loop(mut ctx: ClientContext, mut client: TcpNativeClient) -> LoopExit {
@@ -17,14 +20,16 @@ pub async fn run_loop(mut ctx: ClientContext, mut client: TcpNativeClient) -> Lo
                     let handled = handle_recv(&mut ctx, result);
                     if !handled {
                         // Client disconnected
-                        if let Some(game_ctx) = ctx.game {
-                            if game_ctx.room().map_or(false, |r| r.lock().has_started()) {
+                        /** TODO:
+                        if let Some(room_ctx) = ctx.room {
+                            if room_ctx.room().map_or(false, |r| r.lock().has_started()) {
                                 return LoopExit::Linger(
                                     ctx.profile.player.account_id.clone(),
-                                    game_ctx,
+                                    room_ctx,
                                 );
                             }
                         }
+                        */
                         return LoopExit::Close;
                     }
                 },
@@ -68,7 +73,7 @@ fn handle_recv(ctx: &mut ClientContext, result: Result<String, io::Error>) -> bo
 }
 
 pub enum LoopExit {
-    Linger(String, GameContext),
+    Linger(String, Owned<RoomContext>),
     Close,
 }
 

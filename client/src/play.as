@@ -95,6 +95,9 @@ namespace Playground {
         auto mapCell = Match.GetMapWithUid(mapNod.EdChallengeId);
         if (@mapCell.map is null) return;
 
+        auto myRun = mapCell.GetLocalPlayerRun();
+        if (@myRun !is null && myRun.result.time <= result.time) return;
+
         // Map should be claimed
         mapClaimData.retries = 3;
         mapClaimData.mapUid = mapCell.map.uid;
@@ -109,7 +112,7 @@ namespace Playground {
         if (@map == null) return null;
         MapCell cell = Match.GetMapWithUid(map.EdChallengeId);
         if (@cell.map is null) return null;
-        if (cell.IsClaimed()) return cell.LeadingRun().recordedRun;
+        if (cell.IsClaimed()) return cell.LeadingRun().result;
 
         return RunResult(GetMedalTime(map, Match.config.targetMedal), Match.config.targetMedal);
     }

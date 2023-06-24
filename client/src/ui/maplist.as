@@ -54,11 +54,17 @@ namespace UIMapList {
 
                 UI::PushFont(Font::Regular);
                 UI::TextDisabled("By " + cell.map.username);
+                if (cell.map.style != "") {
+                    UI::PushStyleColor(UI::Col::Button, UIColor::GetAlphaColor(StyleToColor(cell.map.style.ToLower()), .7));
+                    UI::Button(cell.map.style);
+                    UI::PopStyleColor();
+                }
+
                 UI::NewLine();
                 if (cell.IsClaimed()) {
                     Player topPlayer = cell.LeadingRun().player;
                     UI::Text("Claimed by \\$" + UIColor::GetHex(topPlayer.team.color) + topPlayer.name);
-                    UI::Text(cell.LeadingRun().recordedRun.Display());
+                    UI::Text(cell.LeadingRun().result.Display());
                 } else {
                     UI::TextDisabled("This map has not been claimed yet!");
                 }
@@ -83,5 +89,18 @@ namespace UIMapList {
         UI::PopStyleVar(3);
         UI::PopFont();
         UI::End();
+    }
+
+    vec3 StyleToColor(const string&in style) {
+        if (style == "ice" || style == "bobsleigh") return vec3(.6, .9, 1.);
+        if (style == "race" || style == "competitive") return vec3(1., .8, .2);
+        if (style == "lol" || style == "mini") return vec3(.8, .6, .9);
+        if (style == "kacky" || style == "fullspeed") return vec3(.8, .1, .1);
+        if (style == "grass") return vec3(.3, .8, .3);
+        if (style == "dirt") return vec3(.8, .2, .1);
+        if (style == "water") return vec3(.2, .9, 1.);
+        if (style == "plastic") return vec3(.9, .9, .3);
+        if (style == "zrt") return vec3(.1, .5, .1);
+        return vec3(.6, .6, .6);
     }
 }

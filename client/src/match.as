@@ -40,6 +40,8 @@ class LiveMatch {
             auto player = players[i];
             if (player.profile.uid == uid) return player;
         }
+
+        warn("Match: GetPlayer(" + uid + ") returned null.");
         return null;
     }
 
@@ -67,12 +69,15 @@ class LiveMatch {
         return -1;
     }
 
+    MapCell GetCell(int id) {
+        return this.gameMaps[id];
+    }
 }
 
 
 class MapCell {
     GameMap@ map = null;
-    array<GameAttempt>@ attemptRanking = {};
+    array<MapClaim>@ attemptRanking = {};
     CachedImage@ thumbnail;
     CachedImage@ mapImage;
 
@@ -88,15 +93,18 @@ class MapCell {
         return attemptRanking.Length != 0;
     }
 
-    GameAttempt LeadingRun() {
+    MapClaim LeadingRun() {
         if (attemptRanking.Length == 0) throw("Program error: attempted to get leading run on unclaimed map");
         return attemptRanking[0];
     }
-}
 
-class GameAttempt {
-    Player@ player;
-    RunResult recordedRun;
+    MapClaim@ GetLocalPlayerRun() {
+        for (uint i = 0; i < attemptRanking.Length; i++) {
+            if (attemptRanking[i].player.isSelf) return attemptRanking[i]; 
+        }
+
+        return null;
+    }
 }
 
 class EndState {

@@ -1,8 +1,20 @@
 use std::sync::Arc;
 
-use crate::{config::CONFIG, server};
+use crate::{
+    config::CONFIG,
+    orm::composed::profile::PlayerProfile,
+    server::{
+        self,
+        context::{GameContext, RoomContext},
+    },
+};
 
-use super::{directory::Owned, room::GameRoom, util::color::RgbColor};
+use super::{
+    directory::{Owned, Shared},
+    models::{player::PlayerRef, team::TeamIdentifier},
+    room::GameRoom,
+    util::color::RgbColor,
+};
 
 pub fn setup_room(room_arc: &Owned<GameRoom>) {
     let mut room = room_arc.lock();
@@ -20,4 +32,23 @@ pub fn setup_room(room_arc: &Owned<GameRoom>) {
         room.matchconfig().clone(),
         room.get_load_marker(),
     );
+}
+
+#[derive(Debug, Clone)]
+pub struct PlayerData {
+    pub profile: PlayerProfile,
+    pub team: TeamIdentifier,
+    pub operator: bool,
+    pub disconnected: bool,
+    pub room_ctx: Shared<Option<RoomContext>>,
+    pub game_ctx: Shared<Option<GameContext>>,
+}
+
+impl From<&PlayerData> for PlayerRef {
+    fn from(value: &PlayerData) -> Self {
+        Self {
+            uid: value.profile.player.uid,
+            team: value.team,
+        }
+    }
 }

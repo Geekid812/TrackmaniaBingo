@@ -4,7 +4,7 @@
 diesel::table! {
     maps (tmxid) {
         tmxid -> Integer,
-        uid -> Nullable<Text>,
+        uid -> Text,
         userid -> Integer,
         author_login -> Text,
         username -> Text,

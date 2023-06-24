@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 #[diesel(primary_key(tmxid))]
 pub struct MapRecord {
     pub tmxid: i32,
-    pub uid: Option<String>,
+    pub uid: String,
     pub userid: i32,
     pub author_login: String,
     pub username: String,

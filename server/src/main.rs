@@ -1,3 +1,4 @@
+use parking_lot::Mutex;
 use std::sync::Arc;
 use std::{net::SocketAddr, sync::atomic::AtomicU32};
 use tokio::{net::TcpSocket, sync::mpsc::unbounded_channel};
@@ -99,7 +100,12 @@ async fn main() {
             if profile.is_none() {
                 return;
             }
-            let ctx = ClientContext::new(profile.unwrap(), None, Arc::new(tx));
+            let ctx = ClientContext::new(
+                profile.unwrap(),
+                Arc::new(Mutex::new(None)),
+                Arc::new(Mutex::new(None)),
+                Arc::new(tx),
+            );
             client::run_loop(ctx, client).await;
             info!("dropping connection");
         });

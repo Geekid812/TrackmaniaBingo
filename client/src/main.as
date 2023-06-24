@@ -9,6 +9,7 @@ void Main() {
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
     if (WasConnected) {
+        trace("Main: plugin was previously connected, attempting to reconnect.");
         Network::Connect();
     }
 

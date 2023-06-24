@@ -15,8 +15,14 @@ namespace UIGameRoom {
         UI::PushStyleColor(UI::Col::TitleBgActive, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleVar(UI::StyleVar::WindowTitleAlign, vec2(0.5, 0.5));
         UI::PushFont(Font::Bold);
-        UI::SetNextWindowSize(600, 400, UI::Cond::Always);
-        bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, UI::WindowFlags::NoResize | (GrabFocus ? UI::WindowFlags::NoCollapse : 0));
+        UI::SetNextWindowSize(600, 400, UI::Cond::FirstUseEver);
+        bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, (GrabFocus ? UI::WindowFlags::NoCollapse : 0));
+        if (!Visible) {
+            // Room window was closed, should disconnect the player.
+            // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
+            // So for now, the player will get yeeted out.
+            Network::LeaveRoom();
+        }
         if (windowOpen) {
             UI::PushFont(Font::Regular);
             bool gameIsStarting = @Match !is null;
@@ -25,12 +31,6 @@ namespace UIGameRoom {
             UI::EndDisabled();
             if (gameIsStarting) Countdown();
             UI::PopFont();
-        }
-        if (!Visible) {
-            // Room window was closed, should disconnect the player.
-            // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
-            // So for now, the player will get yeeted out.
-            Network::LeaveRoom();
         }
         IncludePlayerCountInTitle = !windowOpen;
         GrabFocus = false;

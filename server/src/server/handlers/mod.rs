@@ -7,6 +7,7 @@ mod create_room;
 mod generic;
 mod ping;
 mod start_match;
+mod submit_run;
 
 #[typetag::deserialize(tag = "req")]
 pub trait Request: Debug {

@@ -1,9 +1,9 @@
-use chrono::{Duration};
+use chrono::Duration;
 use serde::Serialize;
 use serde_with::DurationMilliSeconds;
 
 use crate::{
-    core::livegame::{BingoLine, MapClaim},
+    core::{livegame::BingoLine, models::livegame::MapClaim},
     orm::mapcache::record::MapRecord,
 };
 
@@ -16,9 +16,10 @@ pub enum GameEvent {
         start_ms: Duration,
         maps: Vec<MapRecord>,
     },
-    CellClaim {
+    RunSubmitted {
         cell_id: usize,
         claim: MapClaim,
+        position: usize,
     },
     AnnounceBingo {
         #[serde(flatten)]

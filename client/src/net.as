@@ -209,6 +209,8 @@ namespace Network {
             NetworkHandlers::PlayerUpdate(body);
         } else if (body["event"] == "MatchStart") {
             NetworkHandlers::MatchStart(body);
+        } else if (body["event"] == "RunSubmitted") {
+            NetworkHandlers::RunSubmitted(body);
         } /* else if (Body["event"] == "RoomConfigUpdate") {
             uint oldGridSize = Room.config.GridSize;
             MapMode oldMode = Room.config.MapSelection;
@@ -222,30 +224,7 @@ namespace Network {
                 Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
             }
         } else if (Body["event"] == "CellClaim") {
-            MapCell@ claimedMap = Match.gameMaps[Body["cell_id"]];
-            RunResult result = RunResult(int(Body["claim"]["time"]), Medal(int(Body["claim"]["medal"])));
-            Team team = Room.GetTeamWithId(int(Body["claim"]["player"]["team"]));
 
-            bool IsImprove = claimedMap.ClaimedTeam !is null && claimedMap.ClaimedTeam.Id == team.Id;
-            bool IsReclaim = claimedMap.ClaimedTeam !is null && claimedMap.ClaimedTeam.Id != team.Id;
-            string DeltaTime = claimedMap.ClaimedRun.Time == -1 ? "" : "-" + Time::Format(claimedMap.ClaimedRun.Time - result.Time);
-            string PlayerName = Body["claim"]["player"]["name"];
-            @claimedMap.ClaimedTeam = @team;
-            claimedMap.ClaimedRun = result;
-            claimedMap.ClaimedPlayerName = PlayerName;
-
-            string MapName = claimedMap.Name;
-            string TeamName = team.Name;
-            vec4 TeamColor = UIColor::Brighten(UIColor::GetAlphaColor(team.Color, 0.1), 0.75);
-            vec4 DimmedColor = TeamColor / 1.5;
-            
-            if (IsReclaim) {
-                UI::ShowNotification(Icons::Retweet + " Map Reclaimed", PlayerName + " has reclaimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + result.Display() + " (" + DeltaTime + ")", TeamColor, 15000);
-            } else if (IsImprove) {
-                UI::ShowNotification(Icons::ClockO + " Time Improved", PlayerName + " has improved " + TeamName + " Team's time on \\$fd8" + MapName + "\\$z\n" + result.Display() + " (" + DeltaTime + ")", DimmedColor, 15000);
-            } else { // Normal claim
-                UI::ShowNotification(Icons::Bookmark + " Map Claimed", PlayerName + " has claimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + result.Display(), TeamColor, 15000);
-            }   
         } else if (Body["event"] == "AnnounceBingo") {
             Team team = Room.GetTeamWithId(int(Body["team"]));
             string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
@@ -423,6 +402,7 @@ namespace Network {
 
     void LeaveRoom() {
         // TODO: this is rudimentary, it doesn't keep connection alive
+        trace("Network: LeaveRoom requested.");
         @Room = null;
         CloseConnection();
     }
@@ -444,10 +424,10 @@ namespace Network {
 
     bool ClaimCell(string&in uid, RunResult result) {
         auto body = Json::Object();
-        body["uid"] = uid;
+        body["map_uid"] = uid;
         body["time"] = result.time;
         body["medal"] = result.medal;
-        auto Request = Network::Post("ClaimCell", body, false);
+        auto Request = Network::Post("SubmitRun", body, false);
         return Request !is null;
     }
 
@@ -459,6 +439,7 @@ namespace Network {
             WasConnected = false;
             return;
         }
+
         @Room = GameRoom();
         Room.name = response["room_name"];
         Room.config = RoomConfiguration::Deserialize(response["config"]);

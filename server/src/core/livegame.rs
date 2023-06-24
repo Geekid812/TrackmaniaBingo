@@ -8,12 +8,11 @@ use super::{
     map::GameMap,
     models::{
         self,
-        livegame::Medal,
+        livegame::MapClaim,
         player::Player,
         room::RoomTeam,
         team::{BaseTeam, TeamIdentifier},
     },
-    room::{NetworkPlayer, PlayerData},
     util::base64,
 };
 
@@ -36,7 +35,7 @@ impl LiveMatch {
         start_date: DateTime<Utc>,
         channel: Option<Channel<GameEvent>>,
     ) -> Self {
-        let mut channel = channel.unwrap_or_else(Channel::new);
+        let channel = channel.unwrap_or_else(Channel::new);
 
         Self {
             uid: base64::generate(16),
@@ -46,7 +45,7 @@ impl LiveMatch {
                 .into_iter()
                 .map(|map| GameCell {
                     map: GameMap::from(map),
-                    claim: None,
+                    claims: Vec::new(),
                 })
                 .collect(),
             started: start_date,
@@ -63,6 +62,64 @@ impl LiveMatch {
 
     pub fn uid(&self) -> &String {
         &self.uid
+    }
+
+    pub fn config(&self) -> &MatchConfiguration {
+        &self.config
+    }
+
+    pub fn get_player_team(&self, player_id: i32) -> Option<TeamIdentifier> {
+        for team in &self.teams {
+            if team
+                .members
+                .iter()
+                .filter(|p| p.profile.player.uid == player_id)
+                .next()
+                .is_some()
+            {
+                return Some(team.base.id);
+            }
+        }
+
+        return None;
+    }
+
+    pub fn get_cell(&self, id: usize) -> &GameCell {
+        &self.cells[id]
+    }
+
+    pub fn get_cell_from_map_uid(&self, uid: String) -> Option<usize> {
+        self.cells
+            .iter()
+            .enumerate()
+            .filter(|(_, c)| c.map.record.uid == uid)
+            .map(|(i, _)| i)
+            .next()
+    }
+
+    pub fn add_submitted_run(&mut self, id: usize, claim: MapClaim) {
+        let ranking = &mut self.cells[id].claims;
+        let i = 0;
+        while i < ranking.len() {
+            let current = &ranking[i];
+            if current.player == claim.player {
+                ranking.remove(i);
+                continue;
+            }
+            if claim.time < current.time {
+                break;
+            }
+        }
+        ranking.insert(i, claim.clone());
+        self.broadcast_submitted_run(id, claim, i + 1);
+    }
+
+    fn broadcast_submitted_run(&mut self, cell_id: usize, claim: MapClaim, position: usize) {
+        self.channel.broadcast(&GameEvent::RunSubmitted {
+            cell_id,
+            claim,
+            position,
+        })
     }
 
     pub fn check_for_bingos(&self, grid_size: usize) -> Vec<BingoLine> {
@@ -153,14 +210,13 @@ impl From<RoomTeam> for GameTeam {
 
 pub struct GameCell {
     pub map: GameMap,
-    pub claim: Option<MapClaim>,
+    pub claims: Vec<MapClaim>,
 }
 
-#[derive(Serialize, Clone)]
-pub struct MapClaim {
-    pub player: NetworkPlayer,
-    pub time: u64,
-    pub medal: Medal,
+impl GameCell {
+    pub fn leading_claim(&self) -> Option<&MapClaim> {
+        self.claims.iter().next()
+    }
 }
 
 #[derive(Serialize, Clone)]
@@ -185,12 +241,12 @@ fn iter_check_unique_team<'a>(
     let first = iter
         .next()
         .expect("invalid grid_size")
-        .claim
+        .leading_claim()
         .as_ref()
         .map(|c| c.player.team);
     iter.fold(first, |acc, x| {
         acc.and_then(|y| {
-            if x.claim.as_ref().map(|c| c.player.team) == Some(y) {
+            if x.leading_claim().as_ref().map(|c| c.player.team) == Some(y) {
                 Some(y)
             } else {
                 None

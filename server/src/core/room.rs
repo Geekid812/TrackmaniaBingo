@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Weak},
-};
+use std::{collections::HashMap, sync::Arc};
 
 use chrono::{DateTime, Utc};
 use rand::Rng;
@@ -12,10 +9,11 @@ use tracing::warn;
 use super::{
     directory::{self, Owned, Shared},
     events::{game::GameEvent, room::RoomEvent},
+    gamecommon::PlayerData,
     livegame::{GameTeam, LiveMatch, MatchConfiguration},
     models::{
         self,
-        player::Player,
+        player::{Player, PlayerRef},
         room::{RoomConfiguration, RoomTeam},
         team::{BaseTeam, TeamIdentifier},
     },
@@ -24,6 +22,7 @@ use super::{
 use crate::{
     config::CONFIG,
     orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
+    server::context::{ClientContext, GameContext},
     transport::Channel,
 };
 
@@ -92,6 +91,10 @@ impl GameRoom {
 
     pub fn players(&self) -> Vec<&PlayerData> {
         self.members.values().collect()
+    }
+
+    pub fn players_mut(&mut self) -> Vec<&mut PlayerData> {
+        self.members.values_mut().collect()
     }
 
     pub fn active_match(&self) -> &Option<Shared<LiveMatch>> {
@@ -176,7 +179,7 @@ impl GameRoom {
         self.teams.values().any(|t| t.name == name)
     }
 
-    pub fn add_player(&mut self, profile: &PlayerProfile, operator: bool) {
+    pub fn add_player(&mut self, ctx: &ClientContext, profile: &PlayerProfile, operator: bool) {
         let team = self
             .teams
             .values()
@@ -190,6 +193,8 @@ impl GameRoom {
                 team,
                 operator,
                 disconnected: false,
+                room_ctx: Arc::downgrade(&ctx.room),
+                game_ctx: Arc::downgrade(&ctx.game),
             },
         );
     }
@@ -211,12 +216,16 @@ impl GameRoom {
             .unwrap_or(false)
     }
 
-    pub fn player_join(&mut self, profile: &PlayerProfile) -> Result<(), JoinRoomError> {
+    pub fn player_join(
+        &mut self,
+        ctx: &ClientContext,
+        profile: &PlayerProfile,
+    ) -> Result<(), JoinRoomError> {
         if self.at_size_capacity() {
             return Err(JoinRoomError::PlayerLimitReached);
         }
         // TODO: reimplement room started check
-        Ok(self.add_player(profile, false))
+        Ok(self.add_player(ctx, profile, false))
     }
 
     pub fn player_remove(&mut self, uid: i32) {
@@ -286,6 +295,12 @@ impl GameRoom {
         );
         active_match.broadcast_start();
         let match_arc = directory::MATCHES.register(active_match.uid().to_owned(), active_match);
+
+        self.players_mut().into_iter().for_each(|p| {
+            p.game_ctx
+                .upgrade()
+                .map(|ctx| *ctx.lock() = Some(GameContext::new(p.profile.clone(), &match_arc)));
+        });
         self.active_match = Some(Arc::downgrade(&match_arc));
         match_arc
     }
@@ -315,33 +330,10 @@ pub enum JoinRoomError {
     HasStarted,
 }
 
-#[derive(Debug, Clone)]
-pub struct PlayerData {
-    pub profile: PlayerProfile,
-    pub team: TeamIdentifier,
-    pub operator: bool,
-    pub disconnected: bool,
-}
-
-#[derive(Serialize, Clone, Debug)]
-pub struct NetworkPlayer {
-    pub name: String,
-    pub team: TeamIdentifier,
-}
-
-impl From<&PlayerData> for NetworkPlayer {
-    fn from(value: &PlayerData) -> Self {
-        Self {
-            name: value.profile.player.username.clone(),
-            team: value.team,
-        }
-    }
-}
-
 #[derive(Serialize, Clone, Debug)]
 pub struct NetworkTeam {
     pub info: BaseTeam,
-    pub members: Vec<NetworkPlayer>,
+    pub members: Vec<PlayerRef>,
 }
 
 #[derive(Serialize, Clone, Debug)]
