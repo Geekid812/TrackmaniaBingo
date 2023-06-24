@@ -4,10 +4,10 @@ use chrono::{DateTime, Utc};
 use rand::Rng;
 use serde::{Serialize, Serializer};
 use thiserror::Error;
-use tracing::warn;
+use tracing::{debug, warn};
 
 use super::{
-    directory::{self, Owned, Shared},
+    directory::{self, Owned, Shared, ROOMS},
     events::{game::GameEvent, room::RoomEvent},
     gamecommon::PlayerData,
     livegame::{GameTeam, LiveMatch, MatchConfiguration},
@@ -277,8 +277,20 @@ impl GameRoom {
             .broadcast(&RoomEvent::MatchConfigUpdate(self.matchconfig.clone()));
     }
 
+    pub fn check_close(&mut self) {
+        if !self.members.values().any(|p| p.operator) {
+            debug!("No room operator, closing.");
+            self.close_room("The host has left the room.".to_owned());
+        }
+    }
+
     pub fn close_room(&mut self, message: String) {
         self.channel.broadcast(&RoomEvent::CloseRoom { message });
+        ROOMS.remove(self.join_code.clone());
+
+        self.members.values_mut().for_each(|p| {
+            p.room_ctx.upgrade().map(|ctx| *ctx.lock() = None);
+        });
     }
 
     pub fn start_match(&mut self) -> Owned<LiveMatch> {

@@ -82,7 +82,9 @@ impl Drop for RoomContext {
     fn drop(&mut self) {
         debug!("dropped");
         if let Some(room) = self.room() {
-            room.lock().player_remove(self.profile.player.uid);
+            let mut lock = room.lock();
+            lock.player_remove(self.profile.player.uid);
+            lock.check_close();
         }
     }
 }
