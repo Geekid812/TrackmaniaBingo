@@ -103,16 +103,17 @@ impl LiveMatch {
 
     pub fn add_submitted_run(&mut self, id: usize, claim: MapClaim) {
         let ranking = &mut self.cells[id].claims;
-        let i = 0;
-        while i < ranking.len() {
-            let current = &ranking[i];
+
+        // Bubble up in the ranking until we find a time that was not beaten
+        let mut i = ranking.len();
+        while i > 0 {
+            let current = &ranking[i - 1];
             if current.player == claim.player {
-                ranking.remove(i);
-                continue;
-            }
-            if claim.time < current.time {
+                ranking.remove(i - 1);
+            } else if claim.time >= current.time {
                 break;
             }
+            i -= 1;
         }
         ranking.insert(i, claim.clone());
         self.broadcast_submitted_run(id, claim, i + 1);
