@@ -84,8 +84,8 @@ namespace Board {
         }
 
         // Winning stroke
-        BingoDirection direction = Match.endState.BingoDirection;
-        int i = Match.endState.Offset;
+        BingoDirection direction = Match.endState.bingoDirection;
+        int i = Match.endState.offset;
         nvg::StrokeColor(BINGO_STROKE_COLOR);
         nvg::StrokeWidth(STROKE_WIDTH);
         if (direction == BingoDirection::Horizontal) {

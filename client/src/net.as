@@ -226,6 +226,8 @@ namespace Network {
             NetworkHandlers::PlayerJoin(body);
         } else if (body["event"] == "PlayerLeave") {
             NetworkHandlers::PlayerLeave(body);
+        } else if (body["event"] == "AnnounceBingo") {
+            NetworkHandlers::AnnounceBingo(body);
         }/* else if (Body["event"] == "MapsLoadResult") {
             if (Body["error"].GetType() != Json::Type::Null) {
                 Room.MapsLoadingStatus = LoadStatus::LoadFail;
@@ -235,15 +237,6 @@ namespace Network {
             }
         } else if (Body["event"] == "CellClaim") {
 
-        } else if (Body["event"] == "AnnounceBingo") {
-            Team team = Room.GetTeamWithId(int(Body["team"]));
-            string TeamName = "\\$" + UIColor::GetHex(team.Color) + team.Name;
-            UI::ShowNotification(Icons::Trophy + " Bingo!", TeamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
-
-            Room.EndState.BingoDirection = BingoDirection(int(Body["direction"]));
-            Room.EndState.Offset = Body["index"];
-            Room.EndState.EndTime = Time::Now;
-            WasConnected = false;
         } else if (Body["event"] == "Trace") {
             // Message is already logged to the console
             // trace("Trace: " + string(Body["value"]));
@@ -411,6 +404,7 @@ namespace Network {
         // TODO: this is rudimentary, it doesn't keep connection alive
         trace("Network: LeaveRoom requested.");
         @Room = null;
+        @Match = null;
         CloseConnection();
     }
 

@@ -72,8 +72,12 @@ namespace UIMapList {
                 UI::EndTooltip();
             }
             if (UI::IsItemClicked()) {
-                Visible = false;
-                Playground::LoadMap(cell.map.tmxid);
+                //Visible = false;
+                //Playground::LoadMap(cell.map.tmxid);
+                Playground::mapClaimData.mapResult = RunResult(0, Medal::Author);
+                Playground::mapClaimData.mapUid = cell.map.uid;
+                Playground::mapClaimData.retries = 3;
+                startnew(Playground::ClaimMedalCoroutine);
             }
 
             auto size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(0, 8 * uiScale) - startPos - vec2(0, UI::GetScrollY());

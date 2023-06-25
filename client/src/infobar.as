@@ -7,7 +7,7 @@ namespace InfoBar {
         if (@Match == null) return;
         
         // Time since the game has started. If we are in countdown, don't show up yet
-        int64 stopwatchTime = Time::MillisecondsBounded();
+        int64 stopwatchTime = Time::Milliseconds();
         if (Time::MillisecondsElapsed() < 0) return;
 
         auto team = Match.GetSelf().team;
@@ -18,7 +18,7 @@ namespace InfoBar {
         string colorPrefix;
         switch (phase) {
             case MatchPhase::NoBingo:
-                colorPrefix = "\\$dd2";
+                colorPrefix = "\\$fe6";
                 break;
             case MatchPhase::Overtime:
                 colorPrefix = "\\$e44";
@@ -26,6 +26,34 @@ namespace InfoBar {
             case MatchPhase::Ended:
                 colorPrefix = "\\$fb0";
                 break;
+        }
+
+        // Phase indicator
+        string phaseText;
+        vec3 color;
+        bool animate = true;
+        if (phase == MatchPhase::NoBingo) {
+            phaseText = "Grace Period";
+            color = vec3(.7, .6, .2);
+            animate = false;
+        } else if (phase == MatchPhase::Overtime) {
+            phaseText = "Overtime";
+            color = vec3(.6, .15, .15);
+        } else if (phase == MatchPhase::Ended) {
+            Team winningTeam = Match.endState.team;
+            phaseText = winningTeam.name + " wins!";
+            color = UIColor::Brighten(winningTeam.color, 0.7);
+        }
+        if (phaseText != "" && !UI::IsWindowAppearing()) {
+            float sideMargins = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding).x * 2.;
+            float size = UI::GetWindowSize().x - sideMargins;
+            float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, size, 0.5);
+            UI::PushFont(Font::Bold);
+            UI::PushStyleColor(UI::Col::Button, UIColor::GetAlphaColor(color, animate ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8));
+            LayoutTools::MoveTo(padding);
+            UI::Button(phaseText, vec2(size, 0.));
+            UI::PopStyleColor();
+            UI::PopFont();
         }
 
         // If playing with a time limit, timer counts down to 0

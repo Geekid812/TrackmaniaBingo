@@ -45,6 +45,16 @@ namespace Time {
     }
 
     /**
+     * Get the game's time in milliseconds. It is always within range and stops when the game has ended.
+     */
+    int64 Milliseconds() {
+        if (@Match == null) return 0;
+        int64 millis = MillisecondsBounded();
+        if (Match.endState.HasEnded()) millis = Match.endState.endTime - Match.startTime;
+        return millis;
+    }
+
+    /**
      * Get the milliseconds remaining if playing on a time limit.
      */
     int64 MillisecondsRemaining() {

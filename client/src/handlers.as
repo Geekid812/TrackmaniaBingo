@@ -32,6 +32,7 @@ namespace NetworkHandlers {
         Match.config = Room.matchConfig;
         LoadMaps(match["maps"]);
         WasConnected = true;
+        UIGameRoom::GrabFocus = true;
         Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
     }
 
@@ -139,6 +140,18 @@ namespace NetworkHandlers {
                 return;
             }
         }
+    }
+
+    void AnnounceBingo(Json::Value@ data) {
+        Team team = Room.GetTeamWithId(int(data["team"]));
+        string teamName = "\\$" + UIColor::GetHex(team.color) + team.name;
+        UI::ShowNotification(Icons::Trophy + " Bingo!", teamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
+
+        Match.endState.bingoDirection = BingoDirection(int(data["direction"]));
+        Match.endState.offset = data["index"];
+        Match.endState.endTime = Time::Now;
+        Match.endState.team = team;
+        WasConnected = false;
     }
 
     void LoadGameData(Json::Value@ data) {

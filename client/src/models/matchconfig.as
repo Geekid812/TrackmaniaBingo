@@ -32,6 +32,8 @@ namespace MatchConfiguration {
         value["selection"] = config.mapSelection;
         value["medal"] = config.targetMedal;
         value["time_limit"] = config.minutesLimit;
+        value["no_bingo_mins"] = config.noBingoMinutes;
+        value["overtime"] = config.overtime;
 
         if (config.mapSelection == MapMode::Mappack) value["mappack_id"] = config.mappackId;
         return value;
@@ -43,6 +45,8 @@ namespace MatchConfiguration {
         config.mapSelection = MapMode(int(value["selection"]));
         config.targetMedal = Medal(int(value["medal"]));
         config.minutesLimit = uint(value["time_limit"]);
+        config.noBingoMinutes = uint(value["no_bingo_mins"]);
+        config.overtime = bool(value["overtime"]);
 
         if (value.HasKey("mappack_id")) config.mappackId = uint(value["mappack_id"]);
         return config;

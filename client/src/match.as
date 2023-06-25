@@ -77,7 +77,7 @@ class LiveMatch {
         int64 time = Time::MillisecondsElapsed();
         if (endState.HasEnded()) return MatchPhase::Ended;
         if (time < 0) return MatchPhase::Countdown;
-        if (Time::GetNoBingoMilliseconds() >= time) return MatchPhase::NoBingo;
+        if (int64(Time::GetNoBingoMilliseconds()) >= time) return MatchPhase::NoBingo;
         if (Time::MillisecondsRemaining() < 0) return MatchPhase::Overtime;
         return MatchPhase::Running;
     }
@@ -131,12 +131,13 @@ class MapCell {
 }
 
 class EndState {
-    BingoDirection BingoDirection;
-    int Offset; // Horizontal: Row ID, Vertical: Column ID, Diagonal: 0 -> TL to BR & 1 -> BL to TR
-    uint64 EndTime;
+    BingoDirection bingoDirection;
+    int offset; // Horizontal: Row ID, Vertical: Column ID, Diagonal: 0 -> TL to BR & 1 -> BL to TR
+    uint64 endTime;
+    Team team;
 
     bool HasEnded() {
-        return this.EndTime != 0;
+        return this.endTime != 0;
     }
 }
 

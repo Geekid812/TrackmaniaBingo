@@ -1,5 +1,5 @@
 use crate::{config::CONFIG, orm::mapcache::record::MapRecord, transport::Channel};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::Serialize;
 use serde_repr::Serialize_repr;
 
@@ -117,7 +117,23 @@ impl LiveMatch {
         }
         ranking.insert(i, claim.clone());
         self.broadcast_submitted_run(id, claim, i + 1);
+
+        let now = Utc::now();
+        if (now - self.started) > Duration::minutes(self.config.no_bingo_mins as i64) {
+            let bingos = self.check_for_bingos();
+            let len = bingos.len();
+            if len > 1 && !bingos.iter().all(|line| line.team == bingos[0].team) {
+                // TODO: overtime
+            } else if len >= 1 {
+                self.channel.broadcast(&GameEvent::AnnounceBingo {
+                    line: bingos[0].clone(),
+                });
+                self.set_game_ended();
+            }
+        }
     }
+
+    fn set_game_ended(&mut self) {}
 
     fn broadcast_submitted_run(&mut self, cell_id: usize, claim: MapClaim, position: usize) {
         self.channel.broadcast(&GameEvent::RunSubmitted {
@@ -127,7 +143,8 @@ impl LiveMatch {
         })
     }
 
-    pub fn check_for_bingos(&self, grid_size: usize) -> Vec<BingoLine> {
+    pub fn check_for_bingos(&self) -> Vec<BingoLine> {
+        let grid_size = self.config.grid_size as usize;
         let mut bingos = Vec::new();
         // Horizontal
         for i in 0..grid_size {
