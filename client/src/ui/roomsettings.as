@@ -2,6 +2,8 @@
 namespace UIRoomSettings {
     const uint GRID_SIZE_MIN = 3;
     const uint GRID_SIZE_MAX = 8;
+    const int TIMELIMIT_MAX = 180;
+    const int NOBINGO_MAX = 120;
     const float CHECKBOXES_ALIGN_X = 180;
     const float GAME_SETTINGS_ALIGN_X = 150;
 
@@ -97,7 +99,7 @@ namespace UIRoomSettings {
         LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X);
         string label = TimeFormat(MatchConfig.minutesLimit);
         if (MatchConfig.minutesLimit == 0) label = "\\$888Disabled";
-        auto result = UITools::MixedInputButton(label, "bingotimelimit", 0, 120, 15, MatchConfig.minutesLimit, LoadState(1));
+        auto result = UITools::MixedInputButton(label, "bingotimelimit", 0, TIMELIMIT_MAX, 15, MatchConfig.minutesLimit, LoadState(1));
         MatchConfig.minutesLimit = result.value;
         StoreState(1, result.state);
     }
@@ -107,7 +109,7 @@ namespace UIRoomSettings {
         LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X);
         string label = TimeFormat(MatchConfig.noBingoMinutes);
         if (MatchConfig.noBingoMinutes == 0) label = "\\$888Disabled";
-        auto result = UITools::MixedInputButton(label, "nobingotime", 0, 60, 5, MatchConfig.noBingoMinutes, LoadState(2));
+        auto result = UITools::MixedInputButton(label, "nobingotime", 0, NOBINGO_MAX, 5, MatchConfig.noBingoMinutes, LoadState(2));
         MatchConfig.noBingoMinutes = result.value;
         StoreState(2, result.state);
 
