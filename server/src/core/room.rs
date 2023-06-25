@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use rand::Rng;
+use rand::{distributions::Uniform, Rng};
 use serde::{Serialize, Serializer};
 use thiserror::Error;
 use tracing::{debug, warn};
@@ -30,8 +30,8 @@ pub struct GameRoom {
     join_code: String,
     config: RoomConfiguration,
     matchconfig: MatchConfiguration,
-    members: HashMap<i32, PlayerData>,
-    teams: HashMap<TeamIdentifier, BaseTeam>,
+    members: Vec<PlayerData>,
+    teams: Vec<BaseTeam>,
     teams_id: usize,
     channel: Channel<RoomEvent>,
     created: DateTime<Utc>,
@@ -50,8 +50,8 @@ impl GameRoom {
             join_code,
             config,
             matchconfig,
-            members: HashMap::new(),
-            teams: HashMap::new(),
+            members: Vec::new(),
+            teams: Vec::new(),
             teams_id: 0,
             channel: Channel::new(),
             created: Utc::now(),
@@ -89,20 +89,32 @@ impl GameRoom {
         &self.created
     }
 
-    pub fn players(&self) -> Vec<&PlayerData> {
-        self.members.values().collect()
+    pub fn players(&self) -> &Vec<PlayerData> {
+        &self.members
     }
 
-    pub fn players_mut(&mut self) -> Vec<&mut PlayerData> {
-        self.members.values_mut().collect()
+    pub fn players_mut(&mut self) -> &mut Vec<PlayerData> {
+        &mut self.members
     }
 
     pub fn active_match(&self) -> &Option<Shared<LiveMatch>> {
         &self.active_match
     }
 
-    pub fn teams(&self) -> Vec<&BaseTeam> {
-        self.teams.values().collect()
+    pub fn teams(&self) -> &Vec<BaseTeam> {
+        &self.teams
+    }
+
+    pub fn get_player(&self, uid: i32) -> Option<&PlayerData> {
+        self.members.iter().filter(|p| p.uid == uid).next()
+    }
+
+    pub fn get_player_mut(&mut self, uid: i32) -> Option<&mut PlayerData> {
+        self.members.iter_mut().filter(|p| p.uid == uid).next()
+    }
+
+    pub fn get_team(&self, id: TeamIdentifier) -> Option<&BaseTeam> {
+        self.teams.iter().filter(|p| p.id == id).next()
     }
 
     pub fn teams_as_model(&self) -> Vec<RoomTeam> {
@@ -110,13 +122,12 @@ impl GameRoom {
             .into_iter()
             .map(|(tid, players)| RoomTeam {
                 base: self
-                    .teams
-                    .get(&tid)
+                    .get_team(tid)
                     .expect("teams should be valid")
                     .to_owned(),
                 members: players
                     .iter()
-                    .map(|id| Player::from(self.members.get(id).expect("members should be valid")))
+                    .map(|id| Player::from(self.get_player(*id).expect("members should be valid")))
                     .collect(),
             })
             .collect()
@@ -124,11 +135,11 @@ impl GameRoom {
 
     fn team_members(&self) -> HashMap<TeamIdentifier, Vec<i32>> {
         let mut map: HashMap<TeamIdentifier, Vec<i32>> = HashMap::new();
-        self.members.values().for_each(|p| {
+        self.members.iter().for_each(|p| {
             map.entry(p.team).or_default().push(p.profile.player.uid);
         });
-        self.teams.keys().for_each(|t| {
-            map.entry(*t).or_default();
+        self.teams.iter().for_each(|t| {
+            map.entry(t.id).or_default();
         });
 
         map
@@ -136,21 +147,9 @@ impl GameRoom {
 
     pub fn host_name(&self) -> Option<String> {
         self.members
-            .values()
+            .iter()
             .find(|p| p.operator)
             .map(|p| p.profile.player.username.clone())
-    }
-
-    pub fn get_player(&self, uid: i32) -> Option<&PlayerData> {
-        self.members.get(&uid)
-    }
-
-    pub fn get_player_mut(&mut self, uid: i32) -> Option<&mut PlayerData> {
-        self.members.get_mut(&uid)
-    }
-
-    pub fn get_team(&self, identifier: TeamIdentifier) -> Option<&BaseTeam> {
-        self.teams.get(&identifier)
     }
 
     pub fn create_team(&mut self, teams: &Vec<(String, RgbColor)>) -> Option<&BaseTeam> {
@@ -169,17 +168,55 @@ impl GameRoom {
         let color = teams[idx].1;
         let team = BaseTeam::new(self.teams_id, teams[idx].0.clone(), color);
         self.teams_id += 1;
-        let team_id = team.id;
-        self.teams.insert(team_id, team);
-        self.teams.get(&team_id)
+        self.teams.push(team.clone());
+        self.channel
+            .broadcast(&RoomEvent::TeamCreated { base: team });
+        self.teams.last()
+    }
+
+    pub fn remove_team(&mut self, id: TeamIdentifier) {
+        if self.teams.len() <= 1 {
+            warn!("attempted to delete when 1 or less team is left");
+            return;
+        }
+
+        let searched = self
+            .teams
+            .iter()
+            .enumerate()
+            .find(|(_, t)| t.id == id)
+            .map(|(i, t)| (i, t.to_owned()));
+        if let Some((i, team)) = searched {
+            self.teams.remove(i);
+            let mut updated_players = Vec::new();
+            let default = self.teams.iter().next().unwrap().id;
+            self.members.iter_mut().for_each(|p| {
+                if p.team == team.id {
+                    p.team = default;
+                    updated_players.push(p);
+                }
+            });
+
+            if updated_players.len() > 0 {
+                self.channel
+                    .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
+                        updates: HashMap::from_iter(
+                            updated_players
+                                .into_iter()
+                                .map(|p| (p.profile.player.uid, default)),
+                        ),
+                    }));
+            }
+        }
+        self.channel.broadcast(&RoomEvent::TeamDeleted { id });
     }
 
     fn team_exsits(&self, id: TeamIdentifier) -> bool {
-        self.teams.get(&id).is_some()
+        self.teams.iter().find(|t| t.id == id).is_some()
     }
 
     fn team_exsits_with_name(&self, name: &str) -> bool {
-        self.teams.values().any(|t| t.name == name)
+        self.teams.iter().any(|t| t.name == name)
     }
 
     pub fn add_player(
@@ -188,23 +225,16 @@ impl GameRoom {
         profile: &PlayerProfile,
         operator: bool,
     ) -> TeamIdentifier {
-        let team = self
-            .teams
-            .values()
-            .next()
-            .expect("0 teams in self.teams")
-            .id; // TODO: sort into teams when joining
-        self.members.insert(
-            profile.player.uid,
-            PlayerData {
-                profile: profile.clone(),
-                team,
-                operator,
-                disconnected: false,
-                room_ctx: Arc::downgrade(&ctx.room),
-                game_ctx: Arc::downgrade(&ctx.game),
-            },
-        );
+        let team = self.teams.iter().next().expect("0 teams in self.teams").id; // TODO: sort into teams when joining
+        self.members.push(PlayerData {
+            uid: profile.player.uid,
+            profile: profile.clone(),
+            team,
+            operator,
+            disconnected: false,
+            room_ctx: Arc::downgrade(&ctx.room),
+            game_ctx: Arc::downgrade(&ctx.game),
+        });
         self.channel
             .subscribe(profile.player.uid, ctx.writer.clone());
         team
@@ -257,7 +287,7 @@ impl GameRoom {
     }
 
     pub fn player_remove(&mut self, uid: i32) {
-        self.members.remove(&uid);
+        self.members.retain(|m| m.uid != uid);
         self.channel.unsubscribe(uid);
         self.channel.broadcast(&RoomEvent::PlayerLeave { uid: uid });
 
@@ -275,12 +305,23 @@ impl GameRoom {
         if !self.team_exsits(team) {
             return false;
         }
-        if let Some(data) = self.members.get_mut(&uid) {
+        if let Some(data) = self.members.iter_mut().find(|m| m.uid == uid) {
             data.team = team;
             let uid = data.profile.player.uid;
             self.player_update(vec![(uid, team)]);
         }
         true
+    }
+
+    pub fn sort_teams(&mut self) {
+        let mut unproccessed: Vec<&mut PlayerData> = self.members.iter_mut().collect();
+        let mut teams = self.teams.iter().cycle();
+        let mut rng = rand::thread_rng();
+        while unproccessed.len() > 0 {
+            let dist = Uniform::new(0, unproccessed.len());
+            let selected = unproccessed.remove(rng.sample(dist));
+            selected.team = teams.next().unwrap().id;
+        }
     }
 
     pub fn set_config(&mut self, config: RoomConfiguration) {
@@ -338,7 +379,7 @@ impl GameRoom {
     }
 
     pub fn check_close(&mut self) {
-        if !self.members.values().any(|p| p.operator) {
+        if !self.members.iter().any(|p| p.operator) {
             debug!("No room operator, closing.");
             self.close_room("The host has left the room.".to_owned());
         }
@@ -348,16 +389,27 @@ impl GameRoom {
         self.channel.broadcast(&RoomEvent::CloseRoom { message });
         ROOMS.remove(self.join_code.clone());
 
-        self.members.values_mut().for_each(|p| {
-            p.room_ctx.upgrade().map(|ctx| *ctx.lock() = None);
-        });
+        // self.members.iter_mut().for_each(|p| {
+        //    p.room_ctx.upgrade().map(|ctx| *ctx.lock() = None);
+        // });
 
         if self.config.public {
             directory::send_room_visibility(&self, false);
         }
     }
 
+    fn prepare_start_match(&mut self) {
+        if self.config.randomize {
+            self.sort_teams();
+            self.channel
+                .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
+                    updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
+                }));
+        }
+    }
+
     pub fn start_match(&mut self) -> Owned<LiveMatch> {
+        self.prepare_start_match();
         let start_date = Utc::now() + CONFIG.game.start_countdown;
         let mut active_match = LiveMatch::new(
             self.matchconfig.clone(),

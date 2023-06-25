@@ -73,9 +73,7 @@ namespace UIGameRoom {
             ClipboardCopied = false;
         }
 
-        UI::SameLine();
         float windowWidth = UI::GetWindowSize().x;
-
         if (Room.localPlayerIsHost) {
             UI::SameLine();
             float buttonPadding = LayoutTools::GetPadding(windowWidth, 150, 1.0);
@@ -114,60 +112,88 @@ namespace UIGameRoom {
         UI::NewLine();
         UI::NewLine();
 
-        UI::BeginTable("Bingo_TeamTable", Room.teams.Length + (Room.CanCreateMoreTeams() ? 1 : 0));
+        UI::BeginTable("Bingo_TeamTable", Room.config.randomizeTeams ? 4 : Room.teams.Length + (Room.localPlayerIsHost && Room.CanCreateMoreTeams() ? 1 : 0));
 
-        for (uint i = 0; i < Room.teams.Length; i++) {
-            UI::TableNextColumn();
-            Team@ team = Room.teams[i];
-
-            float seperatorSize = UI::GetContentRegionMax().x - UI::GetCursorPos().x - 50;
-            UI::BeginChild("bingoteamsep" + i, vec2(seperatorSize, UI::GetTextLineHeightWithSpacing() + 4));
-            UI::PushFont(Font::Bold);
-            UI::Text("\\$" + UIColor::GetHex(team.color) + team.name);
-            UI::PopFont();
-
-            UI::PushStyleColor(UI::Col::Separator, UIColor::GetAlphaColor(team.color, .8));
-            UI::Separator();
-            UI::PopStyleColor();
-            UI::EndChild();
-
-            if (UI::IsItemHovered()) {
-                UI::BeginTooltip();
-                UI::Text("\\$" + UIColor::GetHex(team.color) + team.name + " Team" + (Room.GetSelf().team != team ? "  \\$888(Click to join)" : ""));
-                UI::EndTooltip();
-            }
-
-            if (UI::IsItemClicked()) {
-                startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, team);
-            }
-        }
-
-        if (Room.CanCreateMoreTeams()) {
-            UI::TableNextColumn();
-            if (UI::Button(Icons::PlusSquare + " Create team")) {
-                startnew(Network::CreateTeam);
-            }
-        }
-
-        uint rowIndex = 0;
-        while (true) {
-            // Iterate forever until no players in any team remain
-            UI::TableNextRow();
-            uint finishedTeams = 0;
-            for (uint i = 0; i < Room.teams.Length; i++){
-                // Iterate through all teams
+        if (Room.config.randomizeTeams && @Match == null) {
+            for (uint i = 0; i < Room.players.Length; i++) {
                 UI::TableNextColumn();
-                Player@ player = PlayerCell(Room.teams[i], rowIndex);
-                if (player is null) { // No more players in this team
-                    finishedTeams += 1;
-                    continue;
+                Player player = Room.players[i];
+                PlayerLabel(player, i);
+            }
+        } else {
+            for (uint i = 0; i < Room.teams.Length; i++) {
+                UI::TableNextColumn();
+                Team@ team = Room.teams[i];
+
+                float seperatorSize = UI::GetContentRegionMax().x - UI::GetCursorPos().x - 50;
+                if (Room.localPlayerIsHost) {
+                    UI::PushStyleColor(UI::Col::Text, UIColor::GetAlphaColor(team.color, .8));
+                    bool enabled = Room.CanDeleteTeams();
+                    UI::BeginDisabled(!enabled);
+                    UI::Text(Icons::MinusSquare);
+                    UI::EndDisabled();
+                    if (enabled) {
+                        if (UI::IsItemHovered()) {
+                            UI::BeginTooltip();
+                            UI::TextDisabled("Delete " + team.name + " Team");
+                            UI::EndTooltip();
+                        }
+                        if (UI::IsItemClicked()) {
+                            NetParams::DeletedTeamId = team.id;
+                            startnew(Network::DeleteTeam);
+                        }
+                    }
+                    UI::PopStyleColor();
+                    UI::SameLine();
                 }
-                else {
-                    UI::Text((player.isSelf ? "\\$ff8" : "") + (rowIndex + 1) + ". " + player.name);
+                UI::BeginChild("bingoteamsep" + i, vec2(seperatorSize, UI::GetTextLineHeightWithSpacing() + 4));
+                UI::PushFont(Font::Bold);
+                UI::Text("\\$" + UIColor::GetHex(team.color) + team.name);
+                UI::PopFont();
+
+                UI::PushStyleColor(UI::Col::Separator, UIColor::GetAlphaColor(team.color, .8));
+                UI::Separator();
+                UI::PopStyleColor();
+                UI::EndChild();
+
+                if (UI::IsItemHovered()) {
+                    UI::BeginTooltip();
+                    UI::Text("\\$" + UIColor::GetHex(team.color) + team.name + " Team" + (Room.GetSelf().team != team ? "  \\$888(Click to join)" : ""));
+                    UI::EndTooltip();
+                }
+
+                if (UI::IsItemClicked()) {
+                    startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, team);
                 }
             }
-            if (finishedTeams == Room.teams.Length) break;
-            rowIndex += 1;
+
+            if (Room.localPlayerIsHost && Room.CanCreateMoreTeams()) {
+                UI::TableNextColumn();
+                if (UI::Button(Icons::PlusSquare + " Create team")) {
+                    startnew(Network::CreateTeam);
+                }
+            }
+
+            uint rowIndex = 0;
+            while (true) {
+                // Iterate forever until no players in any team remain
+                UI::TableNextRow();
+                uint finishedTeams = 0;
+                for (uint i = 0; i < Room.teams.Length; i++){
+                    // Iterate through all teams
+                    UI::TableNextColumn();
+                    Player@ player = PlayerCell(Room.teams[i], rowIndex);
+                    if (player is null) { // No more players in this team
+                        finishedTeams += 1;
+                        continue;
+                    }
+                    else {
+                        PlayerLabel(player, rowIndex);
+                    }
+                }
+                if (finishedTeams == Room.teams.Length) break;
+                rowIndex += 1;
+            }
         }
         UI::EndTable();
 
@@ -194,6 +220,10 @@ namespace UIGameRoom {
 
         // Leave room if window was closed
         //if (!Visible) Network::LeaveRoom();
+    }
+
+    void PlayerLabel(Player player, uint index) {
+        UI::Text((player.isSelf ? "\\$ff8" : "") + (index + 1) + ". " + player.name);
     }
 
     string[] MatchConfigInfo(MatchConfiguration config) {

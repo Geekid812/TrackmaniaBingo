@@ -80,7 +80,7 @@ impl RoomContext {
 
 impl Drop for RoomContext {
     fn drop(&mut self) {
-        debug!("dropped");
+        debug!("RoomContext dropped");
         if let Some(room) = self.room() {
             let mut lock = room.lock();
             lock.player_remove(self.profile.player.uid);
@@ -123,9 +123,9 @@ impl GameContext {
 
 impl Drop for GameContext {
     fn drop(&mut self) {
-        debug!("dropped");
-        if let Some(room) = self.game_match() {
-            // TODO: room.lock().player_remove(self.profile.player.uid);
-        }
+        debug!("GameContext dropped");
+        //if let Some(room) = self.game_match() {
+        //    // TODO: room.lock().player_remove(self.profile.player.uid);
+        //}
     }
 }

@@ -154,6 +154,24 @@ namespace NetworkHandlers {
         WasConnected = false;
     }
 
+    void TeamCreated(Json::Value@ data) {
+        Room.teams.InsertLast(Team(
+            data["id"], 
+            data["name"],
+            vec3(data["color"][0] / 255., data["color"][1] / 255., data["color"][2] / 255.)
+        ));
+    }
+
+    void TeamDeleted(Json::Value@ data) {
+        int id = data["id"];
+        for (uint i = 0; i < Room.teams.Length; i++) {
+            if (Room.teams[i].id == id) {
+                Room.teams.RemoveAt(i);
+                return;
+            }
+        }
+    }
+
     void LoadGameData(Json::Value@ data) {
 //        Room.StartTime = Time::Now - uint(data["start_time"]);
         for (uint i = 0; i < data["cells"].Length; i++) {

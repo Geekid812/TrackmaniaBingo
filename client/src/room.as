@@ -49,8 +49,12 @@ class GameRoom {
     }
 
     bool CanCreateMoreTeams() {
-        // Non hosts should not see that more teams can be created
-        return teams.Length < uint(Math::Min(maxTeams, config.hasPlayerLimit ? config.maxPlayers : maxTeams)) && Room.localPlayerIsHost;
+        return teams.Length < uint(Math::Min(maxTeams, config.hasPlayerLimit ? config.maxPlayers : maxTeams));
+    }
+
+    bool CanDeleteTeams() {
+        // Must have at least 2 teams to play
+        return teams.Length > 2;
     }
 }
 

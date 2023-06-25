@@ -37,6 +37,7 @@ namespace Network {
     }
 
     void Reset() {
+        ResetGameState();
         _protocol = Protocol();
         Internal::SuspendUI = false;
         Internal::ConnectionOpen = false;
@@ -46,6 +47,11 @@ namespace Network {
         Internal::Errors = {};
         Timings::LastPingSent = 0;
         Timings::LastPingReceived = 0;
+    }
+
+    void ResetGameState() {
+        @Room = null;
+        @Match = null;
     }
 
     void Connect() {
@@ -204,30 +210,35 @@ namespace Network {
             warn("Invalid message, discarding.");
             return;
         }
-        if (body["event"] == "PlayerUpdate") {
+        string event = body["event"];
+        if (event == "PlayerUpdate") {
             NetworkHandlers::PlayerUpdate(body);
-        } else if (body["event"] == "MatchStart") {
+        } else if (event == "MatchStart") {
             NetworkHandlers::MatchStart(body);
-        } else if (body["event"] == "RunSubmitted") {
+        } else if (event == "RunSubmitted") {
             NetworkHandlers::RunSubmitted(body);
-        } else if (body["event"] == "ConfigUpdate") {
+        } else if (event == "ConfigUpdate") {
             NetworkHandlers::UpdateConfig(body);
-        } else if (body["event"] == "RoomListed") {
+        } else if (event == "RoomListed") {
             NetworkHandlers::AddRoomListing(body);
-        } else if (body["event"] == "RoomUnlisted") {
+        } else if (event == "RoomUnlisted") {
             NetworkHandlers::RemoveRoomListing(body);
-        } else if (body["event"] == "RoomlistPlayerCountUpdate") {
+        } else if (event == "RoomlistPlayerCountUpdate") {
             NetworkHandlers::RoomlistPlayerUpdate(body);
-        } else if (body["event"] == "RoomlistConfigUpdate") {
+        } else if (event == "RoomlistConfigUpdate") {
             NetworkHandlers::RoomlistUpdateConfig(body);
-        } else if (body["event"] == "RoomlistInGameStatusUpdate") {
+        } else if (event == "RoomlistInGameStatusUpdate") {
             NetworkHandlers::RoomlistInGameStatusUpdate(body);
-        } else if (body["event"] == "PlayerJoin") {
+        } else if (event == "PlayerJoin") {
             NetworkHandlers::PlayerJoin(body);
-        } else if (body["event"] == "PlayerLeave") {
+        } else if (event == "PlayerLeave") {
             NetworkHandlers::PlayerLeave(body);
-        } else if (body["event"] == "AnnounceBingo") {
+        } else if (event == "AnnounceBingo") {
             NetworkHandlers::AnnounceBingo(body);
+        } else if (event == "TeamCreated") {
+            NetworkHandlers::TeamCreated(body);
+        } else if (event == "TeamDeleted") {
+            NetworkHandlers::TeamDeleted(body);
         }/* else if (Body["event"] == "MapsLoadResult") {
             if (Body["error"].GetType() != Json::Type::Null) {
                 Room.MapsLoadingStatus = LoadStatus::LoadFail;
@@ -345,6 +356,12 @@ namespace Network {
         Network::Post("CreateTeam", Json::Object());
     }
 
+    void DeleteTeam() {
+        auto body = Json::Object();
+        body["id"] = NetParams::DeletedTeamId;
+        Network::Post("DeleteTeam", body);
+    }
+
     void JoinRoom() {
         auto body = Json::Object();
         body["join_code"] = NetParams::JoinCode;
@@ -403,8 +420,6 @@ namespace Network {
     void LeaveRoom() {
         // TODO: this is rudimentary, it doesn't keep connection alive
         trace("Network: LeaveRoom requested.");
-        @Room = null;
-        @Match = null;
         CloseConnection();
     }
 

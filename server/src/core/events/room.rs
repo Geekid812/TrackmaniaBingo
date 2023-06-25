@@ -3,7 +3,10 @@ use serde::Serialize;
 use crate::{
     core::{
         livegame::MatchConfiguration,
-        models::{room::RoomConfiguration, team::TeamIdentifier},
+        models::{
+            room::RoomConfiguration,
+            team::{BaseTeam, TeamIdentifier},
+        },
         room::PlayerUpdates,
     },
     orm::composed::profile::PlayerProfile,
@@ -26,5 +29,12 @@ pub enum RoomEvent {
     },
     CloseRoom {
         message: String,
+    },
+    TeamCreated {
+        #[serde(flatten)]
+        base: BaseTeam,
+    },
+    TeamDeleted {
+        id: TeamIdentifier,
     },
 }
