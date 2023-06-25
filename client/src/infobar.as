@@ -7,18 +7,32 @@ namespace InfoBar {
         if (@Match == null) return;
         
         // Time since the game has started. If we are in countdown, don't show up yet
-        int64 stopwatchTime = Time::ClampedMillisecondsElapsed();
-        if (stopwatchTime < 0) return;
+        int64 stopwatchTime = Time::MillisecondsBounded();
+        if (Time::MillisecondsElapsed() < 0) return;
 
         auto team = Match.GetSelf().team;
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
+        MatchPhase phase = Match.GetPhase();
         UI::PushFont(Font::MonospaceBig);
-        string colorPrefix = Match.endState.HasEnded() ? "\\$fb0" : "";
+        string colorPrefix;
+        switch (phase) {
+            case MatchPhase::NoBingo:
+                colorPrefix = "\\$dd2";
+                break;
+            case MatchPhase::Overtime:
+                colorPrefix = "\\$e44";
+                break;
+            case MatchPhase::Ended:
+                colorPrefix = "\\$fb0";
+                break;
+        }
 
         // If playing with a time limit, timer counts down to 0
-        if (Match.config.minutesLimit != 0) stopwatchTime = Time::GetTimelimitMilliseconds() - stopwatchTime;
-        
+        if (Match.config.minutesLimit != 0 || Match.config.noBingoMinutes != 0) stopwatchTime = Time::GetMaxTimeMilliseconds() - stopwatchTime;
+        if (phase == MatchPhase::NoBingo) stopwatchTime -= Time::GetTimelimitMilliseconds();
+        if (stopwatchTime < 0) stopwatchTime = -stopwatchTime;
+
         UI::Text(colorPrefix + Time::Format(stopwatchTime, false, true, true));
         UI::PopFont();
 

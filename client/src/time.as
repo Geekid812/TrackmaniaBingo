@@ -9,33 +9,46 @@ namespace Time {
     }
 
     /**
+     * Get the match's no bingo time period in milliseconds.
+     */
+    uint64 GetNoBingoMilliseconds() {
+        if (@Match == null) return 0;
+        return Match.config.noBingoMinutes * 60 * 1000;
+    }
+
+
+    /**
+     * Get the match's total max time, excluding overtime.
+     */
+    uint64 GetMaxTimeMilliseconds() {
+        return GetTimelimitMilliseconds() + GetNoBingoMilliseconds();
+    }
+
+    /**
      * Get the milliseconds elapsed since game start.
-     * Time does not increase after a game has ended.
+     * Can be negative during the countdown phase.
      */
     int64 MillisecondsElapsed() {
         if (@Match == null) return 0;
         uint64 curTime = Time::Now;
-        if (Match.endState.HasEnded()) {
-            curTime = Match.endState.EndTime;
-        }
         return curTime - Match.startTime;
+    }
+
+    /**
+     * Get the milliseconds elapsed since game start.
+     * Will always be strictly within the time limit range.
+     */
+    int64 MillisecondsBounded() {
+        if (@Match == null) return 0;
+        if (Match.config.minutesLimit == 0) return MillisecondsElapsed();
+        return Math::Clamp(MillisecondsElapsed(), 0, GetMaxTimeMilliseconds());
     }
 
     /**
      * Get the milliseconds remaining if playing on a time limit.
      */
-    uint64 MillisecondsRemaining() {
-        if (@Match == null) return 0;
-        return GetTimelimitMilliseconds() - ClampedMillisecondsElapsed();
-    }
-
-    /**
-     * Get the milliseconds elapsed since game start, but never exceeds the time limit.
-     * Can be negative during the countdown phase.
-     */
-    int64 ClampedMillisecondsElapsed() {
-        if (@Match == null) return 0;
-        if (Match.config.minutesLimit == 0) return MillisecondsElapsed();
-        return Math::Clamp(MillisecondsElapsed(), 0, GetTimelimitMilliseconds());
+    int64 MillisecondsRemaining() {
+        if (@Match == null || Match.config.minutesLimit == 0) return 0;
+        return GetTimelimitMilliseconds() - MillisecondsElapsed() + GetNoBingoMilliseconds();
     }
 }

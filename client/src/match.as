@@ -72,6 +72,15 @@ class LiveMatch {
     MapCell GetCell(int id) {
         return this.gameMaps[id];
     }
+
+    MatchPhase GetPhase() {
+        int64 time = Time::MillisecondsElapsed();
+        if (endState.HasEnded()) return MatchPhase::Ended;
+        if (time < 0) return MatchPhase::Countdown;
+        if (Time::GetNoBingoMilliseconds() >= time) return MatchPhase::NoBingo;
+        if (Time::MillisecondsRemaining() < 0) return MatchPhase::Overtime;
+        return MatchPhase::Running;
+    }
 }
 
 
@@ -155,6 +164,14 @@ enum BingoDirection {
     Horizontal,
     Vertical,
     Diagonal
+}
+
+enum MatchPhase {
+    Countdown,
+    NoBingo,
+    Running,
+    Overtime,
+    Ended
 }
 
 namespace Game {
