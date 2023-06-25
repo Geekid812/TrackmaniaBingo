@@ -43,33 +43,32 @@ namespace NetworkHandlers {
         }
     }
 
-    void RunSubmitted(Json::Value@ claim) {
-            MapCell@ claimedMap = Match.GetCell(int(claim["cell_id"]));
-            int position = int(claim["position"]);
-            claimedMap.attemptRanking.InsertAt(position - 1, MapClaim::Deserialize(claim["claim"]));
+    void RunSubmitted(Json::Value@ data) {
+            MapCell@ claimedMap = Match.GetCell(int(data["cell_id"]));
+            int position = int(data["position"]);
+            MapClaim claim = MapClaim::Deserialize(data["claim"]);
 
-/**
-            bool IsImprove = claimedMap.ClaimedTeam !is null && claimedMap.ClaimedTeam.Id == team.Id;
-            bool IsReclaim = claimedMap.ClaimedTeam !is null && claimedMap.ClaimedTeam.Id != team.Id;
-            string DeltaTime = claimedMap.ClaimedRun.Time == -1 ? "" : "-" + Time::Format(claimedMap.ClaimedRun.Time - result.Time);
-            string PlayerName = Body["claim"]["player"]["name"];
-            @claimedMap.ClaimedTeam = @team;
-            claimedMap.ClaimedRun = result;
-            claimedMap.ClaimedPlayerName = PlayerName;
-
-            string MapName = claimedMap.Name;
-            string TeamName = team.Name;
-            vec4 TeamColor = UIColor::Brighten(UIColor::GetAlphaColor(team.Color, 0.1), 0.75);
-            vec4 DimmedColor = TeamColor / 1.5;
-            
-            if (IsReclaim) {
-                UI::ShowNotification(Icons::Retweet + " Map Reclaimed", PlayerName + " has reclaimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + result.Display() + " (" + DeltaTime + ")", TeamColor, 15000);
-            } else if (IsImprove) {
-                UI::ShowNotification(Icons::ClockO + " Time Improved", PlayerName + " has improved " + TeamName + " Team's time on \\$fd8" + MapName + "\\$z\n" + result.Display() + " (" + DeltaTime + ")", DimmedColor, 15000);
-            } else { // Normal claim
-                UI::ShowNotification(Icons::Bookmark + " Map Claimed", PlayerName + " has claimed \\$fd8" + MapName + "\\$z for " + TeamName + " Team\n" + result.Display(), TeamColor, 15000);
-            }   
-            */
+            if (position == 1) {
+                auto team = claim.player.team;
+                bool isImprove = claimedMap.IsClaimed() && claimedMap.LeadingRun().player.team.id == team.id;
+                bool isReclaim = claimedMap.IsClaimed() && claimedMap.LeadingRun().player.team.id != team.id;
+                string deltaTime = claimedMap.IsClaimed() ? "-" + Time::Format(claimedMap.LeadingRun().result.time - claim.result.time) : "";
+                string playerName = claim.player.name;
+                string mapName = ColoredString(claimedMap.map.trackName);
+                string teamName = team.name;
+                vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(team.color, 0.1), 0.75);
+                vec4 dimmedColor = teamColor / 1.5;
+                RunResult result = claim.result;
+                
+                if (isReclaim) {
+                    UI::ShowNotification(Icons::Retweet + " Map Reclaimed", playerName + " has reclaimed \\$fd8" + mapName + "\\$z for " + teamName + " Team\n" + result.Display() + " (" + deltaTime + ")", teamColor, 15000);
+                } else if (isImprove) {
+                    UI::ShowNotification(Icons::ClockO + " Time Improved", playerName + " has improved " + teamName + " Team's time on \\$fd8" + mapName + "\\$z\n" + result.Display() + " (" + deltaTime + ")", dimmedColor, 15000);
+                } else { // Normal claim
+                    UI::ShowNotification(Icons::Bookmark + " Map Claimed", playerName + " has claimed \\$fd8" + mapName + "\\$z for " + teamName + " Team\n" + result.Display(), teamColor, 15000);
+                }
+            }
+            claimedMap.RegisterClaim(claim);
     }
 
     void UpdateConfig(Json::Value@ data) {

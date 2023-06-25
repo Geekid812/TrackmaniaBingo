@@ -98,7 +98,7 @@ namespace UIRoomMenu {
 
                 if (inGame) {
                     string timer;
-                    if (Time::Stamp >= room.startedTimestamp) timer = "\\$f80" + Time::Format((Time::Stamp - room.startedTimestamp) * 1000, false, true, true);
+                    if (uint64(Time::Stamp) >= room.startedTimestamp) timer = "\\$f80" + Time::Format((Time::Stamp - room.startedTimestamp) * 1000, false, true, true);
                     else timer = "\\$f80Game starting in " + (room.startedTimestamp - Time::Stamp) + "...";
                     padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(timer).x, 0.75);
                     UI::SetCursorPos(base + vec2(padding, 4.));

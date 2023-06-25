@@ -105,6 +105,20 @@ class MapCell {
 
         return null;
     }
+
+    void RegisterClaim(MapClaim claim) {
+        int i = attemptRanking.Length;
+        while (i > 0) {
+            auto current = attemptRanking[i - 1];
+            if (current.player.profile.uid == claim.player.profile.uid) {
+                attemptRanking.RemoveAt(i - 1);
+            } else if (claim.result.time >= current.result.time) {
+                break;
+            }
+            i -= 1;
+        }
+        attemptRanking.InsertAt(i, claim);
+    }
 }
 
 class EndState {
