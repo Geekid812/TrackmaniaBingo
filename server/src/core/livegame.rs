@@ -88,6 +88,10 @@ impl LiveMatch {
         &self.cells[id]
     }
 
+    pub fn start_date(&self) -> &DateTime<Utc> {
+        &self.started
+    }
+
     pub fn get_cell_from_map_uid(&self, uid: String) -> Option<usize> {
         self.cells
             .iter()

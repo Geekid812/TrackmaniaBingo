@@ -17,6 +17,8 @@ pub struct NetworkRoom {
     pub player_count: usize,
     #[serde_as(as = "TimestampSeconds")]
     pub created: DateTime<Utc>,
+    #[serde_as(as = "TimestampSeconds")]
+    pub started: DateTime<Utc>,
 }
 
 impl From<&room::GameRoom> for NetworkRoom {
@@ -29,6 +31,7 @@ impl From<&room::GameRoom> for NetworkRoom {
             match_config: value.matchconfig().to_owned(),
             player_count: value.players().len(),
             created: value.created().to_owned(),
+            started: value.start_date(),
         }
     }
 }

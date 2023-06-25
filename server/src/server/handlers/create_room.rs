@@ -54,6 +54,9 @@ impl Request for CreateRoom {
         ))));
         ctx.room = room_ctx;
         room.add_player(&ctx, &ctx.profile, true);
+        if room.config().public {
+            directory::send_room_visibility(&room, true);
+        }
 
         room.channel()
             .subscribe(ctx.profile.player.uid, ctx.writer.clone());

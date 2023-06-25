@@ -12,6 +12,15 @@ namespace UIRoomMenu {
     LoadStatus RoomsLoad = LoadStatus::NotLoaded;
     array<NetworkRoom> PublicRooms;
 
+    NetworkRoom@ GetRoom(const string&in code) {
+        for (uint i = 0; i < PublicRooms.Length; i++) {
+            if (PublicRooms[i].joinCode == code) return PublicRooms[i];
+        }
+
+        warn("Roomlist: GetRoom(" + code + ") returned null.");
+        return null;
+    }
+
     void RoomCodeInput() {
         UITools::AlignedLabel("Room code");
         UI::SetNextItemWidth(200);
@@ -81,16 +90,34 @@ namespace UIRoomMenu {
                 UI::SetCursorPos(base + vec2(padding, 0.));
                 UI::Text(righttext);
 
+                bool inGame = room.startedTimestamp != 0;
+                string buttonText = Icons::Play + "  Join";
+                if (inGame) buttonText = Icons::PlayCircleO + "  In Game";
                 base = UI::GetCursorPos();
                 UI::Text(string::Join(UIGameRoom::MatchConfigInfo(room.matchConfig), "\t"));
-                padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(Icons::Play + "\tJoin\t").x, 1.0);
+
+                if (inGame) {
+                    string timer;
+                    if (Time::Stamp >= room.startedTimestamp) timer = "\\$f80" + Time::Format((Time::Stamp - room.startedTimestamp) * 1000, false, true, true);
+                    else timer = "\\$f80Game starting in " + (room.startedTimestamp - Time::Stamp) + "...";
+                    padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(timer).x, 0.75);
+                    UI::SetCursorPos(base + vec2(padding, 4.));
+                    UI::Text(timer);
+                }
+
+                padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t" + buttonText).x, 1.0);
                 UI::SetCursorPos(base + vec2(padding, 0.));
-                UIColor::DarkGreen();
-                if (UI::Button(Icons::Play + " Join")) {
+                UI::BeginDisabled(inGame);
+                if (!inGame) UIColor::DarkGreen();
+                else UIColor::Orange();
+
+                if (UI::Button(buttonText)) {
                     NetParams::JoinCode = room.joinCode;
                     startnew(Network::JoinRoom);
                 }
+
                 UIColor::Reset();
+                UI::EndDisabled();
 
                 UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 4));
             }

@@ -7,6 +7,7 @@ class NetworkRoom {
     MatchConfiguration matchConfig;
     uint playerCount;
     uint64 createdTimestamp;
+    uint64 startedTimestamp;
 }
 
 namespace NetworkRoom {
@@ -19,6 +20,7 @@ namespace NetworkRoom {
         value["match_config"] = room.matchConfig;
         value["player_cout"] = room.playerCount;
         value["created"] = room.createdTimestamp;
+        value["started"] = room.startedTimestamp;
 
         return value;
     }
@@ -32,6 +34,7 @@ namespace NetworkRoom {
         room.matchConfig = MatchConfiguration::Deserialize(value["match_config"]);
         room.playerCount = uint(value["player_count"]);
         room.createdTimestamp = uint64(value["created"]);
+        room.startedTimestamp = uint64(value["started"]);
 
         return room;
     }

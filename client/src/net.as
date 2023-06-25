@@ -216,7 +216,13 @@ namespace Network {
             NetworkHandlers::AddRoomListing(body);
         } else if (body["event"] == "RoomUnlisted") {
             NetworkHandlers::RemoveRoomListing(body);
-        } /* else if (Body["event"] == "MapsLoadResult") {
+        } else if (body["event"] == "RoomlistPlayerCountUpdate") {
+            NetworkHandlers::RoomlistPlayerUpdate(body);
+        } else if (body["event"] == "RoomlistConfigUpdate") {
+            NetworkHandlers::RoomlistUpdateConfig(body);
+        } else if (body["event"] == "RoomlistInGameStatusUpdate") {
+            NetworkHandlers::RoomlistInGameStatusUpdate(body);
+        }/* else if (Body["event"] == "MapsLoadResult") {
             if (Body["error"].GetType() != Json::Type::Null) {
                 Room.MapsLoadingStatus = LoadStatus::LoadFail;
                 Room.LoadFailInfo = Body["error"];

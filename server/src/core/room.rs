@@ -1,14 +1,14 @@
 use std::{collections::HashMap, sync::Arc};
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use rand::Rng;
 use serde::{Serialize, Serializer};
 use thiserror::Error;
 use tracing::{debug, warn};
 
 use super::{
-    directory::{self, Owned, Shared, ROOMS},
-    events::{game::GameEvent, room::RoomEvent},
+    directory::{self, Owned, Shared, PUB_ROOMS_CHANNEL, ROOMS},
+    events::{game::GameEvent, room::RoomEvent, roomlist::RoomlistEvent},
     gamecommon::PlayerData,
     livegame::{GameTeam, LiveMatch, MatchConfiguration},
     models::{
@@ -286,6 +286,16 @@ impl GameRoom {
             config: self.config.clone(),
             match_config: self.matchconfig.clone(),
         });
+
+        if self.config.public {
+            PUB_ROOMS_CHANNEL
+                .lock()
+                .broadcast(&RoomlistEvent::RoomlistConfigUpdate {
+                    code: self.join_code.clone(),
+                    config: self.config.clone(),
+                    match_config: self.matchconfig.clone(),
+                });
+        }
     }
 
     pub fn check_close(&mut self) {
@@ -329,7 +339,30 @@ impl GameRoom {
                 .map(|ctx| *ctx.lock() = Some(GameContext::new(p.profile.clone(), &match_arc)));
         });
         self.active_match = Some(Arc::downgrade(&match_arc));
+        self.send_in_game_status_update();
         match_arc
+    }
+
+    pub fn start_date(&self) -> DateTime<Utc> {
+        self.active_match
+            .as_ref()
+            .and_then(|weak| weak.upgrade().map(|game| game.lock().start_date().clone()))
+            .unwrap_or(DateTime::from_utc(
+                NaiveDateTime::from_timestamp_millis(0).unwrap(),
+                Utc,
+            ))
+    }
+
+    fn send_in_game_status_update(&self) {
+        if self.config.public {
+            let start_time = self.start_date();
+            PUB_ROOMS_CHANNEL
+                .lock()
+                .broadcast(&RoomlistEvent::RoomlistInGameStatusUpdate {
+                    code: self.join_code.clone(),
+                    start_time,
+                })
+        }
     }
 }
 

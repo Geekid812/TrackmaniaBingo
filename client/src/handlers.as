@@ -92,6 +92,22 @@ namespace NetworkHandlers {
         }
     }
 
+    void RoomlistUpdateConfig(Json::Value@ data) {
+        NetworkRoom@ room = UIRoomMenu::GetRoom(data["code"]);
+        room.config = RoomConfiguration::Deserialize(data["config"]);
+        room.matchConfig = MatchConfiguration::Deserialize(data["match_config"]);
+    }
+
+    void RoomlistPlayerUpdate(Json::Value@ data) {
+        NetworkRoom@ room = UIRoomMenu::GetRoom(data["code"]);
+        room.playerCount += int(data["delta"]);
+    }
+
+    void RoomlistInGameStatusUpdate(Json::Value@ data) {
+        NetworkRoom@ room = UIRoomMenu::GetRoom(data["code"]);
+        room.startedTimestamp = uint64(data["start_time"]);
+    }
+
     void LoadGameData(Json::Value@ data) {
 //        Room.StartTime = Time::Now - uint(data["start_time"]);
         for (uint i = 0; i < data["cells"].Length; i++) {
