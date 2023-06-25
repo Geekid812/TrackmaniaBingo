@@ -206,4 +206,11 @@ namespace UIRoomSettings {
             if (MatchConfig.noBingoMinutes != 0) TotalTimeIndicator();
         }
     }
+
+    void SaveConfiguredSettings() {
+        Json::Value@ configs = Json::Object();
+        configs["room"] = RoomConfiguration::Serialize(RoomConfig);
+        configs["game"] = MatchConfiguration::Serialize(MatchConfig);
+        PersistantStorage::LastConfig = Json::Write(configs);
+    }
 }

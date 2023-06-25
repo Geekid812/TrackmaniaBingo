@@ -9,6 +9,9 @@ namespace PersistantStorage {
     [Setting hidden]
     float MapListUiScale = 1.0f;
 
+    [Setting hidden]
+    string LastConfig = "";
+
     void LoadPersistentItems() {
         try {
             if (LocalProfile != "") {
@@ -16,6 +19,16 @@ namespace PersistantStorage {
             }
         } catch {
             warn("LoadPersistentItems: Deserialize of LocalProfile failed (" + getExceptionInfo() + ")");
+        }
+
+        try {
+            if (LastConfig != "") {
+                Json::Value@ configs = Json::Parse(LastConfig);
+                RoomConfig = RoomConfiguration::Deserialize(configs["room"]);
+                MatchConfig = MatchConfiguration::Deserialize(configs["game"]);
+            }
+        } catch {
+            warn("LoadPersistentItems: Deserialize of LastConfig failed (" + getExceptionInfo() + ")");
         }
     }
 }

@@ -107,6 +107,7 @@ namespace UIMainWindow {
         UI::BeginDisabled(disabled);
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Create Room")) {
+            UIRoomSettings::SaveConfiguredSettings();
             startnew(Network::CreateRoom);
         }
         UIColor::Reset();
@@ -183,6 +184,7 @@ namespace SettingsWindow {
 
         UIColor::Cyan();
         if (UI::Button(Icons::CheckCircle + " Update Settings")) {
+            UIRoomSettings::SaveConfiguredSettings();
             startnew(Network::EditConfig);
         }
         UIColor::Reset();
