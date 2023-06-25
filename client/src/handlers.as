@@ -107,6 +107,40 @@ namespace NetworkHandlers {
         room.startedTimestamp = uint64(data["start_time"]);
     }
 
+    void LoadRoomTeams(Json::Value@ teams) {
+        @Room.teams = {};
+        for (uint i = 0; i < teams.Length; i++) {
+            Json::Value@ t = teams[i];
+            Team team = Team(
+                t["id"], 
+                t["name"],
+                vec3(t["color"][0] / 255., t["color"][1] / 255., t["color"][2] / 255.)
+            );
+            Room.teams.InsertLast(team);
+
+            for (uint j = 0; j < t["members"].Length; j++) {
+                Json::Value@ m = t["members"][j];
+                PlayerProfile profile = PlayerProfile::Deserialize(m);
+                Room.players.InsertLast(Player(profile, team, profile.uid == Profile.uid));
+            }
+        }
+    }
+
+    void PlayerJoin(Json::Value@ data) {
+        if (@Room is null) return;
+        Room.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Room.GetTeamWithId(data["team"]), false));
+    }
+
+    void PlayerLeave(Json::Value@ data) {
+        int uid = int(data["uid"]);
+        for (uint i = 0; i < Room.players.Length; i++) {
+            if (Room.players[i].profile.uid == uid) {
+                Room.players.RemoveAt(i);
+                return;
+            }
+        }
+    }
+
     void LoadGameData(Json::Value@ data) {
 //        Room.StartTime = Time::Now - uint(data["start_time"]);
         for (uint i = 0; i < data["cells"].Length; i++) {

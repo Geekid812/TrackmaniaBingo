@@ -21,6 +21,12 @@ namespace UIRoomMenu {
         return null;
     }
 
+    void SwitchToContext() {
+        UIGameRoom::Visible = true;
+        UIGameRoom::GrabFocus = true;
+        UIMainWindow::Visible = false;
+    }
+
     void RoomCodeInput() {
         UITools::AlignedLabel("Room code");
         UI::SetNextItemWidth(200);

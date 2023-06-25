@@ -127,6 +127,9 @@ impl GameRoom {
         self.members.values().for_each(|p| {
             map.entry(p.team).or_default().push(p.profile.player.uid);
         });
+        self.teams.keys().for_each(|t| {
+            map.entry(*t).or_default();
+        });
 
         map
     }
@@ -179,7 +182,12 @@ impl GameRoom {
         self.teams.values().any(|t| t.name == name)
     }
 
-    pub fn add_player(&mut self, ctx: &ClientContext, profile: &PlayerProfile, operator: bool) {
+    pub fn add_player(
+        &mut self,
+        ctx: &ClientContext,
+        profile: &PlayerProfile,
+        operator: bool,
+    ) -> TeamIdentifier {
         let team = self
             .teams
             .values()
@@ -197,6 +205,9 @@ impl GameRoom {
                 game_ctx: Arc::downgrade(&ctx.game),
             },
         );
+        self.channel
+            .subscribe(profile.player.uid, ctx.writer.clone());
+        team
     }
 
     pub fn get_load_marker(&self) -> u32 {
@@ -224,12 +235,40 @@ impl GameRoom {
         if self.at_size_capacity() {
             return Err(JoinRoomError::PlayerLimitReached);
         }
-        // TODO: reimplement room started check
-        Ok(self.add_player(ctx, profile, false))
+        if self.has_started() {
+            return Err(JoinRoomError::HasStarted);
+        }
+
+        let team = self.add_player(ctx, profile, false);
+        self.channel.broadcast(&RoomEvent::PlayerJoin {
+            profile: profile.clone(),
+            team,
+        });
+
+        if self.config.public {
+            PUB_ROOMS_CHANNEL
+                .lock()
+                .broadcast(&RoomlistEvent::RoomlistPlayerCountUpdate {
+                    code: self.join_code.clone(),
+                    delta: 1,
+                });
+        }
+        Ok(())
     }
 
     pub fn player_remove(&mut self, uid: i32) {
         self.members.remove(&uid);
+        self.channel.unsubscribe(uid);
+        self.channel.broadcast(&RoomEvent::PlayerLeave { uid: uid });
+
+        if self.config.public {
+            PUB_ROOMS_CHANNEL
+                .lock()
+                .broadcast(&RoomlistEvent::RoomlistPlayerCountUpdate {
+                    code: self.join_code.clone(),
+                    delta: -1,
+                });
+        }
     }
 
     pub fn change_team(&mut self, uid: i32, team: TeamIdentifier) -> bool {
@@ -375,11 +414,6 @@ impl Serialize for GameRoom {
     }
 }
 
-#[derive(Serialize)]
-pub struct PlayerUpdates {
-    pub updates: HashMap<i32, TeamIdentifier>,
-}
-
 #[derive(Error, Debug)]
 pub enum JoinRoomError {
     #[error("The room is already full.")]
@@ -388,6 +422,11 @@ pub enum JoinRoomError {
     DoesNotExist(String),
     #[error("The game has already started.")]
     HasStarted,
+}
+
+#[derive(Serialize)]
+pub struct PlayerUpdates {
+    pub updates: HashMap<i32, TeamIdentifier>,
 }
 
 #[derive(Serialize, Clone, Debug)]

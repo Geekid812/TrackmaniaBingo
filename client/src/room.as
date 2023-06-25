@@ -48,7 +48,7 @@ class GameRoom {
         return null;
     }
 
-    bool CanCreateMoreTeams(){
+    bool CanCreateMoreTeams() {
         // Non hosts should not see that more teams can be created
         return teams.Length < uint(Math::Min(maxTeams, config.hasPlayerLimit ? config.maxPlayers : maxTeams)) && Room.localPlayerIsHost;
     }

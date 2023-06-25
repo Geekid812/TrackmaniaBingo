@@ -222,6 +222,10 @@ namespace Network {
             NetworkHandlers::RoomlistUpdateConfig(body);
         } else if (body["event"] == "RoomlistInGameStatusUpdate") {
             NetworkHandlers::RoomlistInGameStatusUpdate(body);
+        } else if (body["event"] == "PlayerJoin") {
+            NetworkHandlers::PlayerJoin(body);
+        } else if (body["event"] == "PlayerLeave") {
+            NetworkHandlers::PlayerLeave(body);
         }/* else if (Body["event"] == "MapsLoadResult") {
             if (Body["error"].GetType() != Json::Type::Null) {
                 Room.MapsLoadingStatus = LoadStatus::LoadFail;
@@ -325,9 +329,7 @@ namespace Network {
         string roomCode = response["join_code"];
         Room.maxTeams = int(response["max_teams"]);
         UIRoomMenu::JoinCodeVisible = false;
-        UIMainWindow::Visible = false;
-        UIGameRoom::Visible = true;
-        UIGameRoom::GrabFocus = true;
+        UIRoomMenu::SwitchToContext();
 
         Room.teams = {};
         auto jsonTeams = response["teams"];
@@ -360,19 +362,16 @@ namespace Network {
             return;
         }
         
-        if (response.HasKey("error")) {
-            UI::ShowNotification(Icons::Times + string(response["error"]));  
-        } else {
-            // Success!
-            @Room = GameRoom();
-            Room.name = response["name"];
-            Room.config = RoomConfiguration::Deserialize(response["config"]);
-            Room.joinCode = UIRoomMenu::JoinCodeInput;
-            Room.localPlayerIsHost = false;
-            //NetworkHandlers::UpdateRoom(Response["status"]);
+        @Room = GameRoom();
+        Room.config = RoomConfiguration::Deserialize(response["config"]);
+        Room.matchConfig = MatchConfiguration::Deserialize(response["match_config"]);
+        Room.name = Room.config.name;
+        Room.joinCode = NetParams::JoinCode;
+        Room.localPlayerIsHost = false;
+        NetworkHandlers::LoadRoomTeams(response["teams"]);
 
-            UIRoomMenu::JoinCodeVisible = false;
-        }
+        UIRoomMenu::JoinCodeVisible = false;
+        UIRoomMenu::SwitchToContext();
     }
 
     void GetPublicRooms() {

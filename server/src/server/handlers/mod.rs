@@ -7,6 +7,7 @@ mod create_room;
 mod edit_config;
 mod generic;
 mod get_public_rooms;
+mod join_room;
 mod ping;
 mod start_match;
 mod submit_run;
