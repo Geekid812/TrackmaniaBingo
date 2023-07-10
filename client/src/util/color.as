@@ -48,14 +48,15 @@ namespace UIColor {
     }
 
     void Color(vec4 base, vec4 accent, vec4 active) {
-        UI::PushStyleColor(UI::Col::CheckMark, base);
         UI::PushStyleColor(UI::Col::Button, base);
         UI::PushStyleColor(UI::Col::ButtonHovered, accent);
         UI::PushStyleColor(UI::Col::ButtonActive, active);
         UI::PushStyleColor(UI::Col::Tab, base);
         UI::PushStyleColor(UI::Col::TabHovered, accent);
         UI::PushStyleColor(UI::Col::TabActive, active);
+        UI::PushStyleColor(UI::Col::CheckMark, base);
         UI::PushStyleColor(UI::Col::FrameBgHovered, Brighten(base, .4));
+        UI::PushStyleColor(UI::Col::FrameBgActive, Brighten(base, .6));
     }
 
     void Custom(vec3 color){
@@ -63,7 +64,7 @@ namespace UIColor {
     }
 
     void Reset() {
-        UI::PopStyleColor(8);
+        UI::PopStyleColor(9);
     }
 
     vec4 GetAlphaColor(vec3 color, float alpha) {

@@ -78,7 +78,21 @@ namespace NetworkHandlers {
     }
 
     void AddRoomListing(Json::Value@ room) {
-        UIRoomMenu::PublicRooms.InsertLast(NetworkRoom::Deserialize(room));
+        auto netRoom = NetworkRoom::Deserialize(room);
+        UIRoomMenu::PublicRooms.InsertLast(netRoom);
+
+        if (PersistantStorage::SubscribeToRoomUpdates && @Match is null && @Room is null) {
+            array<string> params = {
+                stringof(netRoom.matchConfig.mapSelection),
+                netRoom.matchConfig.gridSize + "x" + netRoom.matchConfig.gridSize,
+                stringof(netRoom.matchConfig.targetMedal)
+            };
+            if (netRoom.matchConfig.minutesLimit != 0) {
+                params.InsertLast(netRoom.matchConfig.minutesLimit + " minutes");
+            }
+            string paramsString = string::Join(params, ", ");
+            UI::ShowNotification(Icons::PlusCircle + " Bingo: New game started", netRoom.hostName + " is hosting a new game: \\$ee4" + netRoom.name + "\n\\$z(" + paramsString + ")", vec4(0.27,0.50,0.29, 1.), 10000);
+        }
     }
 
     void RemoveRoomListing(Json::Value@ data) {

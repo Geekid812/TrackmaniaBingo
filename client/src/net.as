@@ -168,7 +168,7 @@ namespace Network {
     }
 
     bool ShouldStayConnected() {
-        return UIMainWindow::Visible || @Room != null || @Match != null;
+        return UIMainWindow::Visible || @Room != null || @Match != null || PersistantStorage::SubscribeToRoomUpdates;
     }
 
     void DoPing() {

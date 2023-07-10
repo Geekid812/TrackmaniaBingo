@@ -22,6 +22,7 @@ namespace UIGameRoom {
             // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
             // So for now, the player will get yeeted out.
             Network::LeaveRoom();
+            return;
         }
         if (windowOpen) {
             UI::PushFont(Font::Regular);

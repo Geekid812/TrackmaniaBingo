@@ -13,6 +13,14 @@ void Main() {
         Network::Connect();
     }
 
+    // We are interested in roomlist notifications, so we should connect
+    if (PersistantStorage::SubscribeToRoomUpdates) {
+        trace("Main: Player is subscribed to roomlist updates, connecting to the servers.");
+        Network::Connect();
+        UIRoomMenu::RoomsLoad = LoadStatus::Loading;
+        startnew(Network::GetPublicRooms);
+    }
+
     while (true) {
         Network::Loop();
         yield();

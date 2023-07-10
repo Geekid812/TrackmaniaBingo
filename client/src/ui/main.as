@@ -71,9 +71,13 @@ namespace UIMainWindow {
             UI::EndChild();
             UI::EndTabItem();
         } else {
-            if (UIRoomMenu::RoomsLoad != LoadStatus::NotLoaded) {
+            if (UIRoomMenu::RoomsLoad != LoadStatus::NotLoaded && !PersistantStorage::SubscribeToRoomUpdates) {
                 UIRoomMenu::RoomsLoad = LoadStatus::NotLoaded;
                 startnew(Network::UnsubscribeRoomlist);
+            }
+            if (UIRoomMenu::RoomsLoad == LoadStatus::NotLoaded && PersistantStorage::SubscribeToRoomUpdates) {
+                UIRoomMenu::RoomsLoad = LoadStatus::Loading;
+                startnew(Network::GetPublicRooms);
             }
         }
 

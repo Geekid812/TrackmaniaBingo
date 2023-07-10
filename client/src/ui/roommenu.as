@@ -66,7 +66,7 @@ namespace UIRoomMenu {
         }
 
         float heightRemaining = UI::GetWindowSize().y - UI::GetCursorPos().y;
-        float offset = 140. * UI::GetScale();
+        float offset = 150. * UI::GetScale();
         UI::BeginChild("bingo_rooms", vec2(0, heightRemaining - offset), false);
 
         if (RoomsLoad == LoadStatus::Loading) {
@@ -134,13 +134,16 @@ namespace UIRoomMenu {
         UI::EndChild();
     }
 
+    void SubscribeCheckbox() {
+        PersistantStorage::SubscribeToRoomUpdates = UI::Checkbox("Send a notification when a new public     game is created", PersistantStorage::SubscribeToRoomUpdates);
+    }
+
     void RoomMenu() {
         UITools::SectionHeader("Public Rooms");
         if (Network::GetState() == ConnectionState::Connected) {
             PublicRoomList();
         }
 
-        UI::NewLine();
         UITools::SectionHeader("Join a Private Room");
         RoomCodeInput();
 
@@ -149,5 +152,8 @@ namespace UIRoomMenu {
         UI::EndDisabled();
 
         UIMainWindow::ConnectingIndicator();
+        UI::NewLine();
+        UI::Separator();
+        SubscribeCheckbox();
     }
 }

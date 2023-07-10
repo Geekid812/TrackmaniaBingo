@@ -12,6 +12,9 @@ namespace PersistantStorage {
     [Setting hidden]
     string LastConfig = "";
 
+    [Setting hidden]
+    bool SubscribeToRoomUpdates = false;
+
     void LoadPersistentItems() {
         try {
             if (LocalProfile != "") {
