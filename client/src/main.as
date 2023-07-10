@@ -1,5 +1,5 @@
-const string WindowName = Icons::Th + " \\$zBingo";
-const string MenuItemName = "\\$ff0" + WindowName;
+const string WindowName = Icons::Th + " \\$zBingo (Beta)";
+const string MenuItemName = "\\$069" + WindowName;
 
 void Main() {
     startnew(Font::Init);
