@@ -1,13 +1,21 @@
 use std::sync::{Arc, Weak};
 
 use crate::{
-    config::CONFIG, orm::mapcache::record::MapRecord, server::tasks::execute_delayed_task,
+    config::CONFIG,
+    orm::{
+        self,
+        mapcache::record::MapRecord,
+        models::matches::{Match, PlayerToMatch},
+    },
+    server::tasks::execute_delayed_task,
     transport::Channel,
 };
 use chrono::{DateTime, Duration, Utc};
+use diesel::{insert_into, RunQueryDsl};
 use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
+use tracing::error;
 
 use super::{
     directory::{Owned, Shared},
@@ -151,6 +159,13 @@ impl LiveMatch {
         &self.cells[id]
     }
 
+    pub fn get_team_mut(&mut self, team_id: TeamIdentifier) -> Option<&mut GameTeam> {
+        self.teams
+            .iter_mut()
+            .filter(|t| t.base.id == team_id)
+            .next()
+    }
+
     pub fn start_date(&self) -> &DateTime<Utc> {
         &self.started
     }
@@ -188,8 +203,14 @@ impl LiveMatch {
             if len > 1 && !bingos.iter().all(|line| line.team == bingos[0].team) {
                 // TODO: overtime
             } else if len >= 1 {
+                let bingo_line = bingos[0].clone();
+                let winning_team = self
+                    .get_team_mut(bingo_line.clone().team)
+                    .expect("winning team exists");
+                winning_team.winner = true;
+
                 self.channel.broadcast(&GameEvent::AnnounceBingo {
-                    line: bingos[0].clone(),
+                    line: bingo_line.clone(),
                 });
                 self.set_game_ended();
             }
@@ -200,6 +221,43 @@ impl LiveMatch {
         if let Some(room) = self.room.upgrade() {
             room.lock().reset_match();
         }
+        self.save_match();
+    }
+
+    fn save_match(&mut self) {
+        let match_model = Match {
+            uid: self.uid.clone(),
+            started_at: self.started.naive_utc(),
+            ended_at: Utc::now().naive_utc(),
+        };
+        let mut player_results = Vec::new();
+        for team in &self.teams {
+            for player in &team.members {
+                player_results.push(PlayerToMatch {
+                    player_uid: player.profile.player.uid,
+                    match_uid: self.uid.clone(),
+                    outcome: if team.winner {
+                        "W".to_owned()
+                    } else {
+                        "L".to_owned()
+                    },
+                });
+            }
+        }
+        tokio::spawn(orm::execute(move |conn| {
+            use crate::orm::schema::{
+                matches::dsl::matches, matches_players::dsl::matches_players,
+            };
+            if let Err(e) = insert_into(matches).values(match_model).execute(conn) {
+                error!("execute error: {}", e);
+            }
+            if let Err(e) = insert_into(matches_players)
+                .values(player_results)
+                .execute(conn)
+            {
+                error!("execute error: {}", e);
+            }
+        }));
     }
 
     fn broadcast_submitted_run(&mut self, cell_id: usize, claim: MapClaim, position: usize) {
@@ -294,6 +352,7 @@ impl LiveMatch {
 pub struct GameTeam {
     base: BaseTeam,
     members: Vec<Player>,
+    pub winner: bool,
 }
 
 impl From<RoomTeam> for GameTeam {
@@ -301,6 +360,7 @@ impl From<RoomTeam> for GameTeam {
         Self {
             base: value.base,
             members: value.members,
+            winner: false,
         }
     }
 }
