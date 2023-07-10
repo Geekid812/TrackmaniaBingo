@@ -223,7 +223,13 @@ namespace UIGameRoom {
     }
 
     void PlayerLabel(Player player, uint index) {
-        UI::Text((player.isSelf ? "\\$ff8" : "") + (index + 1) + ". " + player.name);
+        string titlePrefix = player.profile.title != "" ? "\\$" + player.profile.title.SubStr(0, 3) : "";
+        UI::Text((player.isSelf ? "\\$ff8" : "") + (index + 1) + ". " + titlePrefix + player.name);
+        if (UI::IsItemHovered()) {
+            UI::BeginTooltip();
+            UIProfile::RenderProfile(player.profile, false);
+            UI::EndTooltip();
+        }
     }
 
     string[] MatchConfigInfo(MatchConfiguration config) {

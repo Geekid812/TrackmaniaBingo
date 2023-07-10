@@ -3,7 +3,7 @@ namespace UIProfile {
     const string PLAYER_FLAG_URL = "https://trackmania.io/img/flags/";
     PlayerProfile@ openProfiles;
 
-    void RenderProfile(PlayerProfile profile) {
+    void RenderProfile(PlayerProfile profile, bool showId = true) {
         CountryFlag(profile.countryCode, vec2(30, 20));
         UI::SameLine();
         vec2 playerPos = UI::GetCursorPos();
@@ -14,8 +14,9 @@ namespace UIProfile {
 
         MatchCount(profile.matchCount, profile.wins, profile.losses);
         UI::SetCursorPos(playerPos);
-        RatingDisplay(profile.score, profile.deviation);
-        PlayerId(profile.uid);
+        // RatingDisplay(profile.score, profile.deviation);
+        UI::NewLine();
+        if (showId) PlayerId(profile.uid);
     }
 
     void CountryFlag(const string&in countryCode, vec2 size) {
