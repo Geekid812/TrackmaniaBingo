@@ -79,7 +79,7 @@ namespace UITools {
         if (err != "") {
             string message = "\\$ff8" + err;
             if (err == "timeout") message = "\\$888It looks like the server is not responding.\nIf this is an issue, try reconnecting to the server.";
-            UI::Text(message);
+            UI::TextWrapped(message);
 
             if (err == "timeout") {
                 UI::SameLine();

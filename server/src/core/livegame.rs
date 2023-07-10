@@ -107,9 +107,15 @@ impl LiveMatch {
     }
 
     fn broadcast_start(&mut self) {
+        let maps_in_grid = self.config.grid_size * self.config.grid_size;
         self.channel.broadcast(&GameEvent::MatchStart {
             start_ms: CONFIG.game.start_countdown,
-            maps: self.cells.iter().map(|c| c.map.record.clone()).collect(),
+            maps: self
+                .cells
+                .iter()
+                .take(maps_in_grid)
+                .map(|c| c.map.record.clone())
+                .collect(),
         });
     }
 
@@ -197,7 +203,7 @@ impl LiveMatch {
     }
 
     pub fn check_for_bingos(&self) -> Vec<BingoLine> {
-        let grid_size = self.config.grid_size as usize;
+        let grid_size = self.config.grid_size;
         let mut bingos = Vec::new();
         // Horizontal
         for i in 0..grid_size {

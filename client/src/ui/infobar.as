@@ -48,11 +48,14 @@ namespace UIInfoBar {
             float sideMargins = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding).x * 2.;
             float size = UI::GetWindowSize().x - sideMargins;
             float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, size, 0.5);
+            vec4 buttonColor = UIColor::GetAlphaColor(color, animate ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8);
             UI::PushFont(Font::Bold);
-            UI::PushStyleColor(UI::Col::Button, UIColor::GetAlphaColor(color, animate ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8));
+            UI::PushStyleColor(UI::Col::Button, buttonColor);
+            UI::PushStyleColor(UI::Col::ButtonHovered, buttonColor);
+            UI::PushStyleColor(UI::Col::ButtonActive, buttonColor);
             LayoutTools::MoveTo(padding);
             UI::Button(phaseText, vec2(size, 0.));
-            UI::PopStyleColor();
+            UI::PopStyleColor(3);
             UI::PopFont();
         }
 

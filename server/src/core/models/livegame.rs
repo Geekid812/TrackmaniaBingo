@@ -5,7 +5,7 @@ use super::player::PlayerRef;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MatchConfiguration {
-    pub grid_size: u8,
+    pub grid_size: usize,
     pub selection: MapMode,
     pub medal: Medal,
     pub time_limit: u32,

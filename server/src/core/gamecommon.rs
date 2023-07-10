@@ -33,7 +33,7 @@ pub fn setup_room(room_arc: &Owned<GameRoom>) {
     room.create_team(&TEAMS).expect("creating initial 1st team");
     room.create_team(&TEAMS).expect("creating initial 2nd team");
 
-    server::mapcache::load_maps(
+    server::mapload::load_maps(
         Arc::downgrade(&room_arc),
         room.matchconfig().clone(),
         room.get_load_marker(),

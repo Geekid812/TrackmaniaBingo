@@ -16,7 +16,7 @@ namespace Font {
         @Title = UI::LoadFont("assets/SofiaSans-Bold.ttf", 36);
         @Subtitle = UI::LoadFont("assets/SofiaSans-Regular.ttf", 24);
 
-        sleep(5000); // Non-essential styles below
+        sleep(3000); // Non-essential styles below
         @Header = UI::LoadFont("assets/SofiaSans-Regular.ttf", 32);
         @MonospaceBig = UI::LoadFont("assets/Inconsolata-Medium.ttf", 26);
         @Monospace = UI::LoadFont("DroidSansMono.ttf", 18, -1, -1, true);

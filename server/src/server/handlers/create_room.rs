@@ -44,13 +44,13 @@ impl Request for CreateRoom {
             self.match_config.clone(),
             roomcode.clone(),
         );
-        let room_arc = directory::ROOMS.register(roomcode, new_room);
-        setup_room(&room_arc);
+        directory::ROOMS.insert(roomcode, new_room.clone());
+        setup_room(&new_room);
 
-        let mut room = room_arc.lock();
+        let mut room = new_room.lock();
         let room_ctx = Arc::new(Mutex::new(Some(RoomContext::new(
             ctx.profile.clone(),
-            &room_arc,
+            &new_room,
         ))));
         ctx.room = room_ctx;
         room.add_player(&ctx, &ctx.profile, true);

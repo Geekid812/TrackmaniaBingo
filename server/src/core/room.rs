@@ -1,7 +1,12 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Weak},
+};
 
+use anyhow::anyhow;
 use chrono::{DateTime, NaiveDateTime, Utc};
-use rand::{distributions::Uniform, Rng};
+use parking_lot::Mutex;
+use rand::{distributions::Uniform, seq::SliceRandom, Rng};
 use serde::{Serialize, Serializer};
 use thiserror::Error;
 use tracing::{debug, warn};
@@ -22,11 +27,15 @@ use super::{
 use crate::{
     config::CONFIG,
     orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
-    server::context::{ClientContext, GameContext},
+    server::{
+        context::{ClientContext, GameContext},
+        mapload,
+    },
     transport::Channel,
 };
 
 pub struct GameRoom {
+    ptr: Shared<Self>,
     join_code: String,
     config: RoomConfiguration,
     matchconfig: MatchConfiguration,
@@ -45,8 +54,9 @@ impl GameRoom {
         config: RoomConfiguration,
         matchconfig: MatchConfiguration,
         join_code: String,
-    ) -> Self {
-        Self {
+    ) -> Owned<Self> {
+        let _self = Self {
+            ptr: Weak::new(),
             join_code,
             config,
             matchconfig,
@@ -58,7 +68,10 @@ impl GameRoom {
             load_marker: 0,
             loaded_maps: Vec::new(),
             active_match: None,
-        }
+        };
+        let arc = Arc::new(Mutex::new(_self));
+        arc.lock().ptr = Arc::downgrade(&arc);
+        arc
     }
 
     pub fn name(&self) -> &str {
@@ -342,9 +355,15 @@ impl GameRoom {
     }
 
     fn trigger_new_matchconfig(&mut self, config: MatchConfiguration) {
-        if config.selection != self.matchconfig.selection {
-            // reload maps
+        if config.selection != self.matchconfig.selection
+            || self.matchconfig.mappack_id != config.mappack_id
+            || self.matchconfig.grid_size < config.grid_size
+        {
+            // map selection changed, reload maps
+            self.loaded_maps = Vec::new();
+            mapload::load_maps(self.ptr.clone(), config.clone(), self.get_load_marker());
         }
+
         self.matchconfig = config;
     }
 
@@ -406,9 +425,24 @@ impl GameRoom {
                     updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
                 }));
         }
+
+        self.loaded_maps.shuffle(&mut rand::thread_rng());
     }
 
-    pub fn start_match(&mut self) -> Owned<LiveMatch> {
+    pub fn check_start_match(&mut self) -> Result<Owned<LiveMatch>, anyhow::Error> {
+        let map_count_minimum = self.matchconfig.grid_size * self.matchconfig.grid_size;
+        let count = self.loaded_maps.len();
+        if count < map_count_minimum {
+            let mut err = anyhow!("Could not load enough maps to start the game: {} maps needed, but only {} could be loaded.", map_count_minimum, count);
+            if count == 0 {
+                err = anyhow!("Could not load the maps to start the game. Please wait a moment or try changing the map selection settings.");
+            }
+            return Err(err);
+        }
+        Ok(self.start_match())
+    }
+
+    fn start_match(&mut self) -> Owned<LiveMatch> {
         self.prepare_start_match();
         let start_date = Utc::now() + CONFIG.game.start_countdown;
         let match_arc = LiveMatch::new(

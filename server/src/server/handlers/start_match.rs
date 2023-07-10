@@ -17,7 +17,12 @@ impl Request for StartMatch {
                     error: "You are not a room operator.".to_owned(),
                 });
             }
-            lock.start_match();
+
+            if let Err(error) = lock.check_start_match() {
+                return Box::new(generic::Error {
+                    error: error.to_string(),
+                });
+            }
         } else {
             ctx.trace("not in a room, ignored");
         }
