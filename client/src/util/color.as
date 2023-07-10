@@ -43,6 +43,10 @@ namespace UIColor {
         Color(vec4(.75, .25, .25, 1.), vec4(.9, .35, .35, 1.), vec4(.95, .4, .4, 1.));
     }
 
+    void LightGray() {
+        Color(vec4(.6, .6, .6, 1.), vec4(.6, .6, .6, 1.), vec4(.6, .6, .6, 1.));
+    }
+
     void Color(vec4 base, vec4 accent, vec4 active) {
         UI::PushStyleColor(UI::Col::CheckMark, base);
         UI::PushStyleColor(UI::Col::Button, base);

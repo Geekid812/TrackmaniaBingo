@@ -446,6 +446,7 @@ impl GameRoom {
         self.prepare_start_match();
         let start_date = Utc::now() + CONFIG.game.start_countdown;
         let match_arc = LiveMatch::new(
+            self.ptr.clone(),
             self.matchconfig.clone(),
             self.loaded_maps.clone(),
             self.teams_as_model()
@@ -478,6 +479,14 @@ impl GameRoom {
                 NaiveDateTime::from_timestamp_millis(0).unwrap(),
                 Utc,
             ))
+    }
+
+    pub fn reset_match(&mut self) {
+        if let Some(match_) = self.active_match.as_ref().and_then(|m| m.upgrade()) {
+            directory::MATCHES.remove_item(match_);
+        }
+        self.active_match = None;
+        self.send_in_game_status_update();
     }
 
     fn send_in_game_status_update(&self) {

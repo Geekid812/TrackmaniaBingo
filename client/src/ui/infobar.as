@@ -80,11 +80,28 @@ namespace UIInfoBar {
         UIColor::Reset();
 
         UIColor::Gray();
-        if (Match.endState.HasEnded()) {
-            UI::SameLine();
+        if (Match.GetPhase() == MatchPhase::Ended) {
+            // Small controls window below the infobar for exiting
+            vec2 parentPos = UI::GetWindowPos();
+            vec2 parentSize = UI::GetWindowSize();
+            UI::Begin("Bingo Infobar Controls", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoMove);
+            UIColor::LightGray();
+            if (@Room !is null) {
+                if (UI::Button("Back to room")) {
+                    @Match = null;
+                    UIGameRoom::Visible = true;
+                }
+                UI::SameLine();
+            }
+            UIColor::Reset();
+
             if (UI::Button("Exit")) {
                 Network::LeaveRoom();
             }
+
+            vec2 thisSize = UI::GetWindowSize();
+            UI::SetWindowPos(vec2(parentPos.x + (parentSize.x - thisSize.x) / 2., parentPos.y + parentSize.y + BOARD_MARGIN / 2.));
+            UI::End();
         }
         UIColor::Reset();
         UI::PopStyleVar();

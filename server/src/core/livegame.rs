@@ -20,6 +20,7 @@ use super::{
         room::RoomTeam,
         team::{BaseTeam, TeamIdentifier},
     },
+    room::GameRoom,
     util::base64,
 };
 
@@ -28,6 +29,7 @@ pub type MatchConfiguration = models::livegame::MatchConfiguration;
 pub struct LiveMatch {
     ptr: Shared<Self>,
     uid: String,
+    room: Shared<GameRoom>,
     config: MatchConfiguration,
     teams: Vec<GameTeam>,
     cells: Vec<GameCell>,
@@ -38,6 +40,7 @@ pub struct LiveMatch {
 
 impl LiveMatch {
     pub fn new(
+        room: Shared<GameRoom>,
         config: MatchConfiguration,
         maps: Vec<MapRecord>,
         teams: Vec<GameTeam>,
@@ -49,6 +52,7 @@ impl LiveMatch {
         let mut _self = Self {
             ptr: Weak::new(),
             uid: base64::generate(16),
+            room,
             config,
             teams,
             cells: maps
@@ -192,7 +196,11 @@ impl LiveMatch {
         }
     }
 
-    fn set_game_ended(&mut self) {}
+    fn set_game_ended(&mut self) {
+        if let Some(room) = self.room.upgrade() {
+            room.lock().reset_match();
+        }
+    }
 
     fn broadcast_submitted_run(&mut self, cell_id: usize, claim: MapClaim, position: usize) {
         self.channel.broadcast(&GameEvent::RunSubmitted {
@@ -231,7 +239,7 @@ impl LiveMatch {
                 iter.next();
             }
 
-            let col = iter.step_by(grid_size);
+            let col = iter.step_by(grid_size).take(grid_size);
             let unique_team = iter_check_unique_team(col);
 
             if let Some(team) = unique_team {

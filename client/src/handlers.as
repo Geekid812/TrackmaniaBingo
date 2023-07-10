@@ -151,6 +151,7 @@ namespace NetworkHandlers {
         Match.endState.offset = data["index"];
         Match.endState.endTime = Time::Now;
         Match.endState.team = team;
+        Match.SetPhase(MatchPhase::Ended);
         WasConnected = false;
     }
 
