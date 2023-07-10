@@ -5,7 +5,9 @@ class LiveMatch {
     array<Team>@ teams = {};
     array<Player>@ players = {};
     uint64 startTime = 0;
+    uint64 overtimeStartTime = 0;
     uint64 endTime = 0;
+    MatchPhase phase = MatchPhase::Starting;
     EndState endState;
 
     Player@ GetSelf(){
@@ -74,12 +76,21 @@ class LiveMatch {
     }
 
     MatchPhase GetPhase() {
-        int64 time = Time::MillisecondsElapsed();
-        if (endState.HasEnded()) return MatchPhase::Ended;
-        if (time < 0) return MatchPhase::Countdown;
-        if (int64(Time::GetNoBingoMilliseconds()) >= time) return MatchPhase::NoBingo;
-        if (Time::MillisecondsRemaining() < 0) return MatchPhase::Overtime;
-        return MatchPhase::Running;
+        return this.phase;
+    }
+
+    void SetPhase(MatchPhase phase) {
+        auto previous = this.phase;
+        this.phase = phase;
+
+        if (previous == MatchPhase::Starting) {
+            UIGameRoom::Visible = false;
+            UIMapList::Visible = true;
+        }
+
+        if (phase == MatchPhase::Overtime) {
+            overtimeStartTime = Time::Now;
+        }
     }
 }
 
@@ -168,7 +179,7 @@ enum BingoDirection {
 }
 
 enum MatchPhase {
-    Countdown,
+    Starting,
     NoBingo,
     Running,
     Overtime,
@@ -181,14 +192,6 @@ namespace Game {
         if (@Match == null) return;
         if (!Match.endState.HasEnded()) {
             Playground::CheckRunFinished();
-        
-            // check if countdown time is up
-            if (Match.config.minutesLimit != 0 && Time::MillisecondsRemaining() == 0) {
-                Network::NotifyCountdownEnd();
-            }
         }
-
-        // start game if start countdown ended
-        // TODO: rework needed
     }
 }

@@ -3,7 +3,10 @@ use serde::Serialize;
 use serde_with::DurationMilliSeconds;
 
 use crate::{
-    core::{livegame::BingoLine, models::livegame::MapClaim},
+    core::{
+        livegame::BingoLine,
+        models::livegame::{MapClaim, MatchPhase},
+    },
     orm::mapcache::record::MapRecord,
 };
 
@@ -24,5 +27,8 @@ pub enum GameEvent {
     AnnounceBingo {
         #[serde(flatten)]
         line: BingoLine,
+    },
+    PhaseChange {
+        phase: MatchPhase,
     },
 }

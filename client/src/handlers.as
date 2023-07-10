@@ -172,6 +172,14 @@ namespace NetworkHandlers {
         }
     }
 
+    void PhaseChange(Json::Value@ data) {
+        if (@Match is null) {
+            warn("Handlers [PhaseChange]: Match is null!");
+            return;
+        }
+        Match.SetPhase(MatchPhase(int(data["phase"])));
+    }
+
     void LoadGameData(Json::Value@ data) {
 //        Room.StartTime = Time::Now - uint(data["start_time"]);
         for (uint i = 0; i < data["cells"].Length; i++) {

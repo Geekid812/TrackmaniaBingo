@@ -239,19 +239,9 @@ namespace Network {
             NetworkHandlers::TeamCreated(body);
         } else if (event == "TeamDeleted") {
             NetworkHandlers::TeamDeleted(body);
-        }/* else if (Body["event"] == "MapsLoadResult") {
-            if (Body["error"].GetType() != Json::Type::Null) {
-                Room.MapsLoadingStatus = LoadStatus::LoadFail;
-                Room.LoadFailInfo = Body["error"];
-            } else {
-                Room.MapsLoadingStatus = LoadStatus::LoadSuccess;
-            }
-        } else if (Body["event"] == "CellClaim") {
-
-        } else if (Body["event"] == "Trace") {
-            // Message is already logged to the console
-            // trace("Trace: " + string(Body["value"]));
-        } */ else {
+        } else if (event == "PhaseChange") {
+            NetworkHandlers::PhaseChange(body);
+        } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }
     }
@@ -466,9 +456,5 @@ namespace Network {
         if (response.HasKey("game_data")) {
             NetworkHandlers::LoadGameData(response["game_data"]);
         }
-    }
-
-    void NotifyCountdownEnd() {
-        // TODO
     }
 }

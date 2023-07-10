@@ -17,7 +17,7 @@ namespace UIGameRoom {
         UI::PushFont(Font::Bold);
         UI::SetNextWindowSize(600, 400, UI::Cond::FirstUseEver);
         bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, (GrabFocus ? UI::WindowFlags::NoCollapse : 0));
-        if (!Visible) {
+        if (!Visible && @Match == null) {
             // Room window was closed, should disconnect the player.
             // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
             // So for now, the player will get yeeted out.
@@ -25,7 +25,7 @@ namespace UIGameRoom {
         }
         if (windowOpen) {
             UI::PushFont(Font::Regular);
-            bool gameIsStarting = @Match !is null;
+            bool gameIsStarting = @Match !is null && Match.GetPhase() == MatchPhase::Starting;
             UI::BeginDisabled(gameIsStarting);
             RenderContent();
             UI::EndDisabled();
@@ -252,12 +252,6 @@ namespace UIGameRoom {
     }
 
     void Countdown() {
-        if (Match.startTime < Time::Now) {
-            Visible = false;
-            UIMapList::Visible = true;
-            return;
-        }
-
         vec2 windowSize = UI::GetWindowSize();
         int secondsRemaining = (Match.startTime - Time::Now) / 1000 + 1;
         string countdownText = "Game starting in " + secondsRemaining + "...";

@@ -39,3 +39,13 @@ pub enum Medal {
     Bronze,
     None,
 }
+
+#[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]
+#[repr(u8)]
+pub enum MatchPhase {
+    Starting,
+    NoBingo,
+    Running,
+    Overtime,
+    Ended,
+}

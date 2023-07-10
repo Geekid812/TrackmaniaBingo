@@ -58,8 +58,6 @@ impl Request for CreateRoom {
             directory::send_room_visibility(&room, true);
         }
 
-        room.channel()
-            .subscribe(ctx.profile.player.uid, ctx.writer.clone());
         Box::new(CreateRoomResponse {
             name: room.name().to_owned(),
             join_code: room.join_code().to_owned(),

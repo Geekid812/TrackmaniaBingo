@@ -1,14 +1,21 @@
-use crate::{config::CONFIG, orm::mapcache::record::MapRecord, transport::Channel};
+use std::sync::{Arc, Weak};
+
+use crate::{
+    config::CONFIG, orm::mapcache::record::MapRecord, server::tasks::execute_delayed_task,
+    transport::Channel,
+};
 use chrono::{DateTime, Duration, Utc};
+use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
 
 use super::{
+    directory::{Owned, Shared},
     events::game::GameEvent,
     map::GameMap,
     models::{
         self,
-        livegame::MapClaim,
+        livegame::{MapClaim, MatchPhase},
         player::Player,
         room::RoomTeam,
         team::{BaseTeam, TeamIdentifier},
@@ -19,11 +26,13 @@ use super::{
 pub type MatchConfiguration = models::livegame::MatchConfiguration;
 
 pub struct LiveMatch {
+    ptr: Shared<Self>,
     uid: String,
     config: MatchConfiguration,
     teams: Vec<GameTeam>,
     cells: Vec<GameCell>,
     started: DateTime<Utc>,
+    phase: MatchPhase,
     channel: Channel<GameEvent>,
 }
 
@@ -34,10 +43,11 @@ impl LiveMatch {
         teams: Vec<GameTeam>,
         start_date: DateTime<Utc>,
         channel: Option<Channel<GameEvent>>,
-    ) -> Self {
+    ) -> Owned<Self> {
         let channel = channel.unwrap_or_else(Channel::new);
 
-        Self {
+        let mut _self = Self {
+            ptr: Weak::new(),
             uid: base64::generate(16),
             config,
             teams,
@@ -49,11 +59,54 @@ impl LiveMatch {
                 })
                 .collect(),
             started: start_date,
+            phase: MatchPhase::Starting,
             channel,
-        }
+        };
+        let arc = Arc::new(Mutex::new(_self));
+        arc.lock().ptr = Arc::downgrade(&arc);
+        arc
     }
 
-    pub fn broadcast_start(&mut self) {
+    pub fn setup_match_start(&mut self) {
+        self.setup_phase_timers();
+        self.broadcast_start();
+    }
+
+    fn setup_phase_timers(&mut self) {
+        let mut first_phase = MatchPhase::Running;
+        let countdown_duration = CONFIG.game.start_countdown;
+        let nobingo_duration = Duration::minutes(self.config.no_bingo_mins as i64);
+        let main_phase_duration = Duration::minutes(self.config.time_limit as i64);
+        if !nobingo_duration.is_zero() {
+            first_phase = MatchPhase::NoBingo;
+            execute_delayed_task(
+                self.ptr.clone(),
+                |game| game.nobingo_phase_change(),
+                (countdown_duration + nobingo_duration).to_std().unwrap(),
+            );
+        }
+        if !main_phase_duration.is_zero() {
+            execute_delayed_task(
+                self.ptr.clone(),
+                |game| game.overtime_phase_change(),
+                (countdown_duration + nobingo_duration + main_phase_duration)
+                    .to_std()
+                    .unwrap(),
+            );
+        }
+        execute_delayed_task(
+            self.ptr.clone(),
+            move |game| game.set_phase(first_phase),
+            countdown_duration.to_std().unwrap(),
+        );
+    }
+
+    fn set_phase(&mut self, phase: MatchPhase) {
+        self.phase = phase;
+        self.channel.broadcast(&GameEvent::PhaseChange { phase });
+    }
+
+    fn broadcast_start(&mut self) {
         self.channel.broadcast(&GameEvent::MatchStart {
             start_ms: CONFIG.game.start_countdown,
             maps: self.cells.iter().map(|c| c.map.record.clone()).collect(),
@@ -213,6 +266,14 @@ impl LiveMatch {
         }
 
         bingos
+    }
+
+    fn nobingo_phase_change(&mut self) {
+        self.set_phase(MatchPhase::Running);
+    }
+
+    fn overtime_phase_change(&mut self) {
+        self.set_phase(MatchPhase::Overtime);
     }
 }
 

@@ -1,5 +1,5 @@
 
-namespace InfoBar {
+namespace UIInfoBar {
     // Margin between the board and the "info bar", in pixels
     const int BOARD_MARGIN = 8;
 
@@ -8,12 +8,12 @@ namespace InfoBar {
         
         // Time since the game has started. If we are in countdown, don't show up yet
         int64 stopwatchTime = Time::Milliseconds();
-        if (Time::MillisecondsElapsed() < 0) return;
+        MatchPhase phase = Match.GetPhase();
+        if (phase == MatchPhase::Starting) return;
 
         auto team = Match.GetSelf().team;
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
-        MatchPhase phase = Match.GetPhase();
         UI::PushFont(Font::MonospaceBig);
         string colorPrefix;
         switch (phase) {
@@ -21,7 +21,7 @@ namespace InfoBar {
                 colorPrefix = "\\$fe6";
                 break;
             case MatchPhase::Overtime:
-                colorPrefix = "\\$e44";
+                colorPrefix = "\\$e44+";
                 break;
             case MatchPhase::Ended:
                 colorPrefix = "\\$fb0";
@@ -60,6 +60,7 @@ namespace InfoBar {
         if (Match.config.minutesLimit != 0 || Match.config.noBingoMinutes != 0) stopwatchTime = Time::GetMaxTimeMilliseconds() - stopwatchTime;
         if (phase == MatchPhase::NoBingo) stopwatchTime -= Time::GetTimelimitMilliseconds();
         if (stopwatchTime < 0) stopwatchTime = -stopwatchTime;
+        if (phase == MatchPhase::Overtime) stopwatchTime = Time::Now - Match.overtimeStartTime;
 
         UI::Text(colorPrefix + Time::Format(stopwatchTime, false, true, true));
         UI::PopFont();

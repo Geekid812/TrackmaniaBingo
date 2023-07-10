@@ -43,6 +43,11 @@ impl<K: Hash + Eq + Clone, T> Directory<K, T> {
         arc
     }
 
+    pub fn insert(&self, key: K, item: Owned<T>) {
+        let mut lock = self.inner.lock();
+        lock.insert(key, item);
+    }
+
     pub fn find(&self, key: K) -> Option<Owned<T>> {
         self.inner.lock().get(&key).map(|arc| arc.clone())
     }

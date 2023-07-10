@@ -411,7 +411,7 @@ impl GameRoom {
     pub fn start_match(&mut self) -> Owned<LiveMatch> {
         self.prepare_start_match();
         let start_date = Utc::now() + CONFIG.game.start_countdown;
-        let mut active_match = LiveMatch::new(
+        let match_arc = LiveMatch::new(
             self.matchconfig.clone(),
             self.loaded_maps.clone(),
             self.teams_as_model()
@@ -421,8 +421,10 @@ impl GameRoom {
             start_date,
             Some(Channel::<GameEvent>::from(&self.channel)),
         );
-        active_match.broadcast_start();
-        let match_arc = directory::MATCHES.register(active_match.uid().to_owned(), active_match);
+        let mut lock = match_arc.lock();
+        lock.setup_match_start();
+        directory::MATCHES.insert(lock.uid().to_owned(), match_arc.clone());
+        drop(lock);
 
         self.players_mut().into_iter().for_each(|p| {
             p.game_ctx
