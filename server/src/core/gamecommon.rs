@@ -40,7 +40,6 @@ pub fn setup_room(room_arc: &Owned<GameRoom>) {
     );
 }
 
-#[derive(Debug, Clone)]
 pub struct PlayerData {
     pub uid: i32,
     pub profile: PlayerProfile,
