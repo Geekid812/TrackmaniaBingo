@@ -232,13 +232,22 @@ impl GameRoom {
         self.teams.iter().any(|t| t.name == name)
     }
 
+    fn get_least_populated_team(&self) -> Option<&BaseTeam> {
+        self.teams
+            .iter()
+            .min_by_key(|team| self.members.iter().filter(|m| m.team == team.id).count())
+    }
+
     pub fn add_player(
         &mut self,
         ctx: &ClientContext,
         profile: &PlayerProfile,
         operator: bool,
     ) -> TeamIdentifier {
-        let team = self.teams.iter().next().expect("0 teams in self.teams").id; // TODO: sort into teams when joining
+        let team = self
+            .get_least_populated_team()
+            .expect("0 teams in self.teams")
+            .id;
         self.members.push(PlayerData {
             uid: profile.player.uid,
             profile: profile.clone(),

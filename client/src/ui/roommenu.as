@@ -135,7 +135,7 @@ namespace UIRoomMenu {
     }
 
     void SubscribeCheckbox() {
-        PersistantStorage::SubscribeToRoomUpdates = UI::Checkbox("Send a notification when a new public     game is created", PersistantStorage::SubscribeToRoomUpdates);
+        PersistantStorage::SubscribeToRoomUpdates = UI::Checkbox("Send a notification when a new public game is created", PersistantStorage::SubscribeToRoomUpdates);
     }
 
     void RoomMenu() {

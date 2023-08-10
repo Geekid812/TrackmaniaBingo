@@ -162,8 +162,8 @@ class RunResult {
         this.medal = medal;
     }
 
-    string Display() {
-        return symbolOf(this.medal) + "\\$z " + Time::Format(this.time);
+    string Display(const string&in color = "$z") {
+        return symbolOf(this.medal) + "\\" + color + " " + Time::Format(this.time);
     }
 
     string DisplayTime() {

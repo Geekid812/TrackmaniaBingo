@@ -114,6 +114,8 @@ while True:
         save_result(page, j)
     except Exception as e:
         err(e)
+        # SQLite error: we should still move to the next page as the request was successful
+        page += 1
         continue
 
     print('OK')
