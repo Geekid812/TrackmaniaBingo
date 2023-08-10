@@ -33,6 +33,7 @@ namespace NetworkHandlers {
         LoadMaps(match["maps"]);
         WasConnected = true;
         UIGameRoom::GrabFocus = true;
+        UIMapList::Visible = false;
         Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
     }
 
