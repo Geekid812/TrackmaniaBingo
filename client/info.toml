@@ -1,8 +1,9 @@
 [meta]
-version = "4.0-beta (2023-07-10)"
+version = "4.0-beta (2023-08-10)"
 name = "Bingo (Beta)"
 author = "TheGeekid"
 category = "Game"
+siteid = 410
 
 [script]
 timeout = 10000
