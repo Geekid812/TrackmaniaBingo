@@ -196,25 +196,16 @@ impl LiveMatch {
         ranking.insert(i, claim.clone());
         self.broadcast_submitted_run(id, claim, i + 1);
 
-        let now = Utc::now();
-        if (now - self.started) > Duration::minutes(self.config.no_bingo_mins as i64) {
-            let bingos = self.check_for_bingos();
-            let len = bingos.len();
-            if len > 1 && !bingos.iter().all(|line| line.team == bingos[0].team) {
-                // TODO: overtime
-            } else if len >= 1 {
-                let bingo_line = bingos[0].clone();
-                let winning_team = self
-                    .get_team_mut(bingo_line.clone().team)
-                    .expect("winning team exists");
-                winning_team.winner = true;
+        self.do_bingo_checks();
+    }
 
-                self.channel.broadcast(&GameEvent::AnnounceBingo {
-                    line: bingo_line.clone(),
-                });
-                self.set_game_ended();
-            }
-        }
+    fn announce_bingo_and_game_end(&mut self, line: BingoLine) {
+        let winning_team = self.get_team_mut(line.team).expect("winning team exists");
+        winning_team.winner = true;
+
+        self.channel
+            .broadcast(&GameEvent::AnnounceBingo { line: line.clone() });
+        self.set_game_ended();
     }
 
     fn set_game_ended(&mut self) {
@@ -266,6 +257,21 @@ impl LiveMatch {
             claim,
             position,
         })
+    }
+
+    fn do_bingo_checks(&mut self) -> bool {
+        if self.phase != MatchPhase::NoBingo {
+            let bingos = self.check_for_bingos();
+            let len = bingos.len();
+            if len > 1 && !bingos.iter().all(|line| line.team == bingos[0].team) {
+                self.overtime_phase_change();
+            } else if len >= 1 {
+                let bingo_line = bingos[0].clone();
+                self.announce_bingo_and_game_end(bingo_line);
+                return true;
+            }
+        }
+        false
     }
 
     pub fn check_for_bingos(&self) -> Vec<BingoLine> {
@@ -341,7 +347,9 @@ impl LiveMatch {
     }
 
     fn nobingo_phase_change(&mut self) {
-        self.set_phase(MatchPhase::Running);
+        if !self.do_bingo_checks() && self.phase != MatchPhase::Overtime {
+            self.set_phase(MatchPhase::Running);
+        }
     }
 
     fn overtime_phase_change(&mut self) {
