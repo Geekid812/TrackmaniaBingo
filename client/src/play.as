@@ -99,7 +99,7 @@ namespace Playground {
         if (@myRun !is null && myRun.result.time <= result.time) return;
 
         int medalTime = GetMedalTime(mapNod, Match.config.targetMedal);
-        if (result.time > medalTime) return;
+        if (medalTime != -1 && result.time > medalTime) return;
 
         // Map should be claimed
         mapClaimData.retries = 3;
@@ -109,13 +109,13 @@ namespace Playground {
         startnew(ClaimMedalCoroutine);
     }
 
-    RunResult@ GetCurrentTimeToBeat() {
+    RunResult@ GetCurrentTimeToBeat(bool basetime = false) {
         if (@Match == null) return null;
         CGameCtnChallenge@ map = GetCurrentMap();
         if (@map == null) return null;
         MapCell cell = Match.GetMapWithUid(map.EdChallengeId);
         if (@cell.map is null) return null;
-        if (cell.IsClaimed()) return cell.LeadingRun().result;
+        if (!basetime && cell.IsClaimed()) return cell.LeadingRun().result;
 
         return RunResult(GetMedalTime(map, Match.config.targetMedal), Match.config.targetMedal);
     }
@@ -135,6 +135,13 @@ namespace Playground {
         if (medal == Medal::Silver) return map.TMObjective_SilverTime;
         if (medal == Medal::Bronze) return map.TMObjective_BronzeTime;
         return -1;
+    }
+
+    void DebugClaim(MapCell mapCell) {
+        mapClaimData.retries = 3;
+        mapClaimData.mapUid = mapCell.map.uid;
+        mapClaimData.mapResult = RunResult(3600000, Medal::None);
+        startnew(ClaimMedalCoroutine);
     }
 
     void ClaimMedalCoroutine() {

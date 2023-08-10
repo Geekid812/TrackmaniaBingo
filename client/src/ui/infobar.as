@@ -2,6 +2,75 @@
 namespace UIInfoBar {
     // Margin between the board and the "info bar", in pixels
     const int BOARD_MARGIN = 8;
+    // Alignment offset of map leaderboard rankings
+    const float MAP_LEADERBOARD_SIDE_MARGIN = 35.;
+
+    float subwindowOffset = 0.;
+
+    // Small controls window below the infobar for exiting
+    void InfobarControls() {
+        vec4 geometry = SubwindowBegin("Bingo Infobar Controls");
+        UIColor::LightGray();
+        if (@Room !is null) {
+            if (UI::Button("Back to room")) {
+                @Match = null;
+                UIGameRoom::Visible = true;
+            }
+            UI::SameLine();
+        }
+        UIColor::Reset();
+
+        if (UI::Button("Exit")) {
+            Network::LeaveRoom();
+            UIMainWindow::Visible = true;
+        }
+        SubwindowEnd(geometry);
+    }
+
+    void MapLeaderboard(MapCell map) {
+        vec4 geometry = SubwindowBegin("Bingo Map Leaderboard");
+        if (map.attemptRanking.Length == 0 && Match.config.targetMedal == Medal::None) {
+            UI::Text("\\$888Complete this map to claim it!");
+            SubwindowEnd(geometry);
+            return;
+        }
+
+        for (uint i = 0; i < map.attemptRanking.Length; i++) {
+            MapClaim claim = map.attemptRanking[i];
+            UI::PushFont(i == 0 ? Font::MonospaceBig : Font::Monospace);
+            UI::Text(tostring(i + 1) + ".");
+            UI::PopFont();
+            UI::SameLine();
+            if (i == 0) {
+                UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 6));
+            }
+            UI::PushFont(i == 0 ? Font::Bold : Font::Regular);
+            LayoutTools::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
+            UI::Text(claim.result.Display() + "\t\\$" + UIColor::GetHex(claim.player.team.color) + claim.player.name);
+            UI::PopFont();
+        }
+        if (Match.config.targetMedal != Medal::None) {
+            LayoutTools::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
+            UI::Text(Playground::GetCurrentTimeToBeat(true).Display("$888") + "\tTarget Medal");
+        }
+        SubwindowEnd(geometry);
+    }
+
+    vec4 SubwindowBegin(const string&in name) {
+        vec2 parentPos = UI::GetWindowPos();
+        vec2 parentSize = UI::GetWindowSize();
+        UI::Begin(name, UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoMove);
+        return vec4(parentPos, parentSize);
+    }
+
+    void SubwindowEnd(vec4 geometry) {
+        vec2 parentPos = geometry.xy + vec2(0, subwindowOffset);
+        vec2 parentSize = geometry.zw;
+        vec2 thisSize = UI::GetWindowSize();
+        UI::SetWindowPos(vec2(parentPos.x + (parentSize.x - thisSize.x) / 2., parentPos.y + parentSize.y + BOARD_MARGIN / 2.));
+        UI::End();
+        subwindowOffset += thisSize.y + BOARD_MARGIN / 2.;
+    }
 
     void Render() {
         if (@Match == null) return;
@@ -78,50 +147,21 @@ namespace UIInfoBar {
             UIMapList::Visible = !UIMapList::Visible;
         }
         UIColor::Reset();
+        RunResult@ runToBeat = Playground::GetCurrentTimeToBeat();
+        if (@runToBeat != null) {
+            MapCell map = Match.GetCurrentMap();
+            MapLeaderboard(map);
+        }
 
         UIColor::Gray();
         if (Match.GetPhase() == MatchPhase::Ended) {
-            // Small controls window below the infobar for exiting
-            vec2 parentPos = UI::GetWindowPos();
-            vec2 parentSize = UI::GetWindowSize();
-            UI::Begin("Bingo Infobar Controls", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoMove);
-            UIColor::LightGray();
-            if (@Room !is null) {
-                if (UI::Button("Back to room")) {
-                    @Match = null;
-                    UIGameRoom::Visible = true;
-                }
-                UI::SameLine();
-            }
-            UIColor::Reset();
-
-            if (UI::Button("Exit")) {
-                Network::LeaveRoom();
-                UIMainWindow::Visible = true;
-            }
-
-            vec2 thisSize = UI::GetWindowSize();
-            UI::SetWindowPos(vec2(parentPos.x + (parentSize.x - thisSize.x) / 2., parentPos.y + parentSize.y + BOARD_MARGIN / 2.));
-            UI::End();
+            InfobarControls();
         }
         UIColor::Reset();
         UI::PopStyleVar();
-
-        if (@Match != null && !Match.endState.HasEnded()) {
-            RunResult@ runToBeat = Playground::GetCurrentTimeToBeat();
-            if (@runToBeat != null) {
-                MapCell map = Match.GetCurrentMap();
-                if (runToBeat.time != -1 && (!map.IsClaimed() || map.LeadingRun().player.team != team)) {
-                    UI::Text("Time to beat: " + runToBeat.Display());
-                } else if (runToBeat.time != -1) {
-                    UI::Text("Your team's time: " + runToBeat.Display());
-                } else {
-                    UI::Text("Complete this map to claim it!");
-                }
-            }
-        }
         UI::PopFont();
 
+        subwindowOffset = 0.;
         vec2 windowSize = UI::GetWindowSize();
         UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - windowSize.x) / 2, int(Board::Position.y) + int(Board::BoardSize) + BOARD_MARGIN), UI::Cond::Always);
         UI::End();
