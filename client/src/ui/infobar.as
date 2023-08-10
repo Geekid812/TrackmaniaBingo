@@ -97,6 +97,7 @@ namespace UIInfoBar {
 
             if (UI::Button("Exit")) {
                 Network::LeaveRoom();
+                UIMainWindow::Visible = true;
             }
 
             vec2 thisSize = UI::GetWindowSize();
