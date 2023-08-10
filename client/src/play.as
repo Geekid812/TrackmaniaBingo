@@ -98,6 +98,9 @@ namespace Playground {
         auto myRun = mapCell.GetLocalPlayerRun();
         if (@myRun !is null && myRun.result.time <= result.time) return;
 
+        int medalTime = GetMedalTime(mapNod, Match.config.targetMedal);
+        if (result.time > medalTime) return;
+
         // Map should be claimed
         mapClaimData.retries = 3;
         mapClaimData.mapUid = mapCell.map.uid;
