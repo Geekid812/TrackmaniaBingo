@@ -18,7 +18,7 @@ pub struct Config {
     pub database_url: String,
     pub mapcache_url: String,
     pub tcp_port: u16,
-    pub min_client: String,
+    pub min_client: Option<String>,
     pub tmx_useragent: String,
     pub secrets: Secrets,
     pub mapqueue: MapsConfig,
@@ -79,7 +79,7 @@ impl Default for Config {
             database_url: "sqlite://db/main.db".to_owned(),
             mapcache_url: "sqlite://mapcache.db".to_owned(),
             tcp_port: 3080,
-            min_client: "4.0".to_owned(),
+            min_client: None,
             tmx_useragent: "TrackmaniaBingo (development)".to_string(),
             secrets: Secrets {
                 openplanet_auth: None,

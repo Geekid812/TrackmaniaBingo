@@ -40,8 +40,11 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile,
         Version::try_from(handshake.version).map_err(|_| HandshakeCode::InvalidVersion)?;
 
     // Client version check
-    if client_version
-        < Version::try_from(CONFIG.min_client.clone()).expect("invalid client version in config")
+    let min_version = &CONFIG.min_client;
+    if min_version.is_some()
+        && client_version
+            < Version::try_from(min_version.clone().unwrap())
+                .expect("invalid client version in config")
     {
         return Err(HandshakeCode::IncompatibleVersion);
     }
