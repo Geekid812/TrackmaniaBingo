@@ -1,7 +1,18 @@
+#![allow(non_camel_case_types)]
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use super::player::PlayerRef;
+use super::map::GameMap;
+
+use super::{player::PlayerRef, team::BaseTeam};
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MatchState {
+    pub config: MatchConfiguration,
+    pub phase: MatchPhase,
+    pub teams: Vec<BaseTeam>,
+    pub cells: Vec<GameCell>,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MatchConfiguration {
@@ -15,7 +26,19 @@ pub struct MatchConfiguration {
     pub mappack_id: Option<u32>,
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GameCell {
+    pub map: GameMap,
+    pub claims: Vec<MapClaim>,
+}
+
+impl GameCell {
+    pub fn leading_claim(&self) -> Option<&MapClaim> {
+        self.claims.iter().next()
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MapClaim {
     pub player: PlayerRef,
     pub time: u64,

@@ -20,10 +20,10 @@ use tracing::error;
 use super::{
     directory::{Owned, Shared},
     events::game::GameEvent,
-    map::GameMap,
     models::{
         self,
-        livegame::{MapClaim, MatchPhase},
+        livegame::{GameCell, MapClaim, MatchPhase},
+        map::GameMap,
         player::Player,
         room::RoomTeam,
         team::{BaseTeam, TeamIdentifier},
@@ -39,29 +39,30 @@ pub struct LiveMatch {
     uid: String,
     room: Shared<GameRoom>,
     config: MatchConfiguration,
+    options: MatchOptions,
     teams: Vec<GameTeam>,
     cells: Vec<GameCell>,
-    started: DateTime<Utc>,
+    started: Option<DateTime<Utc>>,
     phase: MatchPhase,
     channel: Channel<GameEvent>,
 }
 
+struct MatchOptions {
+    start_countdown: Duration,
+}
+
 impl LiveMatch {
     pub fn new(
-        room: Shared<GameRoom>,
         config: MatchConfiguration,
         maps: Vec<MapRecord>,
         teams: Vec<GameTeam>,
-        start_date: DateTime<Utc>,
-        channel: Option<Channel<GameEvent>>,
     ) -> Owned<Self> {
-        let channel = channel.unwrap_or_else(Channel::new);
-
         let mut _self = Self {
             ptr: Weak::new(),
             uid: base64::generate(16),
-            room,
+            room: Weak::new(),
             config,
+            options: MatchOptions::default(),
             teams,
             cells: maps
                 .into_iter()
@@ -70,23 +71,39 @@ impl LiveMatch {
                     claims: Vec::new(),
                 })
                 .collect(),
-            started: start_date,
+            started: None,
             phase: MatchPhase::Starting,
-            channel,
+            channel: Channel::new(),
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
         arc
     }
 
-    pub fn setup_match_start(&mut self) {
+    pub fn set_parent_room(&mut self, room: Shared<GameRoom>) {
+        self.room = room;
+    }
+
+    pub fn set_channel(&mut self, channel: Channel<GameEvent>) {
+        self.channel = channel;
+    }
+
+    pub fn set_start_countdown(&mut self, countdown: Duration) {
+        if self.started.is_some() {
+            panic!("attempted to change match options after starting");
+        }
+        self.options.start_countdown = countdown;
+    }
+
+    pub fn setup_match_start(&mut self, start_date: DateTime<Utc>) {
+        self.started = Some(start_date);
         self.setup_phase_timers();
         self.broadcast_start();
     }
 
     fn setup_phase_timers(&mut self) {
         let mut first_phase = MatchPhase::Running;
-        let countdown_duration = CONFIG.game.start_countdown;
+        let countdown_duration = self.options.start_countdown;
         let nobingo_duration = Duration::minutes(self.config.no_bingo_mins as i64);
         let main_phase_duration = Duration::minutes(self.config.time_limit as i64);
         if !nobingo_duration.is_zero() {
@@ -121,12 +138,12 @@ impl LiveMatch {
     fn broadcast_start(&mut self) {
         let maps_in_grid = self.config.grid_size * self.config.grid_size;
         self.channel.broadcast(&GameEvent::MatchStart {
-            start_ms: CONFIG.game.start_countdown,
+            start_ms: self.options.start_countdown,
             maps: self
                 .cells
                 .iter()
                 .take(maps_in_grid)
-                .map(|c| c.map.record.clone())
+                .map(|c| c.map.track.clone())
                 .collect(),
         });
     }
@@ -166,7 +183,7 @@ impl LiveMatch {
             .next()
     }
 
-    pub fn start_date(&self) -> &DateTime<Utc> {
+    pub fn start_date(&self) -> &Option<DateTime<Utc>> {
         &self.started
     }
 
@@ -174,7 +191,7 @@ impl LiveMatch {
         self.cells
             .iter()
             .enumerate()
-            .filter(|(_, c)| c.map.record.uid == uid)
+            .filter(|(_, c)| c.map.track.uid == uid)
             .map(|(i, _)| i)
             .next()
     }
@@ -218,7 +235,7 @@ impl LiveMatch {
     fn save_match(&mut self) {
         let match_model = Match {
             uid: self.uid.clone(),
-            started_at: self.started.naive_utc(),
+            started_at: self.started.map(|t| t.naive_utc()).unwrap_or_default(),
             ended_at: Utc::now().naive_utc(),
         };
         let mut player_results = Vec::new();
@@ -357,6 +374,14 @@ impl LiveMatch {
     }
 }
 
+impl Default for MatchOptions {
+    fn default() -> Self {
+        Self {
+            start_countdown: CONFIG.game.start_countdown,
+        }
+    }
+}
+
 pub struct GameTeam {
     base: BaseTeam,
     members: Vec<Player>,
@@ -370,17 +395,6 @@ impl From<RoomTeam> for GameTeam {
             members: value.members,
             winner: false,
         }
-    }
-}
-
-pub struct GameCell {
-    pub map: GameMap,
-    pub claims: Vec<MapClaim>,
-}
-
-impl GameCell {
-    pub fn leading_claim(&self) -> Option<&MapClaim> {
-        self.claims.iter().next()
     }
 }
 

@@ -4,6 +4,8 @@ use serde::Deserialize;
 use serde_with::DurationSeconds;
 use std::collections::HashMap;
 
+use crate::core::models::livegame::MatchConfiguration;
+
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     let toml_content = std::fs::read_to_string("config.toml");
     toml_content
@@ -51,6 +53,7 @@ pub struct GameConfig {
     pub mxrandom_max_author_time: Duration,
     #[serde_as(as = "DurationSeconds<i64>")]
     pub start_countdown: Duration,
+    pub daily_config: Option<MatchConfiguration>,
 }
 
 #[derive(Deserialize)]
@@ -106,6 +109,7 @@ impl Default for Config {
                 ),
                 mxrandom_max_author_time: Duration::minutes(5),
                 start_countdown: Duration::seconds(5),
+                daily_config: None,
             },
             routes: RestConfig {
                 openplanet: OpenplanetRoutes {

@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::anyhow;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use parking_lot::Mutex;
 use rand::{distributions::Uniform, seq::SliceRandom, Rng};
 use serde::{Serialize, Serializer};
@@ -25,7 +25,6 @@ use super::{
     util::color::RgbColor,
 };
 use crate::{
-    config::CONFIG,
     orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
     server::{
         context::{ClientContext, GameContext},
@@ -370,7 +369,7 @@ impl GameRoom {
         {
             // map selection changed, reload maps
             self.loaded_maps = Vec::new();
-            mapload::load_maps(self.ptr.clone(), config.clone(), self.get_load_marker());
+            mapload::load_maps(self.ptr.clone(), &config, self.get_load_marker());
         }
 
         self.matchconfig = config;
@@ -453,20 +452,19 @@ impl GameRoom {
 
     fn start_match(&mut self) -> Owned<LiveMatch> {
         self.prepare_start_match();
-        let start_date = Utc::now() + CONFIG.game.start_countdown;
+        let start_date = Utc::now();
         let match_arc = LiveMatch::new(
-            self.ptr.clone(),
             self.matchconfig.clone(),
             self.loaded_maps.clone(),
             self.teams_as_model()
                 .into_iter()
                 .map(GameTeam::from)
                 .collect(),
-            start_date,
-            Some(Channel::<GameEvent>::from(&self.channel)),
         );
         let mut lock = match_arc.lock();
-        lock.setup_match_start();
+        lock.set_parent_room(self.ptr.clone());
+        lock.set_channel(Channel::<GameEvent>::from(&self.channel));
+        lock.setup_match_start(start_date);
         directory::MATCHES.insert(lock.uid().to_owned(), match_arc.clone());
         drop(lock);
 
@@ -480,14 +478,11 @@ impl GameRoom {
         match_arc
     }
 
-    pub fn start_date(&self) -> DateTime<Utc> {
-        self.active_match
-            .as_ref()
-            .and_then(|weak| weak.upgrade().map(|game| game.lock().start_date().clone()))
-            .unwrap_or(DateTime::from_utc(
-                NaiveDateTime::from_timestamp_millis(0).unwrap(),
-                Utc,
-            ))
+    pub fn start_date(&self) -> Option<DateTime<Utc>> {
+        self.active_match.as_ref().and_then(|weak| {
+            weak.upgrade()
+                .and_then(|game| game.lock().start_date().clone())
+        })
     }
 
     pub fn reset_match(&mut self) {
@@ -500,7 +495,7 @@ impl GameRoom {
 
     fn send_in_game_status_update(&self) {
         if self.config.public {
-            let start_time = self.start_date();
+            let start_time = self.start_date().unwrap_or_default();
             PUB_ROOMS_CHANNEL
                 .lock()
                 .broadcast(&RoomlistEvent::RoomlistInGameStatusUpdate {

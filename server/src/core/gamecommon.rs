@@ -35,7 +35,7 @@ pub fn setup_room(room_arc: &Owned<GameRoom>) {
 
     server::mapload::load_maps(
         Arc::downgrade(&room_arc),
-        room.matchconfig().clone(),
+        room.matchconfig(),
         room.get_load_marker(),
     );
 }
