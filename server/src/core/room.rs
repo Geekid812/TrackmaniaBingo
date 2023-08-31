@@ -462,6 +462,11 @@ impl GameRoom {
         }
     }
 
+    pub fn broadcast_sync(&mut self) {
+        self.channel
+            .broadcast(&RoomEvent::RoomSync(self.get_state()));
+    }
+
     fn prepare_start_match(&mut self) {
         if self.config.randomize {
             self.sort_teams();
@@ -473,6 +478,7 @@ impl GameRoom {
 
         if self.matchconfig.free_for_all {
             self.create_ffa_teams();
+            self.broadcast_sync();
         }
 
         self.loaded_maps.shuffle(&mut rand::thread_rng());
