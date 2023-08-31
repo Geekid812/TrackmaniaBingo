@@ -115,7 +115,7 @@ namespace UIGameRoom {
 
         UI::BeginTable("Bingo_TeamTable", Room.config.randomizeTeams ? 4 : Room.teams.Length + (Room.localPlayerIsHost && Room.CanCreateMoreTeams() ? 1 : 0));
 
-        if (Room.config.randomizeTeams && @Match == null) {
+        if ((Room.config.randomizeTeams && @Match == null) || Room.matchConfig.freeForAll) {
             for (uint i = 0; i < Room.players.Length; i++) {
                 UI::TableNextColumn();
                 Player player = Room.players[i];

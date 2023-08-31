@@ -28,6 +28,7 @@ pub struct MatchConfiguration {
     pub time_limit: u32,
     pub no_bingo_mins: u32,
     pub overtime: bool,
+    pub free_for_all: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mappack_id: Option<u32>,
 }

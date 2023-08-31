@@ -175,6 +175,12 @@ namespace UIRoomSettings {
         MatchConfig.overtime = UI::Checkbox("##bingoovertime", MatchConfig.overtime);
     }
 
+    void FFAToggle() {
+        UITools::AlignedLabel(Icons::Users + " Enable Free For All");
+        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X);
+        MatchConfig.freeForAll = UI::Checkbox("##bingoffa", MatchConfig.freeForAll);
+    }
+
     void TotalTimeIndicator() {
         UITools::AlignedLabel(Icons::PlayCircle + "  Total Game Time: " + TimeFormat(MatchConfig.minutesLimit + MatchConfig.noBingoMinutes));
         UI::NewLine();
@@ -186,7 +192,14 @@ namespace UIRoomSettings {
         UI::SameLine();
         AccessToggle();
         PlayerLimitToggle();
+
+        UI::BeginDisabled(MatchConfig.freeForAll);
         RandomizeToggle();
+        UI::EndDisabled();
+        if (MatchConfig.freeForAll) {
+            RoomConfig.randomizeTeams = false;
+        }
+
         if (RoomConfig.hasPlayerLimit) {
             PlayerLimitInput();
         }
@@ -203,8 +216,9 @@ namespace UIRoomSettings {
         NoBingoTimeControl();
         if (MatchConfig.minutesLimit != 0) {
             OvertimeToggle();
-            if (MatchConfig.noBingoMinutes != 0) TotalTimeIndicator();
         }
+        // FFAToggle();
+        if (MatchConfig.noBingoMinutes != 0 && MatchConfig.minutesLimit != 0) TotalTimeIndicator();
     }
 
     void SaveConfiguredSettings() {
