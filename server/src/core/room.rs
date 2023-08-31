@@ -5,6 +5,10 @@ use std::{
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
+use palette::{
+    convert::{FromColorUnclamped, TryFromColor},
+    FromColor, Hsv, IntoColor, Srgb,
+};
 use parking_lot::Mutex;
 use rand::{distributions::Uniform, seq::SliceRandom, Rng};
 use serde::{Serialize, Serializer};
@@ -19,10 +23,10 @@ use super::{
     models::{
         self,
         player::{Player, PlayerRef},
-        room::{RoomConfiguration, RoomTeam},
+        room::{RoomConfiguration, RoomState, RoomTeam},
         team::{BaseTeam, TeamIdentifier},
     },
-    util::color::RgbColor,
+    util::Color,
 };
 use crate::{
     orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
@@ -164,7 +168,16 @@ impl GameRoom {
             .map(|p| p.profile.player.username.clone())
     }
 
-    pub fn create_team(&mut self, teams: &Vec<(String, RgbColor)>) -> Option<&BaseTeam> {
+    pub fn get_state(&self) -> RoomState {
+        RoomState {
+            config: self.config.clone(),
+            matchconfig: self.matchconfig.clone(),
+            join_code: self.join_code.clone(),
+            teams: self.teams_as_model(),
+        }
+    }
+
+    pub fn create_team_from_preset(&mut self, teams: &Vec<(String, Color)>) -> Option<&BaseTeam> {
         let team_count = self.teams.len();
         if team_count >= teams.len() {
             warn!("attempted to create more than {} teams", teams.len());
@@ -178,12 +191,28 @@ impl GameRoom {
         }
 
         let color = teams[idx].1;
-        let team = BaseTeam::new(self.teams_id, teams[idx].0.clone(), color);
+        Some(self.inner_create_team(teams[idx].0.clone(), color))
+    }
+
+    pub fn create_random_team(&mut self) -> &BaseTeam {
+        let mut rng = rand::thread_rng();
+        let (h, s, v) = (
+            rng.gen_range(0..=255),
+            rng.gen_range(128..=255),
+            rng.gen_range(128..=255),
+        );
+        let color: Hsv = Hsv::new_srgb(h, s, v).into_format::<f32>();
+        let rgb = Srgb::from_color(color).into_format::<u8>();
+        self.inner_create_team(String::new(), rgb)
+    }
+
+    fn inner_create_team(&mut self, name: String, color: Color) -> &BaseTeam {
+        let team = BaseTeam::new(self.teams_id, name, color);
         self.teams_id += 1;
         self.teams.push(team.clone());
         self.channel
             .broadcast(&RoomEvent::TeamCreated { base: team });
-        self.teams.last()
+        self.teams.last().unwrap()
     }
 
     pub fn remove_team(&mut self, id: TeamIdentifier) {
@@ -345,6 +374,14 @@ impl GameRoom {
         }
     }
 
+    fn create_ffa_teams(&mut self) {
+        self.teams = Vec::new();
+        for i in 0..self.members.len() {
+            let team = self.create_random_team();
+            self.members[i].team = team.id;
+        }
+    }
+
     pub fn set_config(&mut self, config: RoomConfiguration) {
         self.trigger_new_config(config);
         self.config_update();
@@ -432,6 +469,10 @@ impl GameRoom {
                 .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
                     updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
                 }));
+        }
+
+        if self.matchconfig.free_for_all {
+            self.create_ffa_teams();
         }
 
         self.loaded_maps.shuffle(&mut rand::thread_rng());

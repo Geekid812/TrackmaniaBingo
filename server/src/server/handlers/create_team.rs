@@ -16,7 +16,7 @@ impl Request for CreateTeam {
                     error: "You are not a room operator.".to_owned(),
                 });
             }
-            lock.create_team(&gamecommon::TEAMS);
+            lock.create_team_from_preset(&gamecommon::TEAMS);
         } else {
             return Box::new(generic::Error {
                 error: "Player is not in a room.".to_owned(),

@@ -4,7 +4,7 @@ use crate::{
     core::{
         livegame::MatchConfiguration,
         models::{
-            room::RoomConfiguration,
+            room::{RoomConfiguration, RoomState},
             team::{BaseTeam, TeamIdentifier},
         },
         room::PlayerUpdates,
@@ -37,4 +37,5 @@ pub enum RoomEvent {
     TeamDeleted {
         id: TeamIdentifier,
     },
+    RoomSync(RoomState),
 }

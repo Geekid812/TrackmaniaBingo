@@ -1,6 +1,7 @@
+use palette::serde::as_array;
 use serde::{Deserialize, Serialize};
 
-use crate::core::util::color::RgbColor;
+use crate::core::util::Color;
 
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Debug, Hash, Deserialize)]
 pub struct TeamIdentifier(usize);
@@ -9,11 +10,12 @@ pub struct TeamIdentifier(usize);
 pub struct BaseTeam {
     pub id: TeamIdentifier,
     pub name: String,
-    pub color: RgbColor,
+    #[serde(with = "as_array")]
+    pub color: Color,
 }
 
 impl BaseTeam {
-    pub fn new(id: usize, name: String, color: RgbColor) -> Self {
+    pub fn new(id: usize, name: String, color: Color) -> Self {
         Self {
             id: TeamIdentifier(id),
             name,
