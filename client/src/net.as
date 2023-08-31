@@ -241,6 +241,10 @@ namespace Network {
             NetworkHandlers::TeamDeleted(body);
         } else if (event == "PhaseChange") {
             NetworkHandlers::PhaseChange(body);
+        } else if (event == "RoomSync") {
+            NetworkHandlers::RoomSync(body);
+        } else if (event == "MatchSync") {
+            NetworkHandlers::MatchSync(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }

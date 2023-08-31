@@ -221,4 +221,15 @@ namespace NetworkHandlers {
         LiveMatch match = LiveMatch::Deserialize(data["state"]);
         @UIDaily::DailyMatch = match;
     }
+
+    void RoomSync(Json::Value@ data) {
+        Room.config = RoomConfiguration::Deserialize(data["config"]);
+        Room.matchConfig = MatchConfiguration::Deserialize(data["matchconfig"]);
+        Room.joinCode = data["join_code"];
+        LoadRoomTeams(data["teams"]);
+    }
+
+    void MatchSync(Json::Value@ data) {
+        warn("TODO: MatchSync");
+    }
 }
