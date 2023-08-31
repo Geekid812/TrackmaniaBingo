@@ -8,23 +8,30 @@ namespace UIMapList {
 
         UI::Begin(WINDOW_NAME, Visible, UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoCollapse);
         UI::PushFont(Font::Condensed);
-        auto drawList = UI::GetWindowDrawList();
 
         UI::SetNextItemWidth(220);
         float uiScale = PersistantStorage::MapListUiScale;
         uiScale = UI::SliderFloat(uiScale <= 0.5 ? "###gridsize" : "Grid UI Size###gridsize", uiScale, 0.2, 2.0, "%.1f");
         PersistantStorage::MapListUiScale = uiScale;
 
+        MapGrid(Match.gameMaps, Match.config.gridSize, uiScale);
+        
+        UI::PopFont();
+        UI::End();
+    }
+
+    void MapGrid(array<MapCell>@&in maps, int gridSize, float uiScale = 1.0, bool interactable = true) {
+        auto drawList = UI::GetWindowDrawList();
         UI::PushStyleVar(UI::StyleVar::CellPadding, vec2(8 * uiScale, 8 * uiScale));
         UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2(2, 2));
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(4, 4));
         UI::PushStyleColor(UI::Col::TableBorderLight, vec4(.6, .6, .6, 1.));
         UI::PushStyleColor(UI::Col::TableBorderStrong, vec4(1., 1., 1., 1.));
-        UI::BeginTable("Bingo_MapList", Match.config.gridSize, UI::TableFlags::SizingFixedFit | UI::TableFlags::Borders);
+        UI::BeginTable("Bingo_MapList", gridSize, UI::TableFlags::SizingFixedFit | UI::TableFlags::Borders);
 
         if (uiScale <= 0.5) UI::PushFont(Font::Tiny);
-        for (uint i = 0; i < Match.gameMaps.Length; i++) {
-            auto cell = Match.gameMaps[i];
+        for (uint i = 0; i < maps.Length; i++) {
+            auto cell = maps[i];
             UI::TableNextColumn();
 
             auto startPos = UI::GetCursorPos() + UI::GetWindowPos() - vec2(8 * uiScale, 8 * uiScale) - vec2(0, UI::GetScrollY());
@@ -71,7 +78,7 @@ namespace UIMapList {
                 UI::PopFont();
                 UI::EndTooltip();
             }
-            if (UI::IsItemClicked()) {
+            if (interactable && UI::IsItemClicked()) {
                 Visible = false;
                 Playground::LoadMap(cell.map.tmxid);
             }
@@ -87,8 +94,6 @@ namespace UIMapList {
         UI::EndTable();
         UI::PopStyleColor(2);
         UI::PopStyleVar(3);
-        UI::PopFont();
-        UI::End();
     }
 
     vec3 StyleToColor(const string&in style) {

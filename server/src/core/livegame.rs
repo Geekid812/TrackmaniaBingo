@@ -22,7 +22,7 @@ use super::{
     events::game::GameEvent,
     models::{
         self,
-        livegame::{GameCell, MapClaim, MatchPhase},
+        livegame::{GameCell, MapClaim, MatchPhase, MatchState},
         map::GameMap,
         player::Player,
         room::RoomTeam,
@@ -156,6 +156,10 @@ impl LiveMatch {
         &self.config
     }
 
+    pub fn channel(&mut self) -> &mut Channel<GameEvent> {
+        &mut self.channel
+    }
+
     pub fn get_player_team(&self, player_id: i32) -> Option<TeamIdentifier> {
         for team in &self.teams {
             if team
@@ -194,6 +198,16 @@ impl LiveMatch {
             .filter(|(_, c)| c.map.track.uid == uid)
             .map(|(i, _)| i)
             .next()
+    }
+
+    pub fn get_state(&self) -> MatchState {
+        MatchState {
+            config: self.config.clone(),
+            phase: self.phase,
+            teams: self.teams.iter().map(|t| t.base.clone()).collect(), // TODO: broadcast members too
+            cells: self.cells.clone(),
+            started: self.started.unwrap_or_default(),
+        }
     }
 
     pub fn add_submitted_run(&mut self, id: usize, claim: MapClaim) {

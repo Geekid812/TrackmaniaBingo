@@ -1,10 +1,15 @@
+enum LoadStatus {
+    NotLoaded,
+    Loading,
+    Ok,
+    Error
+}
 
 namespace UIMainWindow {
     bool Visible;
 
     bool ClipboardHovered;
     bool ClipboardCopied;
-    WindowTab ActiveTab;
 
     enum WindowTab {
         Home,
@@ -57,7 +62,6 @@ namespace UIMainWindow {
         UIColor::Crimson();
         UI::BeginTabBar("Bingo_TabBar");
         if (UI::BeginTabItem(Icons::Home + " Home")) {
-            ActiveTab = WindowTab::Home;
             UI::BeginChild("bingohome");
             UIHome::Render();
             UI::EndChild();
@@ -65,7 +69,6 @@ namespace UIMainWindow {
         }
 
         if (UI::BeginTabItem(Icons::PlayCircle + " Play")) {
-            ActiveTab = WindowTab::Play;
             UI::BeginChild("bingojoin");
             UIRoomMenu::RoomMenu();
             UI::EndChild();
@@ -82,12 +85,26 @@ namespace UIMainWindow {
         }
 
         if (UI::BeginTabItem(Icons::PlusSquare + " Create")) {
-            ActiveTab = WindowTab::Create;
             UI::BeginChild("bingocreate");
             CreateTab();
             UI::EndChild();
             UI::EndTabItem();
         }
+
+        if (UI::BeginTabItem(Icons::Star + " Daily")) {
+            UI::BeginChild("bingodaily");
+            UIDaily::DailyHome();
+            UI::EndChild();
+            UI::EndTabItem();
+        } else {
+            if (UIDaily::DailyLoad != LoadStatus::NotLoaded) {
+                if (@UIDaily::DailyMatch !is null) startnew(Network::UnsubscribeDailyChallenge);
+                UIDaily::DailyLoad = LoadStatus::NotLoaded;
+                @UIDaily::DailyMatch = null;
+            }
+        }
+
+
         UI::EndTabBar();
         UIColor::Reset();
     }

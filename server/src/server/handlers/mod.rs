@@ -5,6 +5,7 @@ use crate::server::context::ClientContext;
 mod change_team;
 mod create_room;
 mod create_team;
+mod daily_challenge;
 mod delete_team;
 mod edit_config;
 mod generic;

@@ -53,8 +53,8 @@ async fn main() {
         warn!("Admin key is not set, access to the admin dashboard is unrestricted. This is not recommended!");
     }
 
-    // Setup map fetch loop
-    //tokio::spawn(mapqueue::run_loop());
+    // Setup daily challenge
+    tokio::spawn(server::daily::run_loop());
 
     // Socket creation
     let socket = TcpSocket::new_v4().expect("ipv4 socket to be created");

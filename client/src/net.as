@@ -438,6 +438,15 @@ namespace Network {
         return Request !is null;
     }
 
+    void LoadDailyChallenge() {
+        auto response = Post("SubscribeDailyChallenge", Json::Object(), false);
+        NetworkHandlers::LoadDailyChallenge(response);   
+    }
+
+    void UnsubscribeDailyChallenge() {
+        Post("UnsubscribeDailyChallenge", Json::Object(), false);
+    }
+
     void Sync() {
         trace("Network: Syncing with server...");
         auto response = Network::Post("Sync", Json::Object(), false);

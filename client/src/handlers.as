@@ -206,4 +206,19 @@ namespace NetworkHandlers {
 //            @Room.MapList[i].ClaimedTeam = Room.GetTeamWithId(cell["claim"]["player"]["team"]);
         }
     }
+
+    void LoadDailyChallenge(Json::Value@ data) {
+        if (data is null) {
+            UIDaily::DailyLoad = LoadStatus::Error;
+            return;
+        }
+
+        UIDaily::DailyLoad = LoadStatus::Ok;
+        if (data["res"] == "DailyNotLoaded") {
+            @UIDaily::DailyMatch = null;
+        }
+
+        LiveMatch match = LiveMatch::Deserialize(data["state"]);
+        @UIDaily::DailyMatch = match;
+    }
 }

@@ -46,7 +46,7 @@ namespace GameMap {
         map.authorTime = value["author_time"];
         map.uploadedTimestamp = value["uploaded_at"];
         map.updatedTimestamp = value["updated_at"];
-        map.tags = value["tags"];
+        if (value["tags"].GetType() != Json::Type::Null) map.tags = value["tags"];
         if (value["style"].GetType() != Json::Type::Null) map.style = value["style"];
         return map;
     }

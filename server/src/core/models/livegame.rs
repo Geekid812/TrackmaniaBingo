@@ -1,17 +1,23 @@
 #![allow(non_camel_case_types)]
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use serde_with::serde_as;
+use serde_with::TimestampSeconds;
 
 use super::map::GameMap;
 
 use super::{player::PlayerRef, team::BaseTeam};
 
+#[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MatchState {
     pub config: MatchConfiguration,
     pub phase: MatchPhase,
     pub teams: Vec<BaseTeam>,
     pub cells: Vec<GameCell>,
+    #[serde_as(as = "TimestampSeconds")]
+    pub started: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
