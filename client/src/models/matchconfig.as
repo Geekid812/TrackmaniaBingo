@@ -7,6 +7,7 @@ class MatchConfiguration {
     uint minutesLimit = 0;
     uint noBingoMinutes = 0;
     bool overtime = false;
+    bool freeForAll = false;
 }
 
 enum MapMode {
@@ -34,6 +35,7 @@ namespace MatchConfiguration {
         value["time_limit"] = config.minutesLimit;
         value["no_bingo_mins"] = config.noBingoMinutes;
         value["overtime"] = config.overtime;
+        value["free_for_all"] = config.freeForAll;
 
         if (config.mapSelection == MapMode::Mappack) value["mappack_id"] = config.mappackId;
         return value;
@@ -47,6 +49,7 @@ namespace MatchConfiguration {
         config.minutesLimit = uint(value["time_limit"]);
         config.noBingoMinutes = uint(value["no_bingo_mins"]);
         config.overtime = bool(value["overtime"]);
+        config.freeForAll = bool(value["free_for_all"]);
 
         if (value.HasKey("mappack_id")) config.mappackId = uint(value["mappack_id"]);
         return config;

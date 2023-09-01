@@ -4,7 +4,8 @@ use std::{
 };
 
 use anyhow::anyhow;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
+use palette::{FromColor, Hsv, Srgb};
 use parking_lot::Mutex;
 use rand::{distributions::Uniform, seq::SliceRandom, Rng};
 use serde::{Serialize, Serializer};
@@ -19,13 +20,12 @@ use super::{
     models::{
         self,
         player::{Player, PlayerRef},
-        room::{RoomConfiguration, RoomTeam},
+        room::{RoomConfiguration, RoomState, RoomTeam},
         team::{BaseTeam, TeamIdentifier},
     },
-    util::color::RgbColor,
+    util::Color,
 };
 use crate::{
-    config::CONFIG,
     orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
     server::{
         context::{ClientContext, GameContext},
@@ -165,7 +165,20 @@ impl GameRoom {
             .map(|p| p.profile.player.username.clone())
     }
 
-    pub fn create_team(&mut self, teams: &Vec<(String, RgbColor)>) -> Option<&BaseTeam> {
+    pub fn has_player(&self, uid: i32) -> bool {
+        self.members.iter().any(|m| m.profile.player.uid == uid)
+    }
+
+    pub fn get_state(&self) -> RoomState {
+        RoomState {
+            config: self.config.clone(),
+            matchconfig: self.matchconfig.clone(),
+            join_code: self.join_code.clone(),
+            teams: self.teams_as_model(),
+        }
+    }
+
+    pub fn create_team_from_preset(&mut self, teams: &Vec<(String, Color)>) -> Option<&BaseTeam> {
         let team_count = self.teams.len();
         if team_count >= teams.len() {
             warn!("attempted to create more than {} teams", teams.len());
@@ -179,12 +192,28 @@ impl GameRoom {
         }
 
         let color = teams[idx].1;
-        let team = BaseTeam::new(self.teams_id, teams[idx].0.clone(), color);
+        Some(self.inner_create_team(teams[idx].0.clone(), color))
+    }
+
+    pub fn create_random_team(&mut self) -> &BaseTeam {
+        let mut rng = rand::thread_rng();
+        let (h, s, v) = (
+            rng.gen_range(0..=255),
+            rng.gen_range(128..=255),
+            rng.gen_range(128..=255),
+        );
+        let color: Hsv = Hsv::new_srgb(h, s, v).into_format::<f32>();
+        let rgb = Srgb::from_color(color).into_format::<u8>();
+        self.inner_create_team(String::new(), rgb)
+    }
+
+    fn inner_create_team(&mut self, name: String, color: Color) -> &BaseTeam {
+        let team = BaseTeam::new(self.teams_id, name, color);
         self.teams_id += 1;
         self.teams.push(team.clone());
         self.channel
             .broadcast(&RoomEvent::TeamCreated { base: team });
-        self.teams.last()
+        self.teams.last().unwrap()
     }
 
     pub fn remove_team(&mut self, id: TeamIdentifier) {
@@ -254,8 +283,6 @@ impl GameRoom {
             team,
             operator,
             disconnected: false,
-            room_ctx: Arc::downgrade(&ctx.room),
-            game_ctx: Arc::downgrade(&ctx.game),
         });
         self.channel
             .subscribe(profile.player.uid, ctx.writer.clone());
@@ -289,6 +316,9 @@ impl GameRoom {
         }
         if self.has_started() {
             return Err(JoinRoomError::HasStarted);
+        }
+        if self.has_player(ctx.profile.player.uid) {
+            return Err(JoinRoomError::PlayerAlreadyJoined);
         }
 
         let team = self.add_player(ctx, profile, false);
@@ -346,6 +376,14 @@ impl GameRoom {
         }
     }
 
+    fn create_ffa_teams(&mut self) {
+        self.teams = Vec::new();
+        for i in 0..self.members.len() {
+            let team = self.create_random_team();
+            self.members[i].team = team.id;
+        }
+    }
+
     pub fn set_config(&mut self, config: RoomConfiguration) {
         self.trigger_new_config(config);
         self.config_update();
@@ -370,7 +408,7 @@ impl GameRoom {
         {
             // map selection changed, reload maps
             self.loaded_maps = Vec::new();
-            mapload::load_maps(self.ptr.clone(), config.clone(), self.get_load_marker());
+            mapload::load_maps(self.ptr.clone(), &config, self.get_load_marker());
         }
 
         self.matchconfig = config;
@@ -426,6 +464,11 @@ impl GameRoom {
         }
     }
 
+    pub fn broadcast_sync(&mut self) {
+        self.channel
+            .broadcast(&RoomEvent::RoomSync(self.get_state()));
+    }
+
     fn prepare_start_match(&mut self) {
         if self.config.randomize {
             self.sort_teams();
@@ -433,6 +476,11 @@ impl GameRoom {
                 .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
                     updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
                 }));
+        }
+
+        if self.matchconfig.free_for_all {
+            self.create_ffa_teams();
+            self.broadcast_sync();
         }
 
         self.loaded_maps.shuffle(&mut rand::thread_rng());
@@ -453,41 +501,36 @@ impl GameRoom {
 
     fn start_match(&mut self) -> Owned<LiveMatch> {
         self.prepare_start_match();
-        let start_date = Utc::now() + CONFIG.game.start_countdown;
+        let start_date = Utc::now();
         let match_arc = LiveMatch::new(
-            self.ptr.clone(),
             self.matchconfig.clone(),
             self.loaded_maps.clone(),
             self.teams_as_model()
                 .into_iter()
                 .map(GameTeam::from)
                 .collect(),
-            start_date,
-            Some(Channel::<GameEvent>::from(&self.channel)),
         );
         let mut lock = match_arc.lock();
-        lock.setup_match_start();
+        lock.set_parent_room(self.ptr.clone());
+        lock.set_channel(Channel::<GameEvent>::from(&self.channel));
+        lock.setup_match_start(start_date);
         directory::MATCHES.insert(lock.uid().to_owned(), match_arc.clone());
         drop(lock);
 
-        self.players_mut().into_iter().for_each(|p| {
-            p.game_ctx
-                .upgrade()
-                .map(|ctx| *ctx.lock() = Some(GameContext::new(p.profile.clone(), &match_arc)));
-        });
         self.active_match = Some(Arc::downgrade(&match_arc));
         self.send_in_game_status_update();
         match_arc
     }
 
-    pub fn start_date(&self) -> DateTime<Utc> {
-        self.active_match
-            .as_ref()
-            .and_then(|weak| weak.upgrade().map(|game| game.lock().start_date().clone()))
-            .unwrap_or(DateTime::from_utc(
-                NaiveDateTime::from_timestamp_millis(0).unwrap(),
-                Utc,
-            ))
+    pub fn get_match(&self) -> Option<Owned<LiveMatch>> {
+        self.active_match.as_ref().and_then(|m| m.upgrade())
+    }
+
+    pub fn start_date(&self) -> Option<DateTime<Utc>> {
+        self.active_match.as_ref().and_then(|weak| {
+            weak.upgrade()
+                .and_then(|game| game.lock().playstart_date().clone())
+        })
     }
 
     pub fn reset_match(&mut self) {
@@ -500,7 +543,7 @@ impl GameRoom {
 
     fn send_in_game_status_update(&self) {
         if self.config.public {
-            let start_time = self.start_date();
+            let start_time = self.start_date().unwrap_or_default();
             PUB_ROOMS_CHANNEL
                 .lock()
                 .broadcast(&RoomlistEvent::RoomlistInGameStatusUpdate {
@@ -528,6 +571,8 @@ pub enum JoinRoomError {
     DoesNotExist(String),
     #[error("The game has already started.")]
     HasStarted,
+    #[error("You have already joined this room.")]
+    PlayerAlreadyJoined,
 }
 
 #[derive(Serialize)]

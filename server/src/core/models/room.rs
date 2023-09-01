@@ -6,6 +6,14 @@ use crate::core::room;
 
 use super::{livegame::MatchConfiguration, player::Player, team::BaseTeam};
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RoomState {
+    pub config: RoomConfiguration,
+    pub matchconfig: MatchConfiguration,
+    pub join_code: String,
+    pub teams: Vec<RoomTeam>,
+}
+
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct NetworkRoom {
@@ -31,7 +39,7 @@ impl From<&room::GameRoom> for NetworkRoom {
             match_config: value.matchconfig().to_owned(),
             player_count: value.players().len(),
             created: value.created().to_owned(),
-            started: value.start_date(),
+            started: value.start_date().unwrap_or_default(),
         }
     }
 }

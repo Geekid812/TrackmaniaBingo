@@ -22,6 +22,7 @@ namespace UIGameRoom {
             // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
             // So for now, the player will get yeeted out.
             Network::LeaveRoom();
+            CleanupUI();
             return;
         }
         if (windowOpen) {
@@ -36,6 +37,10 @@ namespace UIGameRoom {
         IncludePlayerCountInTitle = !windowOpen;
         GrabFocus = false;
 
+        CleanupUI();
+    }
+
+    void CleanupUI() {
         UI::End();
         UI::PopFont();
         UI::PopStyleVar();
@@ -115,7 +120,7 @@ namespace UIGameRoom {
 
         UI::BeginTable("Bingo_TeamTable", Room.config.randomizeTeams ? 4 : Room.teams.Length + (Room.localPlayerIsHost && Room.CanCreateMoreTeams() ? 1 : 0));
 
-        if (Room.config.randomizeTeams && @Match == null) {
+        if ((Room.config.randomizeTeams && @Match == null) || Room.matchConfig.freeForAll) {
             for (uint i = 0; i < Room.players.Length; i++) {
                 UI::TableNextColumn();
                 Player player = Room.players[i];
@@ -198,11 +203,7 @@ namespace UIGameRoom {
         }
         UI::EndTable();
 
-        UIColor::DarkRed();
-        if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-            startnew(Network::LeaveRoom);
-        }
-        UIColor::Reset();
+        LeaveButton();
 
         if (Room.localPlayerIsHost) {
             UIColor::DarkGreen();
@@ -221,6 +222,14 @@ namespace UIGameRoom {
 
         // Leave room if window was closed
         //if (!Visible) Network::LeaveRoom();
+    }
+
+    void LeaveButton() {
+        UIColor::DarkRed();
+        if (UI::Button(Icons::Kenney::Exit + " Leave")) {
+            startnew(Network::LeaveRoom);
+        }
+        UIColor::Reset();
     }
 
     void PlayerLabel(Player player, uint index) {

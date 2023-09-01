@@ -58,16 +58,18 @@ namespace NetworkHandlers {
                 string playerName = claim.player.name;
                 string mapName = ColoredString(claimedMap.map.trackName);
                 string teamName = team.name;
+                string teamCredit = "for " + teamName + " Team";
+                if (Match.config.freeForAll) teamCredit = "";
                 vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(team.color, 0.1), 0.75);
                 vec4 dimmedColor = teamColor / 1.5;
                 RunResult result = claim.result;
                 
                 if (isReclaim) {
-                    UI::ShowNotification(Icons::Retweet + " Map Reclaimed", playerName + " has reclaimed \\$fd8" + mapName + "\\$z for " + teamName + " Team\n" + result.Display() + " (" + deltaTime + ")", teamColor, 15000);
+                    UI::ShowNotification(Icons::Retweet + " Map Reclaimed", playerName + " has reclaimed \\$fd8" + mapName + "\\$z " + teamCredit + "\n" + result.Display() + " (" + deltaTime + ")", teamColor, 15000);
                 } else if (isImprove) {
-                    UI::ShowNotification(Icons::ClockO + " Time Improved", playerName + " has improved " + teamName + " Team's time on \\$fd8" + mapName + "\\$z\n" + result.Display() + " (" + deltaTime + ")", dimmedColor, 15000);
+                    UI::ShowNotification(Icons::ClockO + " Time Improved", playerName + " has improved " + (Match.config.freeForAll ? "their" : (teamName + " Team's")) + " time on \\$fd8" + mapName + "\\$z\n" + result.Display() + " (" + deltaTime + ")", dimmedColor, 15000);
                 } else { // Normal claim
-                    UI::ShowNotification(Icons::Bookmark + " Map Claimed", playerName + " has claimed \\$fd8" + mapName + "\\$z for " + teamName + " Team\n" + result.Display(), teamColor, 15000);
+                    UI::ShowNotification(Icons::Bookmark + " Map Claimed", playerName + " has claimed \\$fd8" + mapName + "\\$z " + teamCredit + "\n" + result.Display(), teamColor, 15000);
                 }
             }
             claimedMap.RegisterClaim(claim);
@@ -125,6 +127,7 @@ namespace NetworkHandlers {
 
     void LoadRoomTeams(Json::Value@ teams) {
         @Room.teams = {};
+        @Room.players = {};
         for (uint i = 0; i < teams.Length; i++) {
             Json::Value@ t = teams[i];
             Team team = Team(
@@ -205,5 +208,32 @@ namespace NetworkHandlers {
 //            Room.MapList[i].ClaimedPlayerName = cell["claim"]["player"]["name"];
 //            @Room.MapList[i].ClaimedTeam = Room.GetTeamWithId(cell["claim"]["player"]["team"]);
         }
+    }
+
+    void LoadDailyChallenge(Json::Value@ data) {
+        if (data is null) {
+            UIDaily::DailyLoad = LoadStatus::Error;
+            return;
+        }
+
+        UIDaily::DailyLoad = LoadStatus::Ok;
+        if (data["res"] == "DailyNotLoaded") {
+            @UIDaily::DailyMatch = null;
+            return;
+        }
+
+        LiveMatch match = LiveMatch::Deserialize(data["state"]);
+        @UIDaily::DailyMatch = match;
+    }
+
+    void RoomSync(Json::Value@ data) {
+        Room.config = RoomConfiguration::Deserialize(data["config"]);
+        Room.matchConfig = MatchConfiguration::Deserialize(data["matchconfig"]);
+        Room.joinCode = data["join_code"];
+        LoadRoomTeams(data["teams"]);
+    }
+
+    void MatchSync(Json::Value@ data) {
+        warn("TODO: MatchSync");
     }
 }

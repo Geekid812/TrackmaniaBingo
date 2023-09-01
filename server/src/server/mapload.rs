@@ -1,3 +1,5 @@
+use std::pin::Pin;
+
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use futures::Future;
 use once_cell::sync::Lazy;
@@ -12,25 +14,29 @@ use crate::{
     orm::mapcache::{self, record::MapRecord},
 };
 
+type MaploadResult = Result<Vec<MapRecord>, anyhow::Error>;
 static MAPPACK_LOADER: Lazy<MappackLoader> = Lazy::new(|| MappackLoader::new());
 
-pub fn load_maps(room: Shared<GameRoom>, config: MatchConfiguration, userdata: u32) {
-    match config.selection {
-        MapMode::RandomTMX => tokio::spawn(fetch_and_load(
-            room,
-            cache_load_mxrandom(config.grid_size * config.grid_size),
-            userdata,
-        )),
-        MapMode::Mappack => tokio::spawn(fetch_and_load(
-            room,
-            network_load_mappack(config.mappack_id.unwrap()),
-            userdata,
-        )),
-        _ => unimplemented!(),
-    };
+pub fn load_maps(room: Shared<GameRoom>, config: &MatchConfiguration, userdata: u32) {
+    let fut = get_load_future(config);
+    tokio::spawn(fetch_and_load(room, fut, userdata));
 }
 
-async fn fetch_and_load<F: Future<Output = Result<Vec<MapRecord>, anyhow::Error>>>(
+pub async fn gather_maps(config: &MatchConfiguration) -> MaploadResult {
+    get_load_future(config).await
+}
+
+fn get_load_future(
+    config: &MatchConfiguration,
+) -> Pin<Box<dyn Future<Output = MaploadResult> + Send>> {
+    match config.selection {
+        MapMode::RandomTMX => Box::pin(cache_load_mxrandom(config.grid_size * config.grid_size)),
+        MapMode::Mappack => Box::pin(network_load_mappack(config.mappack_id.unwrap())),
+        _ => unimplemented!(),
+    }
+}
+
+async fn fetch_and_load<F: Future<Output = MaploadResult>>(
     room: Shared<GameRoom>,
     fut: F,
     userdata: u32,

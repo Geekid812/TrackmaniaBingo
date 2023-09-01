@@ -5,7 +5,7 @@ use serde_with::DurationMilliSeconds;
 use crate::{
     core::{
         livegame::BingoLine,
-        models::livegame::{MapClaim, MatchPhase},
+        models::livegame::{MapClaim, MatchPhase, MatchState},
     },
     orm::mapcache::record::MapRecord,
 };
@@ -31,4 +31,5 @@ pub enum GameEvent {
     PhaseChange {
         phase: MatchPhase,
     },
+    MatchSync(MatchState),
 }

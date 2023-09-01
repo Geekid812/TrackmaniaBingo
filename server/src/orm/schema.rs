@@ -5,6 +5,7 @@ diesel::table! {
         uid -> Text,
         started_at -> Timestamp,
         ended_at -> Nullable<Timestamp>,
+        daily_timedate -> Nullable<Text>,
     }
 }
 

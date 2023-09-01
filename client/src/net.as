@@ -241,6 +241,10 @@ namespace Network {
             NetworkHandlers::TeamDeleted(body);
         } else if (event == "PhaseChange") {
             NetworkHandlers::PhaseChange(body);
+        } else if (event == "RoomSync") {
+            NetworkHandlers::RoomSync(body);
+        } else if (event == "MatchSync") {
+            NetworkHandlers::MatchSync(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }
@@ -281,7 +285,7 @@ namespace Network {
         string Text = Json::Write(body);
         if (!_protocol.Send(Text)) {
             warn("Network: Post preemptively failed!");
-            OnDisconnect();
+            if (Network::IsConnected()) OnDisconnect();
             return null;
         } // TODO: connection fault?
         Internal::Errors.Delete(type);
@@ -412,6 +416,7 @@ namespace Network {
         // TODO: this is rudimentary, it doesn't keep connection alive
         trace("Network: LeaveRoom requested.");
         CloseConnection();
+        UIMainWindow::Visible = false;
     }
 
     void JoinTeam(Team team) {
@@ -436,6 +441,15 @@ namespace Network {
         body["medal"] = result.medal;
         auto Request = Network::Post("SubmitRun", body, false);
         return Request !is null;
+    }
+
+    void LoadDailyChallenge() {
+        auto response = Post("SubscribeDailyChallenge", Json::Object(), false);
+        NetworkHandlers::LoadDailyChallenge(response);   
+    }
+
+    void UnsubscribeDailyChallenge() {
+        Post("UnsubscribeDailyChallenge", Json::Object(), false);
     }
 
     void Sync() {

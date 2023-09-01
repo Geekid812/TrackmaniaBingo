@@ -4,6 +4,8 @@ use serde::Deserialize;
 use serde_with::DurationSeconds;
 use std::collections::HashMap;
 
+use crate::core::models::livegame::MatchConfiguration;
+
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     let toml_content = std::fs::read_to_string("config.toml");
     toml_content
@@ -34,6 +36,7 @@ pub struct Secrets {
 
 #[serde_with::serde_as]
 #[derive(Deserialize)]
+#[serde(default)]
 pub struct MapsConfig {
     pub queue_size: usize,
     pub queue_capacity: usize,
@@ -45,15 +48,18 @@ pub struct MapsConfig {
 
 #[serde_with::serde_as]
 #[derive(Deserialize)]
+#[serde(default)]
 pub struct GameConfig {
     pub teams: HashMap<String, String>,
     #[serde_as(as = "DurationSeconds<i64>")]
     pub mxrandom_max_author_time: Duration,
     #[serde_as(as = "DurationSeconds<i64>")]
     pub start_countdown: Duration,
+    pub daily_config: Option<MatchConfiguration>,
 }
 
 #[derive(Deserialize)]
+#[serde(default)]
 pub struct RestConfig {
     pub openplanet: OpenplanetRoutes,
     pub tmx: TmxRoutes,
@@ -85,38 +91,57 @@ impl Default for Config {
                 openplanet_auth: None,
                 admin_key: None,
             },
-            mapqueue: MapsConfig {
-                queue_size: 10,
-                queue_capacity: 30,
-                fetch_timeout: Duration::seconds(20),
-                fetch_interval: Duration::seconds(4),
+            mapqueue: MapsConfig::default(),
+            game: GameConfig::default(),
+            routes: RestConfig::default(),
+        }
+    }
+}
+
+impl Default for MapsConfig {
+    fn default() -> Self {
+        MapsConfig {
+            queue_size: 10,
+            queue_capacity: 30,
+            fetch_timeout: Duration::seconds(20),
+            fetch_interval: Duration::seconds(4),
+        }
+    }
+}
+
+impl Default for GameConfig {
+    fn default() -> Self {
+        GameConfig {
+            teams: HashMap::from_iter(
+                vec![
+                    ("Red", "F81315"),
+                    ("Green", "8BC34A"),
+                    ("Blue", "0095FF"),
+                    ("Cyan", "4DD0E1"),
+                    ("Pink", "E04980"),
+                    ("Yellow", "FFFF00"),
+                ]
+                .into_iter()
+                .map(|(s1, s2)| (s1.to_owned(), s2.to_owned())),
+            ),
+            mxrandom_max_author_time: Duration::minutes(5),
+            start_countdown: Duration::seconds(5),
+            daily_config: None,
+        }
+    }
+}
+
+impl Default for RestConfig {
+    fn default() -> Self {
+        RestConfig {
+            openplanet: OpenplanetRoutes {
+                base: "https://openplanet.dev".to_owned(),
+                auth_validate: "/api/auth/validate".to_owned(),
             },
-            game: GameConfig {
-                teams: HashMap::from_iter(
-                    vec![
-                        ("Red", "F81315"),
-                        ("Green", "8BC34A"),
-                        ("Blue", "0095FF"),
-                        ("Cyan", "4DD0E1"),
-                        ("Pink", "E04980"),
-                        ("Yellow", "FFFF00"),
-                    ]
-                    .into_iter()
-                    .map(|(s1, s2)| (s1.to_owned(), s2.to_owned())),
-                ),
-                mxrandom_max_author_time: Duration::minutes(5),
-                start_countdown: Duration::seconds(5),
-            },
-            routes: RestConfig {
-                openplanet: OpenplanetRoutes {
-                    base: "https://openplanet.dev".to_owned(),
-                    auth_validate: "/api/auth/validate".to_owned(),
-                },
-                tmx: TmxRoutes {
-                    base: "https://trackmania.exchange".to_owned(),
-                    map_search: "/mapsearch2/search".to_owned(),
-                    mappack_maps: "/api/mappack/get_mappack_tracks/".to_owned(),
-                },
+            tmx: TmxRoutes {
+                base: "https://trackmania.exchange".to_owned(),
+                map_search: "/mapsearch2/search".to_owned(),
+                mappack_maps: "/api/mappack/get_mappack_tracks/".to_owned(),
             },
         }
     }

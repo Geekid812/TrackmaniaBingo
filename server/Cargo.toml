@@ -79,3 +79,6 @@ rustc_version_runtime = "0.2.1"
 
 # Utilities for serializing chrono types
 serde_with = { version = "3.0.0", features = ["chrono_0_4"] }
+
+# Color helper
+palette = { version = "0.7.3", features = ["serializing"] }
