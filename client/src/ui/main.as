@@ -1,3 +1,5 @@
+const string BINGO_ISSUES_URL = "https://github.com/Geekid812/TrackmaniaBingo/issues";
+
 enum LoadStatus {
     NotLoaded,
     Loading,
@@ -118,7 +120,7 @@ namespace UIMainWindow {
     void CreateTab() {
         UIRoomSettings::SettingsView();
         CreateRoomButton();
-        ConnectingIndicator();
+        UITools::ConnectingIndicator();
         UITools::ErrorMessage("CreateRoom");
     }
 
@@ -135,27 +137,17 @@ namespace UIMainWindow {
         UI::EndDisabled();
     }
 
-    void ConnectingIndicator() {
-        if (Network::GetState() == ConnectionState::Connecting) {
-            UI::SameLine();
-            UI::Text("\\$58f" + GetConnectingIcon() + " \\$zConnecting to server...");
-        }
-    }
-
-    string GetConnectingIcon() {
-        int sequence = int(Time::Now / 333) % 3;
-        if (sequence == 0)
-            return Icons::Kenney::SignalLow;
-        if (sequence == 1)
-            return Icons::Kenney::SignalMedium;
-        return Icons::Kenney::SignalHigh;
-    }
-
     void OfflineWarning() {
         UI::Text("\\$ff4" + Icons::ExclamationTriangle + "  \\$zAn error occured while connecting to the Bingo server.");
         UIColor::Red();
         if (UI::Button(Icons::Repeat + " Retry")) {
             startnew(Network::Connect);
+        }
+        UIColor::Reset();
+        UI::SameLine();
+        UIColor::DarkRed();
+        if (UI::Button(Icons::Bug + " Report Issue")) {
+            OpenBrowserURL(BINGO_ISSUES_URL);
         }
         UIColor::Reset();
     }

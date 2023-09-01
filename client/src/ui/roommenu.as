@@ -144,7 +144,7 @@ namespace UIRoomMenu {
         JoinPrivateRoomButton();
         UI::EndDisabled();
 
-        UIMainWindow::ConnectingIndicator();
+        UITools::ConnectingIndicator();
         UI::NewLine();
         UI::Separator();
         SubscribeCheckbox();

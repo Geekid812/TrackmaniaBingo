@@ -285,7 +285,7 @@ namespace Network {
         string Text = Json::Write(body);
         if (!_protocol.Send(Text)) {
             warn("Network: Post preemptively failed!");
-            OnDisconnect();
+            if (Network::IsConnected()) OnDisconnect();
             return null;
         } // TODO: connection fault?
         Internal::Errors.Delete(type);

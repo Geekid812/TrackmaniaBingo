@@ -219,6 +219,7 @@ namespace NetworkHandlers {
         UIDaily::DailyLoad = LoadStatus::Ok;
         if (data["res"] == "DailyNotLoaded") {
             @UIDaily::DailyMatch = null;
+            return;
         }
 
         LiveMatch match = LiveMatch::Deserialize(data["state"]);

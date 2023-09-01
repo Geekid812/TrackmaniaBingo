@@ -91,6 +91,23 @@ namespace UITools {
         }
     }
 
+
+    void ConnectingIndicator() {
+        if (Network::GetState() == ConnectionState::Connecting) {
+            UI::SameLine();
+            UI::Text("\\$58f" + GetConnectingIcon() + " \\$zConnecting to server...");
+        }
+    }
+
+    string GetConnectingIcon() {
+        int sequence = int(Time::Now / 333) % 3;
+        if (sequence == 0)
+            return Icons::Kenney::SignalLow;
+        if (sequence == 1)
+            return Icons::Kenney::SignalMedium;
+        return Icons::Kenney::SignalHigh;
+    }
+
     bool grzero(int x) { return x > 0; }
     int toint(bool x) { return x ? 1 : 0; } 
 }

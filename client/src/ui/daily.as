@@ -11,7 +11,11 @@ namespace UIDaily {
         UI::TextWrapped("Blabla explaining the daily challenge.");
 
         UI::NewLine();
-        DailyShowGridPreview();
+        UITools::ConnectingIndicator();
+        UITools::ErrorMessage("SubscribeDailyChallenge");
+        if (Network::IsConnected()) {
+            DailyShowGridPreview();
+        }
     }
 
     void DailyShowGridPreview() {
@@ -22,6 +26,11 @@ namespace UIDaily {
 
         if (DailyLoad == LoadStatus::Loading) {
             LoadingIndicator();
+            return;
+        }
+
+        if (DailyLoad == LoadStatus::Error) {
+            ErrorIndicator();
             return;
         }
 
@@ -54,6 +63,10 @@ namespace UIDaily {
 
     void LoadingIndicator() {
         CenterText("Loading daily challenge...", Font::Bold);
+    }
+
+    void ErrorIndicator() {
+        CenterText("Could not load the daily challenge.", Font::Regular);
     }
 
     void InactiveIndicator() {
