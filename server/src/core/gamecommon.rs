@@ -2,14 +2,7 @@ use std::{str::FromStr, sync::Arc};
 
 use once_cell::sync::Lazy;
 
-use crate::{
-    config::CONFIG,
-    orm::composed::profile::PlayerProfile,
-    server::{
-        self,
-        context::{GameContext, RoomContext},
-    },
-};
+use crate::{config::CONFIG, orm::composed::profile::PlayerProfile, server};
 
 pub static TEAMS: Lazy<Vec<(String, Color)>> = Lazy::new(|| {
     CONFIG
@@ -21,7 +14,7 @@ pub static TEAMS: Lazy<Vec<(String, Color)>> = Lazy::new(|| {
 });
 
 use super::{
-    directory::{Owned, Shared},
+    directory::Owned,
     models::{player::PlayerRef, team::TeamIdentifier},
     room::GameRoom,
     util::Color,
@@ -48,8 +41,6 @@ pub struct PlayerData {
     pub team: TeamIdentifier,
     pub operator: bool,
     pub disconnected: bool,
-    pub room_ctx: Shared<Option<RoomContext>>,
-    pub game_ctx: Shared<Option<GameContext>>,
 }
 
 impl From<&PlayerData> for PlayerRef {

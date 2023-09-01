@@ -100,12 +100,7 @@ async fn main() {
             if profile.is_none() {
                 return;
             }
-            let ctx = ClientContext::new(
-                profile.unwrap(),
-                Arc::new(Mutex::new(None)),
-                Arc::new(Mutex::new(None)),
-                Arc::new(tx),
-            );
+            let ctx = ClientContext::new(profile.unwrap(), None, None, Arc::new(tx));
             client::run_loop(ctx, client).await;
             info!("dropping connection");
         });

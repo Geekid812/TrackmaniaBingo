@@ -191,6 +191,12 @@ impl LiveMatch {
         &self.started
     }
 
+    pub fn playstart_date(&self) -> Option<DateTime<Utc>> {
+        self.started
+            .as_ref()
+            .map(|d| *d + self.options.start_countdown)
+    }
+
     pub fn get_cell_from_map_uid(&self, uid: String) -> Option<usize> {
         self.cells
             .iter()

@@ -5,10 +5,7 @@ use std::{
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-use palette::{
-    convert::{FromColorUnclamped, TryFromColor},
-    FromColor, Hsv, IntoColor, Srgb,
-};
+use palette::{FromColor, Hsv, Srgb};
 use parking_lot::Mutex;
 use rand::{distributions::Uniform, seq::SliceRandom, Rng};
 use serde::{Serialize, Serializer};
@@ -168,6 +165,10 @@ impl GameRoom {
             .map(|p| p.profile.player.username.clone())
     }
 
+    pub fn has_player(&self, uid: i32) -> bool {
+        self.members.iter().any(|m| m.profile.player.uid == uid)
+    }
+
     pub fn get_state(&self) -> RoomState {
         RoomState {
             config: self.config.clone(),
@@ -282,8 +283,6 @@ impl GameRoom {
             team,
             operator,
             disconnected: false,
-            room_ctx: Arc::downgrade(&ctx.room),
-            game_ctx: Arc::downgrade(&ctx.game),
         });
         self.channel
             .subscribe(profile.player.uid, ctx.writer.clone());
@@ -317,6 +316,9 @@ impl GameRoom {
         }
         if self.has_started() {
             return Err(JoinRoomError::HasStarted);
+        }
+        if self.has_player(ctx.profile.player.uid) {
+            return Err(JoinRoomError::PlayerAlreadyJoined);
         }
 
         let team = self.add_player(ctx, profile, false);
@@ -515,20 +517,19 @@ impl GameRoom {
         directory::MATCHES.insert(lock.uid().to_owned(), match_arc.clone());
         drop(lock);
 
-        self.players_mut().into_iter().for_each(|p| {
-            p.game_ctx
-                .upgrade()
-                .map(|ctx| *ctx.lock() = Some(GameContext::new(p.profile.clone(), &match_arc)));
-        });
         self.active_match = Some(Arc::downgrade(&match_arc));
         self.send_in_game_status_update();
         match_arc
     }
 
+    pub fn get_match(&self) -> Option<Owned<LiveMatch>> {
+        self.active_match.as_ref().and_then(|m| m.upgrade())
+    }
+
     pub fn start_date(&self) -> Option<DateTime<Utc>> {
         self.active_match.as_ref().and_then(|weak| {
             weak.upgrade()
-                .and_then(|game| game.lock().start_date().clone())
+                .and_then(|game| game.lock().playstart_date().clone())
         })
     }
 
@@ -570,6 +571,8 @@ pub enum JoinRoomError {
     DoesNotExist(String),
     #[error("The game has already started.")]
     HasStarted,
+    #[error("You have already joined this room.")]
+    PlayerAlreadyJoined,
 }
 
 #[derive(Serialize)]

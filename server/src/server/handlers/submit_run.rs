@@ -19,11 +19,12 @@ pub struct SubmitRun {
 #[typetag::deserialize]
 impl Request for SubmitRun {
     fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+        ctx.game_sync();
         if let Some(game) = ctx.game_match() {
             let claim = MapClaim {
                 player: PlayerRef {
                     uid: ctx.profile.player.uid,
-                    team: ctx.game.lock().as_ref().unwrap().team(),
+                    team: ctx.game.as_ref().unwrap().team(),
                 },
                 time: self.time,
                 medal: self.medal,

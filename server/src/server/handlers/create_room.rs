@@ -36,7 +36,7 @@ impl Request for CreateRoom {
         if let Some(room) = ctx.game_room() {
             ctx.trace("already in a room, leaving previous game");
             room.lock().player_remove(ctx.profile.player.uid);
-            // TODO: on player removed?
+            // ctx.room;
         }
         let roomcode = directory::get_new_roomcode();
         let new_room = GameRoom::create(
@@ -48,10 +48,7 @@ impl Request for CreateRoom {
         setup_room(&new_room);
 
         let mut room = new_room.lock();
-        let room_ctx = Arc::new(Mutex::new(Some(RoomContext::new(
-            ctx.profile.clone(),
-            &new_room,
-        ))));
+        let room_ctx = Some(RoomContext::new(ctx.profile.clone(), &new_room));
         ctx.room = room_ctx;
         room.add_player(&ctx, &ctx.profile, true);
         if room.config().public {

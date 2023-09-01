@@ -14,8 +14,8 @@ use crate::{
 };
 
 pub struct ClientContext {
-    pub room: Owned<Option<RoomContext>>,
-    pub game: Owned<Option<GameContext>>,
+    pub room: Option<RoomContext>,
+    pub game: Option<GameContext>,
     pub profile: PlayerProfile,
     pub writer: Arc<Tx>,
 }
@@ -23,8 +23,8 @@ pub struct ClientContext {
 impl ClientContext {
     pub fn new(
         profile: PlayerProfile,
-        room: Owned<Option<RoomContext>>,
-        game: Owned<Option<GameContext>>,
+        room: Option<RoomContext>,
+        game: Option<GameContext>,
         writer: Arc<Tx>,
     ) -> Self {
         Self {
@@ -36,14 +36,17 @@ impl ClientContext {
     }
 
     pub fn game_room(&self) -> Option<Owned<GameRoom>> {
-        self.room.lock().as_ref().and_then(|roomctx| roomctx.room())
+        self.room.as_ref().and_then(|roomctx| roomctx.room())
+    }
+
+    pub fn game_sync(&mut self) {
+        if let Some(game) = self.room.as_ref().and_then(|roomctx| roomctx.game()) {
+            self.game = Some(GameContext::new(self.profile.clone(), &game));
+        }
     }
 
     pub fn game_match(&self) -> Option<Owned<LiveMatch>> {
-        self.game
-            .lock()
-            .as_ref()
-            .and_then(|gamectx| gamectx.game_match())
+        self.game.as_ref().and_then(|gamectx| gamectx.game_match())
     }
 
     pub fn trace<M: Into<String>>(&self, message: M) {
@@ -53,6 +56,14 @@ impl ClientContext {
                     .send(format!("{{\"event\":\"Trace\",\"value\":{}}}", text)),
             );
         }
+    }
+}
+
+impl Drop for ClientContext {
+    fn drop(&mut self) {
+        debug!("ClientContext dropped");
+        self.room.as_mut().map(|r| r.cleanup());
+        self.game.as_mut().map(|g| g.cleanup());
     }
 }
 
@@ -76,11 +87,13 @@ impl RoomContext {
     pub fn room(&self) -> Option<Owned<GameRoom>> {
         self.room.upgrade()
     }
-}
 
-impl Drop for RoomContext {
-    fn drop(&mut self) {
-        debug!("RoomContext dropped");
+    pub fn game(&self) -> Option<Owned<LiveMatch>> {
+        self.room.upgrade().and_then(|r| r.lock().get_match())
+    }
+
+    pub fn cleanup(&mut self) {
+        debug!("RoomContext cleanup");
         if let Some(room) = self.room() {
             let mut lock = room.lock();
             lock.player_remove(self.profile.player.uid);
@@ -119,13 +132,10 @@ impl GameContext {
     pub fn team(&self) -> TeamIdentifier {
         self.team
     }
-}
 
-impl Drop for GameContext {
-    fn drop(&mut self) {
-        debug!("GameContext dropped");
-        //if let Some(room) = self.game_match() {
-        //    // TODO: room.lock().player_remove(self.profile.player.uid);
-        //}
+    pub fn cleanup(&mut self) {
+        if let Some(room) = self.game_match() {
+            // TODO: room.lock().player_remove(self.profile.player.uid);
+        }
     }
 }

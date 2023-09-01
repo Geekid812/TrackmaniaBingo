@@ -40,7 +40,7 @@ impl Request for JoinRoom {
                     error: format!("{}", e),
                 });
             }
-            *ctx.room.lock() = Some(RoomContext::new(ctx.profile.clone(), &room));
+            ctx.room = Some(RoomContext::new(ctx.profile.clone(), &room));
             Box::new(JoinRoomResponse {
                 config: lock.config().clone(),
                 match_config: lock.matchconfig().clone(),
