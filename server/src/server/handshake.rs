@@ -36,17 +36,17 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile,
         _ = timeout => return Err(HandshakeCode::ReadError),
     };
 
-    let client_version =
-        Version::try_from(handshake.version).map_err(|_| HandshakeCode::InvalidVersion)?;
-
     // Client version check
     let min_version = &CONFIG.min_client;
-    if min_version.is_some()
-        && client_version
+    if min_version.is_some() {
+        let client_version =
+            Version::try_from(handshake.version).map_err(|_| HandshakeCode::InvalidVersion)?;
+        if client_version
             < Version::try_from(min_version.clone().unwrap())
                 .expect("invalid client version in config")
-    {
-        return Err(HandshakeCode::IncompatibleVersion);
+        {
+            return Err(HandshakeCode::IncompatibleVersion);
+        }
     }
 
     // Match token to a valid user in storage
