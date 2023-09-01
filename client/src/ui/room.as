@@ -22,6 +22,7 @@ namespace UIGameRoom {
             // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
             // So for now, the player will get yeeted out.
             Network::LeaveRoom();
+            CleanupUI();
             return;
         }
         if (windowOpen) {
@@ -36,6 +37,10 @@ namespace UIGameRoom {
         IncludePlayerCountInTitle = !windowOpen;
         GrabFocus = false;
 
+        CleanupUI();
+    }
+
+    void CleanupUI() {
         UI::End();
         UI::PopFont();
         UI::PopStyleVar();
