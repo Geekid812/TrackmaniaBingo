@@ -8,7 +8,7 @@ namespace UIDaily {
         UI::PushFont(Font::Subtitle);
         UI::Text("Daily Challenge - " + formattedDate);
         UI::PopFont();   
-        UI::TextWrapped("Blabla explaining the daily challenge.");
+        UI::TextWrapped("Work in progress. This mode cannot be played yet.");
 
         UI::NewLine();
         UITools::ConnectingIndicator();
