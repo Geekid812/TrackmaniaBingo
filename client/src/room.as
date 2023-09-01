@@ -56,6 +56,17 @@ class GameRoom {
         // Must have at least 2 teams to play
         return teams.Length > 2;
     }
+
+    NetworkRoom NetworkState() {
+        auto netroom = NetworkRoom();
+        netroom.name = this.name;
+        netroom.config = this.config;
+        netroom.matchConfig = this.matchConfig;
+        netroom.playerCount = this.players.Length;
+        netroom.hostName = "";
+
+        return netroom;
+    }
 }
 
 class Team {

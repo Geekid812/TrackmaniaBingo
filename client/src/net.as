@@ -416,6 +416,7 @@ namespace Network {
         // TODO: this is rudimentary, it doesn't keep connection alive
         trace("Network: LeaveRoom requested.");
         CloseConnection();
+        UIMainWindow::Visible = false;
     }
 
     void JoinTeam(Team team) {

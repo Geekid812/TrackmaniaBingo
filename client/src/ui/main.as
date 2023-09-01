@@ -38,6 +38,11 @@ namespace UIMainWindow {
     }
 
     void RenderContent() {
+        if (!Permissions::PlayLocalMap()) {
+            NoPermissions();
+            return;
+        }
+
         if (Network::IsOfflineMode()) {
             UI::PushStyleColor(UI::Col::ChildBg, vec4(.3, .3, 0., .9));
             UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
@@ -50,16 +55,15 @@ namespace UIMainWindow {
             UI::Dummy(vec2(0, 20));
         }
 
-        if (!Permissions::PlayLocalMap()) {
-            NoPermissions();
-            return;
-        }
-
         UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 10));
         if (@Profile != null) {
             UIProfile::RenderProfile(Profile);
         }
         UI::Dummy(vec2(0, 10));
+
+        if (@Room != null) {
+            InGameHeader();
+        }
         
         UIColor::Crimson();
         UI::BeginTabBar("Bingo_TabBar");
@@ -150,6 +154,32 @@ namespace UIMainWindow {
             OpenBrowserURL(BINGO_ISSUES_URL);
         }
         UIColor::Reset();
+    }
+
+    void InGameHeader() {
+        UI::PushStyleColor(UI::Col::ChildBg, vec4(.9, .2, .2, .1));
+        UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
+        UI::BeginChild("###bingoingame", vec2(0, 62), true);
+        
+        UI::PushFont(Font::Bold);
+        UI::Text("\\$f44IN GAME");
+        UI::PopFont();
+
+        UI::SameLine();
+        UIRoomMenu::RoomInfo(Room.NetworkState());
+
+        UI::SameLine();
+        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t\t\tLeave").x, 1.0);
+        LayoutTools::MoveTo(padding);
+        UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
+        UIGameRoom::LeaveButton();
+
+
+        UI::EndChild();
+        UI::PopStyleVar();
+        UI::PopStyleColor();
+
+        UI::Dummy(vec2(0, 20));
     }
 /**
 

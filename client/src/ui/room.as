@@ -203,11 +203,7 @@ namespace UIGameRoom {
         }
         UI::EndTable();
 
-        UIColor::DarkRed();
-        if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-            startnew(Network::LeaveRoom);
-        }
-        UIColor::Reset();
+        LeaveButton();
 
         if (Room.localPlayerIsHost) {
             UIColor::DarkGreen();
@@ -226,6 +222,14 @@ namespace UIGameRoom {
 
         // Leave room if window was closed
         //if (!Visible) Network::LeaveRoom();
+    }
+
+    void LeaveButton() {
+        UIColor::DarkRed();
+        if (UI::Button(Icons::Kenney::Exit + " Leave")) {
+            startnew(Network::LeaveRoom);
+        }
+        UIColor::Reset();
     }
 
     void PlayerLabel(Player player, uint index) {
