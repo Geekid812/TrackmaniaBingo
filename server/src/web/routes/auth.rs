@@ -1,8 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
-use diesel::{AsChangeset, Insertable, RunQueryDsl};
+use futures::executor::block_on;
 use once_cell::sync::Lazy;
 use reqwest::StatusCode;
+use sqlx::QueryBuilder;
+use std::iter::once;
 use tracing::error;
 use warp::{http::Response, Filter};
 use warp::{Rejection, Reply};
@@ -11,7 +13,7 @@ use crate::core::util::base64;
 use crate::integrations::openplanet::ValidationError;
 use crate::integrations::tmio::CountryIdentifier;
 use crate::orm;
-use crate::orm::schema::players;
+use crate::orm::models::player::NewPlayer;
 use crate::{config::CONFIG, integrations::openplanet::Authenticator};
 
 static AUTHENTICATOR: Lazy<Option<Arc<Authenticator>>> = Lazy::new(|| {
@@ -59,13 +61,13 @@ async fn login(token: Option<String>) -> impl warp::Reply {
                         client_token: token.clone(),
                         country_code,
                     };
-                    let result = orm::execute(move |conn| {
-                        diesel::insert_into(players::table)
-                            .values(&player)
-                            .on_conflict(players::columns::account_id)
-                            .do_update()
-                            .set(&player)
-                            .execute(conn)
+                    let result = orm::execute(move |mut conn| {
+                        let mut builder = QueryBuilder::new("INSERT INTO players ");
+                        builder.push_values(once(player), |mut builder, p| {
+                            p.bind_values(&mut builder)
+                        });
+                        builder.push(" ON CONFLICT(account_id) REPLACE");
+                        block_on(builder.build().execute(&mut *conn))
                     })
                     .await;
                     if let Err(exec_error) = result {
@@ -88,13 +90,4 @@ async fn login(token: Option<String>) -> impl warp::Reply {
             .status(StatusCode::BAD_REQUEST)
             .body("query parameter 'token' is required".to_owned()),
     }
-}
-
-#[derive(Insertable, AsChangeset)]
-#[diesel(table_name = players)]
-pub struct NewPlayer {
-    pub account_id: String,
-    pub username: String,
-    pub client_token: String,
-    pub country_code: Option<String>,
 }

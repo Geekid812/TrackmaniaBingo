@@ -1,14 +1,9 @@
 use crate::core::util::serialize::serialize_time;
-use crate::orm::schema::{matches, matches_players};
 use chrono::NaiveDateTime;
-use diesel::prelude::*;
 use serde::Serialize;
+use sqlx::{query_builder::Separated, FromRow, Sqlite};
 
-use super::player::Player;
-
-#[derive(Queryable, Selectable, Identifiable, Serialize, Insertable)]
-#[diesel(table_name = matches)]
-#[diesel(primary_key(uid))]
+#[derive(Serialize, FromRow)]
 pub struct Match {
     pub uid: String,
     #[serde(serialize_with = "serialize_time")]
@@ -17,13 +12,27 @@ pub struct Match {
     pub ended_at: NaiveDateTime,
 }
 
-#[derive(Identifiable, Selectable, Queryable, Associations, Debug, Insertable)]
-#[diesel(belongs_to(Player, foreign_key = player_uid))]
-#[diesel(belongs_to(Match, foreign_key = match_uid))]
-#[diesel(table_name = matches_players)]
-#[diesel(primary_key(player_uid, match_uid))]
+impl Match {
+    pub fn bind_values(&self, values: &mut Separated<'_, '_, Sqlite, &'static str>) {
+        values
+            .push_bind(self.uid.clone())
+            .push_bind(self.started_at.clone())
+            .push_bind(self.ended_at.clone());
+    }
+}
+
+#[derive(Serialize, FromRow)]
 pub struct PlayerToMatch {
     pub player_uid: i32,
     pub match_uid: String,
     pub outcome: String,
+}
+
+impl PlayerToMatch {
+    pub fn bind_values(&self, values: &mut Separated<'_, '_, Sqlite, &'static str>) {
+        values
+            .push_bind(self.player_uid)
+            .push_bind(self.match_uid.clone())
+            .push_bind(self.outcome.clone());
+    }
 }

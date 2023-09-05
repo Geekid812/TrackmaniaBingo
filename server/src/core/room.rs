@@ -27,10 +27,7 @@ use super::{
 };
 use crate::{
     orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
-    server::{
-        context::{ClientContext, GameContext},
-        mapload,
-    },
+    server::{context::ClientContext, mapload},
     transport::Channel,
 };
 

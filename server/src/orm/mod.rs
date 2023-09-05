@@ -1,45 +1,37 @@
 pub mod composed;
-pub mod dsl;
 pub mod mapcache;
 pub mod models;
-pub mod schema;
 
-use deadpool_diesel::{
-    sqlite::{Manager, Object, Pool},
-    InteractError, PoolError, Runtime,
-};
-use diesel::SqliteConnection;
 use once_cell::sync::OnceCell;
-use thiserror::Error;
+use sqlx::{
+    database::HasArguments,
+    sqlite::{SqlitePoolOptions, SqliteRow},
+    Sqlite, SqlitePool,
+};
 
-static DB_POOL: OnceCell<Pool> = OnceCell::new();
+static DB_POOL: OnceCell<SqlitePool> = OnceCell::new();
+pub type Connection = sqlx::pool::PoolConnection<Sqlite>;
+pub type Row = SqliteRow;
+pub type Query<'a> = sqlx::query::Query<'a, Sqlite, <Sqlite as HasArguments<'a>>::Arguments>;
 
-pub fn start_database(url: &str) {
-    let manager = Manager::new(url, Runtime::Tokio1);
-    let pool = Pool::builder(manager).max_size(8).build().unwrap();
+pub async fn start_database(url: &str) {
+    let pool = SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect(url)
+        .await
+        .expect("database should be started");
     DB_POOL.get_or_init(|| pool);
 }
 
-async fn pooled_connection() -> Result<Object, PoolError> {
-    DB_POOL
-        .get()
-        .expect("database pool should be initialized")
-        .get()
-        .await
-}
-
-pub async fn execute<F, R>(f: F) -> Result<R, ExecuteError>
+pub async fn execute<F, R>(f: F) -> R
 where
-    F: FnOnce(&mut SqliteConnection) -> R + Send + 'static,
+    F: FnOnce(Connection) -> R + Send + 'static,
     R: Send + 'static,
 {
-    Ok(pooled_connection().await?.interact(f).await?)
-}
-
-#[derive(Error, Debug)]
-pub enum ExecuteError {
-    #[error(transparent)]
-    PoolError(#[from] PoolError),
-    #[error(transparent)]
-    InteractError(#[from] InteractError),
+    f(DB_POOL
+        .get()
+        .expect("database not initialized")
+        .acquire()
+        .await
+        .expect("did not acquire database connection"))
 }

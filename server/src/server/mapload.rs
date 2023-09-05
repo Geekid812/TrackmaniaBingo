@@ -1,14 +1,14 @@
 use std::pin::Pin;
 
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use futures::executor::block_on;
 use futures::Future;
 use once_cell::sync::Lazy;
+use sqlx::FromRow;
 use tracing::error;
 
 use crate::config::CONFIG;
 use crate::core::room::GameRoom;
 use crate::integrations::tmexchange::MappackLoader;
-use crate::orm::dsl::RandomDsl;
 use crate::{
     core::{directory::Shared, livegame::MatchConfiguration, models::livegame::MapMode},
     orm::mapcache::{self, record::MapRecord},
@@ -54,15 +54,18 @@ async fn fetch_and_load<F: Future<Output = MaploadResult>>(
 }
 
 async fn cache_load_mxrandom(count: usize) -> Result<Vec<MapRecord>, anyhow::Error> {
-    mapcache::execute(move |conn| {
-        use crate::orm::mapcache::schema::maps::dsl::*;
-
-        maps.filter(author_time.le(CONFIG.game.mxrandom_max_author_time.num_milliseconds() as i32))
-            .randomize(count as i32)
-            .load::<MapRecord>(conn)
+    mapcache::execute(move |mut conn| {
+        let query =
+            sqlx::query("SELECT * FROM maps WHERE author_time <= ?  ORDER BY RANDOM() LIMIT ?")
+                .bind(CONFIG.game.mxrandom_max_author_time.num_milliseconds() as i32)
+                .bind(count as i32);
+        block_on(query.fetch_all(&mut *conn)).map(|v| {
+            v.iter()
+                .map(|r| MapRecord::from_row(r).expect("MapRecord from_row failed"))
+                .collect()
+        })
     })
     .await
-    .expect("database execute error")
     .map_err(anyhow::Error::from)
 }
 

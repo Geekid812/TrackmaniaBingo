@@ -1,10 +1,7 @@
-use diesel::{BelongingToDsl, QueryDsl, RunQueryDsl, SqliteConnection};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 
-use crate::orm::{
-    models::{matches::PlayerToMatch, player::Player},
-    schema::matches_players,
-};
+use crate::orm::{models::player::Player, Connection};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerProfile {
@@ -22,8 +19,8 @@ enum MatchOutcome {
     Loss,
 }
 
-impl From<Option<String>> for MatchOutcome {
-    fn from(value: Option<String>) -> Self {
+impl MatchOutcome {
+    fn from_value(value: Option<String>) -> Self {
         match value.as_deref() {
             Some("W") => MatchOutcome::Win,
             Some("L") => MatchOutcome::Loss,
@@ -32,15 +29,17 @@ impl From<Option<String>> for MatchOutcome {
     }
 }
 
-pub fn get_profile(
-    conn: &mut SqliteConnection,
+pub async fn get_profile(
+    conn: &mut Connection,
     player: Player,
-) -> diesel::QueryResult<PlayerProfile> {
-    let matches = PlayerToMatch::belonging_to(&player)
-        .select(matches_players::outcome)
-        .load::<Option<String>>(conn)?
+) -> Result<PlayerProfile, sqlx::Error> {
+    let matches = sqlx::query("SELECT outcome FROM matches_players WHERE player_uid = ?")
+        .bind(player.uid)
+        .fetch_all(&mut **conn)
+        .await?
         .into_iter()
-        .map(MatchOutcome::from)
+        .map(|row| row.get("outcome"))
+        .map(MatchOutcome::from_value)
         .collect::<Vec<MatchOutcome>>();
     let wins = matches.iter().filter(|o| **o == MatchOutcome::Win).count() as i32;
     let losses = matches.iter().filter(|o| **o == MatchOutcome::Loss).count() as i32;

@@ -56,9 +56,6 @@ toml = "0.7.3"
 # HTTP requests
 reqwest = { version = "0.11.17", features = ["multipart", "json"] }
 
-# Database ORM
-diesel = { version = "2.0.4", features = ["sqlite", "chrono"] }
-
 # Utilities for protocol codec
 tokio-util = { version = "0.7.8", features = ["codec"] }
 
@@ -71,9 +68,6 @@ handlebars = "4.3.6"
 # Utilities for working with bytes
 bytes = "1.4.0"
 
-# Async pool for database connections
-deadpool-diesel = { version = "0.4.1", features = ["sqlite"] }
-
 # Getting compiler info at runtime
 rustc_version_runtime = "0.2.1"
 
@@ -82,3 +76,6 @@ serde_with = { version = "3.0.0", features = ["chrono_0_4"] }
 
 # Color helper
 palette = { version = "0.7.3", features = ["serializing"] }
+
+# Database engine
+sqlx = { version = "0.7.1", features = ["runtime-tokio", "sqlite", "chrono"] }

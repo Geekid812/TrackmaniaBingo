@@ -1,4 +1,7 @@
-use std::sync::{Arc, Weak};
+use std::{
+    iter::once,
+    sync::{Arc, Weak},
+};
 
 use crate::{
     config::CONFIG,
@@ -11,10 +14,11 @@ use crate::{
     transport::Channel,
 };
 use chrono::{DateTime, Duration, Utc};
-use diesel::{insert_into, RunQueryDsl};
+use futures::executor::block_on;
 use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
+use sqlx::QueryBuilder;
 use tracing::error;
 
 use super::{
@@ -272,17 +276,23 @@ impl LiveMatch {
                 });
             }
         }
-        tokio::spawn(orm::execute(move |conn| {
-            use crate::orm::schema::{
-                matches::dsl::matches, matches_players::dsl::matches_players,
-            };
-            if let Err(e) = insert_into(matches).values(match_model).execute(conn) {
+        tokio::spawn(orm::execute(move |mut conn| {
+            let mut builder = QueryBuilder::new("INSERT INTO matches ");
+            builder.push_values(once(match_model), |mut builder, m| {
+                m.bind_values(&mut builder)
+            });
+            let query = builder.build();
+            if let Err(e) = block_on(query.execute(&mut *conn)) {
                 error!("execute error: {}", e);
             }
-            if let Err(e) = insert_into(matches_players)
-                .values(player_results)
-                .execute(conn)
-            {
+
+            let mut builder = QueryBuilder::new("INSERT INTO matches_players ");
+            let query = builder
+                .push_values(player_results, |mut b, result| {
+                    result.bind_values(&mut b);
+                })
+                .build();
+            if let Err(e) = block_on(query.execute(&mut *conn)) {
                 error!("execute error: {}", e);
             }
         }));

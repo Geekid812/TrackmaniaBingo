@@ -1,12 +1,12 @@
 use std::io;
 use std::time::Duration;
 
-use diesel::prelude::*;
-use diesel::result::Error::NotFound;
+use futures::executor::block_on;
 use futures::{select, FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 use serde_repr::Serialize_repr;
+use sqlx::FromRow;
 use tokio::pin;
 use tokio::time::sleep;
 use tracing::error;
@@ -47,15 +47,14 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile,
     }
 
     // Match token to a valid user in storage
-    let player_record = orm::execute(|conn| {
-        use crate::orm::schema::players::dsl::*;
-        let player = players
-            .filter(client_token.eq(handshake.token))
-            .first::<Player>(conn)?;
-        get_profile(conn, player)
+    let player_record = orm::execute(|mut conn| {
+        let query =
+            sqlx::query("SELECT * FROM players WHERE client_token = ?").bind(handshake.token);
+        let row = block_on(query.fetch_one(&mut *conn))?;
+        let player = Player::from_row(&row).expect("Player from_row failed");
+        block_on(get_profile(&mut conn, player))
     })
-    .await
-    .expect("database execute error");
+    .await;
 
     let profile = match player_record {
         Ok(player) => player,
