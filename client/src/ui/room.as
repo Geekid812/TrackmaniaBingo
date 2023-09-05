@@ -14,7 +14,6 @@ namespace UIGameRoom {
         UI::PushStyleColor(UI::Col::TitleBg, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleColor(UI::Col::TitleBgActive, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleVar(UI::StyleVar::WindowTitleAlign, vec2(0.5, 0.5));
-        UI::PushFont(Font::Bold);
         UI::SetNextWindowSize(600, 400, UI::Cond::FirstUseEver);
         bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, (GrabFocus ? UI::WindowFlags::NoCollapse : 0));
         if (!Visible && @Match == null) {
@@ -42,7 +41,6 @@ namespace UIGameRoom {
 
     void CleanupUI() {
         UI::End();
-        UI::PopFont();
         UI::PopStyleVar();
         UI::PopStyleColor(2);
     }
