@@ -60,7 +60,7 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile,
         Ok(player) => player,
         Err(e) => {
             return Err(match e {
-                NotFound => HandshakeCode::AuthRefused,
+                sqlx::Error::RowNotFound => HandshakeCode::AuthRefused,
                 _ => {
                     error!("Auth failure: {:?}", e);
                     HandshakeCode::AuthFailure
