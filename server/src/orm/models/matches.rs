@@ -10,6 +10,7 @@ pub struct Match {
     pub started_at: NaiveDateTime,
     #[serde(serialize_with = "serialize_time")]
     pub ended_at: NaiveDateTime,
+    pub daily_timedate: Option<String>,
 }
 
 impl Match {

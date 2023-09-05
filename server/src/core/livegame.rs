@@ -261,6 +261,7 @@ impl LiveMatch {
             uid: self.uid.clone(),
             started_at: self.started.map(|t| t.naive_utc()).unwrap_or_default(),
             ended_at: Utc::now().naive_utc(),
+            daily_timedate: None,
         };
         let mut player_results = Vec::new();
         for team in &self.teams {

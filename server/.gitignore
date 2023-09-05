@@ -1,5 +1,5 @@
 /target
-db/*.db
+db/*.db*
 /legacy
 config.toml
 mapcache.db

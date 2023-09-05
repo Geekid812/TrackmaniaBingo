@@ -51,6 +51,7 @@ pub async fn get(mut db: Connection, uid: i32) -> Result<Option<Player>, sqlx::E
     }
 }
 
+#[derive(Debug)]
 pub struct NewPlayer {
     pub account_id: String,
     pub username: String,
@@ -63,7 +64,7 @@ impl NewPlayer {
         values
             .push_bind(self.account_id.clone())
             .push_bind(self.username.clone())
-            .push_bind(self.country_code.clone())
-            .push_bind(self.client_token.clone());
+            .push_bind(self.client_token.clone())
+            .push_bind(self.country_code.clone());
     }
 }

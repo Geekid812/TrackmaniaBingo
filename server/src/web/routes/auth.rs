@@ -62,11 +62,11 @@ async fn login(token: Option<String>) -> impl warp::Reply {
                         country_code,
                     };
                     let result = orm::execute(move |mut conn| {
-                        let mut builder = QueryBuilder::new("INSERT INTO players ");
+                        let mut builder = QueryBuilder::new("INSERT INTO players(account_id, username, client_token, country_code) ");
                         builder.push_values(once(player), |mut builder, p| {
                             p.bind_values(&mut builder)
                         });
-                        builder.push(" ON CONFLICT(account_id) REPLACE");
+                        builder.push(" ON CONFLICT(account_id) DO UPDATE SET client_token=excluded.client_token, username=excluded.username, country_code=excluded.country_code");
                         block_on(builder.build().execute(&mut *conn))
                     })
                     .await;
