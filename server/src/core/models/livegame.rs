@@ -31,6 +31,8 @@ pub struct MatchConfiguration {
     pub free_for_all: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mappack_id: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub map_tag: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -55,8 +57,8 @@ pub struct MapClaim {
 #[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]
 #[repr(u8)]
 pub enum MapMode {
-    TOTD,
     RandomTMX,
+    Tags,
     Mappack,
 }
 

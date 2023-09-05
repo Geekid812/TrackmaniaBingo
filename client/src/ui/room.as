@@ -245,7 +245,7 @@ namespace UIGameRoom {
     string[] MatchConfigInfo(MatchConfiguration config) {
         return {
             StatusLabel(Icons::Th, tostring(config.gridSize) + "x" + tostring(config.gridSize)),
-            StatusLabel(Icons::Map, tostring(config.mapSelection)),
+            StatusLabel(Icons::Map, config.mapSelection != MapMode::Tags || !MXTags::TagsLoaded() ? tostring(config.mapSelection) : MXTags::GetTag(config.mapTag).name),
             StatusLabel(Icons::Bullseye, stringof(config.targetMedal)),
             StatusLabel(Icons::Hourglass, config.minutesLimit == 0 ? "∞" : tostring(config.minutesLimit) + ":00")
         };

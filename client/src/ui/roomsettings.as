@@ -66,13 +66,14 @@ namespace UIRoomSettings {
         LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X);
         UI::SetNextItemWidth(250);
         if (UI::BeginCombo("##bingomaps", @SelectedPack != null ? SelectedPack.name : stringof(MatchConfig.mapSelection))) {
-            if (UI::Selectable(stringof(MapMode::TOTD), MatchConfig.mapSelection == MapMode::TOTD)) {
-                MatchConfig.mapSelection = MapMode::TOTD;
-                @SelectedPack = null;
-            }
 
             if (UI::Selectable(stringof(MapMode::MXRandom), MatchConfig.mapSelection == MapMode::MXRandom)) {
                 MatchConfig.mapSelection = MapMode::MXRandom;
+                @SelectedPack = null;
+            }
+
+            if (UI::Selectable(stringof(MapMode::Tags), MatchConfig.mapSelection == MapMode::Tags)) {
+                MatchConfig.mapSelection = MapMode::Tags;
                 @SelectedPack = null;
             }
 
@@ -142,6 +143,27 @@ namespace UIRoomSettings {
         MatchConfig.mappackId = UI::InputInt("##bingomappack", MatchConfig.mappackId, 0);
     }
 
+    void MapTagSelector() {
+        UITools::AlignedLabel(Icons::Tag + "  Selected Map Tag");
+        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X);
+        UI::SetNextItemWidth(250);
+        if (!MXTags::TagsLoaded()) {
+            UI::BeginDisabled();
+            UI::InputText("##maptaginput", "...", false);
+            UI::EndDisabled();
+            return;
+        }
+        if (UI::BeginCombo("##bingomaptag", MXTags::GetTag(MatchConfig.mapTag).name)) {
+            for (uint i = 0; i < MXTags::Tags.Length; i++) {
+                MXTags::Tag tag = MXTags::Tags[i];
+                if (UI::Selectable(tag.name, tag.id == MatchConfig.mapTag)) {
+                    MatchConfig.mapTag = tag.id;
+                }
+            }
+            UI::EndCombo();
+        }
+    }
+
     void TargetMedalSelector() {
         UITools::AlignedLabel(Icons::Kenney::ButtonCircle + "  Target Medal");
         LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X);
@@ -207,10 +229,13 @@ namespace UIRoomSettings {
         UI::NewLine();
         UITools::SectionHeader("Game Settings");
         MapModeSelector();
-        TargetMedalSelector();
         if (MatchConfig.mapSelection == MapMode::Mappack) {
             MappackIdInput();
         }
+        if (MatchConfig.mapSelection == MapMode::Tags) {
+            MapTagSelector();
+        }
+        TargetMedalSelector();
         GridSizeSelector();
         TimeLimitControl();
         NoBingoTimeControl();

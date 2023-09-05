@@ -401,6 +401,7 @@ impl GameRoom {
     fn trigger_new_matchconfig(&mut self, config: MatchConfiguration) {
         if config.selection != self.matchconfig.selection
             || self.matchconfig.mappack_id != config.mappack_id
+            || self.matchconfig.map_tag != config.map_tag
             || self.matchconfig.grid_size < config.grid_size
         {
             // map selection changed, reload maps

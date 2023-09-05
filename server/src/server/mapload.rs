@@ -31,7 +31,12 @@ fn get_load_future(
 ) -> Pin<Box<dyn Future<Output = MaploadResult> + Send>> {
     match config.selection {
         MapMode::RandomTMX => Box::pin(cache_load_mxrandom(config.grid_size * config.grid_size)),
+        MapMode::Tags => Box::pin(cache_load_tag(
+            config.grid_size * config.grid_size,
+            config.map_tag.unwrap(),
+        )),
         MapMode::Mappack => Box::pin(network_load_mappack(config.mappack_id.unwrap())),
+        #[allow(unreachable_patterns)]
         _ => unimplemented!(),
     }
 }
@@ -56,13 +61,31 @@ async fn fetch_and_load<F: Future<Output = MaploadResult>>(
 async fn cache_load_mxrandom(count: usize) -> Result<Vec<MapRecord>, anyhow::Error> {
     mapcache::execute(move |mut conn| {
         let query =
-            sqlx::query("SELECT * FROM maps WHERE author_time <= ?  ORDER BY RANDOM() LIMIT ?")
+            sqlx::query("SELECT * FROM maps WHERE author_time <= ? ORDER BY RANDOM() LIMIT ?")
                 .bind(CONFIG.game.mxrandom_max_author_time.num_milliseconds() as i32)
                 .bind(count as i32);
         block_on(query.fetch_all(&mut *conn)).map(|v| {
             v.iter()
                 .map(|r| MapRecord::from_row(r).expect("MapRecord from_row failed"))
                 .collect()
+        })
+    })
+    .await
+    .map_err(anyhow::Error::from)
+}
+
+async fn cache_load_tag(count: usize, tag: i32) -> Result<Vec<MapRecord>, anyhow::Error> {
+    mapcache::execute(move |mut conn| {
+        let query =
+            sqlx::query("SELECT * FROM maps WHERE author_time <= ? AND (tags = ? OR tags LIKE ? + ',%')  ORDER BY RANDOM() LIMIT ?")
+                .bind(CONFIG.game.mxrandom_max_author_time.num_milliseconds() as i32)
+                .bind(tag)
+                .bind(tag)
+                .bind(count as i32);
+        block_on(query.fetch_all(&mut *conn)).map(|v| {
+            v.iter()
+            .map(|r| MapRecord::from_row(r).expect("MapRecord from_row failed"))
+            .collect()
         })
     })
     .await

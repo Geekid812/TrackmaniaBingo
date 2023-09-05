@@ -50,7 +50,7 @@ pub async fn run_loop() {
             .unwrap();
         let tomorrow = midnight + Duration::days(1);
         let time_until_midnight = TokioDuration::from((tomorrow - now).to_std().unwrap());
-        sleep_until(Instant::now() + TokioDuration::from_secs(3)).await;
+        sleep_until(Instant::now() + time_until_midnight).await;
         start_daily_challenge().await;
     }
 }

@@ -1,8 +1,9 @@
 
 class MatchConfiguration {
     uint gridSize = 5;
-    MapMode mapSelection = MapMode::TOTD;
+    MapMode mapSelection = MapMode::MXRandom;
     uint mappackId;
+    int mapTag = 1;
     Medal targetMedal = Medal::Author;
     uint minutesLimit = 0;
     uint noBingoMinutes = 0;
@@ -11,17 +12,17 @@ class MatchConfiguration {
 }
 
 enum MapMode {
-    TOTD,
     MXRandom,
+    Tags,
     Mappack,
 }
 
 string stringof(MapMode mode) {
-    if (mode == MapMode::TOTD) {
-        return "Track of the Day";
-    }
     if (mode == MapMode::MXRandom) {
-        return "Random Map (TMX)";
+        return "Random Maps";
+    }
+    if (mode == MapMode::Tags) {
+        return "Maps With Tag";
     }
     return "Custom Mappack";
 }
@@ -38,6 +39,7 @@ namespace MatchConfiguration {
         value["free_for_all"] = config.freeForAll;
 
         if (config.mapSelection == MapMode::Mappack) value["mappack_id"] = config.mappackId;
+        if (config.mapSelection == MapMode::Tags) value["map_tag"] = config.mapTag;
         return value;
     }
 
@@ -52,6 +54,7 @@ namespace MatchConfiguration {
         config.freeForAll = bool(value["free_for_all"]);
 
         if (value.HasKey("mappack_id")) config.mappackId = uint(value["mappack_id"]);
+        if (value.HasKey("map_tag")) config.mapTag = uint(value["map_tag"]);
         return config;
     }
 }
