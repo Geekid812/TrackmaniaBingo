@@ -50,9 +50,11 @@ namespace Board {
                 auto map = Match.gameMaps[j * cellsPerRow + i];
                 nvg::BeginPath();
                 vec4 color;
-                if (map.IsClaimed())
+                if (map.paintColor != vec3())
+                    color = UIColor::GetAlphaColor(map.paintColor, .8);
+                else if (map.IsClaimed())
                     color = UIColor::GetAlphaColor(map.LeadingRun().player.team.color, .8);
-                else 
+                else
                     color = vec4(.3, .3, .3, .8 * colorAnimProgress);
                 nvg::FillColor(color);
                 nvg::Rect(Position.x + float(i) * (cellSize + borderSize) + borderSize, Position.y + float(j) * (cellSize + borderSize) + borderSize, cellSize, cellSize);

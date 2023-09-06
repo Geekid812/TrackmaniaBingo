@@ -44,6 +44,7 @@ void Render() {
     Board::Draw();
     UIInfoBar::Render();
     UIMapList::Render();
+    UIPaintColor::Render();
 }
 
 void RenderInterface() {

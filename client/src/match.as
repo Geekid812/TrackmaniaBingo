@@ -98,6 +98,7 @@ class LiveMatch {
 class MapCell {
     GameMap@ map = null;
     array<MapClaim>@ attemptRanking = {};
+    vec3 paintColor = vec3();
     CachedImage@ thumbnail;
     CachedImage@ mapImage;
 
