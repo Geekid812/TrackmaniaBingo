@@ -38,6 +38,7 @@ namespace UIRoomSettings {
     }
 
     void AccessToggle() {
+        UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
         if (RoomConfig.isPublic) {
             UIColor::DarkGreen();
             if (UI::Button(Icons::Unlock + " Public")) {

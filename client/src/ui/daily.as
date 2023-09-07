@@ -8,7 +8,7 @@ namespace UIDaily {
         UI::PushFont(Font::Subtitle);
         UI::Text("Daily Challenge - " + formattedDate);
         UI::PopFont();   
-        UI::TextWrapped("A special bingo game with a 5x5 grid, Random Maps, Gold Medals, lasting all day everyday until midnight UTC.\n\nPlay at any time of the day and try to get a bingo line from these randomly selected maps. Be careful, everyone is playing at the same time on the same maps, and the bingos are only tailled up at the end of the day! Can you defend your maps and earn the win for today's challenge?\n\nNote: This mode is still a work in progress.");
+        UI::TextWrapped("A special bingo game with a 5x5 grid, random maps, gold medals, lasting all day everyday until midnight UTC.\n\nPlay at any time of the day and try to get a bingo line from these randomly selected maps. Be careful, everyone is playing at the same time on the same maps, and the bingos are only tallied up at the end of the day! Can you defend your maps and earn the win for today's challenge?\n\nNote: This mode is still a work in progress.");
 
         UI::NewLine();
         UITools::ConnectingIndicator();
