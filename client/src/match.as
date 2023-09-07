@@ -1,19 +1,20 @@
 
 class LiveMatch {
+    string uid;
     MatchConfiguration config;
     array<MapCell>@ gameMaps = {};
     array<Team>@ teams = {};
     array<Player>@ players = {};
-    uint64 startTime = 0;
-    uint64 overtimeStartTime = 0;
-    uint64 endTime = 0;
+    int64 startTime = 0;
+    int64 overtimeStartTime = 0;
+    int64 endTime = 0;
     MatchPhase phase = MatchPhase::Starting;
     EndState endState;
 
     Player@ GetSelf(){
         for (uint i = 0; i < players.Length; i++){
             auto player = players[i];
-            if (player.isSelf)
+            if (player.IsSelf())
                 return player;
         }
         return null;
@@ -35,6 +36,17 @@ class LiveMatch {
                 players.InsertLast(player);
         }
         return players;
+    }
+
+    uint GetTeamCellCount(Team team) {
+        uint sum = 0;
+        for (uint i = 0; i < gameMaps.Length; i++) {
+            if (gameMaps[i].IsClaimed() && gameMaps[i].LeadingRun().player.team == team) {
+                sum += 1;
+            }
+        }
+
+        return sum;
     }
 
     Player@ GetPlayer(int uid) {
@@ -98,6 +110,7 @@ class LiveMatch {
 class MapCell {
     GameMap@ map = null;
     array<MapClaim>@ attemptRanking = {};
+    vec3 paintColor = vec3();
     CachedImage@ thumbnail;
     CachedImage@ mapImage;
 
@@ -120,7 +133,7 @@ class MapCell {
 
     MapClaim@ GetLocalPlayerRun() {
         for (uint i = 0; i < attemptRanking.Length; i++) {
-            if (attemptRanking[i].player.isSelf) return attemptRanking[i]; 
+            if (attemptRanking[i].player.IsSelf()) return attemptRanking[i]; 
         }
 
         return null;
@@ -141,14 +154,32 @@ class MapCell {
     }
 }
 
-class EndState {
+class BingoLine {
     BingoDirection bingoDirection;
     int offset; // Horizontal: Row ID, Vertical: Column ID, Diagonal: 0 -> TL to BR & 1 -> BL to TR
-    uint64 endTime;
     Team team;
+
+    BingoLine() {}
+}
+
+class EndState {
+    uint64 endTime;
+    BingoDirection bingoDirection;
+    array<BingoLine>@ bingoLines = {};
+    Team@ team;
 
     bool HasEnded() {
         return this.endTime != 0;
+    }
+
+    uint WinnerTeamsCount() {
+        array<int>@ uniqueTeams = {};
+        for (uint i = 0; i < bingoLines.Length; i++) {
+            int team_id = bingoLines[i].team.id;
+            if (uniqueTeams.Find(team_id) == -1) uniqueTeams.InsertLast(team_id);
+        }
+
+        return uniqueTeams.Length;
     }
 }
 

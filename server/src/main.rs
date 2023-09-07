@@ -1,4 +1,3 @@
-use parking_lot::Mutex;
 use std::sync::Arc;
 use std::{net::SocketAddr, sync::atomic::AtomicU32};
 use tokio::{net::TcpSocket, sync::mpsc::unbounded_channel};
@@ -40,8 +39,9 @@ async fn main() {
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber");
 
     // Database setup
-    orm::start_database(&CONFIG.database_url);
-    orm::mapcache::start_database(&CONFIG.mapcache_url);
+    info!("opening database connections");
+    orm::start_database(&CONFIG.database_url).await;
+    orm::mapcache::start_database(&CONFIG.mapcache_url).await;
 
     // Start web dashboard
     tokio::spawn(web::main());

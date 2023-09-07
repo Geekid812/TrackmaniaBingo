@@ -7,14 +7,16 @@ use serde_with::TimestampSeconds;
 
 use super::map::GameMap;
 
-use super::{player::PlayerRef, team::BaseTeam};
+use super::player::PlayerRef;
+use super::team::GameTeam;
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MatchState {
+    pub uid: String,
     pub config: MatchConfiguration,
     pub phase: MatchPhase,
-    pub teams: Vec<BaseTeam>,
+    pub teams: Vec<GameTeam>,
     pub cells: Vec<GameCell>,
     #[serde_as(as = "TimestampSeconds")]
     pub started: DateTime<Utc>,
@@ -31,6 +33,8 @@ pub struct MatchConfiguration {
     pub free_for_all: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mappack_id: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub map_tag: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -55,8 +59,8 @@ pub struct MapClaim {
 #[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]
 #[repr(u8)]
 pub enum MapMode {
-    TOTD,
     RandomTMX,
+    Tags,
     Mappack,
 }
 

@@ -59,13 +59,15 @@ namespace UIRoomMenu {
         }
 
         float heightRemaining = UI::GetWindowSize().y - UI::GetCursorPos().y;
-        float offset = 150. * UI::GetScale();
+        float offset = 140. * UI::GetScale();
         UI::BeginChild("bingo_rooms", vec2(0, heightRemaining - offset), false);
 
         if (RoomsLoad == LoadStatus::Loading) {
             LoadingIndicator();
         } else if (RoomsLoad == LoadStatus::Error) {
             UI::Text("\\$888Public rooms failed to load.");
+            UI::SameLine();
+            UITools::ReconnectButton();
         } else {
             if (PublicRooms.Length == 0) {
                 UI::Text("\\$888There are no open public rooms at the moment.\nGo ahead and create one!");

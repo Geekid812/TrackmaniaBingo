@@ -8,7 +8,7 @@ namespace UIDaily {
         UI::PushFont(Font::Subtitle);
         UI::Text("Daily Challenge - " + formattedDate);
         UI::PopFont();   
-        UI::TextWrapped("Work in progress. This mode cannot be played yet.");
+        UI::TextWrapped("A special bingo game with a 5x5 grid, Random Maps, Gold Medals, lasting all day everyday until midnight UTC.\n\nPlay at any time of the day and try to get a bingo line from these randomly selected maps. Be careful, everyone is playing at the same time on the same maps, and the bingos are only tailled up at the end of the day! Can you defend your maps and earn the win for today's challenge?\n\nNote: This mode is still a work in progress.");
 
         UI::NewLine();
         UITools::ConnectingIndicator();
@@ -16,9 +16,11 @@ namespace UIDaily {
         if (Network::IsConnected()) {
             DailyShowGridPreview();
         }
+        if (!UIMainWindow::Visible) DailyLoad = LoadStatus::NotLoaded;
     }
 
     void DailyShowGridPreview() {
+        UITools::ErrorMessage("SubscribeDailyChallenge");
         if (DailyLoad == LoadStatus::NotLoaded) {
             startnew(Network::LoadDailyChallenge);
             DailyLoad = LoadStatus::Loading;
@@ -41,9 +43,23 @@ namespace UIDaily {
 
         // Hardcoded to fit a 5x5 grid
         CenterRemainingSpace(446, 446);
-        UI::BeginChild("bingodailygrid", vec2(446, 0), false);
-        UIMapList::MapGrid(DailyMatch.gameMaps, DailyMatch.config.gridSize, 0.5, false);
+        UI::BeginChild("bingodailygrid", vec2(446, 446), false);
+        bool interacted = UIMapList::MapGrid(DailyMatch.gameMaps, DailyMatch.config.gridSize, 0.5, true);
+        if (interacted) {
+            @Match = DailyMatch;
+            NetParams::MatchJoinUid = DailyMatch.uid;
+            UIMainWindow::Visible = false;
+            startnew(Network::JoinMatch);
+        }
         UI::EndChild();
+
+        UI::SetCursorPos(UI::GetCursorPos() - vec2(0., 48.));
+        string countdownText = Time::Format(Math::Max(Time::MillisecondsRemaining(DailyMatch), 0), false, true, true);
+        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(countdownText, Font::Header, 26.).x, 0.5);
+        LayoutTools::MoveTo(padding);
+        UI::PushFont(Font::Header);
+        UI::Text("\\$f90" + countdownText);
+        UI::PopFont();
     }
 
     void CenterRemainingSpace(float width, float height) {

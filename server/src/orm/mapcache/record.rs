@@ -1,12 +1,9 @@
-use super::schema::maps;
 use crate::core::util::serialize::serialize_time;
 use chrono::NaiveDateTime;
-use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
-#[derive(Queryable, Selectable, Identifiable, Serialize, Deserialize, Clone, Debug)]
-#[diesel(table_name = maps)]
-#[diesel(primary_key(tmxid))]
+#[derive(Serialize, Deserialize, Clone, Debug, FromRow)]
 #[serde(rename_all(deserialize = "PascalCase"))]
 pub struct MapRecord {
     #[serde(rename(deserialize = "TrackID"))]

@@ -9,6 +9,10 @@ namespace UIMapList {
         UI::Begin(WINDOW_NAME, Visible, UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoCollapse);
         UI::PushFont(Font::Condensed);
 
+        if (UI::IsWindowFocused() && UI::IsKeyPressed(UI::Key::Insert)) {
+            UIPaintColor::Visible = true;
+        }
+
         UI::SetNextItemWidth(220);
         float uiScale = PersistantStorage::MapListUiScale;
         uiScale = UI::SliderFloat(uiScale <= 0.5 ? "###gridsize" : "Grid UI Size###gridsize", uiScale, 0.2, 2.0, "%.1f");
@@ -20,7 +24,8 @@ namespace UIMapList {
         UI::End();
     }
 
-    void MapGrid(array<MapCell>@&in maps, int gridSize, float uiScale = 1.0, bool interactable = true) {
+    bool MapGrid(array<MapCell>@&in maps, int gridSize, float uiScale = 1.0, bool interactable = true) {
+        bool interacted = false;
         auto drawList = UI::GetWindowDrawList();
         UI::PushStyleVar(UI::StyleVar::CellPadding, vec2(8 * uiScale, 8 * uiScale));
         UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2(2, 2));
@@ -79,12 +84,18 @@ namespace UIMapList {
                 UI::EndTooltip();
             }
             if (interactable && UI::IsItemClicked()) {
-                Visible = false;
-                Playground::LoadMap(cell.map.tmxid);
+                if (UIPaintColor::Visible) cell.paintColor = UIPaintColor::SelectedColor;
+                else {
+                    Visible = false;
+                    Playground::LoadMap(cell.map.tmxid);
+                    interacted = true;
+                }
             }
 
             auto size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(0, 8 * uiScale) - startPos - vec2(0, UI::GetScrollY());
             vec4 rect = vec4(startPos.x, startPos.y, 500, size.y);
+            if (cell.paintColor != vec3())
+                drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.paintColor, 0.1));
             if (cell.IsClaimed())
                 drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.LeadingRun().player.team.color, 0.1));
             if (mapHovered) drawList.AddRectFilled(rect, vec4(.5, .5, .5, .1));
@@ -94,6 +105,7 @@ namespace UIMapList {
         UI::EndTable();
         UI::PopStyleColor(2);
         UI::PopStyleVar(3);
+        return interacted;
     }
 
     vec3 StyleToColor(const string&in style) {

@@ -5,32 +5,29 @@ use std::{
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-use palette::{FromColor, Hsv, Srgb};
 use parking_lot::Mutex;
 use rand::{distributions::Uniform, seq::SliceRandom, Rng};
 use serde::{Serialize, Serializer};
 use thiserror::Error;
-use tracing::{debug, warn};
+use tracing::debug;
 
 use super::{
     directory::{self, Owned, Shared, PUB_ROOMS_CHANNEL, ROOMS},
     events::{game::GameEvent, room::RoomEvent, roomlist::RoomlistEvent},
     gamecommon::PlayerData,
-    livegame::{GameTeam, LiveMatch, MatchConfiguration},
+    livegame::{LiveMatch, MatchConfiguration},
     models::{
         self,
         player::{Player, PlayerRef},
         room::{RoomConfiguration, RoomState, RoomTeam},
-        team::{BaseTeam, TeamIdentifier},
+        team::{BaseTeam, GameTeam, TeamIdentifier},
     },
+    teams::TeamsManager,
     util::Color,
 };
 use crate::{
     orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
-    server::{
-        context::{ClientContext, GameContext},
-        mapload,
-    },
+    server::{context::ClientContext, mapload},
     transport::Channel,
 };
 
@@ -40,8 +37,7 @@ pub struct GameRoom {
     config: RoomConfiguration,
     matchconfig: MatchConfiguration,
     members: Vec<PlayerData>,
-    teams: Vec<BaseTeam>,
-    teams_id: usize,
+    teams: TeamsManager<BaseTeam>,
     channel: Channel<RoomEvent>,
     created: DateTime<Utc>,
     load_marker: u32,
@@ -61,8 +57,7 @@ impl GameRoom {
             config,
             matchconfig,
             members: Vec::new(),
-            teams: Vec::new(),
-            teams_id: 0,
+            teams: TeamsManager::new(),
             channel: Channel::new(),
             created: Utc::now(),
             load_marker: 0,
@@ -115,7 +110,7 @@ impl GameRoom {
     }
 
     pub fn teams(&self) -> &Vec<BaseTeam> {
-        &self.teams
+        &self.teams.get_teams()
     }
 
     pub fn get_player(&self, uid: i32) -> Option<&PlayerData> {
@@ -127,7 +122,7 @@ impl GameRoom {
     }
 
     pub fn get_team(&self, id: TeamIdentifier) -> Option<&BaseTeam> {
-        self.teams.iter().filter(|p| p.id == id).next()
+        self.teams.get(id)
     }
 
     pub fn teams_as_model(&self) -> Vec<RoomTeam> {
@@ -151,7 +146,7 @@ impl GameRoom {
         self.members.iter().for_each(|p| {
             map.entry(p.team).or_default().push(p.profile.player.uid);
         });
-        self.teams.iter().for_each(|t| {
+        self.teams.get_teams().iter().for_each(|t| {
             map.entry(t.id).or_default();
         });
 
@@ -176,95 +171,6 @@ impl GameRoom {
             join_code: self.join_code.clone(),
             teams: self.teams_as_model(),
         }
-    }
-
-    pub fn create_team_from_preset(&mut self, teams: &Vec<(String, Color)>) -> Option<&BaseTeam> {
-        let team_count = self.teams.len();
-        if team_count >= teams.len() {
-            warn!("attempted to create more than {} teams", teams.len());
-            return None;
-        }
-
-        let mut rng = rand::thread_rng();
-        let mut idx = rng.gen_range(0..teams.len());
-        while self.team_exsits_with_name(&teams[idx].0) {
-            idx = rng.gen_range(0..teams.len());
-        }
-
-        let color = teams[idx].1;
-        Some(self.inner_create_team(teams[idx].0.clone(), color))
-    }
-
-    pub fn create_random_team(&mut self) -> &BaseTeam {
-        let mut rng = rand::thread_rng();
-        let (h, s, v) = (
-            rng.gen_range(0..=255),
-            rng.gen_range(128..=255),
-            rng.gen_range(128..=255),
-        );
-        let color: Hsv = Hsv::new_srgb(h, s, v).into_format::<f32>();
-        let rgb = Srgb::from_color(color).into_format::<u8>();
-        self.inner_create_team(String::new(), rgb)
-    }
-
-    fn inner_create_team(&mut self, name: String, color: Color) -> &BaseTeam {
-        let team = BaseTeam::new(self.teams_id, name, color);
-        self.teams_id += 1;
-        self.teams.push(team.clone());
-        self.channel
-            .broadcast(&RoomEvent::TeamCreated { base: team });
-        self.teams.last().unwrap()
-    }
-
-    pub fn remove_team(&mut self, id: TeamIdentifier) {
-        if self.teams.len() <= 1 {
-            warn!("attempted to delete when 1 or less team is left");
-            return;
-        }
-
-        let searched = self
-            .teams
-            .iter()
-            .enumerate()
-            .find(|(_, t)| t.id == id)
-            .map(|(i, t)| (i, t.to_owned()));
-        if let Some((i, team)) = searched {
-            self.teams.remove(i);
-            let mut updated_players = Vec::new();
-            let default = self.teams.iter().next().unwrap().id;
-            self.members.iter_mut().for_each(|p| {
-                if p.team == team.id {
-                    p.team = default;
-                    updated_players.push(p);
-                }
-            });
-
-            if updated_players.len() > 0 {
-                self.channel
-                    .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
-                        updates: HashMap::from_iter(
-                            updated_players
-                                .into_iter()
-                                .map(|p| (p.profile.player.uid, default)),
-                        ),
-                    }));
-            }
-        }
-        self.channel.broadcast(&RoomEvent::TeamDeleted { id });
-    }
-
-    fn team_exsits(&self, id: TeamIdentifier) -> bool {
-        self.teams.iter().find(|t| t.id == id).is_some()
-    }
-
-    fn team_exsits_with_name(&self, name: &str) -> bool {
-        self.teams.iter().any(|t| t.name == name)
-    }
-
-    fn get_least_populated_team(&self) -> Option<&BaseTeam> {
-        self.teams
-            .iter()
-            .min_by_key(|team| self.members.iter().filter(|m| m.team == team.id).count())
     }
 
     pub fn add_player(
@@ -354,7 +260,7 @@ impl GameRoom {
     }
 
     pub fn change_team(&mut self, uid: i32, team: TeamIdentifier) -> bool {
-        if !self.team_exsits(team) {
+        if !self.teams.exists(team) {
             return false;
         }
         if let Some(data) = self.members.iter_mut().find(|m| m.uid == uid) {
@@ -367,7 +273,7 @@ impl GameRoom {
 
     pub fn sort_teams(&mut self) {
         let mut unproccessed: Vec<&mut PlayerData> = self.members.iter_mut().collect();
-        let mut teams = self.teams.iter().cycle();
+        let mut teams = self.teams.get_teams().iter().cycle();
         let mut rng = rand::thread_rng();
         while unproccessed.len() > 0 {
             let dist = Uniform::new(0, unproccessed.len());
@@ -376,11 +282,64 @@ impl GameRoom {
         }
     }
 
+    pub fn remove_team(&mut self, id: TeamIdentifier) {
+        let team = self.teams.remove_team(id);
+        if let Some(team) = team {
+            let mut updated_players = Vec::new();
+            let default = self.teams.get_index(0).unwrap().id;
+            self.members.iter_mut().for_each(|p| {
+                if p.team == team.id {
+                    p.team = default;
+                    updated_players.push(p);
+                }
+            });
+
+            if updated_players.len() > 0 {
+                self.channel
+                    .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
+                        updates: HashMap::from_iter(
+                            updated_players
+                                .into_iter()
+                                .map(|p| (p.profile.player.uid, default)),
+                        ),
+                    }));
+            }
+        }
+        self.channel.broadcast(&RoomEvent::TeamDeleted { id });
+    }
+
+    pub fn create_team_from_preset(&mut self, teams: &Vec<(String, Color)>) -> Option<BaseTeam> {
+        let team = self
+            .teams
+            .create_team_from_preset(teams)
+            .map(BaseTeam::clone);
+        if let Some(team) = team.clone() {
+            self.team_created(team);
+        }
+        team
+    }
+
+    pub fn get_least_populated_team(&self) -> Option<&BaseTeam> {
+        self.teams
+            .get_teams()
+            .iter()
+            .min_by_key(|team| self.members.iter().filter(|m| m.team == team.id).count())
+    }
+
+    fn team_created(&mut self, team: BaseTeam) {
+        self.channel
+            .broadcast(&RoomEvent::TeamCreated { base: team })
+    }
+
     fn create_ffa_teams(&mut self) {
-        self.teams = Vec::new();
+        self.teams = TeamsManager::new();
         for i in 0..self.members.len() {
-            let team = self.create_random_team();
+            let team = self
+                .teams
+                .create_random_team(self.members[i].profile.player.username.clone())
+                .clone();
             self.members[i].team = team.id;
+            self.team_created(team);
         }
     }
 
@@ -404,6 +363,7 @@ impl GameRoom {
     fn trigger_new_matchconfig(&mut self, config: MatchConfiguration) {
         if config.selection != self.matchconfig.selection
             || self.matchconfig.mappack_id != config.mappack_id
+            || self.matchconfig.map_tag != config.map_tag
             || self.matchconfig.grid_size < config.grid_size
         {
             // map selection changed, reload maps
@@ -505,10 +465,13 @@ impl GameRoom {
         let match_arc = LiveMatch::new(
             self.matchconfig.clone(),
             self.loaded_maps.clone(),
-            self.teams_as_model()
-                .into_iter()
-                .map(GameTeam::from)
-                .collect(),
+            TeamsManager::from_teams(
+                self.teams_as_model()
+                    .into_iter()
+                    .map(GameTeam::from)
+                    .collect(),
+                self.teams.teams_id(),
+            ),
         );
         let mut lock = match_arc.lock();
         lock.set_parent_room(self.ptr.clone());
@@ -534,9 +497,6 @@ impl GameRoom {
     }
 
     pub fn reset_match(&mut self) {
-        if let Some(match_) = self.active_match.as_ref().and_then(|m| m.upgrade()) {
-            directory::MATCHES.remove_item(match_);
-        }
         self.active_match = None;
         self.send_in_game_status_update();
     }

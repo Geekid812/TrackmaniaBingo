@@ -61,7 +61,7 @@ namespace UIMainWindow {
         }
         UI::Dummy(vec2(0, 10));
 
-        if (@Room != null) {
+        if (@Room != null || @Match != null) {
             InGameHeader();
         }
         
@@ -166,7 +166,19 @@ namespace UIMainWindow {
         UI::PopFont();
 
         UI::SameLine();
-        UIRoomMenu::RoomInfo(Room.NetworkState());
+        if (@Room !is null) {
+            UIRoomMenu::RoomInfo(Room.NetworkState());
+        } else {
+            if (@UIDaily::DailyMatch !is null && Match.uid == UIDaily::DailyMatch.uid) {
+                UI::PushFont(Font::Bold);
+                UI::Text("Daily Challenge");
+                UI::PopFont();
+            } else {
+                UI::NewLine();
+            }
+
+            UI::Text(string::Join(UIGameRoom::MatchConfigInfo(Match.config), "\t"));
+        }
 
         UI::SameLine();
         float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t\t\tLeave").x, 1.0);

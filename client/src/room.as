@@ -16,7 +16,7 @@ class GameRoom {
     Player@ GetSelf(){
         for (uint i = 0; i < players.Length; i++){
             auto player = players[i];
-            if (player.isSelf)
+            if (player.IsSelf())
                 return player;
         }
         return null;
@@ -91,14 +91,17 @@ class Player {
     PlayerProfile profile;
     string name;
     Team team;
-    bool isSelf;
 
     Player() { }
 
-    Player(PlayerProfile profile, Team team, bool self) {
+    Player(PlayerProfile profile, Team team) {
         this.profile = profile;
         this.name = profile.username;
         this.team = team;
-        this.isSelf = self;
+    }
+
+    bool IsSelf() {
+        if (@Profile is null) return false;
+        return profile.uid == Profile.uid;
     }
 }

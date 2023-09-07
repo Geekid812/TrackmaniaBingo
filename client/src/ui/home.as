@@ -11,9 +11,9 @@ namespace UIHome {
 
     void Title() {
         string title = "\\$ff5Trackmania Bingo \\$888" + Meta::ExecutingPlugin().Version;
-        float titleSize = Draw::MeasureString(title, Font::Title, Font::Title.FontSize).x; 
+        float titleSize = Draw::MeasureString(title, Font::Header, Font::Header.FontSize).x; 
         float titlePadding = LayoutTools::GetPadding(UI::GetWindowSize().x, titleSize, 0.5);
-        UI::PushFont(Font::Title);
+        UI::PushFont(Font::Header);
         UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
         UI::Text(title);
         UI::PopFont();

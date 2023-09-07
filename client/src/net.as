@@ -245,6 +245,14 @@ namespace Network {
             NetworkHandlers::RoomSync(body);
         } else if (event == "MatchSync") {
             NetworkHandlers::MatchSync(body);
+        } else if (event == "AnnounceWinByCellCount") {
+            NetworkHandlers::AnnounceWinByCellCount(body);
+        } else if (event == "AnnounceDraw") {
+            NetworkHandlers::AnnounceDraw();
+        } else if (event == "MatchTeamCreated") {
+            NetworkHandlers::MatchTeamCreated(body);
+        } else if (event == "MatchPlayerJoin") {
+            NetworkHandlers::MatchPlayerJoin(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }
@@ -252,6 +260,7 @@ namespace Network {
 
     void CloseConnection() {
         Reset();
+        UIMainWindow::Visible = false;
         trace("Connection closed cleanly.");
     }
 
@@ -344,7 +353,7 @@ namespace Network {
         Room.name = response["name"];
         Room.localPlayerIsHost = true;
         Room.joinCode = roomCode;
-        @Room.players = { Player(Profile, Room.teams[0], true) };
+        @Room.players = { Player(Profile, Room.teams[0]) };
     }
 
     void CreateTeam() {
@@ -377,6 +386,20 @@ namespace Network {
 
         UIRoomMenu::JoinCodeVisible = false;
         UIRoomMenu::SwitchToContext();
+    }
+
+
+    void JoinMatch() {
+        auto body = Json::Object();
+        body["uid"] = NetParams::MatchJoinUid;
+
+        auto response = Post("JoinMatch", body, true);
+        if (response is null) {
+            trace("Network: JoinMatch - No reply from server.");
+            return;
+        }
+        
+        @Match = LiveMatch::Deserialize(response["state"]);
     }
 
     void GetPublicRooms() {
@@ -416,7 +439,6 @@ namespace Network {
         // TODO: this is rudimentary, it doesn't keep connection alive
         trace("Network: LeaveRoom requested.");
         CloseConnection();
-        UIMainWindow::Visible = false;
     }
 
     void JoinTeam(Team team) {

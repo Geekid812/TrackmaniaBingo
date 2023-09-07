@@ -14,7 +14,6 @@ namespace UIGameRoom {
         UI::PushStyleColor(UI::Col::TitleBg, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleColor(UI::Col::TitleBgActive, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleVar(UI::StyleVar::WindowTitleAlign, vec2(0.5, 0.5));
-        UI::PushFont(Font::Bold);
         UI::SetNextWindowSize(600, 400, UI::Cond::FirstUseEver);
         bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, (GrabFocus ? UI::WindowFlags::NoCollapse : 0));
         if (!Visible && @Match == null) {
@@ -42,7 +41,6 @@ namespace UIGameRoom {
 
     void CleanupUI() {
         UI::End();
-        UI::PopFont();
         UI::PopStyleVar();
         UI::PopStyleColor(2);
     }
@@ -234,7 +232,7 @@ namespace UIGameRoom {
 
     void PlayerLabel(Player player, uint index) {
         string titlePrefix = player.profile.title != "" ? "\\$" + player.profile.title.SubStr(0, 3) : "";
-        UI::Text((player.isSelf ? "\\$ff8" : "") + (index + 1) + ". " + titlePrefix + player.name);
+        UI::Text((player.IsSelf() ? "\\$ff8" : "") + (index + 1) + ". " + titlePrefix + player.name);
         if (UI::IsItemHovered()) {
             UI::BeginTooltip();
             UIProfile::RenderProfile(player.profile, false);
@@ -245,7 +243,7 @@ namespace UIGameRoom {
     string[] MatchConfigInfo(MatchConfiguration config) {
         return {
             StatusLabel(Icons::Th, tostring(config.gridSize) + "x" + tostring(config.gridSize)),
-            StatusLabel(Icons::Map, tostring(config.mapSelection)),
+            StatusLabel(Icons::Map, config.mapSelection != MapMode::Tags || !MXTags::TagsLoaded() ? tostring(config.mapSelection) : MXTags::GetTag(config.mapTag).name),
             StatusLabel(Icons::Bullseye, stringof(config.targetMedal)),
             StatusLabel(Icons::Hourglass, config.minutesLimit == 0 ? "∞" : tostring(config.minutesLimit) + ":00")
         };

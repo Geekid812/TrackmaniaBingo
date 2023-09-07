@@ -1,35 +1,30 @@
-use deadpool_diesel::{
-    sqlite::{Manager, Object, Pool},
-    PoolError, Runtime,
-};
-use diesel::SqliteConnection;
 use once_cell::sync::OnceCell;
+use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 
-use super::ExecuteError;
+use super::Connection;
 
 pub mod record;
-pub mod schema;
 
-static MAPCACHE_POOL: OnceCell<Pool> = OnceCell::new();
+static MAPCACHE_POOL: OnceCell<SqlitePool> = OnceCell::new();
 
-pub fn start_database(url: &str) {
-    let manager = Manager::new(url, Runtime::Tokio1);
-    let pool = Pool::builder(manager).max_size(8).build().unwrap();
+pub async fn start_database(url: &str) {
+    let pool = SqlitePoolOptions::new()
+        .max_connections(3)
+        .connect(url)
+        .await
+        .expect("database should be started");
     MAPCACHE_POOL.get_or_init(|| pool);
 }
 
-async fn pooled_connection() -> Result<Object, PoolError> {
-    MAPCACHE_POOL
-        .get()
-        .expect("database pool should be initialized")
-        .get()
-        .await
-}
-
-pub async fn execute<F, R>(f: F) -> Result<R, ExecuteError>
+pub async fn execute<F, R>(f: F) -> R
 where
-    F: FnOnce(&mut SqliteConnection) -> R + Send + 'static,
+    F: FnOnce(Connection) -> R + Send + 'static,
     R: Send + 'static,
 {
-    Ok(pooled_connection().await?.interact(f).await?)
+    f(MAPCACHE_POOL
+        .get()
+        .expect("database not initialized")
+        .acquire()
+        .await
+        .expect("did not acquire database connection"))
 }

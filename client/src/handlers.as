@@ -140,14 +140,14 @@ namespace NetworkHandlers {
             for (uint j = 0; j < t["members"].Length; j++) {
                 Json::Value@ m = t["members"][j];
                 PlayerProfile profile = PlayerProfile::Deserialize(m);
-                Room.players.InsertLast(Player(profile, team, profile.uid == Profile.uid));
+                Room.players.InsertLast(Player(profile, team));
             }
         }
     }
 
     void PlayerJoin(Json::Value@ data) {
         if (@Room is null) return;
-        Room.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Room.GetTeamWithId(data["team"]), false));
+        Room.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Room.GetTeamWithId(data["team"])));
     }
 
     void PlayerLeave(Json::Value@ data) {
@@ -161,14 +161,34 @@ namespace NetworkHandlers {
     }
 
     void AnnounceBingo(Json::Value@ data) {
-        Team team = Room.GetTeamWithId(int(data["team"]));
-        string teamName = "\\$" + UIColor::GetHex(team.color) + team.name;
-        UI::ShowNotification(Icons::Trophy + " Bingo!", teamName + "\\$z has won the game!", vec4(.6, .6, 0, 1), 20000);
+        @Match.endState.bingoLines = {};
+        for (uint i = 0; i < data["lines"].Length; i++) {
+            auto value = data["lines"][i];
+            BingoLine line = BingoLine();
+            int team_id = int(value["team"]);
 
-        Match.endState.bingoDirection = BingoDirection(int(data["direction"]));
-        Match.endState.offset = data["index"];
+            line.offset = value["index"];
+            line.bingoDirection = BingoDirection(int(value["direction"]));
+            line.team = Match.GetTeamWithId(team_id);
+            Match.endState.bingoLines.InsertLast(line);
+        }
+        if (Match.endState.bingoLines.Length == 0) {
+            throw("Received empty bingo lines!");
+        }
+
+        uint winningTeamsCount = Match.endState.WinnerTeamsCount();
+        string textContent;
+        if (winningTeamsCount == 1) {
+            Team team = Match.endState.bingoLines[0].team;
+            @Match.endState.team = team;
+            string teamName = "\\$" + UIColor::GetHex(team.color) + team.name;
+            textContent = teamName + "\\$z has won the game!";
+        } else {
+            textContent = winningTeamsCount + " teams have managed to get a bingo. Congratulations!";
+        }
+        UI::ShowNotification(Icons::Trophy + " Bingo!", textContent, vec4(.9, .6, 0, 1), 20000);
+
         Match.endState.endTime = Time::Now;
-        Match.endState.team = team;
         Match.SetPhase(MatchPhase::Ended);
         WasConnected = false;
     }
@@ -235,5 +255,38 @@ namespace NetworkHandlers {
 
     void MatchSync(Json::Value@ data) {
         warn("TODO: MatchSync");
+    }
+
+    void AnnounceWinByCellCount(Json::Value@ data) {
+        Team team = Match.GetTeamWithId(int(data["team"]));
+        string teamName = "\\$" + UIColor::GetHex(team.color) + team.name;
+        uint cellCount = Match.GetTeamCellCount(team);
+        UI::ShowNotification(Icons::HourglassEnd + " Game End", teamName + "\\$z has won the game by claiming the most maps, with a total of " + cellCount + " maps!", vec4(.9, .6, 0, 1), 20000);
+
+        Match.endState.endTime = Time::Now;
+        @Match.endState.team = team;
+        Match.SetPhase(MatchPhase::Ended);
+        WasConnected = false;
+    }
+
+    void AnnounceDraw() {
+        UI::ShowNotification(Icons::HourglassEnd + " Game End", "The game has ended in a tie.", vec4(.5, .5, .5, 1), 20000);
+
+        Match.endState.endTime = Time::Now;
+        Match.SetPhase(MatchPhase::Ended);
+        WasConnected = false;
+    }
+
+    void MatchTeamCreated(Json::Value@ data) {
+        Match.teams.InsertLast(Team(
+            data["id"], 
+            data["name"],
+            vec3(data["color"][0] / 255., data["color"][1] / 255., data["color"][2] / 255.)
+        ));
+    }
+
+    void MatchPlayerJoin(Json::Value@ data) {
+        if (@Match is null) return;
+        Match.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Match.GetTeamWithId(data["team"])));
     }
 }

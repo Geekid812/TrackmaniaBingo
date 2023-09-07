@@ -47,14 +47,14 @@ namespace UIProfile {
         }
         ratingText += " \\$888±" + deviation;
         ratingText = "Score: " + ratingText;
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(ratingText, Font::Regular, Font::Regular.FontSize).x, 0.95);
+        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(ratingText, Font::Regular, 16.).x, 0.95);
         LayoutTools::MoveTo(padding);
         UI::Text(ratingText);
     }
 
     void PlayerId(int uid) {
         string idText = "\\$888Player ID: " + uid;
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Regular, Font::Regular.FontSize).x, 0.95);
+        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Regular, 16.).x, 0.95);
         LayoutTools::MoveTo(padding);
         UI::Text(idText);
     }

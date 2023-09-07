@@ -50,9 +50,11 @@ namespace Board {
                 auto map = Match.gameMaps[j * cellsPerRow + i];
                 nvg::BeginPath();
                 vec4 color;
-                if (map.IsClaimed())
+                if (map.paintColor != vec3())
+                    color = UIColor::GetAlphaColor(map.paintColor, .8);
+                else if (map.IsClaimed())
                     color = UIColor::GetAlphaColor(map.LeadingRun().player.team.color, .8);
-                else 
+                else
                     color = vec4(.3, .3, .3, .8 * colorAnimProgress);
                 nvg::FillColor(color);
                 nvg::Rect(Position.x + float(i) * (cellSize + borderSize) + borderSize, Position.y + float(j) * (cellSize + borderSize) + borderSize, cellSize, cellSize);
@@ -84,30 +86,33 @@ namespace Board {
         }
 
         // Winning stroke
-        BingoDirection direction = Match.endState.bingoDirection;
-        int i = Match.endState.offset;
-        nvg::StrokeColor(BINGO_STROKE_COLOR);
-        nvg::StrokeWidth(STROKE_WIDTH);
-        if (direction == BingoDirection::Horizontal) {
-            float yPos = Position.y + borderSize + (cellSize / 2) + i * (cellSize + borderSize);
-            nvg::BeginPath();
-            nvg::MoveTo(vec2(Position.x - borderSize, yPos));
-            nvg::LineTo(vec2(Position.x + BoardSize + borderSize, yPos));
-            nvg::Stroke();
-        } else if (direction == BingoDirection::Vertical) {
-            float xPos = Position.x + borderSize + (cellSize / 2) + i * (cellSize + borderSize);
-            nvg::BeginPath();
-            nvg::MoveTo(vec2(xPos, Position.y - borderSize));
-            nvg::LineTo(vec2(xPos, Position.y + BoardSize + borderSize));
-            nvg::Stroke();
-        } else if (direction == BingoDirection::Diagonal) {
-            nvg::BeginPath();
-            nvg::MoveTo(vec2(Position.x - borderSize, Position.y - borderSize + i * (BoardSize + 2 * borderSize)));
-            nvg::LineTo(vec2(Position.x + BoardSize + borderSize, Position.y - borderSize + (1 - i) * (BoardSize + 2 * borderSize)));
-            nvg::Stroke();
-        }
+        for (uint j = 0; j < Match.endState.bingoLines.Length; j++) {
+            BingoLine line = Match.endState.bingoLines[j];
+            BingoDirection direction = line.bingoDirection;
+            int i = line.offset;
+            nvg::StrokeColor(BINGO_STROKE_COLOR);
+            nvg::StrokeWidth(STROKE_WIDTH);
+            if (direction == BingoDirection::Horizontal) {
+                float yPos = Position.y + borderSize + (cellSize / 2) + i * (cellSize + borderSize);
+                nvg::BeginPath();
+                nvg::MoveTo(vec2(Position.x - borderSize, yPos));
+                nvg::LineTo(vec2(Position.x + BoardSize + borderSize, yPos));
+                nvg::Stroke();
+            } else if (direction == BingoDirection::Vertical) {
+                float xPos = Position.x + borderSize + (cellSize / 2) + i * (cellSize + borderSize);
+                nvg::BeginPath();
+                nvg::MoveTo(vec2(xPos, Position.y - borderSize));
+                nvg::LineTo(vec2(xPos, Position.y + BoardSize + borderSize));
+                nvg::Stroke();
+            } else if (direction == BingoDirection::Diagonal) {
+                nvg::BeginPath();
+                nvg::MoveTo(vec2(Position.x - borderSize, Position.y - borderSize + i * (BoardSize + 2 * borderSize)));
+                nvg::LineTo(vec2(Position.x + BoardSize + borderSize, Position.y - borderSize + (1 - i) * (BoardSize + 2 * borderSize)));
+                nvg::Stroke();
+            }
 
-        nvg::ClosePath();
+            nvg::ClosePath();
+        }
     }
 
     // A unit of drawing is 1/100th of the screen's width.
