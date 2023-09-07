@@ -80,7 +80,13 @@ namespace UIInfoBar {
         MatchPhase phase = Match.GetPhase();
         if (phase == MatchPhase::Starting) return;
 
-        auto team = Match.GetSelf().team;
+        Player@ self = Match.GetSelf();
+        Team team;
+        if (@self is null) {
+            team = Team(0, "", vec3(.5, .5, .5));
+        } else {
+            team = self.team;
+        }
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
         UI::PushFont(Font::MonospaceBig);

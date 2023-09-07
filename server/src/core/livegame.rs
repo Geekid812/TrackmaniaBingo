@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use std::{
     iter::once,
     sync::{Arc, Weak},
@@ -10,7 +11,7 @@ use crate::{
         mapcache::record::MapRecord,
         models::matches::{Match, PlayerToMatch},
     },
-    server::tasks::execute_delayed_task,
+    server::{context::ClientContext, tasks::execute_delayed_task},
     transport::Channel,
 };
 use chrono::{DateTime, Duration, Utc};
@@ -30,7 +31,7 @@ use super::{
         map::GameMap,
         player::Player,
         room::RoomTeam,
-        team::{BaseTeam, TeamIdentifier},
+        team::{BaseTeam, GameTeam, TeamIdentifier},
     },
     room::GameRoom,
     teams::{Team, TeamsManager},
@@ -189,6 +190,65 @@ impl LiveMatch {
         return None;
     }
 
+    fn get_least_populated_team(&self) -> Option<&GameTeam> {
+        self.teams
+            .get_teams()
+            .iter()
+            .min_by_key(|team| team.members.iter().count())
+    }
+
+    pub fn player_join(
+        &mut self,
+        ctx: &ClientContext,
+        mut requested_team: Option<TeamIdentifier>,
+    ) -> Result<TeamIdentifier, anyhow::Error> {
+        if !self.options.player_join {
+            return Err(anyhow!("joining is disabled for this match"));
+        }
+
+        if requested_team.is_none() && !self.config.free_for_all {
+            requested_team = self.get_least_populated_team().map(|t| t.base.id);
+        }
+        self.add_player(ctx, requested_team)
+    }
+
+    fn add_player(
+        &mut self,
+        ctx: &ClientContext,
+        team: Option<TeamIdentifier>,
+    ) -> Result<TeamIdentifier, anyhow::Error> {
+        let team = match team {
+            Some(id) => self
+                .teams
+                .get_mut(id)
+                .ok_or(anyhow!("team id {:?} not found", id))?,
+            None => {
+                let id = self.teams.create_random_team().base.id;
+                let team = self
+                    .teams
+                    .get_mut(id)
+                    .expect("team exists after creating it");
+                self.channel.broadcast(&GameEvent::MatchTeamCreated {
+                    base: team.base.clone(),
+                });
+                team
+            }
+        };
+
+        team.members.push(Player {
+            profile: ctx.profile.clone(),
+            operator: false,
+            disconnected: false,
+        });
+        self.channel.broadcast(&GameEvent::MatchPlayerJoin {
+            profile: ctx.profile.clone(),
+            team: team.base.id,
+        });
+        self.channel
+            .subscribe(ctx.profile.player.uid, ctx.writer.clone());
+        Ok(team.base.id)
+    }
+
     pub fn get_cell(&self, id: usize) -> &GameCell {
         &self.cells[id]
     }
@@ -218,14 +278,10 @@ impl LiveMatch {
 
     pub fn get_state(&self) -> MatchState {
         MatchState {
+            uid: self.uid.clone(),
             config: self.config.clone(),
             phase: self.phase,
-            teams: self
-                .teams
-                .get_teams()
-                .iter()
-                .map(|t| t.base.clone())
-                .collect(), // TODO: broadcast members too
+            teams: self.teams.get_teams().iter().map(GameTeam::clone).collect(), // TODO: broadcast members too
             cells: self.cells.clone(),
             started: self.started.unwrap_or_default(),
         }
@@ -422,28 +478,6 @@ impl Default for MatchOptions {
             start_countdown: CONFIG.game.start_countdown,
             player_join: false,
         }
-    }
-}
-
-pub struct GameTeam {
-    base: BaseTeam,
-    members: Vec<Player>,
-    pub winner: bool,
-}
-
-impl From<RoomTeam> for GameTeam {
-    fn from(value: RoomTeam) -> Self {
-        Self {
-            base: value.base,
-            members: value.members,
-            winner: false,
-        }
-    }
-}
-
-impl Team for GameTeam {
-    fn base(&self) -> &BaseTeam {
-        &self.base
     }
 }
 

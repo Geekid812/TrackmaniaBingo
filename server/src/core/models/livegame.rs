@@ -7,14 +7,16 @@ use serde_with::TimestampSeconds;
 
 use super::map::GameMap;
 
-use super::{player::PlayerRef, team::BaseTeam};
+use super::player::PlayerRef;
+use super::team::GameTeam;
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MatchState {
+    pub uid: String,
     pub config: MatchConfiguration,
     pub phase: MatchPhase,
-    pub teams: Vec<BaseTeam>,
+    pub teams: Vec<GameTeam>,
     pub cells: Vec<GameCell>,
     #[serde_as(as = "TimestampSeconds")]
     pub started: DateTime<Utc>,

@@ -1,19 +1,20 @@
 
 class LiveMatch {
+    string uid;
     MatchConfiguration config;
     array<MapCell>@ gameMaps = {};
     array<Team>@ teams = {};
     array<Player>@ players = {};
-    uint64 startTime = 0;
-    uint64 overtimeStartTime = 0;
-    uint64 endTime = 0;
+    int64 startTime = 0;
+    int64 overtimeStartTime = 0;
+    int64 endTime = 0;
     MatchPhase phase = MatchPhase::Starting;
     EndState endState;
 
     Player@ GetSelf(){
         for (uint i = 0; i < players.Length; i++){
             auto player = players[i];
-            if (player.isSelf)
+            if (player.IsSelf())
                 return player;
         }
         return null;
@@ -121,7 +122,7 @@ class MapCell {
 
     MapClaim@ GetLocalPlayerRun() {
         for (uint i = 0; i < attemptRanking.Length; i++) {
-            if (attemptRanking[i].player.isSelf) return attemptRanking[i]; 
+            if (attemptRanking[i].player.IsSelf()) return attemptRanking[i]; 
         }
 
         return null;

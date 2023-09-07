@@ -232,7 +232,7 @@ namespace UIGameRoom {
 
     void PlayerLabel(Player player, uint index) {
         string titlePrefix = player.profile.title != "" ? "\\$" + player.profile.title.SubStr(0, 3) : "";
-        UI::Text((player.isSelf ? "\\$ff8" : "") + (index + 1) + ". " + titlePrefix + player.name);
+        UI::Text((player.IsSelf() ? "\\$ff8" : "") + (index + 1) + ". " + titlePrefix + player.name);
         if (UI::IsItemHovered()) {
             UI::BeginTooltip();
             UIProfile::RenderProfile(player.profile, false);

@@ -344,7 +344,7 @@ namespace Network {
         Room.name = response["name"];
         Room.localPlayerIsHost = true;
         Room.joinCode = roomCode;
-        @Room.players = { Player(Profile, Room.teams[0], true) };
+        @Room.players = { Player(Profile, Room.teams[0]) };
     }
 
     void CreateTeam() {
@@ -377,6 +377,20 @@ namespace Network {
 
         UIRoomMenu::JoinCodeVisible = false;
         UIRoomMenu::SwitchToContext();
+    }
+
+
+    void JoinMatch() {
+        auto body = Json::Object();
+        body["uid"] = NetParams::MatchJoinUid;
+
+        auto response = Post("JoinMatch", body, true);
+        if (response is null) {
+            trace("Network: JoinMatch - No reply from server.");
+            return;
+        }
+        
+        @Match = LiveMatch::Deserialize(response["state"]);
     }
 
     void GetPublicRooms() {

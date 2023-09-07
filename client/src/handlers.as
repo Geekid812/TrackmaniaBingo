@@ -140,14 +140,14 @@ namespace NetworkHandlers {
             for (uint j = 0; j < t["members"].Length; j++) {
                 Json::Value@ m = t["members"][j];
                 PlayerProfile profile = PlayerProfile::Deserialize(m);
-                Room.players.InsertLast(Player(profile, team, profile.uid == Profile.uid));
+                Room.players.InsertLast(Player(profile, team));
             }
         }
     }
 
     void PlayerJoin(Json::Value@ data) {
         if (@Room is null) return;
-        Room.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Room.GetTeamWithId(data["team"]), false));
+        Room.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Room.GetTeamWithId(data["team"])));
     }
 
     void PlayerLeave(Json::Value@ data) {

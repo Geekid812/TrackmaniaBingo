@@ -42,7 +42,13 @@ namespace UIDaily {
         // Hardcoded to fit a 5x5 grid
         CenterRemainingSpace(446, 446);
         UI::BeginChild("bingodailygrid", vec2(446, 0), false);
-        UIMapList::MapGrid(DailyMatch.gameMaps, DailyMatch.config.gridSize, 0.5, false);
+        bool interacted = UIMapList::MapGrid(DailyMatch.gameMaps, DailyMatch.config.gridSize, 0.5, true);
+        if (interacted) {
+            @Match = DailyMatch;
+            NetParams::MatchJoinUid = DailyMatch.uid;
+            UIMainWindow::Visible = false;
+            startnew(Network::JoinMatch);
+        }
         UI::EndChild();
     }
 

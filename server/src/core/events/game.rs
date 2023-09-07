@@ -5,9 +5,12 @@ use serde_with::DurationMilliSeconds;
 use crate::{
     core::{
         livegame::BingoLine,
-        models::livegame::{MapClaim, MatchPhase, MatchState},
+        models::{
+            livegame::{MapClaim, MatchPhase, MatchState},
+            team::{BaseTeam, TeamIdentifier},
+        },
     },
-    orm::mapcache::record::MapRecord,
+    orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
 };
 
 #[serde_with::serde_as]
@@ -32,4 +35,15 @@ pub enum GameEvent {
         phase: MatchPhase,
     },
     MatchSync(MatchState),
+    MatchTeamCreated {
+        #[serde(flatten)]
+        base: BaseTeam,
+    },
+    MatchPlayerJoin {
+        profile: PlayerProfile,
+        team: TeamIdentifier,
+    },
+    PlayerDisconnect {
+        uid: i32,
+    },
 }

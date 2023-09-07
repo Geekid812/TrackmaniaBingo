@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::{teams::Team, util::Color};
 
+use super::player::Player;
+use super::room::RoomTeam;
+
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Debug, Hash, Deserialize)]
 pub struct TeamIdentifier(usize);
 
@@ -33,5 +36,39 @@ impl PartialEq for BaseTeam {
 impl Team for BaseTeam {
     fn base(&self) -> &BaseTeam {
         &self
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GameTeam {
+    pub base: BaseTeam,
+    pub members: Vec<Player>,
+    #[serde(skip)]
+    pub winner: bool,
+}
+
+impl From<BaseTeam> for GameTeam {
+    fn from(value: BaseTeam) -> Self {
+        Self {
+            base: value,
+            members: Vec::new(),
+            winner: false,
+        }
+    }
+}
+
+impl From<RoomTeam> for GameTeam {
+    fn from(value: RoomTeam) -> Self {
+        Self {
+            base: value.base,
+            members: value.members,
+            winner: false,
+        }
+    }
+}
+
+impl Team for GameTeam {
+    fn base(&self) -> &BaseTeam {
+        &self.base
     }
 }
