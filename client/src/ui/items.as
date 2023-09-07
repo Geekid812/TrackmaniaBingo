@@ -83,14 +83,17 @@ namespace UITools {
 
             if (err == "timeout") {
                 UI::SameLine();
-                if (UI::Button(Icons::Globe + " Reconnect")) startnew(function()  {
-                    Network::CloseConnection();
-                    Network::Connect();
-                });
+                ReconnectButton();
             }
         }
     }
 
+    void ReconnectButton() {
+        if (UI::Button(Icons::Globe + " Reconnect")) startnew(function()  {
+            Network::CloseConnection();
+            Network::Connect();
+        });
+    }
 
     void ConnectingIndicator() {
         if (Network::GetState() == ConnectionState::Connecting) {

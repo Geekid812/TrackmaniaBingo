@@ -20,21 +20,20 @@ use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
 use sqlx::QueryBuilder;
-use tracing::error;
+use tracing::{debug, error};
 
 use super::{
-    directory::{Owned, Shared},
+    directory::{Owned, Shared, MATCHES},
     events::game::GameEvent,
     models::{
         self,
         livegame::{GameCell, MapClaim, MatchPhase, MatchState},
         map::GameMap,
         player::Player,
-        room::RoomTeam,
-        team::{BaseTeam, GameTeam, TeamIdentifier},
+        team::{GameTeam, TeamIdentifier},
     },
     room::GameRoom,
-    teams::{Team, TeamsManager},
+    teams::TeamsManager,
     util::base64,
 };
 
@@ -56,6 +55,7 @@ pub struct LiveMatch {
 struct MatchOptions {
     start_countdown: Duration,
     player_join: bool,
+    is_daily: bool,
 }
 
 impl LiveMatch {
@@ -109,6 +109,13 @@ impl LiveMatch {
         self.options.player_join = enabled;
     }
 
+    pub fn set_daily(&mut self, is_daily: bool) {
+        if self.started.is_some() {
+            panic!("attempted to change match options after starting");
+        }
+        self.options.is_daily = is_daily;
+    }
+
     pub fn setup_match_start(&mut self, start_date: DateTime<Utc>) {
         self.started = Some(start_date);
         self.setup_phase_timers();
@@ -131,7 +138,7 @@ impl LiveMatch {
         if !main_phase_duration.is_zero() {
             execute_delayed_task(
                 self.ptr.clone(),
-                |game| game.overtime_phase_change(),
+                |game| game.endgame_phase_change(),
                 (countdown_duration + nobingo_duration + main_phase_duration)
                     .to_std()
                     .unwrap(),
@@ -206,6 +213,13 @@ impl LiveMatch {
             return Err(anyhow!("joining is disabled for this match"));
         }
 
+        let existing_team = self.get_player_team(ctx.profile.player.uid);
+        if let Some(team) = existing_team {
+            self.channel
+                .subscribe(ctx.profile.player.uid, ctx.writer.clone());
+            return Ok(team);
+        }
+
         if requested_team.is_none() && !self.config.free_for_all {
             requested_team = self.get_least_populated_team().map(|t| t.base.id);
         }
@@ -223,7 +237,11 @@ impl LiveMatch {
                 .get_mut(id)
                 .ok_or(anyhow!("team id {:?} not found", id))?,
             None => {
-                let id = self.teams.create_random_team().base.id;
+                let id = self
+                    .teams
+                    .create_random_team(ctx.profile.player.username.clone())
+                    .base
+                    .id;
                 let team = self
                     .teams
                     .get_mut(id)
@@ -304,31 +322,53 @@ impl LiveMatch {
         ranking.insert(i, claim.clone());
         self.broadcast_submitted_run(id, claim, i + 1);
 
-        self.do_bingo_checks();
+        if !self.options.is_daily {
+            if self.do_bingo_checks() {
+                return;
+            }
+        }
+        if self.phase == MatchPhase::Overtime {
+            self.do_cell_winner_checks();
+        }
     }
 
-    fn announce_bingo_and_game_end(&mut self, line: BingoLine) {
-        let winning_team = self.get_team_mut(line.team).expect("winning team exists");
-        winning_team.winner = true;
+    fn announce_bingo_and_game_end(&mut self, lines: Vec<BingoLine>) {
+        for line in &lines {
+            let winning_team = self.get_team_mut(line.team).expect("winning team exists");
+            winning_team.winner = true;
+        }
 
-        self.channel
-            .broadcast(&GameEvent::AnnounceBingo { line: line.clone() });
-        self.set_game_ended();
+        self.channel.broadcast(&GameEvent::AnnounceBingo {
+            lines: lines.clone(),
+        });
+        self.set_game_ended(false);
     }
 
-    fn set_game_ended(&mut self) {
+    fn set_game_ended(&mut self, draw: bool) {
         if let Some(room) = self.room.upgrade() {
             room.lock().reset_match();
         }
-        self.save_match();
+
+        self.save_match(draw);
+        MATCHES.remove(self.uid.clone());
     }
 
-    fn save_match(&mut self) {
+    fn cell_count(&self) -> usize {
+        self.config.grid_size * self.config.grid_size
+    }
+
+    fn save_match(&mut self, draw: bool) {
+        let daily_timedate = if self.options.is_daily {
+            self.started
+                .map(|date| format!("{}", date.format("%Y-%m-%d")))
+        } else {
+            None
+        };
         let match_model = Match {
             uid: self.uid.clone(),
             started_at: self.started.map(|t| t.naive_utc()).unwrap_or_default(),
             ended_at: Utc::now().naive_utc(),
-            daily_timedate: None,
+            daily_timedate,
         };
         let mut player_results = Vec::new();
         for team in self.teams.get_teams() {
@@ -336,7 +376,9 @@ impl LiveMatch {
                 player_results.push(PlayerToMatch {
                     player_uid: player.profile.player.uid,
                     match_uid: self.uid.clone(),
-                    outcome: if team.winner {
+                    outcome: if draw {
+                        "D".to_owned()
+                    } else if team.winner {
                         "W".to_owned()
                     } else {
                         "L".to_owned()
@@ -351,17 +393,21 @@ impl LiveMatch {
             });
             let query = builder.build();
             if let Err(e) = block_on(query.execute(&mut *conn)) {
-                error!("execute error: {}", e);
+                error!("execute error in matches: {}", e);
             }
 
+            if player_results.is_empty() {
+                return;
+            }
             let mut builder = QueryBuilder::new("INSERT INTO matches_players ");
             let query = builder
                 .push_values(player_results, |mut b, result| {
                     result.bind_values(&mut b);
                 })
-                .build();
+                .build()
+                .persistent(false);
             if let Err(e) = block_on(query.execute(&mut *conn)) {
-                error!("execute error: {}", e);
+                error!("execute error in matches_players: {}", e);
             }
         }));
     }
@@ -378,11 +424,8 @@ impl LiveMatch {
         if self.phase != MatchPhase::NoBingo {
             let bingos = self.check_for_bingos();
             let len = bingos.len();
-            if len > 1 && !bingos.iter().all(|line| line.team == bingos[0].team) {
-                self.overtime_phase_change();
-            } else if len >= 1 {
-                let bingo_line = bingos[0].clone();
-                self.announce_bingo_and_game_end(bingo_line);
+            if len >= 1 && bingos.iter().all(|line| line.team == bingos[0].team) {
+                self.announce_bingo_and_game_end(bingos);
                 return true;
             }
         }
@@ -461,14 +504,79 @@ impl LiveMatch {
         bingos
     }
 
+    pub fn do_cell_winner_checks(&mut self) -> bool {
+        if let Some(winning_team) = self.get_winning_team_by_cell_count() {
+            self.teams
+                .get_mut(winning_team)
+                .expect("winning team exists")
+                .winner = true;
+            self.channel
+                .broadcast(&GameEvent::AnnounceWinByCellCount { team: winning_team });
+            self.set_game_ended(false);
+            return true;
+        }
+        false
+    }
+
+    fn get_winning_team_by_cell_count(&self) -> Option<TeamIdentifier> {
+        let mut winner = None;
+        let mut max_score = 0;
+        let iter = self.cells.iter().take(self.cell_count());
+        for team in self.teams.get_teams() {
+            let score = iter
+                .clone()
+                .filter(|cell| {
+                    cell.leading_claim().is_some()
+                        && cell.leading_claim().unwrap().player.team == team.base.id
+                })
+                .count();
+            if score > max_score {
+                max_score = score;
+                winner = Some(team.base.id);
+            } else if score == max_score {
+                winner = None;
+            }
+        }
+
+        winner
+    }
+
     fn nobingo_phase_change(&mut self) {
         if !self.do_bingo_checks() && self.phase != MatchPhase::Overtime {
             self.set_phase(MatchPhase::Running);
         }
     }
 
-    fn overtime_phase_change(&mut self) {
-        self.set_phase(MatchPhase::Overtime);
+    fn endgame_phase_change(&mut self) {
+        if self.phase == MatchPhase::Overtime {
+            return;
+        }
+
+        if self.do_bingo_checks() {
+            return;
+        }
+
+        if self.options.is_daily {
+            let bingos = self.check_for_bingos();
+            if bingos.len() >= 1 {
+                self.announce_bingo_and_game_end(bingos);
+            } else {
+                self.channel.broadcast(&GameEvent::AnnounceDraw);
+                self.set_game_ended(false);
+            }
+            return;
+        }
+
+        if self.do_cell_winner_checks() {
+            return;
+        }
+
+        if self.config.overtime {
+            self.set_phase(MatchPhase::Overtime);
+        } else {
+            self.channel.broadcast(&GameEvent::AnnounceDraw);
+            self.set_game_ended(true);
+        }
     }
 }
 
@@ -477,6 +585,7 @@ impl Default for MatchOptions {
         Self {
             start_countdown: CONFIG.game.start_countdown,
             player_join: false,
+            is_daily: false,
         }
     }
 }

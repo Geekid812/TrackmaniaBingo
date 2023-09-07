@@ -34,6 +34,7 @@ async fn start_daily_challenge() {
         let mut game = live_match.lock();
         game.set_start_countdown(Duration::zero());
         game.set_player_join(true);
+        game.set_daily(true);
         game.setup_match_start(date.clone());
         MATCHES.insert(game.uid().to_string(), live_match.clone());
     }
@@ -45,16 +46,16 @@ async fn start_daily_challenge() {
 pub async fn run_loop() {
     loop {
         let now = Utc::now();
-        let midnight = now
-            .with_hour(0)
+        let reset_time = now
+            .with_hour(CONFIG.game.daily_reset.hour)
             .unwrap()
-            .with_minute(0)
+            .with_minute(CONFIG.game.daily_reset.minute)
             .unwrap()
             .with_second(0)
             .unwrap();
-        let tomorrow = midnight + Duration::days(1);
-        let time_until_midnight = TokioDuration::from((tomorrow - now).to_std().unwrap());
-        sleep_until(Instant::now() + time_until_midnight).await;
+        let tomorrow = reset_time + Duration::days(1);
+        let time_until_reset = TokioDuration::from((tomorrow - now).to_std().unwrap());
+        sleep_until(Instant::now() + time_until_reset).await;
         start_daily_challenge().await;
     }
 }

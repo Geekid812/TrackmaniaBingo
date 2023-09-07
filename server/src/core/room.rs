@@ -334,7 +334,10 @@ impl GameRoom {
     fn create_ffa_teams(&mut self) {
         self.teams = TeamsManager::new();
         for i in 0..self.members.len() {
-            let team = self.teams.create_random_team().clone();
+            let team = self
+                .teams
+                .create_random_team(self.members[i].profile.player.username.clone())
+                .clone();
             self.members[i].team = team.id;
             self.team_created(team);
         }
@@ -494,9 +497,6 @@ impl GameRoom {
     }
 
     pub fn reset_match(&mut self) {
-        if let Some(match_) = self.active_match.as_ref().and_then(|m| m.upgrade()) {
-            directory::MATCHES.remove_item(match_);
-        }
         self.active_match = None;
         self.send_in_game_status_update();
     }

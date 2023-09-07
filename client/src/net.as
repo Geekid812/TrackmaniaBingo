@@ -245,6 +245,14 @@ namespace Network {
             NetworkHandlers::RoomSync(body);
         } else if (event == "MatchSync") {
             NetworkHandlers::MatchSync(body);
+        } else if (event == "AnnounceWinByCellCount") {
+            NetworkHandlers::AnnounceWinByCellCount(body);
+        } else if (event == "AnnounceDraw") {
+            NetworkHandlers::AnnounceDraw();
+        } else if (event == "MatchTeamCreated") {
+            NetworkHandlers::MatchTeamCreated(body);
+        } else if (event == "MatchPlayerJoin") {
+            NetworkHandlers::MatchPlayerJoin(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }
@@ -252,6 +260,7 @@ namespace Network {
 
     void CloseConnection() {
         Reset();
+        UIMainWindow::Visible = false;
         trace("Connection closed cleanly.");
     }
 
@@ -430,7 +439,6 @@ namespace Network {
         // TODO: this is rudimentary, it doesn't keep connection alive
         trace("Network: LeaveRoom requested.");
         CloseConnection();
-        UIMainWindow::Visible = false;
     }
 
     void JoinTeam(Team team) {

@@ -2,7 +2,7 @@
 namespace BoardLocator {
     void Render() {
         if (@Match == null) return;
-        if (Time::MillisecondsElapsed() < 0 && Board::Position != vec2(0, 0)) return;
+        if (Time::MillisecondsElapsed(@Match) < 0 && Board::Position != vec2(0, 0)) return;
         UI::SetNextWindowPos(int(79 * Board::Unit()), int(Board::Unit()), UI::Cond::FirstUseEver);
         UI::SetNextWindowSize(int(20 * Board::Unit()), int(20 * Board::Unit()), UI::Cond::FirstUseEver);
 

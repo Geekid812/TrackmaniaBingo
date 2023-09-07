@@ -38,6 +38,17 @@ class LiveMatch {
         return players;
     }
 
+    uint GetTeamCellCount(Team team) {
+        uint sum = 0;
+        for (uint i = 0; i < gameMaps.Length; i++) {
+            if (gameMaps[i].IsClaimed() && gameMaps[i].LeadingRun().player.team == team) {
+                sum += 1;
+            }
+        }
+
+        return sum;
+    }
+
     Player@ GetPlayer(int uid) {
         for (uint i = 0; i < players.Length; i++){
             auto player = players[i];
@@ -143,14 +154,32 @@ class MapCell {
     }
 }
 
-class EndState {
+class BingoLine {
     BingoDirection bingoDirection;
     int offset; // Horizontal: Row ID, Vertical: Column ID, Diagonal: 0 -> TL to BR & 1 -> BL to TR
-    uint64 endTime;
     Team team;
+
+    BingoLine() {}
+}
+
+class EndState {
+    uint64 endTime;
+    BingoDirection bingoDirection;
+    array<BingoLine>@ bingoLines = {};
+    Team@ team;
 
     bool HasEnded() {
         return this.endTime != 0;
+    }
+
+    uint WinnerTeamsCount() {
+        array<int>@ uniqueTeams = {};
+        for (uint i = 0; i < bingoLines.Length; i++) {
+            int team_id = bingoLines[i].team.id;
+            if (uniqueTeams.Find(team_id) == -1) uniqueTeams.InsertLast(team_id);
+        }
+
+        return uniqueTeams.Length;
     }
 }
 

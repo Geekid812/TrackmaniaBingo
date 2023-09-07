@@ -34,7 +34,7 @@ impl<T: Team + From<BaseTeam>> TeamsManager<T> {
         Some(self.inner_create_team(teams[idx].0.clone(), color))
     }
 
-    pub fn create_random_team(&mut self) -> &T {
+    pub fn create_random_team(&mut self, name: String) -> &T {
         let mut rng = rand::thread_rng();
         let (h, s, v) = (
             rng.gen_range(0..=255),
@@ -43,7 +43,7 @@ impl<T: Team + From<BaseTeam>> TeamsManager<T> {
         );
         let color: Hsv = Hsv::new_srgb(h, s, v).into_format::<f32>();
         let rgb = Srgb::from_color(color).into_format::<u8>();
-        self.inner_create_team(String::new(), rgb)
+        self.inner_create_team(name, rgb)
     }
 
     fn inner_create_team(&mut self, name: String, color: Color) -> &T {

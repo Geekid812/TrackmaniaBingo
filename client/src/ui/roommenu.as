@@ -66,6 +66,8 @@ namespace UIRoomMenu {
             LoadingIndicator();
         } else if (RoomsLoad == LoadStatus::Error) {
             UI::Text("\\$888Public rooms failed to load.");
+            UI::SameLine();
+            UITools::ReconnectButton();
         } else {
             if (PublicRooms.Length == 0) {
                 UI::Text("\\$888There are no open public rooms at the moment.\nGo ahead and create one!");

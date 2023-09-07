@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use serde::Serialize;
 use sqlx::{query_builder::Separated, FromRow, Sqlite};
 
-#[derive(Serialize, FromRow)]
+#[derive(Serialize, FromRow, Debug)]
 pub struct Match {
     pub uid: String,
     #[serde(serialize_with = "serialize_time")]
@@ -18,11 +18,12 @@ impl Match {
         values
             .push_bind(self.uid.clone())
             .push_bind(self.started_at.clone())
-            .push_bind(self.ended_at.clone());
+            .push_bind(self.ended_at.clone())
+            .push_bind(self.daily_timedate.clone());
     }
 }
 
-#[derive(Serialize, FromRow)]
+#[derive(Serialize, FromRow, Debug)]
 pub struct PlayerToMatch {
     pub player_uid: i32,
     pub match_uid: String,

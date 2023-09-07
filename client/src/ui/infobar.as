@@ -23,6 +23,7 @@ namespace UIInfoBar {
         if (UI::Button("Exit")) {
             Network::LeaveRoom();
             UIMainWindow::Visible = true;
+            startnew(Network::Connect);
         }
         SubwindowEnd(geometry);
     }
@@ -76,7 +77,7 @@ namespace UIInfoBar {
         if (@Match == null) return;
         
         // Time since the game has started. If we are in countdown, don't show up yet
-        int64 stopwatchTime = Time::Milliseconds();
+        int64 stopwatchTime = Time::Milliseconds(@Match);
         MatchPhase phase = Match.GetPhase();
         if (phase == MatchPhase::Starting) return;
 
@@ -115,9 +116,16 @@ namespace UIInfoBar {
             phaseText = "Overtime";
             color = vec3(.6, .15, .15);
         } else if (phase == MatchPhase::Ended) {
-            Team winningTeam = Match.endState.team;
-            phaseText = winningTeam.name + " wins!";
-            color = UIColor::Brighten(winningTeam.color, 0.7);
+            Team@ winningTeam = Match.endState.team;
+
+            if (winningTeam !is null) {
+                phaseText = winningTeam.name + " wins!";
+                color = UIColor::Brighten(winningTeam.color, 0.7);
+            } else {
+                uint winningTeamsCount = Match.endState.WinnerTeamsCount();
+                phaseText = winningTeamsCount == 0 ? "Tie" : winningTeamsCount + " winners!";
+                color = vec3(.5, .5, .5);
+            }
         }
         if (phaseText != "" && !UI::IsWindowAppearing()) {
             float sideMargins = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding).x * 2.;
@@ -135,8 +143,8 @@ namespace UIInfoBar {
         }
 
         // If playing with a time limit, timer counts down to 0
-        if (Match.config.minutesLimit != 0 || Match.config.noBingoMinutes != 0) stopwatchTime = Time::GetMaxTimeMilliseconds() - stopwatchTime;
-        if (phase == MatchPhase::NoBingo) stopwatchTime -= Time::GetTimelimitMilliseconds();
+        if (Match.config.minutesLimit != 0 || Match.config.noBingoMinutes != 0) stopwatchTime = Time::GetMaxTimeMilliseconds(@Match) - stopwatchTime;
+        if (phase == MatchPhase::NoBingo) stopwatchTime -= Time::GetTimelimitMilliseconds(@Match);
         if (stopwatchTime < 0) stopwatchTime = -stopwatchTime;
         if (phase == MatchPhase::Overtime) stopwatchTime = Time::Now - Match.overtimeStartTime;
 

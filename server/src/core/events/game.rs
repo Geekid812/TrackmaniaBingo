@@ -28,9 +28,12 @@ pub enum GameEvent {
         position: usize,
     },
     AnnounceBingo {
-        #[serde(flatten)]
-        line: BingoLine,
+        lines: Vec<BingoLine>,
     },
+    AnnounceWinByCellCount {
+        team: TeamIdentifier,
+    },
+    AnnounceDraw,
     PhaseChange {
         phase: MatchPhase,
     },
