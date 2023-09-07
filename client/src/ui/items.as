@@ -29,6 +29,7 @@ namespace UITools {
 
         // 0b10: input element is active
         // 0b01: input element was just opened
+        UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
         if (grzero(state & 0b10)) {
             if (grzero(state & 0b01)) {
                 UI::SetKeyboardFocusHere();
@@ -48,6 +49,7 @@ namespace UITools {
             UIColor::Reset();
         }
         UI::SameLine();
+        UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
         UI::BeginDisabled(value >= max);
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(9, 4));
         if (UI::Button("+##plus" + id)) {
