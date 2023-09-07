@@ -1,11 +1,10 @@
 [meta]
-version = "4.0.3-beta (2023-09-01)"
+version = "4.0.4-beta (2023-09-07)"
 name = "Bingo (Beta)"
 author = "TheGeekid"
 category = "Game"
 siteid = 410
 
 [script]
-timeout = 10000
 exports = ["src/export/definitions.as"]
 shared_exports = ["src/export/shared.as"]
