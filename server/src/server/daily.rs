@@ -4,6 +4,7 @@ use tokio::time::Duration as TokioDuration;
 use tokio::time::{sleep_until, Instant};
 use tracing::{error, info};
 
+use crate::core::teams::TeamsManager;
 use crate::{
     config::CONFIG,
     core::{directory::Owned, livegame::LiveMatch},
@@ -26,7 +27,7 @@ async fn start_daily_challenge() {
     }
     let maps = maps.unwrap();
     let date = Utc::now();
-    let live_match = LiveMatch::new(config, maps, Vec::new());
+    let live_match = LiveMatch::new(config, maps, TeamsManager::new());
 
     {
         let mut game = live_match.lock();

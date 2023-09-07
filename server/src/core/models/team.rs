@@ -1,7 +1,7 @@
 use palette::serde::as_array;
 use serde::{Deserialize, Serialize};
 
-use crate::core::util::Color;
+use crate::core::{teams::Team, util::Color};
 
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Debug, Hash, Deserialize)]
 pub struct TeamIdentifier(usize);
@@ -27,5 +27,11 @@ impl BaseTeam {
 impl PartialEq for BaseTeam {
     fn eq(&self, other: &Self) -> bool {
         self.id.eq(&other.id)
+    }
+}
+
+impl Team for BaseTeam {
+    fn base(&self) -> &BaseTeam {
+        &self
     }
 }

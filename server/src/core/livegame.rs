@@ -33,6 +33,7 @@ use super::{
         team::{BaseTeam, TeamIdentifier},
     },
     room::GameRoom,
+    teams::{Team, TeamsManager},
     util::base64,
 };
 
@@ -44,7 +45,7 @@ pub struct LiveMatch {
     room: Shared<GameRoom>,
     config: MatchConfiguration,
     options: MatchOptions,
-    teams: Vec<GameTeam>,
+    teams: TeamsManager<GameTeam>,
     cells: Vec<GameCell>,
     started: Option<DateTime<Utc>>,
     phase: MatchPhase,
@@ -53,13 +54,14 @@ pub struct LiveMatch {
 
 struct MatchOptions {
     start_countdown: Duration,
+    player_join: bool,
 }
 
 impl LiveMatch {
     pub fn new(
         config: MatchConfiguration,
         maps: Vec<MapRecord>,
-        teams: Vec<GameTeam>,
+        teams: TeamsManager<GameTeam>,
     ) -> Owned<Self> {
         let mut _self = Self {
             ptr: Weak::new(),
@@ -97,6 +99,13 @@ impl LiveMatch {
             panic!("attempted to change match options after starting");
         }
         self.options.start_countdown = countdown;
+    }
+
+    pub fn set_player_join(&mut self, enabled: bool) {
+        if self.started.is_some() {
+            panic!("attempted to change match options after starting");
+        }
+        self.options.player_join = enabled;
     }
 
     pub fn setup_match_start(&mut self, start_date: DateTime<Utc>) {
@@ -165,7 +174,7 @@ impl LiveMatch {
     }
 
     pub fn get_player_team(&self, player_id: i32) -> Option<TeamIdentifier> {
-        for team in &self.teams {
+        for team in self.teams.get_teams() {
             if team
                 .members
                 .iter()
@@ -185,10 +194,7 @@ impl LiveMatch {
     }
 
     pub fn get_team_mut(&mut self, team_id: TeamIdentifier) -> Option<&mut GameTeam> {
-        self.teams
-            .iter_mut()
-            .filter(|t| t.base.id == team_id)
-            .next()
+        self.teams.get_mut(team_id)
     }
 
     pub fn start_date(&self) -> &Option<DateTime<Utc>> {
@@ -214,7 +220,12 @@ impl LiveMatch {
         MatchState {
             config: self.config.clone(),
             phase: self.phase,
-            teams: self.teams.iter().map(|t| t.base.clone()).collect(), // TODO: broadcast members too
+            teams: self
+                .teams
+                .get_teams()
+                .iter()
+                .map(|t| t.base.clone())
+                .collect(), // TODO: broadcast members too
             cells: self.cells.clone(),
             started: self.started.unwrap_or_default(),
         }
@@ -264,7 +275,7 @@ impl LiveMatch {
             daily_timedate: None,
         };
         let mut player_results = Vec::new();
-        for team in &self.teams {
+        for team in self.teams.get_teams() {
             for player in &team.members {
                 player_results.push(PlayerToMatch {
                     player_uid: player.profile.player.uid,
@@ -409,6 +420,7 @@ impl Default for MatchOptions {
     fn default() -> Self {
         Self {
             start_countdown: CONFIG.game.start_countdown,
+            player_join: false,
         }
     }
 }
@@ -426,6 +438,12 @@ impl From<RoomTeam> for GameTeam {
             members: value.members,
             winner: false,
         }
+    }
+}
+
+impl Team for GameTeam {
+    fn base(&self) -> &BaseTeam {
+        &self.base
     }
 }
 
