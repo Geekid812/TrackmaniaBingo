@@ -20,6 +20,7 @@ pub enum GameEvent {
     MatchStart {
         #[serde_as(as = "DurationMilliSeconds<i64>")]
         start_ms: Duration,
+        can_reroll: bool,
         maps: Vec<MapRecord>,
     },
     RunSubmitted {
@@ -48,5 +49,17 @@ pub enum GameEvent {
     },
     PlayerDisconnect {
         uid: i32,
+    },
+    RerollVoteCast {
+        player_id: i32,
+        cell_id: usize,
+        added: bool,
+        count: usize,
+        required: usize,
+    },
+    MapRerolled {
+        cell_id: usize,
+        map: MapRecord,
+        can_reroll: bool,
     },
 }

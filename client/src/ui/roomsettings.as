@@ -204,6 +204,14 @@ namespace UIRoomSettings {
         MatchConfig.freeForAll = UI::Checkbox("##bingoffa", MatchConfig.freeForAll);
     }
 
+    void RerollsToggle() {
+        UITools::AlignedLabel(Icons::Kenney::ReloadInverse + " Enable Map Rerolls");
+        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        MatchConfig.rerolls = UI::Checkbox("##bingorerolls", MatchConfig.rerolls);
+        UI::SameLine();
+        UITools::HelpTooltip("Players can vote to reroll an unclaimed map if the majority of players agree.");
+    }
+
     void TotalTimeIndicator() {
         UITools::AlignedLabel(Icons::PlayCircle + "  Total Game Time: " + TimeFormat(MatchConfig.minutesLimit + MatchConfig.noBingoMinutes));
         UI::NewLine();
@@ -244,6 +252,7 @@ namespace UIRoomSettings {
             OvertimeToggle();
         }
         // FFAToggle();
+        RerollsToggle();
         if (MatchConfig.noBingoMinutes != 0 && MatchConfig.minutesLimit != 0) TotalTimeIndicator();
     }
 

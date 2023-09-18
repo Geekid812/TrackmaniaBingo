@@ -76,6 +76,7 @@ impl LiveMatch {
                 .map(|map| GameCell {
                     map: GameMap::from(map),
                     claims: Vec::new(),
+                    reroll_ids: Vec::new(),
                 })
                 .collect(),
             started: None,
@@ -166,6 +167,7 @@ impl LiveMatch {
                 .take(maps_in_grid)
                 .map(|c| c.map.track.clone())
                 .collect(),
+            can_reroll: self.can_reroll(),
         });
     }
 
@@ -179,6 +181,10 @@ impl LiveMatch {
 
     pub fn channel(&mut self) -> &mut Channel<GameEvent> {
         &mut self.channel
+    }
+
+    pub fn can_reroll(&self) -> bool {
+        self.config.rerolls && self.cells.len() > self.cell_count()
     }
 
     pub fn get_player_team(&self, player_id: i32) -> Option<TeamIdentifier> {
@@ -302,6 +308,7 @@ impl LiveMatch {
             teams: self.teams.get_teams().iter().map(GameTeam::clone).collect(), // TODO: broadcast members too
             cells: self.cells.clone(),
             started: self.started.unwrap_or_default(),
+            can_reroll: self.can_reroll(),
         }
     }
 
@@ -355,6 +362,10 @@ impl LiveMatch {
 
     fn cell_count(&self) -> usize {
         self.config.grid_size * self.config.grid_size
+    }
+
+    fn player_count(&self) -> usize {
+        self.teams.get_teams().iter().map(|t| t.members.len()).sum()
     }
 
     fn save_match(&mut self, draw: bool) {
@@ -418,6 +429,65 @@ impl LiveMatch {
             claim,
             position,
         })
+    }
+
+    pub fn submit_reroll_vote(
+        &mut self,
+        cell_id: usize,
+        player_id: i32,
+    ) -> Result<(), anyhow::Error> {
+        if !self.config.rerolls {
+            return Err(anyhow!("rerolls are disabled for this match"));
+        }
+        if cell_id >= self.cell_count() {
+            return Err(anyhow!(
+                "invalid cell_id {}, max is {}",
+                cell_id,
+                self.cell_count() - 1
+            ));
+        }
+
+        let cell = &mut self.cells[cell_id];
+        let mut added = false;
+        if cell.reroll_ids.iter().any(|id| *id == player_id) {
+            cell.reroll_ids.retain(|id| *id != player_id);
+        } else {
+            cell.reroll_ids.push(player_id);
+            added = true;
+        }
+
+        let count = cell.reroll_ids.len();
+        let required = self.player_count() / 2 + 1; // TODO: make this customizable
+        self.channel.broadcast(&GameEvent::RerollVoteCast {
+            player_id,
+            cell_id,
+            added,
+            count,
+            required,
+        });
+
+        if added && count >= required {
+            self.reroll_map(cell_id)?;
+        }
+
+        Ok(())
+    }
+
+    fn reroll_map(&mut self, cell_id: usize) -> Result<(), anyhow::Error> {
+        if !self.can_reroll() {
+            return Err(anyhow!("tried to reroll, but rerolls are disallowed"));
+        }
+        if self.cells[cell_id].leading_claim().is_some() {
+            return Err(anyhow!("map is already claimed, cannot reroll it"));
+        }
+
+        self.cells.swap_remove(cell_id);
+        self.channel.broadcast(&GameEvent::MapRerolled {
+            cell_id,
+            map: self.cells[cell_id].map.track.clone(),
+            can_reroll: self.can_reroll(),
+        });
+        Ok(())
     }
 
     fn do_bingo_checks(&mut self) -> bool {

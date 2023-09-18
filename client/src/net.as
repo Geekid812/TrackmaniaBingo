@@ -253,6 +253,10 @@ namespace Network {
             NetworkHandlers::MatchTeamCreated(body);
         } else if (event == "MatchPlayerJoin") {
             NetworkHandlers::MatchPlayerJoin(body);
+        } else if (event == "RerollVoteCast") {
+            NetworkHandlers::RerollVoteCast(body);
+        } else if (event == "MapRerolled") {
+            NetworkHandlers::MapRerolled(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }
@@ -472,6 +476,12 @@ namespace Network {
 
     void UnsubscribeDailyChallenge() {
         Post("UnsubscribeDailyChallenge", Json::Object(), false);
+    }
+
+    void RerollCell() {
+        auto body = Json::Object();
+        body["cell_id"] = NetParams::RerollCellId;
+        Network::Post("CastRerollVote", body, true);
     }
 
     void Sync() {

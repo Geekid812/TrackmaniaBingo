@@ -1,13 +1,14 @@
 namespace UIMapList {
     const string WINDOW_NAME = Icons::Th + " \\$zMap List";
     bool Visible;
-
+    bool RerollMenuOpen;
 
     void Render() {
         if (!Visible || @Match == null) return;
 
         UI::Begin(WINDOW_NAME, Visible, UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoCollapse);
         UI::PushFont(Font::Condensed);
+        UI::BeginDisabled(Network::IsUISuspended());
 
         if (UI::IsWindowFocused() && UI::IsKeyPressed(UI::Key::Insert)) {
             UIPaintColor::Visible = true;
@@ -18,8 +19,38 @@ namespace UIMapList {
         uiScale = UI::SliderFloat(uiScale <= 0.5 ? "###gridsize" : "Grid UI Size###gridsize", uiScale, 0.2, 2.0, "%.1f");
         PersistantStorage::MapListUiScale = uiScale;
 
+        UI::SameLine();
+        string rerollText = RerollMenuOpen ? Icons::Times + " Cancel" : Icons::Kenney::ReloadInverse + " Vote to Reroll";
+        float windowWidth = UI::GetWindowSize().x;
+        float padding = LayoutTools::GetPadding(windowWidth, Draw::MeasureString(rerollText + "\t  ", @Font::Regular, 16.0).x, 1.0);
+        LayoutTools::MoveTo(padding);
+        
+        UI::BeginGroup();
+        if (RerollMenuOpen) UIColor::DarkRed();
+        else UIColor::Cyan();
+        UI::BeginDisabled(!Match.config.rerolls || !Match.canReroll);
+        if (UI::Button(rerollText)) {
+            RerollMenuOpen = !RerollMenuOpen;
+        }
+        UI::EndDisabled();
+        UIColor::Reset();
+        UI::EndGroup();
+
+        if (UI::IsItemHovered()) {
+            if (!Match.config.rerolls) {
+                UI::BeginTooltip();
+                UI::Text("Map rerolls are disabled for this game.");
+                UI::EndTooltip();
+            } else if (!Match.canReroll) {
+                UI::BeginTooltip();
+                UI::Text("There are no other maps available for a reroll.");
+                UI::EndTooltip();
+            }
+        }
+
         MapGrid(Match.gameMaps, Match.config.gridSize, uiScale);
         
+        UI::EndDisabled();
         UI::PopFont();
         UI::End();
     }
@@ -80,12 +111,26 @@ namespace UIMapList {
                 } else {
                     UI::TextDisabled("This map has not been claimed yet!");
                 }
+
+                if (RerollMenuOpen) {
+                    uint requiredPlayers = Match.players.Length / 2 + 1;
+                    if (cell.IsClaimed()) {
+                        UI::Text("\\$f88Cannot reroll this map, it has already been claimed.");
+                    } else {
+                        UI::Text("\\$066Votes to reroll: " + cell.rerollIds.Length + "/" + requiredPlayers);
+                        if (cell.rerollIds.Find(Profile.uid) != -1) UI::Text("\\$ff8You already voted to reroll this map, select this map again to undo.");
+                    }
+                }
                 UI::PopFont();
                 UI::EndTooltip();
             }
             if (interactable && UI::IsItemClicked()) {
                 if (UIPaintColor::Visible) cell.paintColor = UIPaintColor::SelectedColor;
-                else {
+                else if (RerollMenuOpen) {
+                    NetParams::RerollCellId = i;
+                    startnew(Network::RerollCell);
+                    RerollMenuOpen = false;
+                } else {
                     Visible = false;
                     Playground::LoadMap(cell.map.tmxid);
                     interacted = true;
@@ -94,10 +139,19 @@ namespace UIMapList {
 
             auto size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(0, 8 * uiScale) - startPos - vec2(0, UI::GetScrollY());
             vec4 rect = vec4(startPos.x, startPos.y, 500, size.y);
-            if (cell.paintColor != vec3())
-                drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.paintColor, 0.1));
-            if (cell.IsClaimed())
-                drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.LeadingRun().player.team.color, 0.1));
+            if (!RerollMenuOpen) {
+                if (cell.paintColor != vec3())
+                    drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.paintColor, 0.1));
+                if (cell.IsClaimed())
+                    drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.LeadingRun().player.team.color, 0.1));
+            } else {
+                if (!cell.IsClaimed()) {
+                    if (cell.rerollIds.Length > 0)
+                        drawList.AddRectFilled(rect, UIColor::GetAlphaColor(vec3(.0, .3, .3), 0.1));
+                    else 
+                        drawList.AddRectFilled(rect, UIColor::GetAlphaColor(vec3(.0, .6, .6), 0.1));
+                }
+            }
             if (mapHovered) drawList.AddRectFilled(rect, vec4(.5, .5, .5, .1));
         }
         if (uiScale <= 0.5) UI::PopFont();

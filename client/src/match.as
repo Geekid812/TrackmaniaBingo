@@ -9,6 +9,7 @@ class LiveMatch {
     int64 overtimeStartTime = 0;
     int64 endTime = 0;
     MatchPhase phase = MatchPhase::Starting;
+    bool canReroll = false;
     EndState endState;
 
     Player@ GetSelf(){
@@ -111,6 +112,7 @@ class MapCell {
     GameMap@ map = null;
     array<MapClaim>@ attemptRanking = {};
     vec3 paintColor = vec3();
+    array<uint> rerollIds = {};
     CachedImage@ thumbnail;
     CachedImage@ mapImage;
 

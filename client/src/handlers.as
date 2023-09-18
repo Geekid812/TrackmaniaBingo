@@ -30,6 +30,7 @@ namespace NetworkHandlers {
         Match.teams = Room.teams;
         Match.players = Room.players;
         Match.config = Room.matchConfig;
+        Match.canReroll = bool(match["can_reroll"]);
         LoadMaps(match["maps"]);
         WasConnected = true;
         UIGameRoom::GrabFocus = true;
@@ -288,5 +289,45 @@ namespace NetworkHandlers {
     void MatchPlayerJoin(Json::Value@ data) {
         if (@Match is null) return;
         Match.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Match.GetTeamWithId(data["team"])));
+    }
+
+    void RerollVoteCast(Json::Value@ data) {
+        if (@Match is null) {
+            warn("Handlers: got RerollVoteCast event but Match is null.");
+            return;
+        }
+
+        uint id = uint(data["cell_id"]);
+        uint player_id = uint(data["player_id"]);
+        MapCell cell = Match.GetCell(id);
+        if (bool(data["added"])) {
+            cell.rerollIds.InsertLast(player_id);
+
+            int count = uint(data["count"]);
+            int required = uint(data["required"]);
+            string trackName = ColoredString(cell.map.trackName);
+            Player player = Match.GetPlayer(player_id);
+            string playerTag = "\\$" + UIColor::GetHex(player.team.color) + player.name; 
+            UI::ShowNotification("", Icons::Kenney::ReloadInverse + " " + playerTag + " \\$zhas voted to reroll \\$fd8" + trackName + " \\$z(" + count + "/" + required + ")", vec4(0., .4, .4, 1.), 10000);
+        } else {
+            for (uint i = 0; i < cell.rerollIds.Length; i++) {
+                if (cell.rerollIds[i] == player_id) cell.rerollIds.RemoveAt(i);
+            }
+        }
+    }
+
+    void MapRerolled(Json::Value@ data) {
+        if (@Match is null) {
+            warn("Handlers: got MapRerolled event but Match is null.");
+            return;
+        }
+
+        uint id = uint(data["cell_id"]);
+        string oldName = ColoredString(Match.gameMaps[id].map.trackName);
+        Match.gameMaps.RemoveAt(id);
+        Match.gameMaps.InsertAt(id, MapCell(GameMap::Deserialize(data["map"])));
+        Match.canReroll = bool(data["can_reroll"]);
+
+        UI::ShowNotification(Icons::Kenney::ReloadInverse + " Map Rerolled", "The map \\$fd8" + oldName + " \\$zhas been rerolled.", vec4(0., .6, .6, 1.), 10000);
     }
 }
