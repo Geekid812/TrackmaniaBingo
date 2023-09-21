@@ -632,7 +632,7 @@ impl LiveMatch {
                 self.announce_bingo_and_game_end(bingos);
             } else {
                 self.channel.broadcast(&GameEvent::AnnounceDraw);
-                self.set_game_ended(false);
+                self.set_game_ended(true);
             }
             return;
         }
