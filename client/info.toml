@@ -6,6 +6,5 @@ category = "Game"
 siteid = 271
 
 [script]
-timeout = 10000
 exports = ["src/export/definitions.as"]
 shared_exports = ["src/export/shared.as"]
