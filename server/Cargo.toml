@@ -79,3 +79,6 @@ palette = { version = "0.7.3", features = ["serializing"] }
 
 # Database engine
 sqlx = { version = "0.7.1", features = ["runtime-tokio", "sqlite", "chrono"] }
+
+# Async future blocker
+pollster = "0.3.0"

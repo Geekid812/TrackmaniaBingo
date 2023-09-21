@@ -484,6 +484,18 @@ namespace Network {
         Network::Post("CastRerollVote", body, true);
     }
 
+    void GetDailyResults() {
+        auto body = Json::Object();
+        body["period"] = UIDaily::GetYesterdayTimestring();
+        auto response = Network::Post("GetDailyResults", body, false);
+        if (@response is null) return;
+
+        auto dates = response["results"].GetKeys();
+        for (uint i = 0; i < dates.Length; i++) {
+            if (!UIDaily::DailyResults.Exists(dates[i])) UIDaily::DailyResults.Set(dates[i], DailyResult::Deserialize(response["results"][dates[i]]));
+        }
+    }
+
     void Sync() {
         trace("Network: Syncing with server...");
         auto response = Network::Post("Sync", Json::Object(), false);

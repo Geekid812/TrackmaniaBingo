@@ -1,10 +1,4 @@
-use crate::{
-    core::models::{
-        livegame::{MapClaim, Medal},
-        player::PlayerRef,
-    },
-    server::context::ClientContext,
-};
+use crate::server::context::ClientContext;
 use serde::Deserialize;
 
 use super::{generic, Request, Response};
