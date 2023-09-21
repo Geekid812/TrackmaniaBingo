@@ -253,6 +253,10 @@ namespace Network {
             NetworkHandlers::MatchTeamCreated(body);
         } else if (event == "MatchPlayerJoin") {
             NetworkHandlers::MatchPlayerJoin(body);
+        } else if (event == "RerollVoteCast") {
+            NetworkHandlers::RerollVoteCast(body);
+        } else if (event == "MapRerolled") {
+            NetworkHandlers::MapRerolled(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }
@@ -472,6 +476,24 @@ namespace Network {
 
     void UnsubscribeDailyChallenge() {
         Post("UnsubscribeDailyChallenge", Json::Object(), false);
+    }
+
+    void RerollCell() {
+        auto body = Json::Object();
+        body["cell_id"] = NetParams::RerollCellId;
+        Network::Post("CastRerollVote", body, true);
+    }
+
+    void GetDailyResults() {
+        auto body = Json::Object();
+        body["period"] = UIDaily::GetYesterdayTimestring();
+        auto response = Network::Post("GetDailyResults", body, false);
+        if (@response is null) return;
+
+        auto dates = response["results"].GetKeys();
+        for (uint i = 0; i < dates.Length; i++) {
+            if (!UIDaily::DailyResults.Exists(dates[i])) UIDaily::DailyResults.Set(dates[i], DailyResult::Deserialize(response["results"][dates[i]]));
+        }
     }
 
     void Sync() {

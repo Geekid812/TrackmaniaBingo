@@ -6,6 +6,7 @@ namespace LiveMatch {
         match.config = MatchConfiguration::Deserialize(value["config"]);
         match.phase = MatchPhase(int(value["phase"]));
         match.startTime = Time::Now - (Time::Stamp - uint64(value["started"])) * 1000;
+        match.canReroll = bool(value["can_reroll"]);
 
         @match.teams = {};
         @match.players = {};

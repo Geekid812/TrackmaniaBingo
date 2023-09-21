@@ -59,7 +59,7 @@ namespace UIRoomMenu {
         }
 
         float heightRemaining = UI::GetWindowSize().y - UI::GetCursorPos().y;
-        float offset = 140. * UI::GetScale();
+        float offset = 145. * UI::GetScale();
         UI::BeginChild("bingo_rooms", vec2(0, heightRemaining - offset), false);
 
         if (RoomsLoad == LoadStatus::Loading) {
@@ -114,6 +114,7 @@ namespace UIRoomMenu {
                 UIColor::Reset();
                 UI::EndDisabled();
                 UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 4));
+                UI::Dummy(vec2());
             }
             UI::TableNextColumn();
             UI::EndTable();

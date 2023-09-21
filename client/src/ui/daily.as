@@ -1,6 +1,7 @@
 
 namespace UIDaily {
     LoadStatus DailyLoad = LoadStatus::NotLoaded;
+    dictionary DailyResults = {};
     LiveMatch@ DailyMatch;
 
     void DailyHome() {
@@ -8,21 +9,50 @@ namespace UIDaily {
         UI::PushFont(Font::Subtitle);
         UI::Text("Daily Challenge - " + formattedDate);
         UI::PopFont();   
-        UI::TextWrapped("A special bingo game with a 5x5 grid, random maps, gold medals, lasting all day everyday until midnight UTC.\n\nPlay at any time of the day and try to get a bingo line from these randomly selected maps. Be careful, everyone is playing at the same time on the same maps, and the bingos are only tallied up at the end of the day! Can you defend your maps and earn the win for today's challenge?\n\nNote: This mode is still a work in progress.");
+        UI::TextWrapped("A special bingo game with a 5x5 grid, random maps, gold medals, lasting all day everyday until midnight UTC.\n\nPlay at any time of the day and try to get a bingo line from these randomly selected maps. Be careful, everyone is playing at the same time on the same maps, and the bingos are only tallied up at the end of the day! Can you defend your maps and earn the win for today's challenge?");
+        DailyYesterdayResults();
 
         UI::NewLine();
         UITools::ConnectingIndicator();
         UITools::ErrorMessage("SubscribeDailyChallenge");
+
         if (Network::IsConnected()) {
             DailyShowGridPreview();
         }
         if (!UIMainWindow::Visible) DailyLoad = LoadStatus::NotLoaded;
     }
 
+    void DailyYesterdayResults() {
+        string timestring = GetYesterdayTimestring();
+        if (DailyResults.Exists(timestring)) {
+            DailyResult result;
+            DailyResults.Get(timestring, result);
+
+            UI::Text("\\$ff4The winner" + (result.winners.Length == 1 ? "" : "s") +
+            " for yesterday's challenge " + (result.winners.Length == 1 ? "is" : "are") + ": ");
+            for (uint i = 0; i < result.winners.Length; i++) {
+                UI::SameLine();
+                vec2 pos = UI::GetCursorPos();
+                if (pos.x > 10) pos.x -= 6;
+                UI::SetCursorPos(pos);
+                UI::TextWrappedWindow("\\$ff8" + result.winners[i].name);
+            }
+
+            if (result.winners.Length == 0) {
+                UI::SameLine();
+                UI::TextWrapped("\\$aaaNo winners...");
+            }
+
+            UI::SetCursorPos(UI::GetCursorPos() - vec2(0., UI::GetStyleVarVec2(UI::StyleVar::ItemSpacing).y));
+            UI::TextWrappedWindow("\\$aaaTotal players: " + result.playerCount);
+        }
+    }
+
     void DailyShowGridPreview() {
         UITools::ErrorMessage("SubscribeDailyChallenge");
         if (DailyLoad == LoadStatus::NotLoaded) {
             startnew(Network::LoadDailyChallenge);
+            startnew(Network::GetDailyResults);
             DailyLoad = LoadStatus::Loading;
         }
 
@@ -87,5 +117,9 @@ namespace UIDaily {
 
     void InactiveIndicator() {
         CenterText("The daily challenge is not currently active.", Font::Regular);
+    }
+
+    string GetYesterdayTimestring() {
+        return Time::FormatStringUTC("%Y-%m-%d", Time::Stamp - (60 * 60 * 24));
     }
 }

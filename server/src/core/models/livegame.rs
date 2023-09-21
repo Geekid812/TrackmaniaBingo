@@ -18,6 +18,7 @@ pub struct MatchState {
     pub phase: MatchPhase,
     pub teams: Vec<GameTeam>,
     pub cells: Vec<GameCell>,
+    pub can_reroll: bool,
     #[serde_as(as = "TimestampSeconds")]
     pub started: DateTime<Utc>,
 }
@@ -31,6 +32,7 @@ pub struct MatchConfiguration {
     pub no_bingo_mins: u32,
     pub overtime: bool,
     pub free_for_all: bool,
+    pub rerolls: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mappack_id: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,6 +43,7 @@ pub struct MatchConfiguration {
 pub struct GameCell {
     pub map: GameMap,
     pub claims: Vec<MapClaim>,
+    pub reroll_ids: Vec<i32>,
 }
 
 impl GameCell {

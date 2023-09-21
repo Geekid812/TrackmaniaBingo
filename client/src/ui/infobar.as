@@ -5,7 +5,8 @@ namespace UIInfoBar {
     // Alignment offset of map leaderboard rankings
     const float MAP_LEADERBOARD_SIDE_MARGIN = 35.;
 
-    float subwindowOffset = 0.;
+    float SubwindowOffset = 0.;
+    string MapLeaderboardUid;
 
     // Small controls window below the infobar for exiting
     void InfobarControls() {
@@ -47,13 +48,74 @@ namespace UIInfoBar {
             }
             UI::PushFont(i == 0 ? Font::Bold : Font::Regular);
             LayoutTools::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
-            UI::Text(claim.result.Display() + "\t\\$" + UIColor::GetHex(claim.player.team.color) + claim.player.name);
+            UI::Text(claim.result.Display());
+            UI::SameLine();
+            if (i == 0) {
+                UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 6));
+            }
+            UITools::PlayerTag(claim.player);
             UI::PopFont();
         }
         if (Match.config.targetMedal != Medal::None) {
             LayoutTools::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
-            UI::Text(Playground::GetCurrentTimeToBeat(true).Display("$888") + "\tTarget Medal");
+            UI::Text(Playground::GetCurrentTimeToBeat(true).Display("$aaa") + "  Target Medal");
         }
+
+        if (!Match.endState.HasEnded()) {
+            UI::Separator();
+            
+            float width = UI::GetWindowSize().x;
+            float padding = LayoutTools::GetPadding(width, 72., 0.5);
+            LayoutTools::MoveTo(padding);
+            UIColor::Custom(Match.GetSelf().team.color);
+            if (UI::Button(Icons::Times + " Close")) {
+                MapLeaderboardUid = "";
+            }
+            UIColor::Reset();
+        }
+        SubwindowEnd(geometry);
+    }
+
+    void TimeToBeatDisplay(MapCell cell) {
+        vec4 geometry = SubwindowBegin("Bingo Map Info");
+
+        string displayText = "\\$ff8Time to beat: ";
+        Team myTeam = Match.GetSelf().team;
+        if (cell.IsClaimed()) {
+            MapClaim leadingClaim = cell.LeadingRun();
+            if (leadingClaim.player.team == myTeam) {
+                displayText = "\\$ff8Your team's time: ";
+            }
+            string claimingText = leadingClaim.result.Display() + " by";
+
+            float claimTextWidth = Math::Max(Draw::MeasureString(claimingText + " " + leadingClaim.player.name).x, UI::GetWindowSize().x);
+            LayoutTools::MoveTo(LayoutTools::GetPadding(claimTextWidth, Draw::MeasureString(displayText).x, 0.5));
+            UI::Text(displayText);
+            UI::Text(claimingText);
+
+            UI::SameLine();
+            UI::SetCursorPos(UI::GetCursorPos() - vec2(6., 0.));
+            UITools::PlayerTag(leadingClaim.player);
+
+            UI::Separator();
+            float width = UI::GetWindowSize().x;
+            float padding = LayoutTools::GetPadding(width, 140., 0.5);
+            LayoutTools::MoveTo(padding);
+            UIColor::Custom(myTeam.color);
+            if (UI::Button(Icons::ListOl + " Map Leaderboard")) {
+                MapLeaderboardUid = Playground::GetCurrentMap().EdChallengeId;
+            }
+            UIColor::Reset();
+        } else {
+            RunResult@ baseTimeToBeat = Playground::GetCurrentTimeToBeat();
+            if (@baseTimeToBeat !is null && baseTimeToBeat.time != -1) {
+                displayText += baseTimeToBeat.Display();
+                UI::Text(displayText);
+            } else {
+                UI::Text("Complete this map to claim it!");
+            }
+        }
+
         SubwindowEnd(geometry);
     }
 
@@ -65,12 +127,12 @@ namespace UIInfoBar {
     }
 
     void SubwindowEnd(vec4 geometry) {
-        vec2 parentPos = geometry.xy + vec2(0, subwindowOffset);
+        vec2 parentPos = geometry.xy + vec2(0, SubwindowOffset);
         vec2 parentSize = geometry.zw;
         vec2 thisSize = UI::GetWindowSize();
         UI::SetWindowPos(vec2(parentPos.x + (parentSize.x - thisSize.x) / 2., parentPos.y + parentSize.y + BOARD_MARGIN / 2.));
         UI::End();
-        subwindowOffset += thisSize.y + BOARD_MARGIN / 2.;
+        SubwindowOffset += thisSize.y + BOARD_MARGIN / 2.;
     }
 
     void Render() {
@@ -161,10 +223,15 @@ namespace UIInfoBar {
             UIMapList::Visible = !UIMapList::Visible;
         }
         UIColor::Reset();
-        RunResult@ runToBeat = Playground::GetCurrentTimeToBeat();
-        if (@runToBeat != null) {
-            MapCell map = Match.GetCurrentMap();
-            MapLeaderboard(map);
+        
+        MapCell cell = Match.GetCurrentMap();
+        CGameCtnChallenge@ gameMap = Playground::GetCurrentMap();
+        if (@cell.map !is null) {
+            if (gameMap.EdChallengeId == MapLeaderboardUid || Match.endState.HasEnded()) {
+                MapLeaderboard(cell);
+            } else {
+                TimeToBeatDisplay(cell);
+            }
         }
 
         UIColor::Gray();
@@ -175,7 +242,7 @@ namespace UIInfoBar {
         UI::PopStyleVar();
         UI::PopFont();
 
-        subwindowOffset = 0.;
+        SubwindowOffset = 0.;
         vec2 windowSize = UI::GetWindowSize();
         UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - windowSize.x) / 2, int(Board::Position.y) + int(Board::BoardSize) + BOARD_MARGIN), UI::Cond::Always);
         UI::End();

@@ -9,6 +9,7 @@ class MatchConfiguration {
     uint noBingoMinutes = 0;
     bool overtime = false;
     bool freeForAll = false;
+    bool rerolls = false;
 }
 
 enum MapMode {
@@ -37,6 +38,7 @@ namespace MatchConfiguration {
         value["no_bingo_mins"] = config.noBingoMinutes;
         value["overtime"] = config.overtime;
         value["free_for_all"] = config.freeForAll;
+        value["rerolls"] = config.rerolls;
 
         if (config.mapSelection == MapMode::Mappack) value["mappack_id"] = config.mappackId;
         if (config.mapSelection == MapMode::Tags) value["map_tag"] = config.mapTag;
@@ -52,6 +54,7 @@ namespace MatchConfiguration {
         config.noBingoMinutes = uint(value["no_bingo_mins"]);
         config.overtime = bool(value["overtime"]);
         config.freeForAll = bool(value["free_for_all"]);
+        config.rerolls = bool(value["rerolls"]);
 
         if (value.HasKey("mappack_id")) config.mappackId = uint(value["mappack_id"]);
         if (value.HasKey("map_tag")) config.mapTag = uint(value["map_tag"]);

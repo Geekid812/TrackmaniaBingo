@@ -113,6 +113,16 @@ namespace UITools {
         return Icons::Kenney::SignalHigh;
     }
 
+    void PlayerTag(Player player) {
+        vec3 color = player.team.color;
+        UI::Text("\\$" + UIColor::GetHex(color) + player.name);
+        if (UI::IsItemHovered()) {
+            UI::BeginTooltip();
+            UIProfile::RenderProfile(player.profile, false);
+            UI::EndTooltip();
+        }
+    }
+
     bool grzero(int x) { return x > 0; }
     int toint(bool x) { return x ? 1 : 0; } 
 }

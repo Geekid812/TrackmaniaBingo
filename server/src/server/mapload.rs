@@ -29,10 +29,17 @@ pub async fn gather_maps(config: &MatchConfiguration) -> MaploadResult {
 fn get_load_future(
     config: &MatchConfiguration,
 ) -> Pin<Box<dyn Future<Output = MaploadResult> + Send>> {
+    let mut reroll_multiplier = 1;
+    if config.rerolls {
+        reroll_multiplier = 2;
+    }
+
     match config.selection {
-        MapMode::RandomTMX => Box::pin(cache_load_mxrandom(config.grid_size * config.grid_size)),
+        MapMode::RandomTMX => Box::pin(cache_load_mxrandom(
+            config.grid_size * config.grid_size * reroll_multiplier,
+        )),
         MapMode::Tags => Box::pin(cache_load_tag(
-            config.grid_size * config.grid_size,
+            config.grid_size * config.grid_size * reroll_multiplier,
             config.map_tag.unwrap(),
         )),
         MapMode::Mappack => Box::pin(network_load_mappack(config.mappack_id.unwrap())),
