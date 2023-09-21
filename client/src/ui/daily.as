@@ -28,7 +28,8 @@ namespace UIDaily {
             DailyResult result;
             DailyResults.Get(timestring, result);
 
-            UI::Text("\\$ff4The winners for yesterday's challenge are: ");
+            UI::Text("\\$ff4The winner" + (result.winners.Length == 1 ? "" : "s") +
+            " for yesterday's challenge " + (result.winners.Length == 1 ? "is" : "are") + ": ");
             for (uint i = 0; i < result.winners.Length; i++) {
                 UI::SameLine();
                 vec2 pos = UI::GetCursorPos();
