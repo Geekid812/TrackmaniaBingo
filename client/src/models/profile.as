@@ -10,6 +10,8 @@ class PlayerProfile {
     int matchCount;
     int wins;
     int losses;
+    int dailyCount;
+    int dailyWins;
     string title;
 }
 
@@ -26,6 +28,8 @@ namespace PlayerProfile {
         value["match_count"] = profile.matchCount;
         value["wins"] = profile.wins;
         value["losses"] = profile.losses;
+        value["daily_count"] = profile.dailyCount;
+        value["daily_wins"] = profile.dailyWins;
         value["title"] = profile.title;
 
         return value;
@@ -43,6 +47,8 @@ namespace PlayerProfile {
         profile.matchCount = value["match_count"];
         profile.wins = value["wins"];
         profile.losses = value["losses"];
+        profile.dailyCount = value["daily_count"];
+        profile.dailyWins = value["daily_wins"];
         profile.title = value["title"];
 
         return profile;

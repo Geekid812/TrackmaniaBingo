@@ -10,6 +10,8 @@ pub struct PlayerProfile {
     pub match_count: i32,
     pub wins: i32,
     pub losses: i32,
+    pub daily_count: i32,
+    pub daily_wins: i32,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -33,20 +35,43 @@ pub async fn get_profile(
     conn: &mut Connection,
     player: Player,
 ) -> Result<PlayerProfile, sqlx::Error> {
-    let matches = sqlx::query("SELECT outcome FROM matches_players WHERE player_uid = ?")
+    let matches = sqlx::query("SELECT outcome, matches.daily_timedate FROM matches_players JOIN matches ON matches.uid=matches_players.match_uid WHERE player_uid = ?")
         .bind(player.uid)
         .fetch_all(&mut **conn)
         .await?
         .into_iter()
-        .map(|row| row.get("outcome"))
-        .map(MatchOutcome::from_value)
-        .collect::<Vec<MatchOutcome>>();
-    let wins = matches.iter().filter(|o| **o == MatchOutcome::Win).count() as i32;
-    let losses = matches.iter().filter(|o| **o == MatchOutcome::Loss).count() as i32;
+        .map(|row| (MatchOutcome::from_value(row.get("outcome")), row.get::<Option<String>, _>("daily_timedate").is_some()))
+        .collect::<Vec<(MatchOutcome, bool)>>();
+    let (match_count, daily_count) = matches.iter().fold((0, 0), |mut v, o| {
+        if o.1 {
+            v.1 += 1;
+        } else {
+            v.0 += 1;
+        }
+        v
+    });
+    let (wins, daily_wins) =
+        matches
+            .iter()
+            .filter(|o| (*o).0 == MatchOutcome::Win)
+            .fold((0, 0), |mut v, o| {
+                if o.1 {
+                    v.1 += 1;
+                } else {
+                    v.0 += 1;
+                }
+                v
+            });
+    let losses = matches
+        .iter()
+        .filter(|o| (*o).0 == MatchOutcome::Loss && !o.1)
+        .count() as i32;
     Ok(PlayerProfile {
         player,
-        match_count: matches.len() as i32,
+        match_count,
         wins,
         losses,
+        daily_count,
+        daily_wins,
     })
 }
