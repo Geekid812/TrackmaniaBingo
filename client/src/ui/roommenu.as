@@ -114,6 +114,7 @@ namespace UIRoomMenu {
                 UIColor::Reset();
                 UI::EndDisabled();
                 UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 4));
+                UI::Dummy(vec2());
             }
             UI::TableNextColumn();
             UI::EndTable();
