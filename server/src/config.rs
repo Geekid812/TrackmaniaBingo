@@ -20,6 +20,7 @@ pub struct Config {
     pub database_url: String,
     pub mapcache_url: String,
     pub tcp_port: u16,
+    pub http_port: u16,
     pub min_client: String,
     pub tmx_useragent: String,
     pub secrets: Secrets,
@@ -94,6 +95,7 @@ impl Default for Config {
             database_url: "sqlite://db/main.db".to_owned(),
             mapcache_url: "sqlite://mapcache.db".to_owned(),
             tcp_port: 3080,
+            http_port: 8080,
             min_client: "4.0".to_owned(),
             tmx_useragent: "TrackmaniaBingo (development)".to_string(),
             secrets: Secrets {
