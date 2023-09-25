@@ -39,7 +39,9 @@ pub async fn main() {
     let routes = serve_static
         .or(authenticate().and(protected))
         .or(auth_routes());
-    warp::serve(routes).run(([0, 0, 0, 0], 8080)).await;
+    warp::serve(routes)
+        .run(([0, 0, 0, 0], CONFIG.http_port))
+        .await;
 }
 
 fn load_handlebars() -> Handlebars<'static> {
