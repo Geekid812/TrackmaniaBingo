@@ -21,6 +21,11 @@ namespace Playground {
 
     // This code is mostly taken from Greep's RMC
     void LoadMapCoroutine(ref@ Data) {
+        if (!Permissions::PlayLocalMap()) {
+            warn("Playground: aborting LoadMap, player does not have required permissions!");
+            return;
+        }
+
         int tmxId = cast<CoroutineData>(Data).id;
         auto app = cast<CTrackMania>(GetApp());
         bool menuDisplayed = app.ManiaPlanetScriptAPI.ActiveContext_InGameMenuDisplayed;
