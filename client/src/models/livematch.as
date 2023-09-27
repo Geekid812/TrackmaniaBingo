@@ -21,15 +21,20 @@ namespace LiveMatch {
             match.teams.InsertLast(team);
 
             for (uint j = 0; j < t["members"].Length; j++) {
-                auto player = t["members"][i];
+                auto player = t["members"][j];
                 match.players.InsertLast(Player(PlayerProfile::Deserialize(player), team));
             }
         }
 
         @match.gameMaps = {};
         for (uint i = 0; i < value["cells"].Length; i++) {
-            auto cell = value["cells"][i];
-            match.gameMaps.InsertLast(GameMap::Deserialize(cell["map"]));
+            auto cell_json = value["cells"][i];
+            GameMap map = GameMap::Deserialize(cell_json["map"]);
+            MapCell cell = MapCell(map);
+            for (uint j = 0; j < cell_json["claims"].Length; j++) {
+                cell.attemptRanking.InsertLast(MapClaim::Deserialize(cell_json["claims"][j], match));
+            }
+            match.gameMaps.InsertLast(cell);
         }
         return match;
     }

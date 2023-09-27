@@ -76,7 +76,12 @@ namespace UIRoomMenu {
             }
 
             UI::PushStyleColor(UI::Col::TableBorderLight, vec4(.9, 1));
-            UI::BeginTable("bingo_publicrooms", 1, UI::TableFlags::BordersInnerH);
+            if (!UI::BeginTable("bingo_publicrooms", 1, UI::TableFlags::BordersInnerH)) {
+                // Table is not visible, return early and do not call EndTable().
+                UI::PopStyleColor();
+                UI::EndChild();
+                return;
+            }
             for (uint i = 0; i < PublicRooms.Length; i++) {
                 NetworkRoom room = PublicRooms[i];
                 UI::TableNextColumn();

@@ -1,26 +1,9 @@
-## Update 4.0
+## Update 4.1
 
-It's finally here! After so much work poured into this update over multiple months, I am happy to release Update 4 for everyone to play and enjoy.
-Here comes the huge list of changes:
+A small hotfix for today's update containing the following fixes:
 
-- Public rooms: A new public games menu allows everyone to find and join your game easily, no need to share a join code when everyone is welcome! You can also subscribe for notifications when someone opens a public game to play.
+- Fixed issues related to the Daily Challenge not loading.
 
-- Daily Challenge: a special bingo challenge where all players try to get a bingo on the same grid during all day. Can you defend your maps from everyone else?
+- Fix a plugin crash caused by window resizing.
 
-- Player profiles: a public profile has been added for all players, showing how many Bingo matches you have played (since this update came out), along with your wins and losses. Don't worry, I'm sure nobody will worry about the fact that you haven't won any games...
-
-- New match settings: these include randomizing teams, finer time limit controls and a new game phase, the grace period. If enabled, bingos cannot be scored for a certain amount of time from the start of the match.
-
-- You can now immediately go back to the lobby from a game that just ended. No need to back out of the game, you can stay in the same room and the settings will be preserved!
-
-- In addition to overtime, tiebreakers have been added. If nobody has claimed a bingo by the end of the time limit, the win will go to whichever team has claimed the most maps.
-
-- Map Rerolls: If players agree to a majority vote, an unclaimed map on the bingo grid can be rerolled for another map. Sometimes kacky maps can be annoying, but now you can ditch them if that's your thing.
-
-- Map Leaderboards: when there's many players who attempted to claim a map, you might be interested in knowing which times the previous players got, not just the current top time. And now that is possible!
-
-- What if you accidentally created too many teams for your game? Well, now you can also delete teams if you're the host. Wow, that's such a thoughtful addition, I can't possibly imagine how someone could have gotten this idea.
-
-- To improve game stability, maps are now cached on the server to reduce the load and reliance on TrackmaniaExchange. You heard it, no more "couldn't load maps" issues in your lobby just because TMX was down! That's a big relief.
-
-- The plugin will memorize your last game settings when creating a new room, so you don't have to reselect "Random Maps" every time you start a game. It does get annoying at some point.
+- Added a workaround for weird icons in some tooltips.
