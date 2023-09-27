@@ -16,14 +16,15 @@ namespace MapClaim {
         return value;
     }
 
-    MapClaim Deserialize(Json::Value@ value) {
+    MapClaim Deserialize(Json::Value@ value, LiveMatch@ match = null) {
         auto mapClaim = MapClaim();
-        if (@Match is null) {
+        if (@match is null) @match = @Match;
+        if (@match is null) {
             error("MapClaim: attemping to deserialize when Match == null.");
             return mapClaim;
         }
 
-        @mapClaim.player = Match.GetPlayer(int(value["player"]["uid"]));
+        @mapClaim.player = match.GetPlayer(int(value["player"]["uid"]));
         mapClaim.result = RunResult(uint64(value["time"]), Medal(int(value["medal"])));
 
         return mapClaim;
