@@ -65,7 +65,6 @@ namespace UIMapList {
         UI::PushStyleColor(UI::Col::TableBorderStrong, vec4(1., 1., 1., 1.));
         UI::BeginTable("Bingo_MapList", gridSize, UI::TableFlags::SizingFixedFit | UI::TableFlags::Borders);
 
-        if (uiScale <= 0.5) UI::PushFont(Font::Tiny);
         for (uint i = 0; i < maps.Length; i++) {
             auto cell = maps[i];
             UI::TableNextColumn();
@@ -83,8 +82,12 @@ namespace UIMapList {
             }
 
             UI::BeginChild("bingomapname" + i, vec2(160. * uiScale, UI::GetTextLineHeight()));
+
+            if (uiScale <= 0.5) UI::PushFont(Font::Tiny);
             string mapName = ColoredString(cell.map.trackName);
             UI::Text(mapName);
+            if (uiScale <= 0.5) UI::PopFont();
+
             UI::EndChild();
 
             UI::EndGroup();
@@ -154,7 +157,6 @@ namespace UIMapList {
             }
             if (mapHovered) drawList.AddRectFilled(rect, vec4(.5, .5, .5, .1));
         }
-        if (uiScale <= 0.5) UI::PopFont();
 
         UI::EndTable();
         UI::PopStyleColor(2);
