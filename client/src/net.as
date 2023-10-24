@@ -516,4 +516,8 @@ namespace Network {
             NetworkHandlers::LoadGameData(response["game_data"]);
         }
     }
+
+    void ReloadMaps() {
+        Network::Post("ReloadMaps", Json::Object(), false);
+    }
 }

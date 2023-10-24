@@ -361,17 +361,21 @@ impl GameRoom {
     }
 
     fn trigger_new_matchconfig(&mut self, config: MatchConfiguration) {
-        if config.selection != self.matchconfig.selection
+        let mapconfig_changed = config.selection != self.matchconfig.selection
             || self.matchconfig.mappack_id != config.mappack_id
             || self.matchconfig.map_tag != config.map_tag
-            || self.matchconfig.grid_size < config.grid_size
-        {
-            // map selection changed, reload maps
-            self.loaded_maps = Vec::new();
-            mapload::load_maps(self.ptr.clone(), &config, self.get_load_marker());
-        }
+            || self.matchconfig.grid_size < config.grid_size;
 
         self.matchconfig = config;
+        if mapconfig_changed {
+            // map selection changed, reload maps
+            self.reload_maps();
+        }
+    }
+
+    pub fn reload_maps(&mut self) {
+        self.loaded_maps = Vec::new();
+        mapload::load_maps(self.ptr.clone(), &self.matchconfig, self.get_load_marker());
     }
 
     pub fn set_configs(&mut self, config: RoomConfiguration, matchconfig: MatchConfiguration) {

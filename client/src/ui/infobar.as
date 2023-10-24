@@ -16,6 +16,11 @@ namespace UIInfoBar {
             if (UI::Button("Back to room")) {
                 @Match = null;
                 UIGameRoom::Visible = true;
+
+                if (Room.localPlayerIsHost) {
+                    // Starting a new game, ask the server to load new maps
+                    startnew(Network::ReloadMaps);
+                }
             }
             UI::SameLine();
         }
