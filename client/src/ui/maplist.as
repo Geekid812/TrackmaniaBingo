@@ -14,17 +14,21 @@ namespace UIMapList {
             UIPaintColor::Visible = true;
         }
 
-        UI::SetNextItemWidth(220);
-        float uiScale = PersistantStorage::MapListUiScale;
-        uiScale = UI::SliderFloat(uiScale <= 0.5 ? "###gridsize" : "Grid UI Size###gridsize", uiScale, 0.2, 2.0, "%.1f");
-        PersistantStorage::MapListUiScale = uiScale;
+        VoteToRerollButton();
 
         UI::SameLine();
-        string rerollText = RerollMenuOpen ? Icons::Times + " Cancel" : Icons::Kenney::ReloadInverse + " Vote to Reroll";
-        float windowWidth = UI::GetWindowSize().x;
-        float padding = LayoutTools::GetPadding(windowWidth, Draw::MeasureString(rerollText + "\t  ", @Font::Regular, 16.0).x, 1.0);
-        LayoutTools::MoveTo(padding);
+        float uiScale = GridScaleSlider();
+
+        MapGrid(Match.gameMaps, Match.config.gridSize, uiScale);
         
+        UI::EndDisabled();
+        UI::PopFont();
+        UI::End();
+    }
+
+    void VoteToRerollButton() {
+        string rerollText = RerollMenuOpen ? Icons::Times + " Cancel" : Icons::Kenney::ReloadInverse + " Vote to Reroll";
+
         UI::BeginGroup();
         if (RerollMenuOpen) UIColor::DarkRed();
         else UIColor::Cyan();
@@ -47,12 +51,15 @@ namespace UIMapList {
                 UI::EndTooltip();
             }
         }
+    }
 
-        MapGrid(Match.gameMaps, Match.config.gridSize, uiScale);
-        
-        UI::EndDisabled();
-        UI::PopFont();
-        UI::End();
+    float GridScaleSlider() {
+        UI::SetNextItemWidth(220);
+        float uiScale = PersistantStorage::MapListUiScale;
+        uiScale = UI::SliderFloat(uiScale <= 0.5 ? "###gridsize" : "Grid UI Size###gridsize", uiScale, 0.2, 2.0, "%.1f");
+        PersistantStorage::MapListUiScale = uiScale;
+
+        return uiScale;
     }
 
     bool MapGrid(array<MapCell>@&in maps, int gridSize, float uiScale = 1.0, bool interactable = true) {
