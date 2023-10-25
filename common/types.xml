@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file contains the type definitions for data structures shared between the game
+    client and the server. The `typegen.py` tool uses this file to generate Angelscript
+    and Rust bindings of these data types, which are exported to `client/src/datatypes.as`
+    and `server/src/datatypes.rs` respectively.
+-->
+<datatypes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="types.xsd">
+
+    <struct name="TypeFirst">
+        <comment>It's the first type.</comment>
+        <m name="value" type="int" />
+        <m name="other" type="uint" />
+    </struct>
+
+    <struct name="TypeSecond">
+        <m name="text" type="string" />
+    </struct>
+
+    <struct name="Complex">
+        <comment>This struct has more complex members.</comment>
+        <m name="one" type="list[int]" />
+        <m name="two" type="string" optional="true" />
+        <m name="three" type="list[TypeFirst]" optional="true" />
+    </struct>
+</datatypes>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This XML schema definition validates the types.xml file.
+    Consider enabling support for XSD schema validation in your editor
+    to access features such as autocompletion and linting.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="datatypes">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="struct" maxOccurs="unbounded" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="struct">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="comment" type="string" minOccurs="0" />
+                <xs:element ref="m" maxOccurs="unbounded" />
+            </xs:sequence>
+
+            <xs:attribute name="name" type="string" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="m">
+        <xs:complexType>
+            <xs:attribute name="name" type="string" use="required" />
+            <xs:attribute name="type" type="string" use="required" />
+            <xs:attribute name="optional" type="xs:boolean" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:simpleType name="string">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>
