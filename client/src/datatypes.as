@@ -5,7 +5,7 @@
 /* It's the first type. */
 class TypeFirst {
     int value;
-	uint other;
+    uint other;
     TypeFirst() {}
 }
 
@@ -13,7 +13,7 @@ namespace TypeFirst {
     Json::Value@ Serialize(TypeFirst cls) {
         auto value = Json::Object();
         value["value"] = cls.value;
-		value["other"] = cls.other;
+        value["other"] = cls.other;
 
         return value;
     }
@@ -21,7 +21,7 @@ namespace TypeFirst {
     TypeFirst Deserialize(Json::Value@ value) {
         auto cls = TypeFirst();
         cls.value = value["value"];
-		cls.other = value["other"];
+        cls.other = value["other"];
 
         return cls;
     }
@@ -53,8 +53,8 @@ namespace TypeSecond {
 /* This struct has more complex members. */
 class Complex {
     array<int> one;
-	string two;
-	array<TypeFirst>@ three;
+    string two;
+    array<TypeFirst>@ three;
     Complex() {}
 }
 
@@ -62,8 +62,8 @@ namespace Complex {
     Json::Value@ Serialize(Complex cls) {
         auto value = Json::Object();
         value["one"] = cls.one;
-		value["two"] = cls.two;
-		value["three"] = cls.three;
+        value["two"] = cls.two;
+        value["three"] = cls.three;
 
         return value;
     }
@@ -71,12 +71,12 @@ namespace Complex {
     Complex Deserialize(Json::Value@ value) {
         auto cls = Complex();
         for (uint i = 0; i < value["one"].Length; i++) {
-			cls.one.InsertLast(value["one"][i]);
-		}
-		if (value["two"].GetType() != Json::Type::Null) cls.two = value["two"];
-		if (value["three"].GetType() != Json::Type::Null) for (uint i = 0; i < value["three"].Length; i++) {
-			cls.three.InsertLast(TypeFirst::Deserialize(value["three"][i]));
-		}
+            cls.one.InsertLast(value["one"][i]);
+        }
+        if (value["two"].GetType() != Json::Type::Null) cls.two = value["two"];
+        if (value["three"].GetType() != Json::Type::Null) for (uint i = 0; i < value["three"].Length; i++) {
+            cls.three.InsertLast(TypeFirst::Deserialize(value["three"][i]));
+        }
 
         return cls;
     }

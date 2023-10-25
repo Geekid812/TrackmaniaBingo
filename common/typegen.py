@@ -60,7 +60,7 @@ rust_struct = """
 %s
 #[derive(Serialize, Deserialize, Debug)]
 pub struct %s {
-    %s
+    %s,
 }
 """
 
@@ -94,7 +94,7 @@ with open("../server/src/datatypes.rs", "w") as f:
         comment = f"\n/* {struct['comment']} */" if "comment" in struct else ""
 
         f.write(rust_struct %
-                (comment, struct["@name"], ",\n\t".join(members)))
+                (comment, struct["@name"], ",\n    ".join(members)))
 
     print("OK!")
 
@@ -163,7 +163,7 @@ def as_serialize(struct: dict) -> str:
     for m in struct['m']:
         statements.append("value[\"{0}\"] = cls.{0};".format(m['@name']))
 
-    return "\n\t\t".join(statements)
+    return "\n        ".join(statements)
 
 
 def as_deserialize(struct: dict) -> str:
@@ -181,13 +181,13 @@ def as_deserialize(struct: dict) -> str:
             if is_struct_type:
                 deserialized_inner_type = f"{tname}::Deserialize({deserialized_inner_type})"
 
-            stmt = "for (uint i = 0; i < value[\"{0}\"].Length; i++) {{\n\t\t\tcls.{0}.InsertLast({1});\n\t\t}}".format(
+            stmt = "for (uint i = 0; i < value[\"{0}\"].Length; i++) {{\n            cls.{0}.InsertLast({1});\n        }}".format(
                 m['@name'], deserialized_inner_type)
         if optional:
             stmt = f"if (value[\"{m['@name']}\"].GetType() != Json::Type::Null) " + stmt
         statements.append(stmt)
 
-    return "\n\t\t".join(statements)
+    return "\n        ".join(statements)
 
 
 with open("../client/src/datatypes.as", "w") as f:
@@ -199,7 +199,7 @@ with open("../client/src/datatypes.as", "w") as f:
         comment = f"\n/* {struct['comment']} */" if "comment" in struct else ""
 
         f.write(angelscript_class %
-                (comment, struct["@name"], ";\n\t".join(members), struct['@name']))
+                (comment, struct["@name"], ";\n    ".join(members), struct['@name']))
 
         serialize_impl = as_serialize(struct)
         deserialize_impl = as_deserialize(struct)
