@@ -45,12 +45,13 @@ void Render() {
     UIInfoBar::Render();
     UIMapList::Render();
     UIPaintColor::Render();
+    SettingsWindow::Render();
 }
 
 void RenderInterface() {
     UIMainWindow::Render();
     UINews::Render();
-    SettingsWindow::Render();
+    UIDailyHistory::Render();
 }
 
 void Update(float dt) {

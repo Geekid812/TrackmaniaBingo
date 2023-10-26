@@ -8,7 +8,19 @@ namespace UIDaily {
         string formattedDate = Time::FormatStringUTC("%d %B %Y", Time::Stamp);
         UI::PushFont(Font::Subtitle);
         UI::Text("Daily Challenge - " + formattedDate);
-        UI::PopFont();   
+        UI::PopFont();
+
+        float buttonWidth = 124.;
+        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, buttonWidth, 1.0);
+        UI::SameLine();
+        UIColor::Gray();
+        LayoutTools::MoveTo(padding);
+        if (UI::Button(Icons::ThList + " Show History")) {
+            UIDailyHistory::Visible = !UIDailyHistory::Visible;
+        }
+        UIColor::Reset();
+        UI::NewLine();
+        
         UI::TextWrapped("A special bingo game with a 5x5 grid, random maps, gold medals, lasting all day everyday until midnight UTC.\n\nPlay at any time of the day and try to get a bingo line from these randomly selected maps. Be careful, everyone is playing at the same time on the same maps, and the bingos are only tallied up at the end of the day! Can you defend your maps and earn the win for today's challenge?");
         DailyYesterdayResults();
 
@@ -43,6 +55,7 @@ namespace UIDaily {
                 UI::TextWrapped("\\$aaaNo winners...");
             }
 
+
             UI::SetCursorPos(UI::GetCursorPos() - vec2(0., UI::GetStyleVarVec2(UI::StyleVar::ItemSpacing).y));
             UI::TextWrappedWindow("\\$aaaTotal players: " + result.playerCount);
         }
@@ -51,9 +64,10 @@ namespace UIDaily {
     void DailyShowGridPreview() {
         UITools::ErrorMessage("SubscribeDailyChallenge");
         if (DailyLoad == LoadStatus::NotLoaded) {
+            DailyLoad = LoadStatus::Loading;
+            NetParams::DailyResultDate = UIDaily::GetYesterdayTimestring();
             startnew(Network::LoadDailyChallenge);
             startnew(Network::GetDailyResults);
-            DailyLoad = LoadStatus::Loading;
         }
 
         if (DailyLoad == LoadStatus::Loading) {
@@ -121,5 +135,100 @@ namespace UIDaily {
 
     string GetYesterdayTimestring() {
         return Time::FormatStringUTC("%Y-%m-%d", Time::Stamp - (60 * 60 * 24));
+    }
+}
+
+namespace UIDailyHistory {
+    array<string> Months = {
+        "", "January", "Febuary", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    };
+
+    bool Visible;
+    uint CurrentYear = Text::ParseUInt(Time::FormatStringUTC("%Y", Time::Stamp));
+    uint CurrentMonth = Text::ParseUInt(Time::FormatStringUTC("%m", Time::Stamp));
+    uint PageYear = CurrentYear;
+    uint PageMonth = CurrentMonth;
+    string LoadingTimestring;
+
+    void DailyCalendarList(const string&in timestring) {
+        for (uint d = 31; d > 0; d--) {
+            string date = timestring + "-" + (d < 10 ? "0" : "") + d;
+            if (UIDaily::DailyResults.Exists(date)) {
+                DailyResult result;
+                UIDaily::DailyResults.Get(date, result);
+                string challengeText =
+                "\\$fd8" + date + ": \\$z" + result.playerCount + " player"
+                + (result.playerCount != 1 ? "s" : "") + " participated\n";
+
+                if (result.winners.Length == 0) {
+                    challengeText += "\n\\$aaaThere were no winners for this challenge.";
+                } else {
+                    array<string> winners;
+                    for (uint i = 0; i < result.winners.Length; i++) winners.InsertLast(result.winners[i].name);
+                    challengeText += "\n\\$ff6Winner" + (result.winners.Length > 1 ? "s" : "") + ": \\$z" + string::Join(winners, ", ");
+                }
+
+                UI::TextWrappedWindow(challengeText);
+                UI::Separator();
+            }
+        }
+    }
+
+    void Render() {
+        if (!Visible) return;
+        UI::Begin(Icons::ThList + " Daily Challenge History", Visible);
+        UIColor::Crimson();
+        
+        UI::BeginDisabled((PageMonth <= 9 || PageYear != 2023) && PageYear < 2024);
+        if (UI::Button(Icons::ArrowLeft + "##dailyprevious")) {
+            PageMonth -= 1;
+            if (PageMonth == 0) {
+                PageMonth = 12;
+                PageYear -= 1;
+            }
+        }
+        UI::EndDisabled();
+
+        float size = UI::GetWindowSize().x;
+        string date =  Months[PageMonth] + " " + tostring(PageYear);
+        float padding = LayoutTools::GetPadding(size, Draw::MeasureString(date, Font::Regular, 16.).x, 0.5);
+        UI::SameLine();
+        LayoutTools::MoveTo(padding);
+        UI::Text(date);
+
+        float buttonWidth = 38.;
+        padding = LayoutTools::GetPadding(size, buttonWidth, 1.0);
+        UI::SameLine();
+        LayoutTools::MoveTo(padding);
+        UI::BeginDisabled((PageMonth >= CurrentMonth || PageYear != CurrentYear) && PageYear < CurrentYear + 1);
+        if (UI::Button(Icons::ArrowRight + "##dailynext")) {
+            PageMonth += 1;
+            if (PageMonth == 13) {
+                PageMonth = 1;
+                PageYear += 1;
+            }
+        }
+        UI::EndDisabled();
+
+        UI::Separator();
+
+        string timestring = PageYear + "-" + (PageMonth < 10 ? "0" : "") + PageMonth;
+        if (UIDaily::DailyResults.Exists(timestring + "-01") || UIDaily::DailyResults.Exists(timestring + "-27")) {
+            UI::BeginChild("dailycalendarlist");
+            DailyCalendarList(timestring);
+            UI::EndChild();
+        } else {
+            if (timestring == LoadingTimestring) {
+                UI::Text("\\$ff4" + Icons::HourglassHalf + " \\$zLoading daily challenges...");
+            } else {
+                LoadingTimestring = timestring;
+                NetParams::DailyResultDate = timestring + "-__";
+                startnew(Network::GetDailyResults);
+            }
+        }
+
+        UIColor::Reset();
+        UI::End();
     }
 }

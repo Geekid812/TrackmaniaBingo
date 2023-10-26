@@ -486,7 +486,7 @@ namespace Network {
 
     void GetDailyResults() {
         auto body = Json::Object();
-        body["period"] = UIDaily::GetYesterdayTimestring();
+        body["period"] = NetParams::DailyResultDate;
         auto response = Network::Post("GetDailyResults", body, false);
         if (@response is null) return;
 
@@ -515,5 +515,9 @@ namespace Network {
         if (response.HasKey("game_data")) {
             NetworkHandlers::LoadGameData(response["game_data"]);
         }
+    }
+
+    void ReloadMaps() {
+        Network::Post("ReloadMaps", Json::Object(), false);
     }
 }

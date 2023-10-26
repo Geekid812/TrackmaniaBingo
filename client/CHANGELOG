@@ -1,9 +1,12 @@
-## Update 4.1
+## Update 4.2
 
-A small hotfix for today's update containing the following fixes:
+Quality of life update! Public profiles have been slightly tweaked, they now only show the amount of matches played. If you have won a daily challenge, it will also display your daily wins, as a small showoff.
 
-- Fixed issues related to the Daily Challenge not loading.
+There's also been a new addition to the Daily Challenge. You can now access the history of all past daily challenges, including how many players participated and who were the winners.
 
-- Fix a plugin crash caused by window resizing.
+A couple of bugs have been fixed:
 
-- Added a workaround for weird icons in some tooltips.
+- Maps will be shuffled again when restarting a new game from the same room
+- Fix invisible settings window
+- Fix reroll button alignment issues
+- Daily challenge timer is now correctly positioned
