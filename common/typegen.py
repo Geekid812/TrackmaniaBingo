@@ -176,6 +176,9 @@ def as_deserialize(struct: dict) -> str:
         is_struct_type = not (tname in types)
 
         stmt = "cls.{0} = value[\"{0}\"];".format(m['@name'])
+        if is_struct_type:
+            stmt = "cls.{0} = {1}::Deserialize(value[\"{0}\"]);".format(
+                m['@name'], tname)
         if is_list:
             deserialized_inner_type = f"value[\"{m['@name']}\"][i]"
             if is_struct_type:
