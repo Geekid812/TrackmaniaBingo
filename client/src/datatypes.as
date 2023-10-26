@@ -30,6 +30,7 @@ namespace TypeFirst {
 
 class TypeSecond {
     string text;
+    MyEnum flags;
     TypeSecond() {}
 }
 
@@ -37,6 +38,7 @@ namespace TypeSecond {
     Json::Value@ Serialize(TypeSecond cls) {
         auto value = Json::Object();
         value["text"] = cls.text;
+        value["flags"] = int(cls.flags);
 
         return value;
     }
@@ -44,6 +46,7 @@ namespace TypeSecond {
     TypeSecond Deserialize(Json::Value@ value) {
         auto cls = TypeSecond();
         cls.text = value["text"];
+        cls.flags = MyEnum(int(value["flags"]));
 
         return cls;
     }
@@ -61,9 +64,13 @@ class Complex {
 namespace Complex {
     Json::Value@ Serialize(Complex cls) {
         auto value = Json::Object();
-        value["one"] = cls.one;
+        for (uint i = 0; i < cls.one.Length; i++) {
+            value["one"].InsertLast(cls.one[i]);
+        }
         value["two"] = cls.two;
-        value["three"] = cls.three;
+        for (uint i = 0; i < cls.three.Length; i++) {
+            value["three"].InsertLast(TypeFirst::Serialize(cls.three[i]));
+        }
 
         return value;
     }
@@ -80,4 +87,11 @@ namespace Complex {
 
         return cls;
     }
+}
+
+
+/* It's my enum. */
+enum MyEnum {
+    One = 0,
+    Two,
 }

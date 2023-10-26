@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     This file contains the type definitions for data structures shared between the game
-    client and the server. The `typegen.py` tool uses this file to generate Angelscript
+    client and the server.
+    
+    The `bindgen.py` tool uses this file to generate Angelscript
     and Rust bindings of these data types, which are exported to `client/src/datatypes.as`
     and `server/src/datatypes.rs` respectively.
 -->
 <datatypes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="types.xsd">
+    xsi:noNamespaceSchemaLocation="schema/types.xsd">
 
     <struct name="TypeFirst">
         <comment>It's the first type.</comment>
@@ -16,6 +18,7 @@
 
     <struct name="TypeSecond">
         <m name="text" type="string" />
+        <m name="flags" type="MyEnum" />
     </struct>
 
     <struct name="Complex">
@@ -24,4 +27,10 @@
         <m name="two" type="string" optional="true" />
         <m name="three" type="list[TypeFirst]" optional="true" />
     </struct>
+
+    <enum name="MyEnum">
+        <comment>It's my enum.</comment>
+        <v id="0">One</v>
+        <v>Two</v>
+    </enum>
 </datatypes>

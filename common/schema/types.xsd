@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     This XML schema definition validates the types.xml file.
-    Consider enabling support for XSD schema validation in your editor
-    to access features such as autocompletion and linting.
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="datatypes">
         <xs:complexType>
             <xs:sequence>
-                <xs:element ref="struct" maxOccurs="unbounded" />
+                <xs:element ref="struct" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="enum" minOccurs="0" maxOccurs="unbounded" />
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -16,8 +15,19 @@
     <xs:element name="struct">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="comment" type="string" minOccurs="0" />
+                <xs:element name="comment" type="string" minOccurs="0" maxOccurs="1" />
                 <xs:element ref="m" maxOccurs="unbounded" />
+            </xs:sequence>
+
+            <xs:attribute name="name" type="string" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="enum">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="comment" type="string" minOccurs="0" maxOccurs="1" />
+                <xs:element ref="v" maxOccurs="unbounded" />
             </xs:sequence>
 
             <xs:attribute name="name" type="string" use="required" />
@@ -29,6 +39,17 @@
             <xs:attribute name="name" type="string" use="required" />
             <xs:attribute name="type" type="string" use="required" />
             <xs:attribute name="optional" type="xs:boolean" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="v">
+        <xs:complexType>
+            <xs:simpleContent>
+                <xs:extension base="string">
+                    <xs:attribute name="id" type="xs:integer">
+                    </xs:attribute>
+                </xs:extension>
+            </xs:simpleContent>
         </xs:complexType>
     </xs:element>
 
