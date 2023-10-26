@@ -114,8 +114,29 @@ namespace UIGameRoom {
             UI::SameLine();
         }
         UI::NewLine();
-        UI::NewLine();
 
+        if (Room.config.randomizeTeams) {
+            if (Room.localPlayerIsHost) {
+                UI::BeginDisabled(!Room.CanDeleteTeams());
+                if (UI::Button(Icons::MinusSquare)) {
+                    NetParams::DeletedTeamId = Room.teams[0].id;
+                    startnew(Network::DeleteTeam);
+                }
+                UI::EndDisabled();
+
+                UI::SameLine();
+                UI::BeginDisabled(!Room.CanCreateMoreTeams());
+                if (UI::Button(Icons::PlusSquare)) {
+                    startnew(Network::CreateTeam);
+                }
+                UI::EndDisabled();
+                UI::SameLine();
+            }
+            
+            UI::Text("\\$ff8Number of teams: \\$z" + Room.teams.Length);
+        } else {
+            UI::NewLine();
+        }
         UI::BeginTable("Bingo_TeamTable", Room.config.randomizeTeams ? 4 : Room.teams.Length + (Room.localPlayerIsHost && Room.CanCreateMoreTeams() ? 1 : 0));
 
         if ((Room.config.randomizeTeams && @Match == null) || Room.matchConfig.freeForAll) {
@@ -171,7 +192,8 @@ namespace UIGameRoom {
                 }
             }
 
-            if (Room.localPlayerIsHost && Room.CanCreateMoreTeams()) {
+            bool matchInactive = @Match is null;
+            if (Room.localPlayerIsHost && Room.CanCreateMoreTeams() && matchInactive) {
                 UI::TableNextColumn();
                 if (UI::Button(Icons::PlusSquare + " Create team")) {
                     startnew(Network::CreateTeam);
