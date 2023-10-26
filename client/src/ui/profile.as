@@ -12,7 +12,11 @@ namespace UIProfile {
             NameTitle(profile.title);
         }
 
-        MatchCount(profile.matchCount, profile.wins, profile.losses);
+        MatchCount(profile.matchCount);
+        if (profile.dailyWins > 0) {
+            UI::SameLine();
+            DailyWins(profile.dailyWins);
+        }
         UI::SetCursorPos(playerPos);
         // RatingDisplay(profile.score, profile.deviation);
         UI::NewLine();
@@ -34,7 +38,11 @@ namespace UIProfile {
         UI::PopFont();
     }
 
-    void MatchCount(int matches, int wins, int losses) {
+    void MatchCount(int matches) {
+        UI::Text(matches + " \\$zmatch" + (matches == 1 ? "" : "es") + " played");
+    }
+
+    void MatchStats(int matches, int wins, int losses) {
         UI::Text(matches + " \\$zmatch" + (matches == 1 ? "" : "es")
         + " \\$888(\\$8f8" + wins + " \\$888win" + (wins == 1 ? "" : "s")
         + " /\\$f88 " + losses + " \\$888loss" + (losses == 1 ? "" : "es") + ")");
@@ -46,7 +54,7 @@ namespace UIProfile {
     }
 
     void DailyWins(int wins) {
-        UI::Text("\\$ffa" + wins + " \\$zdaily challenge win" + (wins == 1 ? "" : "s"));
+        UI::Text("\\$ffa" + wins + " daily challenge win" + (wins == 1 ? "" : "s"));
     }
 
     void RatingDisplay(int rating, int deviation) {
