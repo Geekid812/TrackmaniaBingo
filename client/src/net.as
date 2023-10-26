@@ -486,7 +486,7 @@ namespace Network {
 
     void GetDailyResults() {
         auto body = Json::Object();
-        body["period"] = UIDaily::GetYesterdayTimestring();
+        body["period"] = NetParams::DailyResultDate;
         auto response = Network::Post("GetDailyResults", body, false);
         if (@response is null) return;
 

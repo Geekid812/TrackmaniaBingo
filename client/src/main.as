@@ -51,6 +51,7 @@ void Render() {
 void RenderInterface() {
     UIMainWindow::Render();
     UINews::Render();
+    UIDailyHistory::Render();
 }
 
 void Update(float dt) {
