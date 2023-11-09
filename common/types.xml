@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file contains the type definitions for data structures shared between the game
+    client and the server.
+    
+    The `typegen.py` tool uses this file to generate Angelscript
+    and Rust bindings of these data types, which are exported to `client/src/datatypes.as`
+    and `server/src/datatypes.rs` respectively.
+-->
+<datatypes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="schema/types.xsd">
+
+    <struct name="PlayerRef">
+        <comment>A simple reference to a registered player.</comment>
+        <m name="uid" type="uint" />
+        <m name="name" type="string" />
+    </struct>
+
+    <!-- <struct name="PlayerProfile">
+
+        <m name="created_at" type="datetime" />
+        <m name="country_code" type="string" />
+        <m name="match_count" type="int" />
+        <m name="daily_count" type="int" />
+        <m name="daily_wins" type="int" />
+        <m name="title" type="string" optional="true" />
+    </struct> -->
+
+    <struct name="RoomConfiguration">
+        <comment>Room parameters set by the host.</comment>
+        <m name="name" type="string" />
+        <m name="public" type="bool" />
+        <m name="randomize" type="bool" />
+        <m name="size" type="uint" />
+    </struct>
+
+    <struct name="MatchConfiguration">
+        <comment>Match parameters set by the host.</comment>
+        <m name="grid_size" type="uint" default="5" />
+        <m name="selection" type="MapMode" default="MapMode::RandomTMX" />
+        <m name="target_medal" type="Medal" default="Medal::Author" />
+        <m name="time_limit" type="duration" />
+        <m name="no_bingo_duration" type="duration" />
+        <m name="overtime" type="bool" />
+        <m name="free_for_all" type="bool" />
+        <m name="rerolls" type="bool" />
+        <m name="mappack_id" type="uint" optional="true" />
+        <m name="map_tag" type="int" optional="true" />
+    </struct>
+
+    <enum name="MapMode">
+        <comment>Available map selection modes.</comment>
+        <v>RandomTMX</v>
+        <v>Tags</v>
+        <v>Mappack</v>
+    </enum>
+
+    <enum name="Medal">
+        <comment>A Trackmania medal ranking.</comment>
+        <v>Author</v>
+        <v>Gold</v>
+        <v>Silver</v>
+        <v>Bronze</v>
+        <v>None</v>
+    </enum>
+</datatypes>

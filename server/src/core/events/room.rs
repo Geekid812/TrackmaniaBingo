@@ -2,13 +2,13 @@ use serde::Serialize;
 
 use crate::{
     core::{
-        livegame::MatchConfiguration,
         models::{
-            room::{RoomConfiguration, RoomState},
+            room::RoomState,
             team::{BaseTeam, TeamIdentifier},
         },
         room::PlayerUpdates,
     },
+    datatypes::{MatchConfiguration, RoomConfiguration},
     orm::composed::profile::PlayerProfile,
 };
 

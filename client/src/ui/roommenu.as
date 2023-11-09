@@ -134,7 +134,7 @@ namespace UIRoomMenu {
         UI::Text(room.name);
         UI::PopFont();
 
-        string righttext = Icons::Users + " " + room.playerCount + (room.config.maxPlayers != 0 ? "/" + room.config.maxPlayers : "") + "\t" + (room.hostName != "" ? ("\t" + Icons::User + " " + room.hostName) : "");
+        string righttext = Icons::Users + " " + room.playerCount + (room.config.size != 0 ? "/" + room.config.size : "") + "\t" + (room.hostName != "" ? ("\t" + Icons::User + " " + room.hostName) : "");
         float padding = LayoutTools::GetPadding(UI::GetWindowSize().x - base.x, Draw::MeasureString(righttext).x, 1.0);
         UI::SetCursorPos(base + vec2(padding, 0.));
         UI::Text(righttext);

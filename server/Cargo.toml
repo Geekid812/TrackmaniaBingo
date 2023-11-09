@@ -82,3 +82,4 @@ sqlx = { version = "0.7.1", features = ["runtime-tokio", "sqlite", "chrono"] }
 
 # Async future blocker
 pollster = "0.3.0"
+derivative = "2.2.0"

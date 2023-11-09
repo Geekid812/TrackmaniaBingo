@@ -5,6 +5,9 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::serde_as;
 use serde_with::TimestampSeconds;
 
+use crate::datatypes::MatchConfiguration;
+use crate::datatypes::Medal;
+
 use super::map::GameMap;
 
 use super::player::PlayerRef;
@@ -21,22 +24,6 @@ pub struct MatchState {
     pub can_reroll: bool,
     #[serde_as(as = "TimestampSeconds")]
     pub started: DateTime<Utc>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct MatchConfiguration {
-    pub grid_size: usize,
-    pub selection: MapMode,
-    pub medal: Medal,
-    pub time_limit: u32,
-    pub no_bingo_mins: u32,
-    pub overtime: bool,
-    pub free_for_all: bool,
-    pub rerolls: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub mappack_id: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub map_tag: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -57,24 +44,6 @@ pub struct MapClaim {
     pub player: PlayerRef,
     pub time: u64,
     pub medal: Medal,
-}
-
-#[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]
-#[repr(u8)]
-pub enum MapMode {
-    RandomTMX,
-    Tags,
-    Mappack,
-}
-
-#[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]
-#[repr(u8)]
-pub enum Medal {
-    Author,
-    Gold,
-    Silver,
-    Bronze,
-    None,
 }
 
 #[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]

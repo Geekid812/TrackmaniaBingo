@@ -6,6 +6,7 @@ use std::{
 
 use crate::{
     config::CONFIG,
+    datatypes::MatchConfiguration,
     orm::{
         self,
         mapcache::record::MapRecord,
@@ -20,13 +21,12 @@ use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
 use sqlx::QueryBuilder;
-use tracing::{debug, error};
+use tracing::error;
 
 use super::{
     directory::{Owned, Shared, MATCHES},
     events::game::GameEvent,
     models::{
-        self,
         livegame::{GameCell, MapClaim, MatchPhase, MatchState},
         map::GameMap,
         player::Player,
@@ -36,8 +36,6 @@ use super::{
     teams::TeamsManager,
     util::base64,
 };
-
-pub type MatchConfiguration = models::livegame::MatchConfiguration;
 
 pub struct LiveMatch {
     ptr: Shared<Self>,
@@ -126,8 +124,8 @@ impl LiveMatch {
     fn setup_phase_timers(&mut self) {
         let mut first_phase = MatchPhase::Running;
         let countdown_duration = self.options.start_countdown;
-        let nobingo_duration = Duration::minutes(self.config.no_bingo_mins as i64);
-        let main_phase_duration = Duration::minutes(self.config.time_limit as i64);
+        let nobingo_duration = self.config.no_bingo_duration;
+        let main_phase_duration = self.config.time_limit;
         if !nobingo_duration.is_zero() {
             first_phase = MatchPhase::NoBingo;
             execute_delayed_task(
@@ -158,7 +156,7 @@ impl LiveMatch {
     }
 
     fn broadcast_start(&mut self) {
-        let maps_in_grid = self.config.grid_size * self.config.grid_size;
+        let maps_in_grid = self.cell_count();
         self.channel.broadcast(&GameEvent::MatchStart {
             uid: self.uid().clone(),
             start_ms: self.options.start_countdown,
@@ -369,7 +367,7 @@ impl LiveMatch {
     }
 
     fn cell_count(&self) -> usize {
-        self.config.grid_size * self.config.grid_size
+        self.config.grid_size as usize * self.config.grid_size as usize
     }
 
     fn player_count(&self) -> usize {
@@ -511,7 +509,7 @@ impl LiveMatch {
     }
 
     pub fn check_for_bingos(&self) -> Vec<BingoLine> {
-        let grid_size = self.config.grid_size;
+        let grid_size = self.config.grid_size as usize;
         let mut bingos = Vec::new();
         // Horizontal
         for i in 0..grid_size {

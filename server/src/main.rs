@@ -5,6 +5,7 @@ use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
 pub mod core;
+pub mod datatypes;
 pub mod integrations;
 pub mod orm;
 pub mod server;

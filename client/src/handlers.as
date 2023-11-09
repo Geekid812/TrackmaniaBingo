@@ -89,12 +89,12 @@ namespace NetworkHandlers {
 
         if (PersistantStorage::SubscribeToRoomUpdates && @Match is null && @Room is null) {
             array<string> params = {
-                stringof(netRoom.matchConfig.mapSelection),
+                stringof(netRoom.matchConfig.selection),
                 netRoom.matchConfig.gridSize + "x" + netRoom.matchConfig.gridSize,
                 stringof(netRoom.matchConfig.targetMedal)
             };
-            if (netRoom.matchConfig.minutesLimit != 0) {
-                params.InsertLast(netRoom.matchConfig.minutesLimit + " minutes");
+            if (netRoom.matchConfig.timeLimit != 0) {
+                params.InsertLast((netRoom.matchConfig.timeLimit / 60000) + " minutes");
             }
             string paramsString = string::Join(params, ", ");
             UI::ShowNotification(Icons::PlusCircle + " Bingo: New game started", netRoom.hostName + " is hosting a new game: \\$ee4" + netRoom.name + "\n\\$z(" + paramsString + ")", vec4(0.27,0.50,0.29, 1.), 10000);
