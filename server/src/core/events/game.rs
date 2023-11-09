@@ -18,6 +18,7 @@ use crate::{
 #[serde(tag = "event")]
 pub enum GameEvent {
     MatchStart {
+        uid: String,
         #[serde_as(as = "DurationMilliSeconds<i64>")]
         start_ms: Duration,
         can_reroll: bool,

@@ -8,9 +8,14 @@ void Main() {
     Config::FetchConfig();
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
-    if (WasConnected) {
+    if (PersistantStorage::LastConnectedMatchId != "") {
         trace("Main: Plugin was previously connected, attempting to reconnect.");
         Network::Connect();
+
+        if (Network::IsConnected()) {
+            NetParams::MatchJoinUid = PersistantStorage::LastConnectedMatchId;
+            startnew(Network::Reconnect);
+        }
     }
 
     // We are interested in roomlist notifications, so we should connect

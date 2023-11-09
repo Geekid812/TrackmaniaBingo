@@ -160,6 +160,7 @@ impl LiveMatch {
     fn broadcast_start(&mut self) {
         let maps_in_grid = self.config.grid_size * self.config.grid_size;
         self.channel.broadcast(&GameEvent::MatchStart {
+            uid: self.uid().clone(),
             start_ms: self.options.start_countdown,
             maps: self
                 .cells
@@ -215,21 +216,23 @@ impl LiveMatch {
         ctx: &ClientContext,
         mut requested_team: Option<TeamIdentifier>,
     ) -> Result<TeamIdentifier, anyhow::Error> {
-        if !self.options.player_join {
-            return Err(anyhow!("joining is disabled for this match"));
-        }
+        let already_joined_team = self.get_player_team(ctx.profile.player.uid);
 
-        let existing_team = self.get_player_team(ctx.profile.player.uid);
-        if let Some(team) = existing_team {
+        if let Some(team) = already_joined_team {
             self.channel
                 .subscribe(ctx.profile.player.uid, ctx.writer.clone());
             return Ok(team);
+        } else {
+            if !self.options.player_join {
+                return Err(anyhow!("joining is disabled for this match"));
+            }
+
+            if requested_team.is_none() && !self.config.free_for_all {
+                requested_team = self.get_least_populated_team().map(|t| t.base.id);
+            }
         }
 
-        if requested_team.is_none() && !self.config.free_for_all {
-            requested_team = self.get_least_populated_team().map(|t| t.base.id);
-        }
-        self.add_player(ctx, requested_team)
+        self.add_player(ctx, already_joined_team.or(requested_team))
     }
 
     fn add_player(
@@ -306,7 +309,12 @@ impl LiveMatch {
             config: self.config.clone(),
             phase: self.phase,
             teams: self.teams.get_teams().iter().map(GameTeam::clone).collect(), // TODO: broadcast members too
-            cells: self.cells.clone(),
+            cells: self
+                .cells
+                .iter()
+                .take(self.cell_count())
+                .map(Clone::clone)
+                .collect(),
             started: self.started.unwrap_or_default(),
             can_reroll: self.can_reroll(),
         }

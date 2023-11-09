@@ -193,38 +193,6 @@ namespace UIMainWindow {
 
         UI::Dummy(vec2(0, 20));
     }
-/**
-
-    
-    void JoinTab() {
-        UIRoomMenu::RoomMenu();
-    }
-
-    
-    void InGame() {
-        UI::Text("A game is already running! Close this window and keep playing!");
-        if (UI::Button(Icons::Kenney::Exit + " Leave Game")) {
-            startnew(Network::LeaveRoom);
-        }
-    }
-
-    void DevControls() {
-        UIColor::Cyan();
-        if (UI::Button(Icons::Signal + " Force Disconnect")) {
-            startnew(Network::OnDisconnect);
-        }
-        UI::SameLine();
-        if (UI::Button(Icons::Globe + " Test Connection")) {
-            startnew(Network::TestConnection);
-        }
-        UI::SameLine();
-        if (UI::Button(Icons::Plug + " Sync Client")) {
-            startnew(Network::Sync);
-        }
-        UIColor::Reset();
-    }
-}
-*/
 }
 
 namespace SettingsWindow {

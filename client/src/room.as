@@ -1,7 +1,3 @@
-// Persisently saved: whether the game has crashed during a game
-[Setting hidden]
-bool WasConnected = false;
-
 class GameRoom {
     string name;
     RoomConfiguration config;

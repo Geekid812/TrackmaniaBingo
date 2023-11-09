@@ -26,16 +26,18 @@ namespace NetworkHandlers {
 
     void MatchStart(Json::Value@ match) {
         @Match = LiveMatch();
+        Match.uid = match["uid"];
         Match.startTime = Time::Now + uint64(match["start_ms"]);
         Match.teams = Room.teams;
         Match.players = Room.players;
         Match.config = Room.matchConfig;
         Match.canReroll = bool(match["can_reroll"]);
         LoadMaps(match["maps"]);
-        WasConnected = true;
         UIGameRoom::GrabFocus = true;
         UIMapList::Visible = false;
-        Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
+
+        PersistantStorage::LastConnectedMatchId = Match.uid;
+        Meta::SaveSettings(); // Ensure MatchId is saved, even in the event of a crash
     }
 
     void LoadMaps(Json::Value@ mapList) {
@@ -191,7 +193,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Match.SetPhase(MatchPhase::Ended);
-        WasConnected = false;
+        PersistantStorage::LastConnectedMatchId = "";
     }
 
     void TeamCreated(Json::Value@ data) {
@@ -267,7 +269,7 @@ namespace NetworkHandlers {
         Match.endState.endTime = Time::Now;
         @Match.endState.team = team;
         Match.SetPhase(MatchPhase::Ended);
-        WasConnected = false;
+        PersistantStorage::LastConnectedMatchId = "";
     }
 
     void AnnounceDraw() {
@@ -275,7 +277,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Match.SetPhase(MatchPhase::Ended);
-        WasConnected = false;
+        PersistantStorage::LastConnectedMatchId = "";
     }
 
     void MatchTeamCreated(Json::Value@ data) {

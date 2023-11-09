@@ -108,14 +108,11 @@ namespace Network {
 
     void HandleHandshakeCode(HandshakeCode code) {
         if (code == HandshakeCode::Ok) {
-            WasConnected = false;
             return;
         }
         if (code == HandshakeCode::CanReconnect) {
             // The server indicates that reconnecting is possible
-            trace("Network: Received reconnection handshake code, attempting to reconnect.");
-            UI::ShowNotification(Icons::Globe + " Reconnecting...");
-            startnew(Sync);
+            warn("Error code" + int(HandshakeCode::CanReconnect) + " is obsolete as of version 4.3. This should not have happened!");
         } else if (code == HandshakeCode::IncompatibleVersion) {
             // Update required
             UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required to play Bingo. Please update the plugin to the latest version in the plugin manager.", vec4(.4, .4, 1., 1.), 10000);
@@ -168,7 +165,7 @@ namespace Network {
     }
 
     bool ShouldStayConnected() {
-        return UIMainWindow::Visible || @Room != null || @Match != null || PersistantStorage::SubscribeToRoomUpdates;
+        return UIMainWindow::Visible || @Room != null || @Match != null || PersistantStorage::SubscribeToRoomUpdates || PersistantStorage::LastConnectedMatchId != "";
     }
 
     void DoPing() {
@@ -496,28 +493,17 @@ namespace Network {
         }
     }
 
-    void Sync() {
-        trace("Network: Syncing with server...");
-        auto response = Network::Post("Sync", Json::Object(), false);
-        if (response is null) {
-            trace("Sync: No reply from server.");
-            WasConnected = false;
-            return;
-        }
-
-        @Room = GameRoom();
-        Room.name = response["room_name"];
-        Room.config = RoomConfiguration::Deserialize(response["config"]);
-        Room.joinCode = response["join_code"];
-        Room.localPlayerIsHost = response["host"];
-        //NetworkHandlers::UpdateRoom(response["status"]);
-        NetworkHandlers::LoadMaps(response["maps"]);
-        if (response.HasKey("game_data")) {
-            NetworkHandlers::LoadGameData(response["game_data"]);
-        }
-    }
-
     void ReloadMaps() {
         Network::Post("ReloadMaps", Json::Object(), false);
+    }
+
+    void Reconnect() {
+        UI::ShowNotification(Icons::Globe + " Reconnecting to your Bingo match...");
+        JoinMatch();
+
+        if (@Match is null || Match.uid != PersistantStorage::LastConnectedMatchId) {
+            trace("Network: Reconnection failure, forgetting previous game save.");
+            PersistantStorage::LastConnectedMatchId = "";
+        }
     }
 }
