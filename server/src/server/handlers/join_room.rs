@@ -1,12 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::{
-        directory::ROOMS,
-        livegame::MatchConfiguration,
-        models::room::{RoomConfiguration, RoomTeam},
-        room::JoinRoomError,
-    },
+    core::{directory::ROOMS, models::room::RoomTeam, room::JoinRoomError},
+    datatypes::{MatchConfiguration, RoomConfiguration},
     server::context::{ClientContext, RoomContext},
 };
 

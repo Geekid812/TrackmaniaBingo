@@ -210,7 +210,7 @@ namespace UIInfoBar {
         }
 
         // If playing with a time limit, timer counts down to 0
-        if (Match.config.minutesLimit != 0 || Match.config.noBingoMinutes != 0) stopwatchTime = Time::GetMaxTimeMilliseconds(@Match) - stopwatchTime;
+        if (Match.config.timeLimit != 0 || Match.config.noBingoDuration != 0) stopwatchTime = Time::GetMaxTimeMilliseconds(@Match) - stopwatchTime;
         if (phase == MatchPhase::NoBingo) stopwatchTime -= Time::GetTimelimitMilliseconds(@Match);
         if (stopwatchTime < 0) stopwatchTime = -stopwatchTime;
         if (phase == MatchPhase::Overtime) stopwatchTime = Time::Now - Match.overtimeStartTime;

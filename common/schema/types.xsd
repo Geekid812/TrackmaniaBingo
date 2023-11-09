@@ -39,6 +39,7 @@
             <xs:attribute name="name" type="string" use="required" />
             <xs:attribute name="type" type="string" use="required" />
             <xs:attribute name="optional" type="xs:boolean" />
+            <xs:attribute name="default" type="string" />
         </xs:complexType>
     </xs:element>
 

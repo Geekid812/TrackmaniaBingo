@@ -1,8 +1,6 @@
 use crate::{
-    core::models::{
-        livegame::{MapClaim, Medal},
-        player::PlayerRef,
-    },
+    core::models::{livegame::MapClaim, player::PlayerRef},
+    datatypes::Medal,
     server::context::ClientContext,
 };
 use serde::Deserialize;

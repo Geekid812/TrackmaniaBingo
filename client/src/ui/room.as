@@ -103,11 +103,11 @@ namespace UIGameRoom {
                 if (i == 0) {
                     StatusTooltip("Grid Size", tostring(Room.matchConfig.gridSize) + "x" + tostring(Room.matchConfig.gridSize));
                 } else if (i == 1) {
-                    StatusTooltip("Map Selection", stringof(Room.matchConfig.mapSelection));
+                    StatusTooltip("Map Selection", stringof(Room.matchConfig.selection));
                 } else if (i == 2) {
                     StatusTooltip("Target Medal", stringof(Room.matchConfig.targetMedal));
                 } else {
-                    StatusTooltip("Time Limit", Room.matchConfig.minutesLimit == 0 ? "Disabled" : tostring(Room.matchConfig.minutesLimit) + " minutes");
+                    StatusTooltip("Time Limit", Room.matchConfig.timeLimit == 0 ? "Disabled" : tostring(Room.matchConfig.timeLimit / 60000) + " minutes");
                 }
             }
 
@@ -116,9 +116,9 @@ namespace UIGameRoom {
         UI::NewLine();
         UI::NewLine();
 
-        UI::BeginTable("Bingo_TeamTable", Room.config.randomizeTeams ? 4 : Room.teams.Length + (Room.localPlayerIsHost && Room.CanCreateMoreTeams() ? 1 : 0));
+        UI::BeginTable("Bingo_TeamTable", Room.config.randomize ? 4 : Room.teams.Length + (Room.localPlayerIsHost && Room.CanCreateMoreTeams() ? 1 : 0));
 
-        if ((Room.config.randomizeTeams && @Match == null) || Room.matchConfig.freeForAll) {
+        if ((Room.config.randomize && @Match == null) || Room.matchConfig.freeForAll) {
             for (uint i = 0; i < Room.players.Length; i++) {
                 UI::TableNextColumn();
                 Player player = Room.players[i];
@@ -243,9 +243,9 @@ namespace UIGameRoom {
     string[] MatchConfigInfo(MatchConfiguration config) {
         return {
             StatusLabel(Icons::Th, tostring(config.gridSize) + "x" + tostring(config.gridSize)),
-            StatusLabel(Icons::Map, config.mapSelection != MapMode::Tags || !MXTags::TagsLoaded() ? tostring(config.mapSelection) : MXTags::GetTag(config.mapTag).name),
+            StatusLabel(Icons::Map, config.selection != MapMode::Tags || !MXTags::TagsLoaded() ? tostring(config.selection) : MXTags::GetTag(config.mapTag).name),
             StatusLabel(Icons::Bullseye, stringof(config.targetMedal)),
-            StatusLabel(Icons::Hourglass, config.minutesLimit == 0 ? "∞" : tostring(config.minutesLimit) + ":00")
+            StatusLabel(Icons::Hourglass, config.timeLimit == 0 ? "∞" : tostring(config.timeLimit / 60000) + ":" + ((config.timeLimit / 1000 % 60) < 10 ? "0" : "") + tostring(config.timeLimit / 1000 % 60))
         };
     }
 
@@ -288,7 +288,7 @@ namespace UIGameRoom {
 
     string PlayerCount() {
         if (@Room is null) return "";
-        return Room.players.Length + (Room.config.hasPlayerLimit ? "/" + Room.config.maxPlayers : "");
+        return Room.players.Length + (hasPlayerLimit(Room.config) ? "/" + Room.config.size : "");
     }
 
     // Helper function to build the table

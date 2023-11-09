@@ -8,9 +8,10 @@ use tracing::error;
 
 use crate::config::CONFIG;
 use crate::core::room::GameRoom;
+use crate::datatypes::{MapMode, MatchConfiguration};
 use crate::integrations::tmexchange::MappackLoader;
 use crate::{
-    core::{directory::Shared, livegame::MatchConfiguration, models::livegame::MapMode},
+    core::directory::Shared,
     orm::mapcache::{self, record::MapRecord},
 };
 
@@ -65,7 +66,7 @@ async fn fetch_and_load<F: Future<Output = MaploadResult>>(
     }
 }
 
-async fn cache_load_mxrandom(count: usize) -> Result<Vec<MapRecord>, anyhow::Error> {
+async fn cache_load_mxrandom(count: u32) -> Result<Vec<MapRecord>, anyhow::Error> {
     mapcache::execute(move |mut conn| {
         let query =
             sqlx::query("SELECT * FROM maps WHERE author_time <= ? ORDER BY RANDOM() LIMIT ?")
@@ -81,7 +82,7 @@ async fn cache_load_mxrandom(count: usize) -> Result<Vec<MapRecord>, anyhow::Err
     .map_err(anyhow::Error::from)
 }
 
-async fn cache_load_tag(count: usize, tag: i32) -> Result<Vec<MapRecord>, anyhow::Error> {
+async fn cache_load_tag(count: u32, tag: i32) -> Result<Vec<MapRecord>, anyhow::Error> {
     mapcache::execute(move |mut conn| {
         let query =
             sqlx::query("SELECT * FROM maps WHERE author_time <= ? AND (tags = ? OR tags LIKE ? + ',%')  ORDER BY RANDOM() LIMIT ?")

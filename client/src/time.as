@@ -5,7 +5,7 @@ namespace Time {
      */
     uint64 GetTimelimitMilliseconds(LiveMatch@ match) {
         if (@match == null) return 0;
-        return match.config.minutesLimit * 60 * 1000;
+        return match.config.timeLimit;
     }
 
     /**
@@ -13,7 +13,7 @@ namespace Time {
      */
     uint64 GetNoBingoMilliseconds(LiveMatch@ match) {
         if (@match == null) return 0;
-        return match.config.noBingoMinutes * 60 * 1000;
+        return match.config.noBingoDuration;
     }
 
 
@@ -40,7 +40,7 @@ namespace Time {
      */
     int64 MillisecondsBounded(LiveMatch@ match) {
         if (@match == null) return 0;
-        if (match.config.minutesLimit == 0) return MillisecondsElapsed(match);
+        if (match.config.timeLimit == 0) return MillisecondsElapsed(match);
         return Math::Clamp(MillisecondsElapsed(match), 0, GetMaxTimeMilliseconds(match));
     }
 
@@ -58,7 +58,7 @@ namespace Time {
      * Get the milliseconds remaining if playing on a time limit.
      */
     int64 MillisecondsRemaining(LiveMatch@ match) {
-        if (@match == null || match.config.minutesLimit == 0) return 0;
+        if (@match == null || match.config.timeLimit == 0) return 0;
         return GetTimelimitMilliseconds(match) - MillisecondsElapsed(match) + GetNoBingoMilliseconds(match);
     }
 }

@@ -2,9 +2,9 @@ use chrono::{DateTime, Utc};
 use serde::Serialize;
 use serde_with::TimestampSeconds;
 
-use crate::core::models::{
-    livegame::MatchConfiguration,
-    room::{NetworkRoom, RoomConfiguration},
+use crate::{
+    core::models::room::NetworkRoom,
+    datatypes::{MatchConfiguration, RoomConfiguration},
 };
 
 #[serde_with::serde_as]

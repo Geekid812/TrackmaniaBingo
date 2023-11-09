@@ -49,7 +49,7 @@ class GameRoom {
     }
 
     bool CanCreateMoreTeams() {
-        return teams.Length < uint(Math::Min(maxTeams, config.hasPlayerLimit ? config.maxPlayers : maxTeams));
+        return teams.Length < uint(Math::Min(maxTeams, hasPlayerLimit(config) ? config.size : maxTeams));
     }
 
     bool CanDeleteTeams() {

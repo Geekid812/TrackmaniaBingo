@@ -1,7 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
-use crate::core::{directory, models::room::RoomConfiguration, room::GameRoom};
+use crate::{
+    core::{directory, room::GameRoom},
+    datatypes::RoomConfiguration,
+};
 
 #[derive(Serialize, Debug)]
 pub struct RoomListTemplate {

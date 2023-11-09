@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use crate::{
-    core::models::{livegame::MatchConfiguration, room::RoomConfiguration},
+    datatypes::{MatchConfiguration, RoomConfiguration},
     server::context::ClientContext,
 };
 

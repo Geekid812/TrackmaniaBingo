@@ -4,7 +4,7 @@ use serde::Deserialize;
 use serde_with::DurationSeconds;
 use std::collections::HashMap;
 
-use crate::core::models::livegame::MatchConfiguration;
+use crate::datatypes::MatchConfiguration;
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     let toml_content = std::fs::read_to_string("config.toml");
