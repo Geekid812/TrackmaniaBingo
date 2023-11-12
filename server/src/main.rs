@@ -5,6 +5,7 @@ use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
 pub mod core;
+pub mod datatypes;
 pub mod integrations;
 pub mod orm;
 pub mod server;
@@ -100,7 +101,7 @@ async fn main() {
             if profile.is_none() {
                 return;
             }
-            let ctx = ClientContext::new(profile.unwrap(), None, None, Arc::new(tx));
+            let ctx = ClientContext::new(profile.unwrap(), Arc::new(tx));
             client::run_loop(ctx, client).await;
             info!("dropping connection");
         });

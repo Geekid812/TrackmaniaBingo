@@ -1,7 +1,5 @@
 use std::fmt::Debug;
 
-use futures::Future;
-
 use crate::server::context::ClientContext;
 
 mod change_team;
@@ -16,6 +14,7 @@ mod get_public_rooms;
 mod join_room;
 mod match_join;
 mod ping;
+mod ping_cell;
 mod reload_maps;
 mod start_match;
 mod submit_run;

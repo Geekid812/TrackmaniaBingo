@@ -9,6 +9,7 @@ use crate::{
         models::team::TeamIdentifier,
         room::GameRoom,
     },
+    datatypes::PlayerRef,
     orm::composed::profile::PlayerProfile,
     transport::Tx,
 };
@@ -21,15 +22,10 @@ pub struct ClientContext {
 }
 
 impl ClientContext {
-    pub fn new(
-        profile: PlayerProfile,
-        room: Option<RoomContext>,
-        game: Option<GameContext>,
-        writer: Arc<Tx>,
-    ) -> Self {
+    pub fn new(profile: PlayerProfile, writer: Arc<Tx>) -> Self {
         Self {
-            room,
-            game,
+            room: None,
+            game: None,
             profile,
             writer,
         }
@@ -47,6 +43,13 @@ impl ClientContext {
 
     pub fn game_match(&self) -> Option<Owned<LiveMatch>> {
         self.game.as_ref().and_then(|gamectx| gamectx.game_match())
+    }
+
+    pub fn get_player_ref(&self) -> PlayerRef {
+        PlayerRef {
+            uid: self.profile.player.uid as u32,
+            name: self.profile.player.username.clone(),
+        }
     }
 
     pub fn trace<M: Into<String>>(&self, message: M) {
@@ -104,7 +107,6 @@ impl RoomContext {
 
 pub struct GameContext {
     game_match: Shared<LiveMatch>,
-    profile: PlayerProfile,
     team: TeamIdentifier,
 }
 
@@ -113,7 +115,6 @@ impl GameContext {
         let uid = profile.player.uid;
         Self {
             game_match: Arc::downgrade(game_match),
-            profile,
             team: game_match
                 .lock()
                 .get_player_team(uid)
@@ -133,9 +134,5 @@ impl GameContext {
         self.team
     }
 
-    pub fn cleanup(&mut self) {
-        if let Some(room) = self.game_match() {
-            // TODO: room.lock().player_remove(self.profile.player.uid);
-        }
-    }
+    pub fn cleanup(&mut self) {}
 }

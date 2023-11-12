@@ -15,17 +15,18 @@ use super::{
     directory::{self, Owned, Shared, PUB_ROOMS_CHANNEL, ROOMS},
     events::{game::GameEvent, room::RoomEvent, roomlist::RoomlistEvent},
     gamecommon::PlayerData,
-    livegame::{LiveMatch, MatchConfiguration},
+    livegame::LiveMatch,
     models::{
         self,
         player::{Player, PlayerRef},
-        room::{RoomConfiguration, RoomState, RoomTeam},
+        room::{RoomState, RoomTeam},
         team::{BaseTeam, GameTeam, TeamIdentifier},
     },
     teams::TeamsManager,
     util::Color,
 };
 use crate::{
+    datatypes::{MatchConfiguration, RoomConfiguration},
     orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
     server::{context::ClientContext, mapload},
     transport::Channel,
@@ -453,7 +454,7 @@ impl GameRoom {
     pub fn check_start_match(&mut self) -> Result<Owned<LiveMatch>, anyhow::Error> {
         let map_count_minimum = self.matchconfig.grid_size * self.matchconfig.grid_size;
         let count = self.loaded_maps.len();
-        if count < map_count_minimum {
+        if count < map_count_minimum as usize {
             let mut err = anyhow!("Could not load enough maps to start the game: {} maps needed, but only {} could be loaded.", map_count_minimum, count);
             if count == 0 {
                 err = anyhow!("Could not load the maps to start the game. Please wait a moment or try changing the map selection settings.");
@@ -539,7 +540,7 @@ pub enum JoinRoomError {
     PlayerAlreadyJoined,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Debug)]
 pub struct PlayerUpdates {
     pub updates: HashMap<i32, TeamIdentifier>,
 }

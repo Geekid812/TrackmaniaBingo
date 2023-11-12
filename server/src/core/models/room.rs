@@ -2,9 +2,12 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::TimestampSeconds;
 
-use crate::core::room;
+use crate::{
+    core::room,
+    datatypes::{MatchConfiguration, RoomConfiguration},
+};
 
-use super::{livegame::MatchConfiguration, player::Player, team::BaseTeam};
+use super::{player::Player, team::BaseTeam};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RoomState {
@@ -44,17 +47,9 @@ impl From<&room::GameRoom> for NetworkRoom {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RoomTeam {
     #[serde(flatten)]
     pub base: BaseTeam,
     pub members: Vec<Player>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct RoomConfiguration {
-    pub name: String,
-    pub public: bool,
-    pub size: u32,
-    pub randomize: bool,
 }

@@ -22,33 +22,34 @@ namespace UIRoomSettings {
     void PlayerLimitToggle() {
         UITools::AlignedLabel(Icons::User + "  Enable Player Limit");
         LayoutTools::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
-        RoomConfig.hasPlayerLimit = UI::Checkbox("##bingomaxplayers", RoomConfig.hasPlayerLimit);
+        bool toggle = UI::Checkbox("##bingomaxplayers", hasPlayerLimit(RoomConfig));
+        if (toggle != hasPlayerLimit(RoomConfig)) RoomConfig.size = toggle ? 4 : 0;
     }
 
     void PlayerLimitInput() {
         UITools::AlignedLabel(Icons::Users + "  Maximum");
         UI::SetNextItemWidth(200);
-        RoomConfig.maxPlayers = Math::Clamp(UI::InputInt(" players allowed", RoomConfig.maxPlayers), 2, 1000);
+        RoomConfig.size = Math::Clamp(UI::InputInt(" players allowed", RoomConfig.size), 2, 1000);
     }
 
     void RandomizeToggle() {
         UITools::AlignedLabel(Icons::Random + "  Randomize Teams");
         LayoutTools::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
-        RoomConfig.randomizeTeams = UI::Checkbox("##bingorandomize", RoomConfig.randomizeTeams);
+        RoomConfig.randomize = UI::Checkbox("##bingorandomize", RoomConfig.randomize);
     }
 
     void AccessToggle() {
         UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
-        if (RoomConfig.isPublic) {
+        if (RoomConfig.public) {
             UIColor::DarkGreen();
             if (UI::Button(Icons::Unlock + " Public")) {
-                RoomConfig.isPublic = false;
+                RoomConfig.public = false;
             }
             UIColor::Reset();
         } else {
             UIColor::Red();
             if (UI::Button(Icons::Lock + " Private")) {
-                RoomConfig.isPublic = true;
+                RoomConfig.public = true;
             }
             UIColor::Reset();
         }
@@ -66,27 +67,27 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::MapO + "  Map Selection");
         LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
-        if (UI::BeginCombo("##bingomaps", @SelectedPack != null ? SelectedPack.name : stringof(MatchConfig.mapSelection))) {
+        if (UI::BeginCombo("##bingomaps", @SelectedPack != null ? SelectedPack.name : stringof(MatchConfig.selection))) {
 
-            if (UI::Selectable(stringof(MapMode::MXRandom), MatchConfig.mapSelection == MapMode::MXRandom)) {
-                MatchConfig.mapSelection = MapMode::MXRandom;
+            if (UI::Selectable(stringof(MapMode::RandomTMX), MatchConfig.selection == MapMode::RandomTMX)) {
+                MatchConfig.selection = MapMode::RandomTMX;
                 @SelectedPack = null;
             }
 
-            if (UI::Selectable(stringof(MapMode::Tags), MatchConfig.mapSelection == MapMode::Tags)) {
-                MatchConfig.mapSelection = MapMode::Tags;
+            if (UI::Selectable(stringof(MapMode::Tags), MatchConfig.selection == MapMode::Tags)) {
+                MatchConfig.selection = MapMode::Tags;
                 @SelectedPack = null;
             }
 
-            if (UI::Selectable(stringof(MapMode::Mappack), MatchConfig.mapSelection == MapMode::Mappack && @SelectedPack == null)) {
-                MatchConfig.mapSelection = MapMode::Mappack;
+            if (UI::Selectable(stringof(MapMode::Mappack), MatchConfig.selection == MapMode::Mappack && @SelectedPack == null)) {
+                MatchConfig.selection = MapMode::Mappack;
                 @SelectedPack = null;
             }
 
             for (uint i = 0; i < Config::FeaturedMappacks.Length; i++) {
                 FeaturedMappack pack = Config::FeaturedMappacks[i];
                 if (UI::Selectable("\\$ff8Featured Mappack: \\$z" + pack.name, @SelectedPack != null && SelectedPack.tmxid == pack.tmxid)) {
-                    MatchConfig.mapSelection = MapMode::Mappack;
+                    MatchConfig.selection = MapMode::Mappack;
                     MatchConfig.mappackId = pack.tmxid;
                     @SelectedPack = pack;
                 }
@@ -99,20 +100,20 @@ namespace UIRoomSettings {
     void TimeLimitControl() {
         UITools::AlignedLabel(Icons::ClockO + "  Time Limit");
         LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        string label = TimeFormat(MatchConfig.minutesLimit);
-        if (MatchConfig.minutesLimit == 0) label = "\\$888Disabled";
-        auto result = UITools::MixedInputButton(label, "bingotimelimit", 0, TIMELIMIT_MAX, 15, MatchConfig.minutesLimit, LoadState(1));
-        MatchConfig.minutesLimit = result.value;
+        string label = TimeFormat(MatchConfig.timeLimit);
+        if (MatchConfig.timeLimit == 0) label = "\\$888Disabled";
+        auto result = UITools::MixedInputButton(label, "bingotimelimit", 0, TIMELIMIT_MAX, 15, MatchConfig.timeLimit / 60000, LoadState(1));
+        MatchConfig.timeLimit = result.value * 60000;
         StoreState(1, result.state);
     }
 
     void NoBingoTimeControl() {
         UITools::AlignedLabel(Icons::LifeRing + "  Grace Period");
         LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        string label = TimeFormat(MatchConfig.noBingoMinutes);
-        if (MatchConfig.noBingoMinutes == 0) label = "\\$888Disabled";
-        auto result = UITools::MixedInputButton(label, "nobingotime", 0, NOBINGO_MAX, 5, MatchConfig.noBingoMinutes, LoadState(2));
-        MatchConfig.noBingoMinutes = result.value;
+        string label = TimeFormat(MatchConfig.noBingoDuration);
+        if (MatchConfig.noBingoDuration == 0) label = "\\$888Disabled";
+        auto result = UITools::MixedInputButton(label, "nobingotime", 0, NOBINGO_MAX, 5, MatchConfig.noBingoDuration / 60000, LoadState(2));
+        MatchConfig.noBingoDuration = result.value * 60000;
         StoreState(2, result.state);
 
         UI::SameLine();
@@ -128,9 +129,9 @@ namespace UIRoomSettings {
         State |= (state & 0b11) << (2 * id);
     }
 
-    string TimeFormat(int minutes) {
-        int hours = minutes / 60;
-        minutes %= 60;
+    string TimeFormat(int64 millis) {
+        int hours = millis / (60 * 60000);
+        int minutes = (millis / 60000) % 60;
         if (hours > 0) {
             return hours + "h" + (minutes > 0 ? " " + minutes + "min" : "");
         }
@@ -213,7 +214,7 @@ namespace UIRoomSettings {
     }
 
     void TotalTimeIndicator() {
-        UITools::AlignedLabel(Icons::PlayCircle + "  Total Game Time: " + TimeFormat(MatchConfig.minutesLimit + MatchConfig.noBingoMinutes));
+        UITools::AlignedLabel(Icons::PlayCircle + "  Total Game Time: " + TimeFormat(MatchConfig.timeLimit + MatchConfig.noBingoDuration));
         UI::NewLine();
     }
 
@@ -228,32 +229,32 @@ namespace UIRoomSettings {
         RandomizeToggle();
         UI::EndDisabled();
         if (MatchConfig.freeForAll) {
-            RoomConfig.randomizeTeams = false;
+            RoomConfig.randomize = false;
         }
 
-        if (RoomConfig.hasPlayerLimit) {
+        if (hasPlayerLimit(RoomConfig)) {
             PlayerLimitInput();
         }
 
         UI::NewLine();
         UITools::SectionHeader("Game Settings");
         MapModeSelector();
-        if (MatchConfig.mapSelection == MapMode::Mappack) {
+        if (MatchConfig.selection == MapMode::Mappack) {
             MappackIdInput();
         }
-        if (MatchConfig.mapSelection == MapMode::Tags) {
+        if (MatchConfig.selection == MapMode::Tags) {
             MapTagSelector();
         }
         TargetMedalSelector();
         GridSizeSelector();
         TimeLimitControl();
         NoBingoTimeControl();
-        if (MatchConfig.minutesLimit != 0) {
+        if (MatchConfig.timeLimit != 0) {
             OvertimeToggle();
         }
         // FFAToggle();
         RerollsToggle();
-        if (MatchConfig.noBingoMinutes != 0 && MatchConfig.minutesLimit != 0) TotalTimeIndicator();
+        if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0) TotalTimeIndicator();
     }
 
     void SaveConfiguredSettings() {

@@ -26,16 +26,18 @@ namespace NetworkHandlers {
 
     void MatchStart(Json::Value@ match) {
         @Match = LiveMatch();
+        Match.uid = match["uid"];
         Match.startTime = Time::Now + uint64(match["start_ms"]);
         Match.teams = Room.teams;
         Match.players = Room.players;
         Match.config = Room.matchConfig;
         Match.canReroll = bool(match["can_reroll"]);
         LoadMaps(match["maps"]);
-        WasConnected = true;
         UIGameRoom::GrabFocus = true;
         UIMapList::Visible = false;
-        Meta::SaveSettings(); // Ensure WasConnected is saved, even in the event of a crash
+
+        PersistantStorage::LastConnectedMatchId = Match.uid;
+        Meta::SaveSettings(); // Ensure MatchId is saved, even in the event of a crash
     }
 
     void LoadMaps(Json::Value@ mapList) {
@@ -87,12 +89,12 @@ namespace NetworkHandlers {
 
         if (PersistantStorage::SubscribeToRoomUpdates && @Match is null && @Room is null) {
             array<string> params = {
-                stringof(netRoom.matchConfig.mapSelection),
+                stringof(netRoom.matchConfig.selection),
                 netRoom.matchConfig.gridSize + "x" + netRoom.matchConfig.gridSize,
                 stringof(netRoom.matchConfig.targetMedal)
             };
-            if (netRoom.matchConfig.minutesLimit != 0) {
-                params.InsertLast(netRoom.matchConfig.minutesLimit + " minutes");
+            if (netRoom.matchConfig.timeLimit != 0) {
+                params.InsertLast((netRoom.matchConfig.timeLimit / 60000) + " minutes");
             }
             string paramsString = string::Join(params, ", ");
             UI::ShowNotification(Icons::PlusCircle + " Bingo: New game started", netRoom.hostName + " is hosting a new game: \\$ee4" + netRoom.name + "\n\\$z(" + paramsString + ")", vec4(0.27,0.50,0.29, 1.), 10000);
@@ -191,7 +193,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Match.SetPhase(MatchPhase::Ended);
-        WasConnected = false;
+        PersistantStorage::LastConnectedMatchId = "";
     }
 
     void TeamCreated(Json::Value@ data) {
@@ -267,7 +269,7 @@ namespace NetworkHandlers {
         Match.endState.endTime = Time::Now;
         @Match.endState.team = team;
         Match.SetPhase(MatchPhase::Ended);
-        WasConnected = false;
+        PersistantStorage::LastConnectedMatchId = "";
     }
 
     void AnnounceDraw() {
@@ -275,7 +277,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Match.SetPhase(MatchPhase::Ended);
-        WasConnected = false;
+        PersistantStorage::LastConnectedMatchId = "";
     }
 
     void MatchTeamCreated(Json::Value@ data) {
@@ -329,5 +331,23 @@ namespace NetworkHandlers {
         Match.canReroll = bool(data["can_reroll"]);
 
         UI::ShowNotification(Icons::Kenney::ReloadInverse + " Map Rerolled", "The map \\$fd8" + oldName + " \\$zhas been rerolled.", vec4(0., .6, .6, 1.), 10000);
+    }
+
+    void CellPinged(Json::Value@ data) {
+        if (@Match is null) {
+            warn("Handlers: got CellPinged event but Match is null.");
+            return;
+        }
+
+        Team team = Match.GetSelf().team;
+        // Not for our team, discard it
+        if (int(data["team"]) != team.id) return;
+
+        auto ping = Board::CellPing();
+        ping.time = Time::Now;
+        ping.cellId = uint(data["cell_id"]);
+        Board::Pings.InsertLast(ping);
+
+        UI::ShowNotification(Icons::Bell + " \\$" + UIColor::GetHex(team.color) + string(data["player"]["name"]) + " \\$zpinged a cell");
     }
 }

@@ -15,6 +15,9 @@ namespace PersistantStorage {
     [Setting hidden]
     bool SubscribeToRoomUpdates = false;
 
+    [Setting hidden]
+    string LastConnectedMatchId = "";
+
     void LoadPersistentItems() {
         try {
             if (LocalProfile != "") {

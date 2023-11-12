@@ -97,7 +97,9 @@ namespace Network {
             handshake.username = GetLocalLogin();
             handshake.authToken = PersistantStorage::ClientToken;
             int code = _protocol.Connect(Settings::BackendAddress, Settings::NetworkPort, handshake);
-            if (code != -1) HandleHandshakeCode(HandshakeCode(code));
+
+            // If the handshake code was not handled, this is the last retry.
+            if (code != -1 && !HandleHandshakeCode(HandshakeCode(code))) retries = 1;
 
             if (!IsConnected()) {
                 retries -= 1;
@@ -106,19 +108,18 @@ namespace Network {
         }
     }
 
-    void HandleHandshakeCode(HandshakeCode code) {
+    bool HandleHandshakeCode(HandshakeCode code) {
         if (code == HandshakeCode::Ok) {
-            WasConnected = false;
-            return;
+            return false;
         }
         if (code == HandshakeCode::CanReconnect) {
             // The server indicates that reconnecting is possible
-            trace("Network: Received reconnection handshake code, attempting to reconnect.");
-            UI::ShowNotification(Icons::Globe + " Reconnecting...");
-            startnew(Sync);
+            warn("Error code" + int(HandshakeCode::CanReconnect) + " is obsolete as of version 4.3. This should not have happened!");
         } else if (code == HandshakeCode::IncompatibleVersion) {
             // Update required
             UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required to play Bingo. Please update the plugin to the latest version in the plugin manager.", vec4(.4, .4, 1., 1.), 10000);
+            trace("Network: Received update handshake code. We will not attempt to retry the connection.");
+            return false;
         } else if (code == HandshakeCode::AuthRefused || code == HandshakeCode::AuthFailure) {
             // Auth error (we should try and update our logins)
             trace("Network: Received auth error handshake code (" + code + "). Attempting to refresh credentials...");
@@ -126,6 +127,7 @@ namespace Network {
         } else {
             // Plugin error (this should not happen)
         }
+        return true;
     }
 
     void Loop() {
@@ -168,7 +170,7 @@ namespace Network {
     }
 
     bool ShouldStayConnected() {
-        return UIMainWindow::Visible || @Room != null || @Match != null || PersistantStorage::SubscribeToRoomUpdates;
+        return UIMainWindow::Visible || @Room != null || @Match != null || PersistantStorage::SubscribeToRoomUpdates || PersistantStorage::LastConnectedMatchId != "";
     }
 
     void DoPing() {
@@ -257,6 +259,8 @@ namespace Network {
             NetworkHandlers::RerollVoteCast(body);
         } else if (event == "MapRerolled") {
             NetworkHandlers::MapRerolled(body);
+        } else if (event == "CellPinged") {
+            NetworkHandlers::CellPinged(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }
@@ -496,28 +500,23 @@ namespace Network {
         }
     }
 
-    void Sync() {
-        trace("Network: Syncing with server...");
-        auto response = Network::Post("Sync", Json::Object(), false);
-        if (response is null) {
-            trace("Sync: No reply from server.");
-            WasConnected = false;
-            return;
-        }
+    void ReloadMaps() {
+        Network::Post("ReloadMaps", Json::Object(), false);
+    }
 
-        @Room = GameRoom();
-        Room.name = response["room_name"];
-        Room.config = RoomConfiguration::Deserialize(response["config"]);
-        Room.joinCode = response["join_code"];
-        Room.localPlayerIsHost = response["host"];
-        //NetworkHandlers::UpdateRoom(response["status"]);
-        NetworkHandlers::LoadMaps(response["maps"]);
-        if (response.HasKey("game_data")) {
-            NetworkHandlers::LoadGameData(response["game_data"]);
+    void Reconnect() {
+        UI::ShowNotification(Icons::Globe + " Reconnecting to your Bingo match...");
+        JoinMatch();
+
+        if (@Match is null || Match.uid != PersistantStorage::LastConnectedMatchId) {
+            trace("Network: Reconnection failure, forgetting previous game save.");
+            PersistantStorage::LastConnectedMatchId = "";
         }
     }
 
-    void ReloadMaps() {
-        Network::Post("ReloadMaps", Json::Object(), false);
+    void PingCell() {
+        auto body = Json::Object();
+        body["cell_id"] = NetParams::PingCellId;
+        Network::Post("PingCell", body, false);
     }
 }

@@ -6,6 +6,7 @@ use std::{
 
 use crate::{
     config::CONFIG,
+    datatypes::MatchConfiguration,
     orm::{
         self,
         mapcache::record::MapRecord,
@@ -20,13 +21,12 @@ use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
 use sqlx::QueryBuilder;
-use tracing::{debug, error};
+use tracing::error;
 
 use super::{
     directory::{Owned, Shared, MATCHES},
     events::game::GameEvent,
     models::{
-        self,
         livegame::{GameCell, MapClaim, MatchPhase, MatchState},
         map::GameMap,
         player::Player,
@@ -36,8 +36,6 @@ use super::{
     teams::TeamsManager,
     util::base64,
 };
-
-pub type MatchConfiguration = models::livegame::MatchConfiguration;
 
 pub struct LiveMatch {
     ptr: Shared<Self>,
@@ -126,8 +124,8 @@ impl LiveMatch {
     fn setup_phase_timers(&mut self) {
         let mut first_phase = MatchPhase::Running;
         let countdown_duration = self.options.start_countdown;
-        let nobingo_duration = Duration::minutes(self.config.no_bingo_mins as i64);
-        let main_phase_duration = Duration::minutes(self.config.time_limit as i64);
+        let nobingo_duration = self.config.no_bingo_duration;
+        let main_phase_duration = self.config.time_limit;
         if !nobingo_duration.is_zero() {
             first_phase = MatchPhase::NoBingo;
             execute_delayed_task(
@@ -158,8 +156,9 @@ impl LiveMatch {
     }
 
     fn broadcast_start(&mut self) {
-        let maps_in_grid = self.config.grid_size * self.config.grid_size;
+        let maps_in_grid = self.cell_count();
         self.channel.broadcast(&GameEvent::MatchStart {
+            uid: self.uid().clone(),
             start_ms: self.options.start_countdown,
             maps: self
                 .cells
@@ -215,21 +214,23 @@ impl LiveMatch {
         ctx: &ClientContext,
         mut requested_team: Option<TeamIdentifier>,
     ) -> Result<TeamIdentifier, anyhow::Error> {
-        if !self.options.player_join {
-            return Err(anyhow!("joining is disabled for this match"));
-        }
+        let already_joined_team = self.get_player_team(ctx.profile.player.uid);
 
-        let existing_team = self.get_player_team(ctx.profile.player.uid);
-        if let Some(team) = existing_team {
+        if let Some(team) = already_joined_team {
             self.channel
                 .subscribe(ctx.profile.player.uid, ctx.writer.clone());
             return Ok(team);
+        } else {
+            if !self.options.player_join {
+                return Err(anyhow!("joining is disabled for this match"));
+            }
+
+            if requested_team.is_none() && !self.config.free_for_all {
+                requested_team = self.get_least_populated_team().map(|t| t.base.id);
+            }
         }
 
-        if requested_team.is_none() && !self.config.free_for_all {
-            requested_team = self.get_least_populated_team().map(|t| t.base.id);
-        }
-        self.add_player(ctx, requested_team)
+        self.add_player(ctx, already_joined_team.or(requested_team))
     }
 
     fn add_player(
@@ -306,7 +307,12 @@ impl LiveMatch {
             config: self.config.clone(),
             phase: self.phase,
             teams: self.teams.get_teams().iter().map(GameTeam::clone).collect(), // TODO: broadcast members too
-            cells: self.cells.clone(),
+            cells: self
+                .cells
+                .iter()
+                .take(self.cell_count())
+                .map(Clone::clone)
+                .collect(),
             started: self.started.unwrap_or_default(),
             can_reroll: self.can_reroll(),
         }
@@ -361,7 +367,7 @@ impl LiveMatch {
     }
 
     fn cell_count(&self) -> usize {
-        self.config.grid_size * self.config.grid_size
+        self.config.grid_size as usize * self.config.grid_size as usize
     }
 
     fn player_count(&self) -> usize {
@@ -503,7 +509,7 @@ impl LiveMatch {
     }
 
     pub fn check_for_bingos(&self) -> Vec<BingoLine> {
-        let grid_size = self.config.grid_size;
+        let grid_size = self.config.grid_size as usize;
         let mut bingos = Vec::new();
         // Horizontal
         for i in 0..grid_size {
@@ -660,14 +666,14 @@ impl Default for MatchOptions {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct BingoLine {
     pub direction: Direction,
     pub index: u32,
     pub team: TeamIdentifier,
 }
 
-#[derive(Serialize_repr, Clone, Copy)]
+#[derive(Serialize_repr, Clone, Copy, Debug)]
 #[repr(u32)]
 pub enum Direction {
     None = 0,

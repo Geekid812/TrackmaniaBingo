@@ -8,14 +8,6 @@ namespace Medals {
 	const string Author = "\\$071" + Icons::Circle;
 }
 
-enum Medal {
-    Author = 0,
-    Gold = 1,
-    Silver = 2,
-    Bronze = 3,
-    None = 4
-}
-
 string stringof(Medal medal) {
     if (medal == Medal::Author) return "Author";
     if (medal == Medal::Gold) return "Gold";

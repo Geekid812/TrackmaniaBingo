@@ -4,5 +4,6 @@ namespace NetParams {
     string MatchJoinUid;
     int DeletedTeamId;
     int RerollCellId;
+    int PingCellId;
     string DailyResultDate;
 }
