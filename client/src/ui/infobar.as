@@ -107,7 +107,7 @@ namespace UIInfoBar {
             float padding = LayoutTools::GetPadding(width, 140., 0.5);
             LayoutTools::MoveTo(padding);
             UIColor::Custom(myTeam.color);
-            if (UI::Button(Icons::ListOl + " Map Leaderboard")) {
+            if (UI::Button(Icons::ListOl + " Map Records")) {
                 MapLeaderboardUid = Playground::GetCurrentMap().EdChallengeId;
             }
             UIColor::Reset();
@@ -221,11 +221,15 @@ namespace UIInfoBar {
         UI::PushFont(Font::Regular);
         UI::SameLine();
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(6, 5));
-        string mapListText = "Open Map List";
-        if (UIMapList::Visible) mapListText = "Close Map List";
         UIColor::Custom(team.color);
-        if (UI::Button(mapListText)) {
+        if (UI::Button(Icons::Map + " Map Grid")) {
             UIMapList::Visible = !UIMapList::Visible;
+        }
+        UI::SameLine();
+        UIColor::Reset();
+        UIColor::Custom(UIColor::Brighten(team.color, 0.6));
+        if (UI::Button("Teams")) {
+            UITeams::Visible = !UITeams::Visible;
         }
         UIColor::Reset();
         

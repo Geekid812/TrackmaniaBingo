@@ -137,98 +137,14 @@ namespace UIGameRoom {
         } else {
             UI::NewLine();
         }
-        UI::BeginTable("Bingo_TeamTable", Room.config.randomize ? 4 : Room.teams.Length + (Room.localPlayerIsHost && Room.CanCreateMoreTeams() ? 1 : 0));
-
-        if ((Room.config.randomize && @Match == null) || Room.matchConfig.freeForAll) {
-            for (uint i = 0; i < Room.players.Length; i++) {
-                UI::TableNextColumn();
-                Player player = Room.players[i];
-                PlayerLabel(player, i);
-            }
-        } else {
-            for (uint i = 0; i < Room.teams.Length; i++) {
-                UI::TableNextColumn();
-                Team@ team = Room.teams[i];
-
-                float seperatorSize = UI::GetContentRegionMax().x - UI::GetCursorPos().x - 50;
-                if (Room.localPlayerIsHost) {
-                    UI::PushStyleColor(UI::Col::Text, UIColor::GetAlphaColor(team.color, .8));
-                    bool enabled = Room.CanDeleteTeams();
-                    UI::BeginDisabled(!enabled);
-                    UI::Text(Icons::MinusSquare);
-                    UI::EndDisabled();
-                    if (enabled) {
-                        if (UI::IsItemHovered()) {
-                            UI::BeginTooltip();
-                            UI::TextDisabled("Delete " + team.name + " Team");
-                            UI::EndTooltip();
-                        }
-                        if (UI::IsItemClicked()) {
-                            NetParams::DeletedTeamId = team.id;
-                            startnew(Network::DeleteTeam);
-                        }
-                    }
-                    UI::PopStyleColor();
-                    UI::SameLine();
-                }
-                UI::BeginChild("bingoteamsep" + i, vec2(seperatorSize, UI::GetTextLineHeightWithSpacing() + 4));
-                UI::PushFont(Font::Bold);
-                UI::Text("\\$" + UIColor::GetHex(team.color) + team.name);
-                UI::PopFont();
-
-                UI::PushStyleColor(UI::Col::Separator, UIColor::GetAlphaColor(team.color, .8));
-                UI::Separator();
-                UI::PopStyleColor();
-                UI::EndChild();
-
-                if (UI::IsItemHovered()) {
-                    UI::BeginTooltip();
-                    UI::Text("\\$" + UIColor::GetHex(team.color) + team.name + " Team" + (Room.GetSelf().team != team ? "  \\$888(Click to join)" : ""));
-                    UI::EndTooltip();
-                }
-
-                if (UI::IsItemClicked()) {
-                    startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, team);
-                }
-            }
-
-            bool matchInactive = @Match is null;
-            if (Room.localPlayerIsHost && Room.CanCreateMoreTeams() && matchInactive) {
-                UI::TableNextColumn();
-                if (UI::Button(Icons::PlusSquare + " Create team")) {
-                    startnew(Network::CreateTeam);
-                }
-            }
-
-            uint rowIndex = 0;
-            while (true) {
-                // Iterate forever until no players in any team remain
-                UI::TableNextRow();
-                uint finishedTeams = 0;
-                for (uint i = 0; i < Room.teams.Length; i++){
-                    // Iterate through all teams
-                    UI::TableNextColumn();
-                    Player@ player = PlayerCell(Room.teams[i], rowIndex);
-                    if (player is null) { // No more players in this team
-                        finishedTeams += 1;
-                        continue;
-                    }
-                    else {
-                        PlayerLabel(player, rowIndex);
-                    }
-                }
-                if (finishedTeams == Room.teams.Length) break;
-                rowIndex += 1;
-            }
-        }
-        UI::EndTable();
+        
+        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null) || Room.matchConfig.freeForAll, true, Room.CanCreateMoreTeams() && @Match is null, Room.CanDeleteTeams());
 
         LeaveButton();
 
         if (Room.localPlayerIsHost) {
             UIColor::DarkGreen();
             bool startDisabled = Room.players.Length < 2 && !Settings::DevMode;
-            startDisabled = false; // Dev override
             UI::BeginDisabled(startDisabled);
             
             UI::SameLine();
@@ -239,9 +155,6 @@ namespace UIGameRoom {
             UIColor::Reset();
             UITools::ErrorMessage("StartMatch");
         }
-
-        // Leave room if window was closed
-        //if (!Visible) Network::LeaveRoom();
     }
 
     void LeaveButton() {
@@ -250,16 +163,6 @@ namespace UIGameRoom {
             startnew(Network::LeaveRoom);
         }
         UIColor::Reset();
-    }
-
-    void PlayerLabel(Player player, uint index) {
-        string titlePrefix = player.profile.title != "" ? "\\$" + player.profile.title.SubStr(0, 3) : "";
-        UI::Text((player.IsSelf() ? "\\$ff8" : "") + (index + 1) + ". " + titlePrefix + player.name);
-        if (UI::IsItemHovered()) {
-            UI::BeginTooltip();
-            UIProfile::RenderProfile(player.profile, false);
-            UI::EndTooltip();
-        }
     }
 
     string[] MatchConfigInfo(MatchConfiguration config) {
@@ -311,18 +214,5 @@ namespace UIGameRoom {
     string PlayerCount() {
         if (@Room is null) return "";
         return Room.players.Length + (hasPlayerLimit(Room.config) ? "/" + Room.config.size : "");
-    }
-
-    // Helper function to build the table
-    Player@ PlayerCell(Team team, int index) {
-        int count = 0;
-        for (uint i = 0; i < Room.players.Length; i++) {
-            auto player = Room.players[i];
-            if (player.team == team) {
-                if (count == index) return player;
-                else count += 1;
-            }
-        }
-        return null; 
     }
 }

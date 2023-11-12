@@ -50,6 +50,7 @@ void Render() {
     UIInfoBar::Render();
     UIMapList::Render();
     UIPaintColor::Render();
+    UITeams::Render();
     SettingsWindow::Render();
 }
 
