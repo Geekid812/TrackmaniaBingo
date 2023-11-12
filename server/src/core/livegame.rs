@@ -666,14 +666,14 @@ impl Default for MatchOptions {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct BingoLine {
     pub direction: Direction,
     pub index: u32,
     pub team: TeamIdentifier,
 }
 
-#[derive(Serialize_repr, Clone, Copy)]
+#[derive(Serialize_repr, Clone, Copy, Debug)]
 #[repr(u32)]
 pub enum Direction {
     None = 0,
