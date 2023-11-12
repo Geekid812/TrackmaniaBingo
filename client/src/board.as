@@ -115,8 +115,8 @@ namespace Board {
             vec2 pos = CellPosition(row, col, sizes);
 
             pingAnimationTime %= PING_PERIOD;
-            for (uint i = 0; i < 2; i++) {
-                float pingAnimProgress = Animation::GetProgress(pingAnimationTime - i * 200, 0, 1000, Animation::Easing::SineOut);
+            for (uint n = 0; n < 2; n++) {
+                float pingAnimProgress = Animation::GetProgress(pingAnimationTime - n * 200, 0, 1000, Animation::Easing::SineOut);
                 float pingScale = pingAnimProgress * PING_SCALE;
                 float posOffset = sizes.cell / 2 - sizes.cell * pingScale / 2;
 
