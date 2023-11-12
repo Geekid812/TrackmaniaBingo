@@ -3,10 +3,10 @@ namespace Settings {
     string BackendAddress = "38.242.214.20";
 
     [Setting name="Backend TCP Port" category="Debug"]
-    uint16 NetworkPort = 3080;
+    uint16 NetworkPort = 3085;
 
     [Setting name="Backend HTTP Port" category="Debug"]
-    uint16 HttpPort = 8080;
+    uint16 HttpPort = 8085;
     
     [Setting name="Connection Timeout" category="Debug"]
     uint NetworkTimeout = 10000;
