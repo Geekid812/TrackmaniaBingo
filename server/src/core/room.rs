@@ -540,7 +540,7 @@ pub enum JoinRoomError {
     PlayerAlreadyJoined,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Debug)]
 pub struct PlayerUpdates {
     pub updates: HashMap<i32, TeamIdentifier>,
 }

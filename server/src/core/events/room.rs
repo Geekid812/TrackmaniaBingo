@@ -12,7 +12,7 @@ use crate::{
     orm::composed::profile::PlayerProfile,
 };
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Debug)]
 #[serde(tag = "event")]
 pub enum RoomEvent {
     PlayerJoin {

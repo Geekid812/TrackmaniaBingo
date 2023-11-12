@@ -4,6 +4,7 @@ use serde::Serialize;
 
 use super::Tx;
 
+#[derive(Clone, Debug)]
 pub struct Channel<T: Serialize> {
     peers: HashMap<i32, Arc<Tx>>,
     _data: PhantomData<T>,
@@ -46,5 +47,11 @@ impl<T: Serialize> Channel<T> {
         for addr in closed {
             self.peers.remove(&addr);
         }
+    }
+}
+
+impl<T: Serialize> Default for Channel<T> {
+    fn default() -> Self {
+        Channel::new()
     }
 }

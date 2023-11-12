@@ -9,6 +9,7 @@ use crate::{
         models::team::TeamIdentifier,
         room::GameRoom,
     },
+    datatypes::PlayerRef,
     orm::composed::profile::PlayerProfile,
     transport::Tx,
 };
@@ -42,6 +43,13 @@ impl ClientContext {
 
     pub fn game_match(&self) -> Option<Owned<LiveMatch>> {
         self.game.as_ref().and_then(|gamectx| gamectx.game_match())
+    }
+
+    pub fn get_player_ref(&self) -> PlayerRef {
+        PlayerRef {
+            uid: self.profile.player.uid as u32,
+            name: self.profile.player.username.clone(),
+        }
     }
 
     pub fn trace<M: Into<String>>(&self, message: M) {

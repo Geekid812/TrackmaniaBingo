@@ -254,6 +254,8 @@ namespace Network {
             NetworkHandlers::RerollVoteCast(body);
         } else if (event == "MapRerolled") {
             NetworkHandlers::MapRerolled(body);
+        } else if (event == "CellPinged") {
+            NetworkHandlers::CellPinged(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }
@@ -505,5 +507,11 @@ namespace Network {
             trace("Network: Reconnection failure, forgetting previous game save.");
             PersistantStorage::LastConnectedMatchId = "";
         }
+    }
+
+    void PingCell() {
+        auto body = Json::Object();
+        body["cell_id"] = NetParams::PingCellId;
+        Network::Post("PingCell", body, false);
     }
 }
