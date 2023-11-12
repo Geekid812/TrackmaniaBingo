@@ -9,7 +9,7 @@ namespace DailyResult {
         result.playerCount = int(value["player_count"]);
 
         for (uint i = 0; i < value["winners"].Length; i++) {
-            //result.winners.InsertLast(PlayerRef(int(value["winners"][i]["uid"]), value["winners"][i]["name"]));
+            result.winners.InsertLast(PlayerRef::Deserialize(value["winners"][i]));
         }
 
         return result;
