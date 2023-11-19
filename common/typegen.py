@@ -158,7 +158,7 @@ def rust_typeof(m, datatypes) -> str:
 
 
 def rust_as_member(m: dict) -> str:
-    tname, _, _, default = parse_member(m)
+    tname, optional, _, default = parse_member(m)
     rtype = rust_typeof(m, datatypes)
     member = f"pub {m['@name']}: {rtype}"
     if rtype == "Duration":
@@ -167,6 +167,8 @@ def rust_as_member(m: dict) -> str:
     if tname in types and types[tname].serde_as:
         member = f"#[serde_as(as = \"{types[tname].serde_as}\")]\n\t" + member
     if default:
+        if optional:
+            default = f"Some({default})"
         member = f"#[derivative(Default(value = \"{default}\"))]\n\t" + member
 
     return member

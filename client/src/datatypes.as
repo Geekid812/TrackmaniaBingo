@@ -66,7 +66,7 @@ class MatchConfiguration {
     bool freeForAll;
     bool rerolls;
     uint mappackId;
-    int mapTag;
+    int mapTag = 1;
     MatchConfiguration() {}
 }
 namespace MatchConfiguration {

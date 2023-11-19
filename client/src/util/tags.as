@@ -48,7 +48,7 @@ namespace MXTags {
             if (tag.id == id) return tag;
         }
         
-        throw("GetTag() returned null. Tags are maybe not initialized.");
+        throw("GetTag() returned null. Tags are maybe not initialized. (Requested tag " + id + ")");
         return Tag();
     }
 }
