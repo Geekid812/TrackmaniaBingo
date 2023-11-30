@@ -146,6 +146,9 @@ namespace UIRoomSettings {
     }
 
     void MapTagSelector() {
+        // FIX: mapTag should not be 0, as it is invalid. Correct it if it was loaded from an invalid LastConfig
+        MatchConfig.mapTag = Math::Max(MatchConfig.mapTag, 1);
+
         UITools::AlignedLabel(Icons::Tag + "  Selected Map Tag");
         LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);

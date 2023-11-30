@@ -45,7 +45,7 @@
         <m name="free_for_all" type="bool" />
         <m name="rerolls" type="bool" />
         <m name="mappack_id" type="uint" optional="true" />
-        <m name="map_tag" type="int" optional="true" />
+        <m name="map_tag" type="int" optional="true" default="1" />
     </struct>
 
     <enum name="MapMode">

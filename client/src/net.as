@@ -446,6 +446,7 @@ namespace Network {
     void LeaveRoom() {
         // TODO: this is rudimentary, it doesn't keep connection alive
         trace("Network: LeaveRoom requested.");
+        PersistantStorage::LastConnectedMatchId = "";
         CloseConnection();
     }
 

@@ -37,4 +37,14 @@ namespace PersistantStorage {
             warn("LoadPersistentItems: Deserialize of LastConfig failed (" + getExceptionInfo() + ")");
         }
     }
+
+    void ResetStorage() {
+        warn("PersistantStorage: Resetting all items...");
+        ClientToken = "";
+        LocalProfile = "";
+        MapListUiScale = 1.0f;
+        LastConfig = "";
+        SubscribeToRoomUpdates = false;
+        LastConnectedMatchId = "";
+    }
 }

@@ -47,7 +47,8 @@ pub struct MatchConfiguration {
     pub free_for_all: bool,
     pub rerolls: bool,
     pub mappack_id: Option<u32>,
-    pub map_tag: Option<i32>,
+    #[derivative(Default(value = "Some(1)"))]
+	pub map_tag: Option<i32>,
 }
 
 /* Available map selection modes. */

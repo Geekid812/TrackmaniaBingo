@@ -25,7 +25,8 @@ namespace BoardLocator {
             for (uint j = 0; j < cellsPerRow; j++) {
                 vec2 pos = Board::CellPosition(i, j, sizes);
                 UI::SetCursorPos(pos - UI::GetWindowPos());
-                if (UI::InvisibleButton("###cellbutton" + i + ":" + j, sizes.cell)) {
+                UI::Dummy(vec2(sizes.cell, sizes.cell));
+                if (UI::IsItemClicked()) {
                     OnCellClicked(i, j);
                 }
             }
