@@ -1,7 +1,7 @@
-## Update 4.3
+## Update 4.4
 
-This small update brings a couple of improvements to your Bingo experience. Featuring:
+Hey all! This is a small bugfix update addressing the following issues:
 
-- A new in-game teams display. At the moment, it is only useful to show your list of teammates, but this new menu will get expanded upon in future versions to provide extra information about the state of each player.
-- Reconnection is back! Since the 4.0 update, you could not rejoin your active games after closing the game. This update reintroduces it, and it should hopefully be able to save a few of your games.
-- Cells can now be **pinged** by double-clicking on the bingo grid to get the attention of other players on something happening on the bingo grid. This is only visible to your own team, so use it to plan out your strategy or to yell *ALERT!!!* when the other team is one map away from winning.
+- Fixed a crash when selected a TMX map tag in the create menu.
+- Correctly clear your last connected match after leaving the game.
+- You can now drag the bingo board around again.
