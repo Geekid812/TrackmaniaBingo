@@ -64,6 +64,13 @@ namespace UIRoomSettings {
     }
 
     void MapModeSelector() {
+        bool disabled = false;
+#if TURBO
+        MatchConfig.selection = MapMode::Campaign;
+        @SelectedPack = null;
+        disabled = true;
+#endif
+        UI::BeginDisabled(disabled);
         UITools::AlignedLabel(Icons::MapO + "  Map Selection");
         LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
@@ -95,6 +102,15 @@ namespace UIRoomSettings {
 
             UI::EndCombo();
         }
+        UI::EndDisabled();
+    }
+
+    void MapSelectButton() {
+        UIColor::Crimson();
+        if (UI::Button(Icons::Map + " Select Maps")) {
+            UIMapSelect::Visible = !UIMapSelect::Visible;
+        }
+        UIColor::Reset();
     }
 
     void TimeLimitControl() {
@@ -242,6 +258,10 @@ namespace UIRoomSettings {
         UI::NewLine();
         UITools::SectionHeader("Game Settings");
         MapModeSelector();
+        if (MatchConfig.selection == MapMode::Campaign) {
+            UI::SameLine();
+            MapSelectButton();
+        }
         if (MatchConfig.selection == MapMode::Mappack) {
             MappackIdInput();
         }

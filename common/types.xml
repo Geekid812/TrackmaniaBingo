@@ -45,14 +45,30 @@
         <m name="free_for_all" type="bool" />
         <m name="rerolls" type="bool" />
         <m name="mappack_id" type="uint" optional="true" />
+        <m name="campaign_selection" type="string" optional="true" />
         <m name="map_tag" type="int" optional="true" default="1" />
     </struct>
+
+    <struct name="HandshakeRequest">
+        <comment>Request to open a connection by the client.</comment>
+        <m name="version" type="string" />
+        <m name="game" type="GamePlatform" />
+        <m name="username" type="string" optional="true" />
+        <m name="token" type="string" optional="true" />
+    </struct>
+
+    <enum name="GamePlatform">
+        <comment>Supported game platforms in Bingo.</comment>
+        <v>Next</v>
+        <v>Turbo</v>
+    </enum>
 
     <enum name="MapMode">
         <comment>Available map selection modes.</comment>
         <v>RandomTMX</v>
         <v>Tags</v>
         <v>Mappack</v>
+        <v>Campaign</v>
     </enum>
 
     <enum name="Medal">

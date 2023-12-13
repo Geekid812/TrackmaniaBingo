@@ -1,21 +1,26 @@
 use std::io;
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Duration;
 
+use chrono::NaiveDateTime;
 use futures::executor::block_on;
 use futures::{select, FutureExt, StreamExt};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::from_str;
 use serde_repr::Serialize_repr;
 use sqlx::FromRow;
 use tokio::pin;
 use tokio::time::sleep;
-use tracing::error;
+use tracing::{debug, error};
 
 use super::version::Version;
+use crate::datatypes::{GamePlatform, HandshakeRequest};
 use crate::orm;
 use crate::orm::composed::profile::{get_profile, PlayerProfile};
 use crate::orm::models::player::Player;
 use crate::{transport::client::tcpnative::TcpNativeClient, CONFIG};
+
+static EHPEMERAL_UID: AtomicI32 = AtomicI32::new(-1000);
 
 pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile, HandshakeCode> {
     pin! {
@@ -37,13 +42,28 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile,
     };
 
     let client_version =
-        Version::try_from(handshake.version).map_err(|_| HandshakeCode::InvalidVersion)?;
+        Version::try_from(handshake.version.clone()).map_err(|_| HandshakeCode::InvalidVersion)?;
 
     // Client version check
     if client_version
         < Version::try_from(CONFIG.min_client.clone()).expect("invalid client version in config")
     {
         return Err(HandshakeCode::IncompatibleVersion);
+    }
+
+    if is_ephemeral_player(&handshake) {
+        if let Some(name) = handshake.username {
+            return Ok(PlayerProfile {
+                player: Player {
+                    uid: EHPEMERAL_UID.fetch_add(-1, Ordering::Relaxed),
+                    username: name,
+                    ..Player::default()
+                },
+                ..PlayerProfile::default()
+            });
+        } else {
+            return Err(HandshakeCode::NoUsername);
+        }
     }
 
     // Match token to a valid user in storage
@@ -72,6 +92,11 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile,
     return Ok(profile);
 }
 
+fn is_ephemeral_player(request: &HandshakeRequest) -> bool {
+    // In Turbo, player profiles are not saved
+    return request.game == GamePlatform::Turbo;
+}
+
 pub async fn deny_socket(
     client: &mut TcpNativeClient,
     code: HandshakeCode,
@@ -85,18 +110,13 @@ pub async fn accept_socket(
     client: &mut TcpNativeClient,
     data: HandshakeSuccess,
 ) -> Result<(), io::Error> {
+    debug!("acceptance");
     client
         .serialize(&HandshakeResponse {
             code: HandshakeCode::Ok,
             data: Some(data),
         })
         .await
-}
-
-#[derive(Deserialize)]
-struct HandshakeRequest {
-    version: String,
-    token: String,
 }
 
 #[derive(Serialize)]
@@ -122,4 +142,5 @@ pub enum HandshakeCode {
     AuthRefused = 4,
     ReadError = 5,
     InvalidVersion = 6,
+    NoUsername = 7,
 }

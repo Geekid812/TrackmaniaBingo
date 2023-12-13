@@ -66,6 +66,7 @@ class MatchConfiguration {
     bool freeForAll;
     bool rerolls;
     uint mappackId;
+    string campaignSelection;
     int mapTag = 1;
     MatchConfiguration() {}
 }
@@ -81,6 +82,7 @@ namespace MatchConfiguration {
         value["free_for_all"] = cls.freeForAll;
         value["rerolls"] = cls.rerolls;
         value["mappack_id"] = cls.mappackId;
+        value["campaign_selection"] = cls.campaignSelection;
         value["map_tag"] = cls.mapTag;
 
         return value;
@@ -97,10 +99,47 @@ namespace MatchConfiguration {
         cls.freeForAll = value["free_for_all"];
         cls.rerolls = value["rerolls"];
         if (value["mappack_id"].GetType() != Json::Type::Null) cls.mappackId = value["mappack_id"];
+        if (value["campaign_selection"].GetType() != Json::Type::Null) cls.campaignSelection = value["campaign_selection"];
         if (value["map_tag"].GetType() != Json::Type::Null) cls.mapTag = value["map_tag"];
 
         return cls;
     }
+}
+
+/* Request to open a connection by the client. */
+class HandshakeRequest {
+    string version;
+    GamePlatform game;
+    string username;
+    string token;
+    HandshakeRequest() {}
+}
+namespace HandshakeRequest {
+    Json::Value@ Serialize(HandshakeRequest cls) {
+        auto value = Json::Object();
+        value["version"] = cls.version;
+        value["game"] = int(cls.game);
+        value["username"] = cls.username;
+        value["token"] = cls.token;
+
+        return value;
+    }
+
+    HandshakeRequest Deserialize(Json::Value@ value) {
+        auto cls = HandshakeRequest();
+        cls.version = value["version"];
+        cls.game = GamePlatform(int(value["game"]));
+        if (value["username"].GetType() != Json::Type::Null) cls.username = value["username"];
+        if (value["token"].GetType() != Json::Type::Null) cls.token = value["token"];
+
+        return cls;
+    }
+}
+
+/* Supported game platforms in Bingo. */
+enum GamePlatform {
+    Next,
+    Turbo,
 }
 
 /* Available map selection modes. */
@@ -108,6 +147,7 @@ enum MapMode {
     RandomTMX,
     Tags,
     Mappack,
+    Campaign,
 }
 
 /* A Trackmania medal ranking. */

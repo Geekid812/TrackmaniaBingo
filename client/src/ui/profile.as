@@ -4,6 +4,7 @@ namespace UIProfile {
     PlayerProfile@ openProfiles;
 
     void RenderProfile(PlayerProfile profile, bool showId = true) {
+#if TMNEXT
         CountryFlag(profile.countryCode, vec2(30, 20));
         UI::SameLine();
         vec2 playerPos = UI::GetCursorPos();
@@ -21,6 +22,9 @@ namespace UIProfile {
         // RatingDisplay(profile.score, profile.deviation);
         UI::NewLine();
         if (showId) PlayerId(profile.uid);
+#elif TURBO
+        PlayerName(profile, true);
+#endif
     }
 
     void CountryFlag(const string&in countryCode, vec2 size) {

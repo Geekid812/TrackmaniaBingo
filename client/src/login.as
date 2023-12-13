@@ -11,10 +11,17 @@ namespace Login {
     }
 
     bool IsLoggedIn() {
+#if TURBO
+        return true;
+#else
         return PersistantStorage::ClientToken != "";
+#endif
     }
 
     void Login() {
+#if TURBO
+        throw("Login() called on Turbo! This is invalid.");
+#else
         trace("Auth: Fetching a new authentication token...");
         string authToken = FetchAuthToken();
         if (authToken != "") {
@@ -42,11 +49,14 @@ namespace Login {
 
         PersistantStorage::ClientToken = req.String();
         trace("Login: Success.");
+#endif
     }
 
+#if TMNEXT
     string FetchAuthToken() {
         Auth::PluginAuthTask@ task = Auth::GetToken();
         while (!task.Finished()) { yield(); }
         return task.Token();
     }
+#endif
 }

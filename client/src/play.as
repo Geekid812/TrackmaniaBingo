@@ -9,16 +9,23 @@ namespace Playground {
         RunResult mapResult;
     }
 
-    void LoadMap(int tmxId) {
-        startnew(LoadMapCoroutine, CoroutineData(tmxId));
-    }
-
     class CoroutineData {
         int id;
 
         CoroutineData(int id) { this.id = id; }
     }
 
+#if TMNEXT
+    void LoadMap(int tmxId) {
+        startnew(LoadMapCoroutine, CoroutineData(tmxId));
+    }
+#elif TURBO
+    void LoadMapCampaign(int trackNum) {
+        startnew(InternalLoadMapCampaign, CoroutineData(trackNum));
+    }
+#endif
+
+#if TMNEXT
     // This code is mostly taken from Greep's RMC
     void LoadMapCoroutine(ref@ Data) {
         if (!Permissions::PlayLocalMap()) {
@@ -52,14 +59,23 @@ namespace Playground {
         auto app = cast<CTrackMania>(GetApp());
         return app.RootMap;
     }
+#elif TURBO
+    void InternalLoadMapCampaign(ref@ Data) {
+        // TODO
+    }
+
+    CGameCtnChallenge@ GetCurrentMap() {
+        auto app = cast<CGameCtnApp>(GetApp());
+        return app.Challenge;
+    }
+#endif
+
 
     // Once again, this is mostly from RMC
     // Only returns a defined value during the finish sequence of a run
     RunResult GetRunResult() {
-        // This is GetCurrentMap(), but because App is used in the function,
-        // we redefine it here
         auto app = cast<CTrackMania>(GetApp());
-        auto map = app.RootMap;
+        auto map = GetCurrentMap();
 
         auto playground = cast<CGamePlayground>(app.CurrentPlayground);
         if (map is null || playground is null) return RunResult();
@@ -73,6 +89,7 @@ namespace Playground {
         auto playgroundScript = cast<CSmArenaRulesMode>(app.PlaygroundScript);
         if (playgroundScript is null || playground.GameTerminals.Length == 0) return RunResult();
 
+#if TMNEXT
         CSmPlayer@ player = cast<CSmPlayer>(playground.GameTerminals[0].ControlledPlayer);
         if (playground.GameTerminals[0].UISequence_Current != SGamePlaygroundUIConfig::EUISequence::Finish || player is null) return RunResult();
 
@@ -82,6 +99,12 @@ namespace Playground {
 
         if (ghost.Result.Time > 0 && ghost.Result.Time < 4294967295) time = ghost.Result.Time;
         playgroundScript.DataFileMgr.Ghost_Release(ghost.Id);
+#elif TURBO
+        CTrackManiaPlayer@ player = cast<CTrackManiaPlayer>(playground.GameTerminals[0].ControlledPlayer);
+        if (player.RaceState != CTrackManiaPlayer::ERaceState::Finished || player is null) return RunResult();
+
+        time = player.CurRace.Time;
+#endif
 
         if (time != -1) {
             return RunResult(time, CalculateMedal(time, authorTime, goldTime, silverTime, bronzeTime));

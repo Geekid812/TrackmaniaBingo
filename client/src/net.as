@@ -92,10 +92,17 @@ namespace Network {
     void OpenConnection() {
         int retries = 3;
         while (!IsConnected() && retries > 0) {
-            auto handshake = HandshakeData();
-            handshake.clientVersion = Meta::ExecutingPlugin().Version;
-            handshake.username = GetLocalLogin();
-            handshake.authToken = PersistantStorage::ClientToken;
+            auto handshake = HandshakeRequest();
+            handshake.version = Meta::ExecutingPlugin().Version;
+            handshake.username = GetLocalUsername();
+            handshake.token = PersistantStorage::ClientToken;
+
+#if TMNEXT
+            handshake.game = GamePlatform::Next;
+#elif TURBO
+            handshake.game = GamePlatform::Turbo;
+#endif
+
             int code = _protocol.Connect(Settings::BackendAddress, Settings::NetworkPort, handshake);
 
             // If the handshake code was not handled, this is the last retry.

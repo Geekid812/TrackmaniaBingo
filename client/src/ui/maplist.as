@@ -141,7 +141,11 @@ namespace UIMapList {
                     RerollMenuOpen = false;
                 } else {
                     Visible = false;
+#if TMNEXT
                     Playground::LoadMap(cell.map.tmxid);
+#elif TURBO
+                    Playground::LoadMapCampaign(0);
+#endif
                     interacted = true;
                 }
             }

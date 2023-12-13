@@ -1,18 +1,4 @@
 // Implementation of a full TCP custom protocol, similar to websockets
-class HandshakeData {
-    string clientVersion;
-    string authToken;
-    string username;
-
-    Json::Value ToJSON() {
-        auto object = Json::Object();
-        object["version"] = clientVersion;
-        object["token"] = authToken;
-        object["username"] = username;
-        return object;
-    }
-}
-
 class Protocol {
     Net::Socket@ socket;
     ConnectionState state;
@@ -24,7 +10,7 @@ class Protocol {
         msgSize = 0;
     }
 
-    int Connect(const string&in host, uint16 port, HandshakeData handshake) {
+    int Connect(const string&in host, uint16 port, HandshakeRequest handshake) {
         state = ConnectionState::Connecting;
         @socket = Net::Socket();
         msgSize = 0;
@@ -49,7 +35,7 @@ class Protocol {
         trace("Protocol: Connected to server after " + (Time::Now - initialDate) + "ms.");
 
         // Opening Handshake
-        if (!InnerSend(Json::Write(handshake.ToJSON()))) {
+        if (!InnerSend(Json::Write(HandshakeRequest::Serialize(handshake)))) {
             trace("Protocol: Failed sending opening handshake.");
             Fail();
             return -1;
@@ -90,10 +76,12 @@ class Protocol {
     }
 
     private bool InnerSend(const string&in data) {
-        MemoryBuffer@ buf = MemoryBuffer(4);
+        MemoryBuffer@ buf = MemoryBuffer(4 + data.Length);
         buf.Write(data.Length);
+        buf.Write(data);
+
         buf.Seek(0);
-        return socket.WriteRaw(buf.ReadString(4) + data);
+        return socket.Write(buf);
     }
 
     bool Send(const string&in data) {
@@ -113,10 +101,7 @@ class Protocol {
 
         if (msgSize == 0) {
             if (socket.Available() >= 4) {
-                MemoryBuffer@ buf = MemoryBuffer(4);
-                buf.Write(socket.ReadRaw(4));
-                buf.Seek(0);
-                int Size = buf.ReadInt32();
+                int Size = socket.ReadInt32();
                 if (Size <= 0) {
                     trace("Protocol: buffer size violation (got " + Size + ").");
                     Fail();

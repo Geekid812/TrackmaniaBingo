@@ -38,10 +38,12 @@ namespace UIMainWindow {
     }
 
     void RenderContent() {
+#if TMNEXT
         if (!Permissions::PlayLocalMap()) {
             NoPermissions();
             return;
         }
+#endif
 
         if (Network::IsOfflineMode()) {
             UI::PushStyleColor(UI::Col::ChildBg, vec4(.3, .3, 0., .9));
@@ -97,6 +99,7 @@ namespace UIMainWindow {
             UI::EndTabItem();
         }
 
+#if TMNEXT
         if (UI::BeginTabItem(Icons::Star + " Daily")) {
             UI::BeginChild("bingodaily");
             UIDaily::DailyHome();
@@ -109,17 +112,20 @@ namespace UIMainWindow {
                 @UIDaily::DailyMatch = null;
             }
         }
+#endif
 
 
         UI::EndTabBar();
         UIColor::Reset();
     }
 
+#if TMNEXT
     void NoPermissions() {
         UI::TextWrapped("Unfortunately, you do not have permission to play this gamemode.");
         UI::TextWrapped("Playing Bingo requires having at least \\$999Standard Access\\$z, which you do not seem to have. Sorry!");
         UI::TextWrapped("If you believe this is a mistake, make sure to restart your game and check your internet connection.");
     }
+#endif
 
     void CreateTab() {
         UIRoomSettings::SettingsView();

@@ -50,10 +50,10 @@ pub struct %s {
 
 rust_enum = """\
 %s
-#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
 #[repr(u8)]
 pub enum %s {
-    %s,
+    #[default] %s,
 }
 """
 

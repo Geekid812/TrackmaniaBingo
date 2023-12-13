@@ -47,24 +47,45 @@ pub struct MatchConfiguration {
     pub free_for_all: bool,
     pub rerolls: bool,
     pub mappack_id: Option<u32>,
+    pub campaign_selection: Option<String>,
     #[derivative(Default(value = "Some(1)"))]
 	pub map_tag: Option<i32>,
 }
 
+/* Request to open a connection by the client. */
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, Derivative)]
+#[derivative(Default)]
+pub struct HandshakeRequest {
+    pub version: String,
+    pub game: GamePlatform,
+    pub username: Option<String>,
+    pub token: Option<String>,
+}
+
+/* Supported game platforms in Bingo. */
+#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
+#[repr(u8)]
+pub enum GamePlatform {
+    #[default] Next,
+    Turbo,
+}
+
 /* Available map selection modes. */
-#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
 #[repr(u8)]
 pub enum MapMode {
-    RandomTMX,
+    #[default] RandomTMX,
     Tags,
     Mappack,
+    Campaign,
 }
 
 /* A Trackmania medal ranking. */
-#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
 #[repr(u8)]
 pub enum Medal {
-    Author,
+    #[default] Author,
     Gold,
     Silver,
     Bronze,

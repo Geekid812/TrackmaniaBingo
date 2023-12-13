@@ -52,6 +52,7 @@ void Render() {
     UIPaintColor::Render();
     UITeams::Render();
     SettingsWindow::Render();
+    UIMapSelect::Render();
 }
 
 void RenderInterface() {

@@ -6,7 +6,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{query_builder::Separated, FromRow, Sqlite};
 
-#[derive(Serialize, Deserialize, Clone, Debug, FromRow)]
+#[derive(Serialize, Deserialize, Clone, Debug, FromRow, Default)]
 pub struct Player {
     pub uid: i32,
     pub account_id: String,
@@ -18,7 +18,7 @@ pub struct Player {
     pub country_code: String,
     #[allow(unused)]
     #[serde(skip_serializing)]
-    client_token: Option<String>,
+    pub client_token: Option<String>,
     #[serde(serialize_with = "serialize_or_default")]
     pub title: Option<String>,
 }
