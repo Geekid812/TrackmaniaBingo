@@ -1,6 +1,6 @@
 use crate::{
     core::models::{livegame::MapClaim, player::PlayerRef},
-    datatypes::Medal,
+    datatypes::{CampaignMap, Medal},
     server::context::ClientContext,
 };
 use serde::Deserialize;
@@ -12,6 +12,7 @@ pub struct SubmitRun {
     map_uid: String,
     time: u64,
     medal: Medal,
+    campaign: Option<CampaignMap>,
 }
 
 #[typetag::deserialize]
@@ -28,7 +29,12 @@ impl Request for SubmitRun {
                 medal: self.medal,
             };
             let mut lock = game.lock();
-            let cell = lock.get_cell_from_map_uid(self.map_uid.clone());
+            let cell: Option<usize>;
+            if self.campaign.is_some() {
+                cell = lock.get_cell_from_campaign(&self.campaign.clone().unwrap());
+            } else {
+                cell = lock.get_cell_from_map_uid(self.map_uid.clone());
+            }
             if let Some(id) = cell {
                 lock.add_submitted_run(id, claim);
             } else {

@@ -36,6 +36,7 @@
 
     <struct name="MatchConfiguration">
         <comment>Match parameters set by the host.</comment>
+        <m name="game" type="GamePlatform" default="GamePlatform::Next" />
         <m name="grid_size" type="uint" default="5" />
         <m name="selection" type="MapMode" default="MapMode::RandomTMX" />
         <m name="target_medal" type="Medal" default="Medal::Author" />
@@ -45,7 +46,7 @@
         <m name="free_for_all" type="bool" />
         <m name="rerolls" type="bool" />
         <m name="mappack_id" type="uint" optional="true" />
-        <m name="campaign_selection" type="string" optional="true" />
+        <m name="campaign_selection" type="list[uint]" optional="true" />
         <m name="map_tag" type="int" optional="true" default="1" />
     </struct>
 
@@ -55,6 +56,12 @@
         <m name="game" type="GamePlatform" />
         <m name="username" type="string" optional="true" />
         <m name="token" type="string" optional="true" />
+    </struct>
+
+    <struct name="CampaignMap">
+        <comment>A map identifier for an official campaign.</comment>
+        <m name="campaign_id" type="int" default="-1" />
+        <m name="map" type="int" default="-1" />
     </struct>
 
     <enum name="GamePlatform">

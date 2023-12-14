@@ -57,6 +57,7 @@ namespace RoomConfiguration {
 
 /* Match parameters set by the host. */
 class MatchConfiguration {
+    GamePlatform game = GamePlatform::Next;
     uint gridSize = 5;
     MapMode selection = MapMode::RandomTMX;
     Medal targetMedal = Medal::Author;
@@ -66,13 +67,14 @@ class MatchConfiguration {
     bool freeForAll;
     bool rerolls;
     uint mappackId;
-    string campaignSelection;
+    array<uint> campaignSelection;
     int mapTag = 1;
     MatchConfiguration() {}
 }
 namespace MatchConfiguration {
     Json::Value@ Serialize(MatchConfiguration cls) {
         auto value = Json::Object();
+        value["game"] = int(cls.game);
         value["grid_size"] = cls.gridSize;
         value["selection"] = int(cls.selection);
         value["target_medal"] = int(cls.targetMedal);
@@ -90,6 +92,7 @@ namespace MatchConfiguration {
 
     MatchConfiguration Deserialize(Json::Value@ value) {
         auto cls = MatchConfiguration();
+        cls.game = GamePlatform(int(value["game"]));
         cls.gridSize = value["grid_size"];
         cls.selection = MapMode(int(value["selection"]));
         cls.targetMedal = Medal(int(value["target_medal"]));
@@ -99,7 +102,9 @@ namespace MatchConfiguration {
         cls.freeForAll = value["free_for_all"];
         cls.rerolls = value["rerolls"];
         if (value["mappack_id"].GetType() != Json::Type::Null) cls.mappackId = value["mappack_id"];
-        if (value["campaign_selection"].GetType() != Json::Type::Null) cls.campaignSelection = value["campaign_selection"];
+        if (value["campaign_selection"].GetType() != Json::Type::Null) for (uint i = 0; i < value["campaign_selection"].Length; i++) {
+            cls.campaignSelection.InsertLast(value["campaign_selection"][i]);
+        }
         if (value["map_tag"].GetType() != Json::Type::Null) cls.mapTag = value["map_tag"];
 
         return cls;
@@ -131,6 +136,30 @@ namespace HandshakeRequest {
         cls.game = GamePlatform(int(value["game"]));
         if (value["username"].GetType() != Json::Type::Null) cls.username = value["username"];
         if (value["token"].GetType() != Json::Type::Null) cls.token = value["token"];
+
+        return cls;
+    }
+}
+
+/* A map identifier for an official campaign. */
+class CampaignMap {
+    int campaignId = -1;
+    int map = -1;
+    CampaignMap() {}
+}
+namespace CampaignMap {
+    Json::Value@ Serialize(CampaignMap cls) {
+        auto value = Json::Object();
+        value["campaign_id"] = cls.campaignId;
+        value["map"] = cls.map;
+
+        return value;
+    }
+
+    CampaignMap Deserialize(Json::Value@ value) {
+        auto cls = CampaignMap();
+        cls.campaignId = value["campaign_id"];
+        cls.map = value["map"];
 
         return cls;
     }

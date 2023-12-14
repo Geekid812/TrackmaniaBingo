@@ -96,12 +96,7 @@ namespace Network {
             handshake.version = Meta::ExecutingPlugin().Version;
             handshake.username = GetLocalUsername();
             handshake.token = PersistantStorage::ClientToken;
-
-#if TMNEXT
-            handshake.game = GamePlatform::Next;
-#elif TURBO
-            handshake.game = GamePlatform::Turbo;
-#endif
+            handshake.game = CurrentGame;
 
             int code = _protocol.Connect(Settings::BackendAddress, Settings::NetworkPort, handshake);
 
@@ -335,6 +330,8 @@ namespace Network {
     }
 
     void CreateRoom() {
+        MatchConfig.game = CurrentGame;
+
         auto body = Json::Object();
         body["config"] = RoomConfiguration::Serialize(RoomConfig);
         body["match_config"] = MatchConfiguration::Serialize(MatchConfig);
@@ -472,11 +469,12 @@ namespace Network {
         Post("StartMatch", Json::Object(), true);
     }
 
-    bool ClaimCell(string&in uid, RunResult result) {
+    bool ClaimCell(string&in uid, CampaignMap campaign, RunResult result) {
         auto body = Json::Object();
         body["map_uid"] = uid;
         body["time"] = result.time;
         body["medal"] = result.medal;
+        if (campaign.campaignId != -1) body["campaign"] = CampaignMap::Serialize(campaign);
         auto Request = Network::Post("SubmitRun", body, false);
         return Request !is null;
     }

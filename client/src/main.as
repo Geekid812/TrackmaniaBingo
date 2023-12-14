@@ -1,6 +1,12 @@
 const string WindowName = Icons::Th + " \\$zBingo";
 const string MenuItemName = "\\$ff0" + WindowName;
 
+#if NEXT
+const GamePlatform CurrentGame = GamePlatform::Next;
+#elif TURBO
+const GamePlatform CurrentGame = GamePlatform::Turbo;
+#endif
+
 void Main() {
     startnew(Font::Init);
     startnew(Login::EnsureLoggedIn);

@@ -1,7 +1,7 @@
 
 namespace UIMapSelect {
+    const uint BITS_PER_INT = 30;
     bool Visible;
-    array<uint> selectionBitfields = {0, 0, 0, 0, 0, 0, 0};
 
     void Render() {
         if (!Visible) return;
@@ -14,6 +14,8 @@ namespace UIMapSelect {
     }
 
     void RenderCampaignSelect() {
+        auto selectionBitfields = MatchConfig.campaignSelection;
+
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(5, 3));
         UI::PushStyleVar(UI::StyleVar::CellPadding, vec2(8, 6));
         if (UI::BeginTable("bingocampaignselect", 5, UI::TableFlags::BordersOuter)) {
@@ -28,16 +30,16 @@ namespace UIMapSelect {
                 if (UI::Button(headers[i])) {
                     for (uint j = 0; j < 50; j++) {
                         int x = (30 * (j / 10) + 10 * i + j);
-                        uint bitfieldIdx = x / 32;
-                        uint bitfieldMask = 1 << (x % 32);
+                        uint bitfieldIdx = x / BITS_PER_INT;
+                        uint bitfieldMask = 1 << (x % BITS_PER_INT);
                         selectionBitfields[bitfieldIdx] ^= bitfieldMask;
                     }
                 }
                 UIColor::Reset();
             }
             for (uint i = 0; i < 200; i++) {
-                uint bitfieldIdx = i / 32;
-                uint bitfieldMask = 1 << (i % 32);
+                uint bitfieldIdx = i / BITS_PER_INT;
+                uint bitfieldMask = 1 << (i % BITS_PER_INT);
                 if (i % 10 == 0) {
                     UI::TableNextColumn();
                 }
@@ -47,8 +49,8 @@ namespace UIMapSelect {
                     UIColor::Custom(UIColor::Brighten(colors[i / 40].xyz, 0.8));
                     if (UI::Button(difficulties[i / 40])) {
                         for (uint j = i; j < i + 40; j++) {
-                            bitfieldIdx = j / 32;
-                            bitfieldMask = 1 << (j % 32);
+                            bitfieldIdx = j / BITS_PER_INT;
+                            bitfieldMask = 1 << (j % BITS_PER_INT);
                             selectionBitfields[bitfieldIdx] ^= bitfieldMask;
                         }
                     }

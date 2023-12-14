@@ -9,7 +9,9 @@ use reqwest::{
 };
 use tracing::error;
 
-use crate::{integrations::USER_AGENT, orm::mapcache::record::MapRecord};
+use crate::{
+    core::models::map::GameMap, integrations::USER_AGENT, orm::mapcache::record::MapRecord,
+};
 
 const ROUTE_MAPPACK: &'static str = "/api/mappack/get_mappack_tracks/";
 
@@ -32,7 +34,7 @@ impl MappackLoader {
     pub async fn get_mappack_tracks(
         &self,
         mappack_id: &str,
-    ) -> Result<Vec<MapRecord>, anyhow::Error> {
+    ) -> Result<Vec<GameMap>, anyhow::Error> {
         let url = Url::from_str(&(super::BASE.to_owned() + ROUTE_MAPPACK + mappack_id))
             .expect("mappack url can be constructed");
 
@@ -45,7 +47,7 @@ impl MappackLoader {
             .json()
             .await?;
 
-        let maps: Vec<MapRecord> = response
+        let maps: Vec<GameMap> = response
             .as_array()
             .ok_or(anyhow!("invalid JSON received: {:?}", response))?
             .to_owned()
@@ -58,6 +60,7 @@ impl MappackLoader {
                 m.is_ok()
             })
             .map(Result::unwrap)
+            .map(GameMap::TMX)
             .collect();
 
         Ok(maps)

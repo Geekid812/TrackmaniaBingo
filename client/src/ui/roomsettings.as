@@ -106,6 +106,10 @@ namespace UIRoomSettings {
     }
 
     void MapSelectButton() {
+        if (MatchConfig.campaignSelection.Length < 7) {
+            MatchConfig.campaignSelection = {0, 0, 0, 0, 0, 0, 0};
+        }
+
         UIColor::Crimson();
         if (UI::Button(Icons::Map + " Select Maps")) {
             UIMapSelect::Visible = !UIMapSelect::Visible;

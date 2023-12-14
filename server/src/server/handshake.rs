@@ -2,7 +2,6 @@ use std::io;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Duration;
 
-use chrono::NaiveDateTime;
 use futures::executor::block_on;
 use futures::{select, FutureExt, StreamExt};
 use serde::Serialize;
@@ -11,7 +10,7 @@ use serde_repr::Serialize_repr;
 use sqlx::FromRow;
 use tokio::pin;
 use tokio::time::sleep;
-use tracing::{debug, error};
+use tracing::error;
 
 use super::version::Version;
 use crate::datatypes::{GamePlatform, HandshakeRequest};
@@ -20,7 +19,7 @@ use crate::orm::composed::profile::{get_profile, PlayerProfile};
 use crate::orm::models::player::Player;
 use crate::{transport::client::tcpnative::TcpNativeClient, CONFIG};
 
-static EHPEMERAL_UID: AtomicI32 = AtomicI32::new(-1000);
+static EPHEMERAL_UID: AtomicI32 = AtomicI32::new(-1000);
 
 pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile, HandshakeCode> {
     pin! {
@@ -55,7 +54,7 @@ pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile,
         if let Some(name) = handshake.username {
             return Ok(PlayerProfile {
                 player: Player {
-                    uid: EHPEMERAL_UID.fetch_add(-1, Ordering::Relaxed),
+                    uid: EPHEMERAL_UID.fetch_add(-1, Ordering::Relaxed),
                     username: name,
                     ..Player::default()
                 },
@@ -110,7 +109,6 @@ pub async fn accept_socket(
     client: &mut TcpNativeClient,
     data: HandshakeSuccess,
 ) -> Result<(), io::Error> {
-    debug!("acceptance");
     client
         .serialize(&HandshakeResponse {
             code: HandshakeCode::Ok,

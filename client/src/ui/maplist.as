@@ -144,7 +144,7 @@ namespace UIMapList {
 #if TMNEXT
                     Playground::LoadMap(cell.map.tmxid);
 #elif TURBO
-                    Playground::LoadMapCampaign(0);
+                    Playground::LoadMapCampaign(cell.map.tmxid);
 #endif
                     interacted = true;
                 }

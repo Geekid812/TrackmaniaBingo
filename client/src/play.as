@@ -7,6 +7,7 @@ namespace Playground {
         int retries;
         string mapUid;
         RunResult mapResult;
+        CampaignMap campaign;
     }
 
     class CoroutineData {
@@ -61,7 +62,25 @@ namespace Playground {
     }
 #elif TURBO
     void InternalLoadMapCampaign(ref@ Data) {
-        // TODO
+        auto app = cast<CGameManiaPlanet>(GetApp());
+        auto scriptAPI = app.ManiaTitleFlowScriptAPI;
+        app.BackToMainMenu();
+
+        // Wait until script API is available
+        while (!scriptAPI.IsReady) yield();
+
+        int mapId = cast<CoroutineData>(Data).id - 1;
+        int difficultyId = mapId / 40;
+        int enviId = (mapId % 40) / 10;
+        array<string> enviNames = {"Canyon", "Valley", "Lagoon", "Stadium"};
+        array<string> difficulties = {"White", "Green", "Blue", "Red", "Black"};
+        
+        string filename = "Campaigns\\" + Text::Format("%02i", difficultyId + 1)
+        + "_" + difficulties[difficultyId] +"\\" + Text::Format("%02i", enviId + 1)
+        + "_" + enviNames[enviId] + "\\" + Text::Format("%03i", mapId + 1) + ".Map.Gbx";
+        string modeName = "TMC_CampaignSolo.Script.txt";
+
+        scriptAPI.PlayMap(filename, modeName, "");
     }
 
     CGameCtnChallenge@ GetCurrentMap() {
@@ -86,7 +105,7 @@ namespace Playground {
         int bronzeTime = map.TMObjective_BronzeTime;
         int time = -1;
 
-        auto playgroundScript = cast<CSmArenaRulesMode>(app.PlaygroundScript);
+        auto playgroundScript = cast<CGamePlaygroundScript>(app.PlaygroundScript);
         if (playgroundScript is null || playground.GameTerminals.Length == 0) return RunResult();
 
 #if TMNEXT
@@ -133,6 +152,14 @@ namespace Playground {
         mapClaimData.retries = 3;
         mapClaimData.mapUid = mapCell.map.uid;
         mapClaimData.mapResult = result;
+
+        auto campaign = CampaignMap();
+        if (mapCell.map.type == MapType::Campaign) {
+            campaign.campaignId = 0;
+            campaign.map = mapCell.map.tmxid;
+        }
+        mapClaimData.campaign = campaign;
+
         trace("Claiming map '" + mapCell.map.uid + "' with time of " + result.time);
         startnew(ClaimMedalCoroutine);
     }
@@ -175,7 +202,7 @@ namespace Playground {
     void ClaimMedalCoroutine() {
         bool ok = false;
         while (mapClaimData.retries > 0) {
-            bool Success = Network::ClaimCell(mapClaimData.mapUid, mapClaimData.mapResult);
+            bool Success = Network::ClaimCell(mapClaimData.mapUid, mapClaimData.campaign, mapClaimData.mapResult);
             mapClaimData.retries -= 1;
             if (Success) {
                 trace("Map successfully claimed.");

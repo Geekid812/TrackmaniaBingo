@@ -44,7 +44,22 @@ namespace NetworkHandlers {
         @Match.gameMaps = {};
         for (uint i = 0; i < mapList.Length; i++) {
             auto jsonMap = mapList[i];
-            Match.gameMaps.InsertLast(GameMap::Deserialize(jsonMap));
+            if (jsonMap["type"] == "TMX") {
+                Match.gameMaps.InsertLast(GameMap::Deserialize(jsonMap));
+            }
+#if TURBO
+            else if (jsonMap["type"] == "Campaign") {
+                GameMap map = GameMap();
+                map.tmxid = uint(jsonMap["map"]);
+                map.uid = Turbo::GetCampaignMapUid(map.tmxid);
+                map.trackName = "#" + Text::Format("%03i", map.tmxid);
+                map.type = MapType::Campaign;
+                Match.gameMaps.InsertLast(map);
+            }
+#endif
+            else {
+                throw("LoadMaps: unknown map type '" + string(jsonMap["type"]) + "'.");
+            }
         }
     }
 

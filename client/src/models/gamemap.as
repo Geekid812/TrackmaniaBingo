@@ -1,4 +1,10 @@
+enum MapType {
+    TMX,
+    Campaign
+}
+
 class GameMap {
+    MapType type = MapType::TMX;
     int tmxid;
     string uid;
     int userid;

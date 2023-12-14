@@ -18,6 +18,7 @@ use super::{
     livegame::LiveMatch,
     models::{
         self,
+        map::GameMap,
         player::{Player, PlayerRef},
         room::{RoomState, RoomTeam},
         team::{BaseTeam, GameTeam, TeamIdentifier},
@@ -27,7 +28,7 @@ use super::{
 };
 use crate::{
     datatypes::{MatchConfiguration, RoomConfiguration},
-    orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
+    orm::composed::profile::PlayerProfile,
     server::{context::ClientContext, mapload},
     transport::Channel,
 };
@@ -42,7 +43,7 @@ pub struct GameRoom {
     channel: Channel<RoomEvent>,
     created: DateTime<Utc>,
     load_marker: u32,
-    loaded_maps: Vec<MapRecord>,
+    loaded_maps: Vec<GameMap>,
     active_match: Option<Shared<LiveMatch>>,
 }
 
@@ -200,7 +201,7 @@ impl GameRoom {
         self.load_marker
     }
 
-    pub fn maps_load_callback(&mut self, maps: Vec<MapRecord>, userdata: u32) {
+    pub fn maps_load_callback(&mut self, maps: Vec<GameMap>, userdata: u32) {
         if userdata == self.load_marker {
             self.loaded_maps = maps;
         }
@@ -365,6 +366,7 @@ impl GameRoom {
         let mapconfig_changed = config.selection != self.matchconfig.selection
             || self.matchconfig.mappack_id != config.mappack_id
             || self.matchconfig.map_tag != config.map_tag
+            || self.matchconfig.campaign_selection != config.campaign_selection
             || self.matchconfig.grid_size < config.grid_size;
 
         self.matchconfig = config;

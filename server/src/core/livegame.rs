@@ -6,10 +6,9 @@ use std::{
 
 use crate::{
     config::CONFIG,
-    datatypes::MatchConfiguration,
+    datatypes::{CampaignMap, MatchConfiguration},
     orm::{
         self,
-        mapcache::record::MapRecord,
         models::matches::{Match, PlayerToMatch},
     },
     server::{context::ClientContext, tasks::execute_delayed_task},
@@ -59,7 +58,7 @@ struct MatchOptions {
 impl LiveMatch {
     pub fn new(
         config: MatchConfiguration,
-        maps: Vec<MapRecord>,
+        maps: Vec<GameMap>,
         teams: TeamsManager<GameTeam>,
     ) -> Owned<Self> {
         let mut _self = Self {
@@ -72,7 +71,7 @@ impl LiveMatch {
             cells: maps
                 .into_iter()
                 .map(|map| GameCell {
-                    map: GameMap::from(map),
+                    map,
                     claims: Vec::new(),
                     reroll_ids: Vec::new(),
                 })
@@ -164,7 +163,7 @@ impl LiveMatch {
                 .cells
                 .iter()
                 .take(maps_in_grid)
-                .map(|c| c.map.track.clone())
+                .map(|c| c.map.clone())
                 .collect(),
             can_reroll: self.can_reroll(),
         });
@@ -296,7 +295,28 @@ impl LiveMatch {
         self.cells
             .iter()
             .enumerate()
-            .filter(|(_, c)| c.map.track.uid == uid)
+            .filter(|(_, c)| {
+                if let GameMap::TMX(record) = &c.map {
+                    return record.uid == uid;
+                } else {
+                    return false;
+                }
+            })
+            .map(|(i, _)| i)
+            .next()
+    }
+
+    pub fn get_cell_from_campaign(&self, campaign: &CampaignMap) -> Option<usize> {
+        self.cells
+            .iter()
+            .enumerate()
+            .filter(|(_, c)| {
+                if let GameMap::Campaign(campaign_other) = &c.map {
+                    return campaign == campaign_other;
+                } else {
+                    return false;
+                }
+            })
             .map(|(i, _)| i)
             .next()
     }
@@ -490,7 +510,7 @@ impl LiveMatch {
         self.cells.swap_remove(cell_id);
         self.channel.broadcast(&GameEvent::MapRerolled {
             cell_id,
-            map: self.cells[cell_id].map.track.clone(),
+            map: self.cells[cell_id].map.clone(),
             can_reroll: self.can_reroll(),
         });
         Ok(())

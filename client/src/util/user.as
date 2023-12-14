@@ -3,7 +3,8 @@ string GetLocalUsername() {
 #if TMNEXT
     return GetLocalLogin();
 #elif TURBO
-    auto localInfo = GetApp().Network.PlaygroundInterfaceScriptHandler.LocalPlayerInfo;
-    return localInfo.Name;
+    auto playground = GetApp().Network.PlaygroundInterfaceScriptHandler;
+    if (playground is null) return "";
+    return playground.LocalPlayerInfo.Name;
 #endif
 }
