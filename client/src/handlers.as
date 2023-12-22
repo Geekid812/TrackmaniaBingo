@@ -37,6 +37,8 @@ namespace NetworkHandlers {
         UIMapList::Visible = false;
 
         PersistantStorage::LastConnectedMatchId = Match.uid;
+        auto self = Match.GetSelf();
+        if (@self !is null) PersistantStorage::LastConnectedMatchTeamId = self.team.id;
         Meta::SaveSettings(); // Ensure MatchId is saved, even in the event of a crash
     }
 
@@ -44,22 +46,7 @@ namespace NetworkHandlers {
         @Match.gameMaps = {};
         for (uint i = 0; i < mapList.Length; i++) {
             auto jsonMap = mapList[i];
-            if (jsonMap["type"] == "TMX") {
-                Match.gameMaps.InsertLast(GameMap::Deserialize(jsonMap));
-            }
-#if TURBO
-            else if (jsonMap["type"] == "Campaign") {
-                GameMap map = GameMap();
-                map.tmxid = uint(jsonMap["map"]);
-                map.uid = Turbo::GetCampaignMapUid(map.tmxid);
-                map.trackName = "#" + Text::Format("%03i", map.tmxid);
-                map.type = MapType::Campaign;
-                Match.gameMaps.InsertLast(map);
-            }
-#endif
-            else {
-                throw("LoadMaps: unknown map type '" + string(jsonMap["type"]) + "'.");
-            }
+            Match.gameMaps.InsertLast(GameMap::Deserialize(jsonMap));
         }
     }
 
@@ -208,7 +195,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Match.SetPhase(MatchPhase::Ended);
-        PersistantStorage::LastConnectedMatchId = "";
+        PersistantStorage::ResetConnectedMatch();
     }
 
     void TeamCreated(Json::Value@ data) {
@@ -284,7 +271,7 @@ namespace NetworkHandlers {
         Match.endState.endTime = Time::Now;
         @Match.endState.team = team;
         Match.SetPhase(MatchPhase::Ended);
-        PersistantStorage::LastConnectedMatchId = "";
+        PersistantStorage::ResetConnectedMatch();
     }
 
     void AnnounceDraw() {
@@ -292,7 +279,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Match.SetPhase(MatchPhase::Ended);
-        PersistantStorage::LastConnectedMatchId = "";
+        PersistantStorage::ResetConnectedMatch();
     }
 
     void MatchTeamCreated(Json::Value@ data) {

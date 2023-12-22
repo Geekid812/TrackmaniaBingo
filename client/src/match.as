@@ -121,10 +121,12 @@ class MapCell {
     MapCell(GameMap map) {
         @this.map = map;
 #if TURBO
-        @this.mapImage = Images::CachedFromURL(Turbo::GetCampaignThumbnailUrl(map.uid));
+        auto url = Turbo::GetCampaignThumbnailUrl(map.uid);
+        @this.mapImage = Images::CachedFromURL(url);
+        @this.thumbnail = Images::FindExisting(url);
 #elif NEXT
-        @this.thumbnail = Images::CachedFromURL("https://trackmania.exchange/maps/screenshot_normal/" + map.tmxid);
-        @this.mapImage = Images::CachedFromURL("https://trackmania.exchange/maps/" + map.tmxid + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
+        @this.thumbnail = Images::CachedFromURL("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
+        @this.mapImage = Images::CachedFromURL("https://trackmania.exchange/maps/" + map.id + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
 #endif    
     }
 

@@ -26,6 +26,17 @@ namespace Playground {
     }
 #endif
 
+    void BackToMainMenu(CGameManiaPlanet@ app) {
+        bool menuDisplayed = app.ManiaPlanetScriptAPI.ActiveContext_InGameMenuDisplayed;
+        if (menuDisplayed) {
+            // Close the in-game menu via ::Quit to avoid TM hanging / crashing. Also takes us back to the main menu.
+            app.Network.PlaygroundInterfaceScriptHandler.CloseInGameMenu(CGameScriptHandlerPlaygroundInterface::EInGameMenuResult::Quit);
+        } else {
+            // Go to main menu and wait until map loading is ready
+            app.BackToMainMenu();
+        }
+    }
+
 #if TMNEXT
     // This code is mostly taken from Greep's RMC
     void LoadMapCoroutine(ref@ Data) {
@@ -36,14 +47,7 @@ namespace Playground {
 
         int tmxId = cast<CoroutineData>(Data).id;
         auto app = cast<CTrackMania>(GetApp());
-        bool menuDisplayed = app.ManiaPlanetScriptAPI.ActiveContext_InGameMenuDisplayed;
-        if (menuDisplayed) {
-            // Close the in-game menu via ::Quit to avoid TM hanging / crashing. Also takes us back to the main menu.
-            app.Network.PlaygroundInterfaceScriptHandler.CloseInGameMenu(CGameScriptHandlerPlaygroundInterface::EInGameMenuResult::Quit);
-        } else {
-            // Go to main menu and wait until map loading is ready
-            app.BackToMainMenu();
-        }
+        BackToMainMenu(app);
 
         // Wait for the active module to be the main menu, and be ready. If getting back to the main menu fails, this will block until the user quits the map.
         while (app.Switcher.ModuleStack.Length == 0 || cast<CTrackManiaMenus>(app.Switcher.ModuleStack[0]) is null) {
@@ -63,10 +67,10 @@ namespace Playground {
 #elif TURBO
     void InternalLoadMapCampaign(ref@ Data) {
         auto app = cast<CGameManiaPlanet>(GetApp());
-        auto scriptAPI = app.ManiaTitleFlowScriptAPI;
-        app.BackToMainMenu();
+        BackToMainMenu(app);
 
         // Wait until script API is available
+        auto scriptAPI = app.ManiaTitleFlowScriptAPI;
         while (!scriptAPI.IsReady) yield();
 
         int mapId = cast<CoroutineData>(Data).id - 1;
@@ -156,7 +160,7 @@ namespace Playground {
         auto campaign = CampaignMap();
         if (mapCell.map.type == MapType::Campaign) {
             campaign.campaignId = 0;
-            campaign.map = mapCell.map.tmxid;
+            campaign.map = mapCell.map.id;
         }
         mapClaimData.campaign = campaign;
 

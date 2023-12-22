@@ -20,6 +20,7 @@ void Main() {
 
         if (Network::IsConnected()) {
             NetParams::MatchJoinUid = PersistantStorage::LastConnectedMatchId;
+            NetParams::MatchJoinTeamId = PersistantStorage::LastConnectedMatchTeamId;
             startnew(Network::Reconnect);
         }
     }

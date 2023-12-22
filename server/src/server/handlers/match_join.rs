@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::{directory::MATCHES, models::livegame::MatchState},
+    core::{
+        directory::MATCHES,
+        models::{livegame::MatchState, team::TeamIdentifier},
+    },
     server::context::{ClientContext, GameContext},
 };
 
@@ -10,6 +13,7 @@ use super::{generic, Request, Response};
 #[derive(Deserialize, Debug)]
 pub struct JoinMatch {
     uid: String,
+    team_id: Option<TeamIdentifier>,
 }
 
 #[derive(Serialize, Debug)]
@@ -28,7 +32,7 @@ impl Request for JoinMatch {
 
         return if let Some(livematch) = MATCHES.find(self.uid.clone()) {
             let mut lock = livematch.lock();
-            if let Err(e) = lock.player_join(&ctx, None) {
+            if let Err(e) = lock.player_join(&ctx, self.team_id) {
                 return Box::new(generic::Error {
                     error: format!("{}", e),
                 });

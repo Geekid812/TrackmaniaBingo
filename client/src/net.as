@@ -404,6 +404,9 @@ namespace Network {
     void JoinMatch() {
         auto body = Json::Object();
         body["uid"] = NetParams::MatchJoinUid;
+        if (NetParams::MatchJoinTeamId != -1) {
+            body["team_id"] = NetParams::MatchJoinTeamId;
+        }
 
         auto response = Post("JoinMatch", body, true);
         if (response is null) {
@@ -450,7 +453,7 @@ namespace Network {
     void LeaveRoom() {
         // TODO: this is rudimentary, it doesn't keep connection alive
         trace("Network: LeaveRoom requested.");
-        PersistantStorage::LastConnectedMatchId = "";
+        PersistantStorage::ResetConnectedMatch();
         CloseConnection();
     }
 
@@ -516,7 +519,7 @@ namespace Network {
 
         if (@Match is null || Match.uid != PersistantStorage::LastConnectedMatchId) {
             trace("Network: Reconnection failure, forgetting previous game save.");
-            PersistantStorage::LastConnectedMatchId = "";
+            PersistantStorage::ResetConnectedMatch();
         }
     }
 

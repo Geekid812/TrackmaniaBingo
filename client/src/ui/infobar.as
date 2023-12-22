@@ -104,7 +104,7 @@ namespace UIInfoBar {
 
             UI::Separator();
             float width = UI::GetWindowSize().x;
-            float padding = LayoutTools::GetPadding(width, 140., 0.5);
+            float padding = LayoutTools::GetPadding(width, 110., 0.5);
             LayoutTools::MoveTo(padding);
             UIColor::Custom(myTeam.color);
             if (UI::Button(Icons::ListOl + " Map Records")) {

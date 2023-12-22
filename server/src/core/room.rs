@@ -27,7 +27,7 @@ use super::{
     util::Color,
 };
 use crate::{
-    datatypes::{MatchConfiguration, RoomConfiguration},
+    datatypes::{GamePlatform, MatchConfiguration, RoomConfiguration},
     orm::composed::profile::PlayerProfile,
     server::{context::ClientContext, mapload},
     transport::Channel,
@@ -483,6 +483,10 @@ impl GameRoom {
         let mut lock = match_arc.lock();
         lock.set_parent_room(self.ptr.clone());
         lock.set_channel(Channel::<GameEvent>::from(&self.channel));
+        if self.matchconfig.game == GamePlatform::Turbo {
+            lock.set_player_join(true);
+        }
+
         lock.setup_match_start(start_date);
         directory::MATCHES.insert(lock.uid().to_owned(), match_arc.clone());
         drop(lock);

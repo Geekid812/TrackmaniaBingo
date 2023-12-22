@@ -18,6 +18,9 @@ namespace PersistantStorage {
     [Setting hidden]
     string LastConnectedMatchId = "";
 
+    [Setting hidden]
+    int LastConnectedMatchTeamId = -1;
+
     void LoadPersistentItems() {
         try {
             if (LocalProfile != "") {
@@ -38,6 +41,12 @@ namespace PersistantStorage {
         }
     }
 
+    void ResetConnectedMatch() {
+        LastConnectedMatchId = "";
+        LastConnectedMatchTeamId = -1;
+        Meta::SaveSettings();
+    }
+
     void ResetStorage() {
         warn("PersistantStorage: Resetting all items...");
         ClientToken = "";
@@ -46,5 +55,6 @@ namespace PersistantStorage {
         LastConfig = "";
         SubscribeToRoomUpdates = false;
         LastConnectedMatchId = "";
+        LastConnectedMatchTeamId = -1;
     }
 }

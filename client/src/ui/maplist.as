@@ -105,7 +105,7 @@ namespace UIMapList {
                 UI::PopFont();
 
                 UI::PushFont(Font::Regular);
-                UI::TextDisabled("By " + cell.map.username);
+                if (cell.map.username != "") UI::TextDisabled("By " + cell.map.username);
                 if (cell.map.style != "") {
                     UI::PushStyleColor(UI::Col::Button, UIColor::GetAlphaColor(StyleToColor(cell.map.style.ToLower()), .7));
                     UI::Button(cell.map.style);
@@ -142,9 +142,9 @@ namespace UIMapList {
                 } else {
                     Visible = false;
 #if TMNEXT
-                    Playground::LoadMap(cell.map.tmxid);
+                    Playground::LoadMap(cell.map.id);
 #elif TURBO
-                    Playground::LoadMapCampaign(cell.map.tmxid);
+                    Playground::LoadMapCampaign(cell.map.id);
 #endif
                     interacted = true;
                 }
@@ -185,6 +185,7 @@ namespace UIMapList {
         if (style == "water") return vec3(.2, .9, 1.);
         if (style == "plastic") return vec3(.9, .9, .3);
         if (style == "zrt") return vec3(.1, .5, .1);
+        if (style == "multilap") return vec3(.8, .1, .2);
         return vec3(.6, .6, .6);
     }
 }

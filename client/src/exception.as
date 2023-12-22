@@ -8,4 +8,3 @@ void errnote(const string&in text) {
     warn("Troubleshooter: " + text);
     UI::ShowNotification("", Icons::ExclamationCircle + " " + text, vec4(.8, .8, .2, 1.), 15000);
 }
-
