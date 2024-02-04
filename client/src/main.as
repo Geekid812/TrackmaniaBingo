@@ -76,7 +76,6 @@ void RenderInterface() {
     UIDailyHistory::Render();
 
     Font::Unset();
-    Font::ResetLoadTimings();
 }
 
 void Update(float dt) {

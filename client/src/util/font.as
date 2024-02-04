@@ -3,7 +3,11 @@ namespace Font {
     // Only attempt to load new requested fonts after the given delay in
     // milliseconds expires. It avoids loading fonts which were on display
     // for a shorter timeframe than this amount.
-    const int64 FONT_LOAD_DELAY = 1500;
+    const int64 FONT_LOAD_DELAY = 800;
+
+    // Don't try to load another font if the size difference is smaller
+    // than this bound (in pixels).
+    const float FONT_SIZE_THRESHOLD = 3.;
 
     array<UI::Font@> FontCache_Regular;
     array<UI::Font@> FontCache_Bold;
@@ -11,6 +15,22 @@ namespace Font {
     array<UI::Font@> FontStack;
     uint64 FontRequest_CompletionTime;
     bool Initialized;
+
+    enum Style {
+        Regular,
+        Bold,
+        Mono
+    }
+
+    class FontLoadCoroutineData {
+        Style style;
+        float size;
+
+        FontLoadCoroutineData(Style style, float size) {
+            this.style = style;
+            this.size = size;
+        }
+    }
 
     void InsertFont(array<UI::Font@>@ cache, UI::Font@ font) {
         for (uint i = 0; i < cache.Length; i++) {
@@ -25,7 +45,7 @@ namespace Font {
 
     UI::Font@ RetrieveFont(array<UI::Font@>@ cache, float size) {
         for (uint i = 0; i < cache.Length; i++) {
-            if (size <= cache[i].FontSize) return cache[i];
+            if (size - FONT_SIZE_THRESHOLD <= cache[i].FontSize) return cache[i];
         }
 
         return cache[cache.Length - 1];
@@ -51,9 +71,14 @@ namespace Font {
                 return null;
         }
 
-        UI::Font@ font = UI::LoadFont(fontName, size);
+        UI::Font@ font = UI::LoadFont(fontName, size, -1, -1, true, true);
         InsertFont(fontCache, font);
         return font;
+    }
+
+    void LoadFontCoroutine(ref@ data) {
+        auto loadData = cast<FontLoadCoroutineData@>(data);
+        LoadFont(loadData.style, loadData.size);
     }
 
     void Init() {
@@ -88,14 +113,16 @@ namespace Font {
 
     void Set(Style style, float size) {
         UI::Font@ font = Get(style, size);
+        float fontSizeDifference = Math::Abs(size - font.FontSize);
 
-        if (size != font.FontSize) {
+        if (fontSizeDifference > FONT_SIZE_THRESHOLD) {
             // This font has an inaccurate size. Start a new font loading
             // request and, if completed, load a new matching font.
             RequestFontLoad();
 
             if (Time::Now > FontRequest_CompletionTime) {
-                @font = LoadFont(style, size);
+                startnew(LoadFontCoroutine, FontLoadCoroutineData(style, size));
+                ResetLoadTimings();
             }
         }
 
@@ -114,16 +141,18 @@ namespace Font {
         return FontStack[FontStack.Length - 1];
     }
 
-    // Call every frame to reset an expired completion timestamp.
     void ResetLoadTimings() {
         if (FontRequest_CompletionTime != 0 && Time::Now > FontRequest_CompletionTime) {
             FontRequest_CompletionTime = 0;
         }
     }
 
-    enum Style {
-        Regular,
-        Bold,
-        Mono
+    // Debugging function: display cache information in the UI.
+    void InspectFontCache(array<UI::Font@>&in cache, const string&in windowName = "Font Cache Inspector") {
+        UI::Begin(Icons::Bug + " " + windowName);
+        for (uint i = 0; i < cache.Length; i++) {
+            UI::Text(i + ": " + cache[i].FontSize);
+        }
+        UI::End();
     }
 }
