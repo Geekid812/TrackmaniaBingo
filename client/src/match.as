@@ -127,7 +127,7 @@ class MapCell {
 #elif NEXT
         @this.thumbnail = Images::CachedFromURL("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
         @this.mapImage = Images::CachedFromURL("https://trackmania.exchange/maps/" + map.id + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
-#endif    
+#endif
     }
 
     bool IsClaimed() {

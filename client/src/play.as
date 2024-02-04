@@ -117,7 +117,7 @@ namespace Playground {
         if (playground.GameTerminals[0].UISequence_Current != SGamePlaygroundUIConfig::EUISequence::Finish || player is null) return RunResult();
 
         CSmScriptPlayer@ playerScriptAPI = cast<CSmScriptPlayer>(player.ScriptAPI);
-        auto ghost = playgroundScript.Ghost_RetrieveFromPlayer(playerScriptAPI);
+        auto ghost = cast<CSmArenaRulesMode>(playgroundScript).Ghost_RetrieveFromPlayer(playerScriptAPI);
         if (ghost is null) return RunResult();
 
         if (ghost.Result.Time > 0 && ghost.Result.Time < 4294967295) time = ghost.Result.Time;
