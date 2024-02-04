@@ -44,25 +44,27 @@ namespace UIInfoBar {
 
         for (uint i = 0; i < map.attemptRanking.Length; i++) {
             MapClaim claim = map.attemptRanking[i];
-            UI::PushFont(i == 0 ? Font::MonospaceBig : Font::Monospace);
             UI::Text(tostring(i + 1) + ".");
-            UI::PopFont();
             UI::SameLine();
             if (i == 0) {
                 UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 6));
             }
-            UI::PushFont(i == 0 ? Font::Bold : Font::Regular);
-            LayoutTools::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
+
+            Font::Style textStyle = Font::Style::Regular;
+            if (i == 0) textStyle = Font::Style::Bold;
+            Font::Set(textStyle, 16.);
+
+            Layout::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
             UI::Text(claim.result.Display());
             UI::SameLine();
             if (i == 0) {
                 UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 6));
             }
             UITools::PlayerTag(claim.player);
-            UI::PopFont();
+            Font::Unset();
         }
         if (Match.config.targetMedal != Medal::None) {
-            LayoutTools::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
+            Layout::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
             UI::Text(Playground::GetCurrentTimeToBeat(true).Display("$aaa") + "  Target Medal");
         }
 
@@ -70,8 +72,8 @@ namespace UIInfoBar {
             UI::Separator();
             
             float width = UI::GetWindowSize().x;
-            float padding = LayoutTools::GetPadding(width, 72., 0.5);
-            LayoutTools::MoveTo(padding);
+            float padding = Layout::GetPadding(width, 72., 0.5);
+            Layout::MoveTo(padding);
             UIColor::Custom(Match.GetSelf().team.color);
             if (UI::Button(Icons::Times + " Close")) {
                 MapLeaderboardUid = "";
@@ -94,7 +96,7 @@ namespace UIInfoBar {
             string claimingText = leadingClaim.result.Display() + " by";
 
             float claimTextWidth = Math::Max(Draw::MeasureString(claimingText + " " + leadingClaim.player.name).x, UI::GetWindowSize().x);
-            LayoutTools::MoveTo(LayoutTools::GetPadding(claimTextWidth, Draw::MeasureString(displayText).x, 0.5));
+            Layout::MoveTo(Layout::GetPadding(claimTextWidth, Draw::MeasureString(displayText).x, 0.5));
             UI::Text(displayText);
             UI::Text(claimingText);
 
@@ -104,8 +106,8 @@ namespace UIInfoBar {
 
             UI::Separator();
             float width = UI::GetWindowSize().x;
-            float padding = LayoutTools::GetPadding(width, 110., 0.5);
-            LayoutTools::MoveTo(padding);
+            float padding = Layout::GetPadding(width, 110., 0.5);
+            Layout::MoveTo(padding);
             UIColor::Custom(myTeam.color);
             if (UI::Button(Icons::ListOl + " Map Records")) {
                 MapLeaderboardUid = Playground::GetCurrentMap().EdChallengeId;
@@ -157,7 +159,6 @@ namespace UIInfoBar {
         }
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
-        UI::PushFont(Font::MonospaceBig);
         string colorPrefix;
         switch (phase) {
             case MatchPhase::NoBingo:
@@ -197,16 +198,14 @@ namespace UIInfoBar {
         if (phaseText != "" && !UI::IsWindowAppearing()) {
             float sideMargins = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding).x * 2.;
             float size = UI::GetWindowSize().x - sideMargins;
-            float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, size, 0.5);
+            float padding = Layout::GetPadding(UI::GetWindowSize().x, size, 0.5);
             vec4 buttonColor = UIColor::GetAlphaColor(color, animate ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8);
-            UI::PushFont(Font::Bold);
             UI::PushStyleColor(UI::Col::Button, buttonColor);
             UI::PushStyleColor(UI::Col::ButtonHovered, buttonColor);
             UI::PushStyleColor(UI::Col::ButtonActive, buttonColor);
-            LayoutTools::MoveTo(padding);
+            Layout::MoveTo(padding);
             UI::Button(phaseText, vec2(size, 0.));
             UI::PopStyleColor(3);
-            UI::PopFont();
         }
 
         // If playing with a time limit, timer counts down to 0
@@ -218,7 +217,6 @@ namespace UIInfoBar {
         UI::Text(colorPrefix + Time::Format(stopwatchTime, false, true, true));
         UI::PopFont();
 
-        UI::PushFont(Font::Regular);
         UI::SameLine();
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(6, 5));
         UIColor::Custom(team.color);
@@ -249,7 +247,6 @@ namespace UIInfoBar {
         }
         UIColor::Reset();
         UI::PopStyleVar();
-        UI::PopFont();
 
         SubwindowOffset = 0.;
         vec2 windowSize = UI::GetWindowSize();

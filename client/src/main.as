@@ -8,7 +8,7 @@ const GamePlatform CurrentGame = GamePlatform::Turbo;
 #endif
 
 void Main() {
-    startnew(Font::Init);
+    Font::Init();
     startnew(Login::EnsureLoggedIn);
     PersistantStorage::LoadPersistentItems();
     Config::FetchConfig();
@@ -51,6 +51,9 @@ void RenderMenu() {
 }
 
 void Render() {
+    if (!Font::Initialized) return;
+    Font::Set(Font::Style::Regular, 20);
+
     UIGameRoom::Render();
     BoardLocator::Render();
     Board::Draw();
@@ -60,12 +63,20 @@ void Render() {
     UITeams::Render();
     SettingsWindow::Render();
     UIMapSelect::Render();
+
+    Font::Unset();
 }
 
 void RenderInterface() {
+    if (!Font::Initialized) return;
+    Font::Set(Font::Style::Regular, 20);
+
     UIMainWindow::Render();
     UINews::Render();
     UIDailyHistory::Render();
+
+    Font::Unset();
+    Font::ResetLoadTimings();
 }
 
 void Update(float dt) {

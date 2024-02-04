@@ -100,12 +100,12 @@ namespace UIRoomMenu {
                     string timer;
                     if (uint64(Time::Stamp) >= room.startedTimestamp) timer = "\\$f80" + Time::Format((Time::Stamp - room.startedTimestamp) * 1000, false, true, true);
                     else timer = "\\$f80Game starting in " + (room.startedTimestamp - Time::Stamp) + "...";
-                    float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(timer).x, 0.75);
+                    float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(timer).x, 0.75);
                     UI::SetCursorPos(base + vec2(padding, 4.));
                     UI::Text(timer);
                 }
 
-                float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t" + buttonText).x, 1.0);
+                float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t" + buttonText).x, 1.0);
                 UI::SetCursorPos(base + vec2(padding, 0.));
                 UI::BeginDisabled(inGame);
                 if (!inGame) UIColor::DarkGreen();
@@ -130,12 +130,10 @@ namespace UIRoomMenu {
 
     void RoomInfo(NetworkRoom room) {
         vec2 base = UI::GetCursorPos();
-        UI::PushFont(Font::Bold);
         UI::Text(room.name);
-        UI::PopFont();
 
         string righttext = Icons::Users + " " + room.playerCount + (room.config.size != 0 ? "/" + room.config.size : "") + "\t" + (room.hostName != "" ? ("\t" + Icons::User + " " + room.hostName) : "");
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x - base.x, Draw::MeasureString(righttext).x, 1.0);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x - base.x, Draw::MeasureString(righttext).x, 1.0);
         UI::SetCursorPos(base + vec2(padding, 0.));
         UI::Text(righttext);
         UI::Text(string::Join(UIGameRoom::MatchConfigInfo(room.matchConfig), "\t"));

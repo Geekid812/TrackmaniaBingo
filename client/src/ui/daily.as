@@ -6,15 +6,13 @@ namespace UIDaily {
 
     void DailyHome() {
         string formattedDate = Time::FormatStringUTC("%d %B %Y", Time::Stamp);
-        UI::PushFont(Font::Subtitle);
         UI::Text("Daily Challenge - " + formattedDate);
-        UI::PopFont();
 
         float buttonWidth = 124.;
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, buttonWidth, 1.0);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, buttonWidth, 1.0);
         UI::SameLine();
         UIColor::Gray();
-        LayoutTools::MoveTo(padding);
+        Layout::MoveTo(padding);
         if (UI::Button(Icons::ThList + " Show History")) {
             UIDailyHistory::Visible = !UIDailyHistory::Visible;
         }
@@ -99,38 +97,37 @@ namespace UIDaily {
 
         UI::SetCursorPos(UI::GetCursorPos() - vec2(0., 48.));
         string countdownText = Time::Format(Math::Max(Time::MillisecondsRemaining(DailyMatch), 0), false, true, true);
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(countdownText, Font::Header, 26.).x, 0.5);
-        LayoutTools::MoveTo(padding);
-        UI::PushFont(Font::Header);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(countdownText, Font::Current(), 26.).x, 0.5);
+        Layout::MoveTo(padding);
         UI::Text("\\$f90" + countdownText);
-        UI::PopFont();
     }
 
     void CenterRemainingSpace(float width, float height) {
         float yOffset = UI::GetCursorPos().y;
         vec2 size = UI::GetWindowSize() - vec2(0, yOffset);
-        float x = LayoutTools::GetPadding(size.x, width, 0.5);
-        float y = LayoutTools::GetPadding(size.y, height, 0.5);
+        float x = Layout::GetPadding(size.x, width, 0.5);
+        float y = Layout::GetPadding(size.y, height, 0.5);
         UI::SetCursorPos(vec2(x, y + yOffset));
     }
 
-    void CenterText(const string&in text, UI::Font@ font) {
-        LayoutTools::MoveTo(LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, Font::Bold, Font::Bold.FontSize).x, 0.5));
+    void CenterText(const string&in text) {
+        UI::Font@ font = Font::Current();
+        Layout::MoveTo(Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
         UI::PushFont(font);
         UI::Text(text);
         UI::PopFont();
     }
 
     void LoadingIndicator() {
-        CenterText("Loading daily challenge...", Font::Bold);
+        CenterText("Loading daily challenge...");
     }
 
     void ErrorIndicator() {
-        CenterText("Could not load the daily challenge.", Font::Regular);
+        CenterText("Could not load the daily challenge.");
     }
 
     void InactiveIndicator() {
-        CenterText("The daily challenge is not currently active.", Font::Regular);
+        CenterText("The daily challenge is not currently active.");
     }
 
     string GetYesterdayTimestring() {
@@ -192,15 +189,16 @@ namespace UIDailyHistory {
 
         float size = UI::GetWindowSize().x;
         string date =  Months[PageMonth] + " " + tostring(PageYear);
-        float padding = LayoutTools::GetPadding(size, Draw::MeasureString(date, Font::Regular, 16.).x, 0.5);
+        UI::Font@ font = Font::Current();
+        float padding = Layout::GetPadding(size, Draw::MeasureString(date, font, font.FontSize).x, 0.5);
         UI::SameLine();
-        LayoutTools::MoveTo(padding);
+        Layout::MoveTo(padding);
         UI::Text(date);
 
         float buttonWidth = 38.;
-        padding = LayoutTools::GetPadding(size, buttonWidth, 1.0);
+        padding = Layout::GetPadding(size, buttonWidth, 1.0);
         UI::SameLine();
-        LayoutTools::MoveTo(padding);
+        Layout::MoveTo(padding);
         UI::BeginDisabled((PageMonth >= CurrentMonth || PageYear != CurrentYear) && PageYear < CurrentYear + 1);
         if (UI::Button(Icons::ArrowRight + "##dailynext")) {
             PageMonth += 1;

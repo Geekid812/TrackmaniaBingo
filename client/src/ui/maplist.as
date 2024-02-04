@@ -7,7 +7,6 @@ namespace UIMapList {
         if (!Visible || @Match == null) return;
 
         UI::Begin(WINDOW_NAME, Visible, UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoCollapse);
-        UI::PushFont(Font::Condensed);
         UI::BeginDisabled(Network::IsUISuspended());
 
         if (UI::IsWindowFocused() && UI::IsKeyPressed(UI::Key::Insert)) {
@@ -22,7 +21,6 @@ namespace UIMapList {
         MapGrid(Match.gameMaps, Match.config.gridSize, uiScale);
         
         UI::EndDisabled();
-        UI::PopFont();
         UI::End();
     }
 
@@ -65,7 +63,6 @@ namespace UIMapList {
     bool MapGrid(array<MapCell>@&in maps, int gridSize, float uiScale = 1.0, bool interactable = true) {
         bool interacted = false;
         auto drawList = UI::GetWindowDrawList();
-        if (uiScale <= 0.5) UI::PushFont(Font::Tiny);
         UI::PushStyleVar(UI::StyleVar::CellPadding, vec2(8 * uiScale, 8 * uiScale));
         UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2(2, 2));
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(4, 4));
@@ -100,11 +97,8 @@ namespace UIMapList {
             bool mapHovered = UI::IsItemHovered();
             if (mapHovered) {
                 UI::BeginTooltip();
-                UI::PushFont(Font::Subtitle);
                 UI::Text(mapName);
-                UI::PopFont();
 
-                UI::PushFont(Font::Regular);
                 if (cell.map.username != "") UI::TextDisabled("By " + cell.map.username);
                 if (cell.map.style != "") {
                     UI::PushStyleColor(UI::Col::Button, UIColor::GetAlphaColor(StyleToColor(cell.map.style.ToLower()), .7));
@@ -130,7 +124,6 @@ namespace UIMapList {
                         if (cell.rerollIds.Find(Profile.uid) != -1) UI::Text("\\$ff8You already voted to reroll this map, select this map again to undo.");
                     }
                 }
-                UI::PopFont();
                 UI::EndTooltip();
             }
             if (interactable && UI::IsItemClicked()) {
@@ -171,7 +164,6 @@ namespace UIMapList {
         UI::EndTable();
         UI::PopStyleColor(2);
         UI::PopStyleVar(3);
-        if (uiScale <= 0.5) UI::PopFont();
         return interacted;
     }
 

@@ -37,9 +37,7 @@ namespace UIProfile {
     }
 
     void PlayerName(PlayerProfile profile, bool bold) {
-        UI::PushFont(bold ? Font::Bold : Font::Regular);
         UI::Text(profile.username);
-        UI::PopFont();
     }
 
     void MatchCount(int matches) {
@@ -68,15 +66,15 @@ namespace UIProfile {
         }
         ratingText += " \\$888±" + deviation;
         ratingText = "Score: " + ratingText;
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(ratingText, Font::Regular, 16.).x, 0.95);
-        LayoutTools::MoveTo(padding);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(ratingText, Font::Current(), 16.).x, 0.95);
+        Layout::MoveTo(padding);
         UI::Text(ratingText);
     }
 
     void PlayerId(int uid) {
         string idText = "\\$888Player ID: " + uid;
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Regular, 16.).x, 0.95);
-        LayoutTools::MoveTo(padding);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
+        Layout::MoveTo(padding);
         UI::Text(idText);
     }
 

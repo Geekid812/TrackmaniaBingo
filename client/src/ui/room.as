@@ -25,13 +25,11 @@ namespace UIGameRoom {
             return;
         }
         if (windowOpen) {
-            UI::PushFont(Font::Regular);
             bool gameIsStarting = @Match !is null && Match.GetPhase() == MatchPhase::Starting;
             UI::BeginDisabled(gameIsStarting);
             RenderContent();
             UI::EndDisabled();
             if (gameIsStarting) Countdown();
-            UI::PopFont();
         }
         IncludePlayerCountInTitle = !windowOpen;
         GrabFocus = false;
@@ -54,9 +52,7 @@ namespace UIGameRoom {
     
         UI::SameLine();
         string roomCodeStatus = StatusLabel((RoomCodeHovered ? "\\$ff8" : "") + Icons::Kenney::Key, RoomCodeVisible ? Room.joinCode : "******");
-        UI::PushFont(Font::Monospace);
         UI::Text(roomCodeStatus);
-        UI::PopFont();
         if (UI::IsItemClicked()) RoomCodeVisible = !RoomCodeVisible;
         RoomCodeHovered = UI::IsItemHovered();
         if (RoomCodeHovered) {
@@ -80,7 +76,7 @@ namespace UIGameRoom {
         float windowWidth = UI::GetWindowSize().x;
         if (Room.localPlayerIsHost) {
             UI::SameLine();
-            float buttonPadding = LayoutTools::GetPadding(windowWidth, 150, 1.0);
+            float buttonPadding = Layout::GetPadding(windowWidth, 150, 1.0);
             UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
             UIColor::Gray();
             if (UI::Button(Icons::Cog + " Change Settings")) {
@@ -93,7 +89,7 @@ namespace UIGameRoom {
 
         string[] roomInfo = MatchConfigInfo(Room.matchConfig);
         string combinedInfo = string::Join(roomInfo, " ");
-        float infoPadding = LayoutTools::GetPadding(windowWidth, Draw::MeasureString(combinedInfo).x, 0.5);
+        float infoPadding = Layout::GetPadding(windowWidth, Draw::MeasureString(combinedInfo).x, 0.5);
         UI::SetCursorPos(vec2(infoPadding, UI::GetCursorPos().y));
 
         for (uint i = 0; i < roomInfo.Length; i++) {
@@ -181,9 +177,7 @@ namespace UIGameRoom {
     void StatusTooltip(const string&in key, const string&in value) {
         UI::BeginTooltip();
         if (key != "") {
-            UI::PushFont(Font::Bold);
             UI::Text(key + ":");
-            UI::PopFont();
             UI::SameLine();
         }
         UI::Text(value);
@@ -194,8 +188,8 @@ namespace UIGameRoom {
         vec2 windowSize = UI::GetWindowSize();
         int secondsRemaining = (Match.startTime - Time::Now) / 1000 + 1;
         string countdownText = "Game starting in " + secondsRemaining + "...";
-        vec2 textSize = Draw::MeasureString(countdownText, Font::Header, Font::Header.FontSize);
-        float padding = LayoutTools::GetPadding(windowSize.x, textSize.x, 1.0);
+        vec2 textSize = Draw::MeasureString(countdownText, Font::Current());
+        float padding = Layout::GetPadding(windowSize.x, textSize.x, 1.0);
         vec4 textColor = UI::GetStyleColor(UI::Col::Text);
         float margin = 16;
 
@@ -204,11 +198,9 @@ namespace UIGameRoom {
         textColor.w = (Math::Sin(alphaValue / 1000.) + 1) / 1.6;
 
         UI::SetCursorPos(vec2(padding - margin, windowSize.y - textSize.y - margin));
-        UI::PushFont(Font::Header);
         UI::PushStyleColor(UI::Col::Text, textColor);
         UI::Text(countdownText);
         UI::PopStyleColor();
-        UI::PopFont();
     }
 
     string PlayerCount() {

@@ -1,5 +1,5 @@
 
-namespace LayoutTools {
+namespace Layout {
     float GetPadding(float windowSize, float elementSize, float alignment) {
         return (windowSize - elementSize) * alignment;
     }

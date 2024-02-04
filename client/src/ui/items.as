@@ -1,10 +1,10 @@
 
 namespace UITools {
     void AlignedLabel(const string&in text) {
-        LayoutTools::BeginLabelAlign();
+        Layout::BeginLabelAlign();
         UI::Text(text);
         UI::SameLine();
-        LayoutTools::EndLabelAlign();
+        Layout::EndLabelAlign();
     }
 
     class InputResult {
@@ -43,7 +43,7 @@ namespace UITools {
             state &= toint(UI::IsItemActive() || grzero(state & 0b01)) << 1;
         } else {
             UIColor::Dark();
-            UI::PushStyleVar(UI::StyleVar::FramePadding, vec2((80 - Draw::MeasureString(label, Font::Regular).x) / 2, 4));
+            UI::PushStyleVar(UI::StyleVar::FramePadding, vec2((80 - Draw::MeasureString(label, Font::Current()).x) / 2, 4));
             if (UI::Button(label + "##button" + id)) {
                 state = 0b11;
             }
@@ -66,9 +66,7 @@ namespace UITools {
     }
 
     void SectionHeader(string&in text) {
-        UI::PushFont(Font::Bold);
         UI::Text(text);
-        UI::PopFont();
     }
 
     void HelpTooltip(const string&in content) {

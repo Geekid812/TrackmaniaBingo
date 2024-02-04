@@ -32,9 +32,7 @@ namespace UIPlayers {
                 }
 
                 UI::BeginChild("bingoteamsep" + i, vec2(seperatorSize, UI::GetTextLineHeightWithSpacing() + 4));
-                UI::PushFont(Font::Bold);
                 UI::Text("\\$" + UIColor::GetHex(team.color) + team.name);
-                UI::PopFont();
 
                 UI::PushStyleColor(UI::Col::Separator, UIColor::GetAlphaColor(team.color, .8));
                 UI::Separator();

@@ -21,7 +21,6 @@ namespace UIMainWindow {
 
     void Render() {
         if (!Visible) return;
-        UI::PushFont(Font::Regular);
 
         bool offline = Network::IsOfflineMode();
         string title = (offline ? Icons::PowerOff + " Offline Mode" : "") + "###bingomain";
@@ -34,7 +33,6 @@ namespace UIMainWindow {
 
         UI::End();
         UI::PopStyleColor(2);
-        UI::PopFont();
     }
 
     void RenderContent() {
@@ -167,18 +165,14 @@ namespace UIMainWindow {
         UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
         UI::BeginChild("###bingoingame", vec2(0, 62), true);
         
-        UI::PushFont(Font::Bold);
         UI::Text("\\$f44IN GAME");
-        UI::PopFont();
 
         UI::SameLine();
         if (@Room !is null) {
             UIRoomMenu::RoomInfo(Room.NetworkState());
         } else {
             if (@UIDaily::DailyMatch !is null && Match.uid == UIDaily::DailyMatch.uid) {
-                UI::PushFont(Font::Bold);
                 UI::Text("Daily Challenge");
-                UI::PopFont();
             } else {
                 UI::NewLine();
             }
@@ -187,8 +181,8 @@ namespace UIMainWindow {
         }
 
         UI::SameLine();
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t\t\tLeave").x, 1.0);
-        LayoutTools::MoveTo(padding);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t\t\tLeave").x, 1.0);
+        Layout::MoveTo(padding);
         UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
         UIGameRoom::LeaveButton();
 
@@ -207,7 +201,6 @@ namespace SettingsWindow {
     void Render() {
         if (!Visible) return;
         UI::Begin(Icons::Th + " Room Settings", Visible, UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
-        UI::PushFont(Font::Regular);
         UIRoomSettings::SettingsView();
         UI::NewLine();
 
@@ -218,7 +211,6 @@ namespace SettingsWindow {
         }
         UIColor::Reset();
         UI::NewLine();
-        UI::PopFont();
         UI::End();
     }
 }
