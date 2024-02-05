@@ -64,7 +64,7 @@ namespace Font {
                 @fontCache = FontCache_Bold;
                 break;
             case Style::Mono:
-                fontName = "droid.ttf";
+                fontName = "droidsansmono.ttf";
                 @fontCache = FontCache_Mono;
                 break;
             default:
@@ -72,6 +72,11 @@ namespace Font {
         }
 
         UI::Font@ font = UI::LoadFont(fontName, size, -1, -1, true, true);
+
+        if (@font is null) {
+            warn("Fonts: null font loaded!");
+        }
+
         InsertFont(fontCache, font);
         return font;
     }

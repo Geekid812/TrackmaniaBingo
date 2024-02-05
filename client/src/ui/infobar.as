@@ -214,8 +214,9 @@ namespace UIInfoBar {
         if (stopwatchTime < 0) stopwatchTime = -stopwatchTime;
         if (phase == MatchPhase::Overtime) stopwatchTime = Time::Now - Match.overtimeStartTime;
 
+        Font::Set(Font::Style::Mono, 28);
         UI::Text(colorPrefix + Time::Format(stopwatchTime, false, true, true));
-        UI::PopFont();
+        Font::Unset();
 
         UI::SameLine();
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(6, 5));

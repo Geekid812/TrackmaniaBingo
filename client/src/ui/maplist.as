@@ -63,6 +63,9 @@ namespace UIMapList {
     bool MapGrid(array<MapCell>@&in maps, int gridSize, float uiScale = 1.0, bool interactable = true) {
         bool interacted = false;
         auto drawList = UI::GetWindowDrawList();
+
+        Font::Set(Font::Style::Regular, 20 * uiScale);
+
         UI::PushStyleVar(UI::StyleVar::CellPadding, vec2(8 * uiScale, 8 * uiScale));
         UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2(2, 2));
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(4, 4));
@@ -78,9 +81,9 @@ namespace UIMapList {
 
             UI::BeginGroup();
             vec2 thumbnailSize = vec2(160 * uiScale, 116 * uiScale);
-            if (@cell.mapImage.m_texture != null) {
+            if (@cell.mapImage !is null && @cell.mapImage.m_texture != null) {
                 UI::Image(cell.mapImage.m_texture, thumbnailSize);
-            } else if (@cell.thumbnail.m_texture != null) {
+            } else if (@cell.thumbnail !is null && @cell.thumbnail.m_texture != null) {
                 UI::Image(cell.thumbnail.m_texture, thumbnailSize);
             } else {
                 UI::Dummy(thumbnailSize);
@@ -164,6 +167,8 @@ namespace UIMapList {
         UI::EndTable();
         UI::PopStyleColor(2);
         UI::PopStyleVar(3);
+        Font::Unset();
+
         return interacted;
     }
 

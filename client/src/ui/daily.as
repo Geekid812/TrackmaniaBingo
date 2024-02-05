@@ -6,14 +6,17 @@ namespace UIDaily {
 
     void DailyHome() {
         string formattedDate = Time::FormatStringUTC("%d %B %Y", Time::Stamp);
-        UI::Text("Daily Challenge - " + formattedDate);
 
-        float buttonWidth = 124.;
-        float padding = Layout::GetPadding(UI::GetWindowSize().x, buttonWidth, 1.0);
+        Font::Set(Font::Style::Bold, 26);
+        UI::Text("\\$ff8Daily Challenge - " + formattedDate);
+        Font::Unset();
+
+        string buttonText = Icons::ThList + " Show History";
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Layout::ButtonWidth(buttonText), 1.0);
         UI::SameLine();
         UIColor::Gray();
         Layout::MoveTo(padding);
-        if (UI::Button(Icons::ThList + " Show History")) {
+        if (UI::Button(buttonText)) {
             UIDailyHistory::Visible = !UIDailyHistory::Visible;
         }
         UIColor::Reset();
@@ -199,7 +202,7 @@ namespace UIDailyHistory {
         padding = Layout::GetPadding(size, buttonWidth, 1.0);
         UI::SameLine();
         Layout::MoveTo(padding);
-        UI::BeginDisabled((PageMonth >= CurrentMonth || PageYear != CurrentYear) && PageYear < CurrentYear + 1);
+        UI::BeginDisabled((PageMonth >= CurrentMonth || PageYear != CurrentYear) && PageYear >= CurrentYear);
         if (UI::Button(Icons::ArrowRight + "##dailynext")) {
             PageMonth += 1;
             if (PageMonth == 13) {

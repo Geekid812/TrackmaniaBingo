@@ -58,7 +58,7 @@ namespace GameMap {
 
     GameMap DeserializeTMX(Json::Value@ value) {
         auto map = GameMap();
-        map.type = MapType(int(value["type"]));
+        map.type = MapType::TMX;
         map.id = value["tmxid"];
         map.uid = value["uid"];
         map.userid = value["userid"];

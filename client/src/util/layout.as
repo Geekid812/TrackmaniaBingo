@@ -15,4 +15,8 @@ namespace Layout {
     void MoveTo(float x) {
         UI::SetCursorPos(vec2(x, UI::GetCursorPos().y));
     }
+
+    float ButtonWidth(const string&in text) {
+        return Draw::MeasureString(text, Font::Current()).x + 2 * UI::GetStyleVarVec2(UI::StyleVar::FramePadding).x;
+    }
 }

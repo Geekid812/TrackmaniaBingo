@@ -76,10 +76,11 @@ namespace UIGameRoom {
         float windowWidth = UI::GetWindowSize().x;
         if (Room.localPlayerIsHost) {
             UI::SameLine();
-            float buttonPadding = Layout::GetPadding(windowWidth, 150, 1.0);
+            string buttonText = Icons::Cog + " Change Settings";
+            float buttonPadding = Layout::GetPadding(windowWidth, Layout::ButtonWidth(buttonText) + 4, 1.0);
             UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
             UIColor::Gray();
-            if (UI::Button(Icons::Cog + " Change Settings")) {
+            if (UI::Button(buttonText)) {
                 SettingsWindow::Visible = !SettingsWindow::Visible;
             }
             UIColor::Reset();

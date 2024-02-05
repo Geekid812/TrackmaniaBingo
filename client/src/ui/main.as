@@ -27,7 +27,7 @@ namespace UIMainWindow {
         vec4 titleColor = offline ? vec4(.5, .1, 0, .95) : UI::GetStyleColor(UI::Col::WindowBg);
         UI::PushStyleColor(UI::Col::TitleBg, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleColor(UI::Col::TitleBgActive, titleColor);
-        UI::Begin(title, Visible);
+        Window::Create(title, Visible, 600, 800);
 
         RenderContent();
 

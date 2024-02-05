@@ -124,7 +124,7 @@ class MapCell {
         auto url = Turbo::GetCampaignThumbnailUrl(map.uid);
         @this.mapImage = Images::CachedFromURL(url);
         @this.thumbnail = Images::FindExisting(url);
-#elif NEXT
+#elif TMNEXT
         @this.thumbnail = Images::CachedFromURL("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
         @this.mapImage = Images::CachedFromURL("https://trackmania.exchange/maps/" + map.id + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
 #endif

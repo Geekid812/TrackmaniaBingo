@@ -10,18 +10,23 @@ namespace UIHome {
     }
 
     void Title() {
+        Font::Set(Font::Style::Bold, 26);
+
         string title = "\\$ff5Trackmania Bingo \\$888" + Meta::ExecutingPlugin().Version;
         float titleSize = Draw::MeasureString(title, Font::Current()).x; 
         float titlePadding = Layout::GetPadding(UI::GetWindowSize().x, titleSize, 0.5);
         UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
         UI::Text(title);
+    
+        Font::Unset();
     }
 
     void MoreNewsButton() {
+        string buttonText = Icons::ArrowRight + " More News";
         UI::SameLine();
-        UI::SetCursorPos(vec2(Layout::GetPadding(UI::GetWindowSize().x, 120, 1.0), UI::GetCursorPos().y));
+        UI::SetCursorPos(vec2(Layout::GetPadding(UI::GetWindowSize().x, Layout::ButtonWidth(buttonText), 1.0), UI::GetCursorPos().y));
         UIColor::Cyan();
-        if (UI::Button(Icons::ArrowRight + " More News")) {
+        if (UI::Button(buttonText)) {
             UINews::Visible = !UINews::Visible;
         }
         UIColor::Reset();
