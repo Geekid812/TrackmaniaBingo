@@ -64,6 +64,16 @@
         <m name="map" type="int" default="-1" />
     </struct>
 
+    <struct name="ChatMessage">
+        <comment>A message sent by a player in a text chat.</comment>
+        <m name="uid" type="uint" />
+        <m name="name" type="string" />
+        <m name="title" type="string" optional="true" />
+        <m name="timestamp" type="datetime" />
+        <m name="content" type="string" />
+        <m name="team_message" type="bool" />
+    </struct>
+
     <enum name="GamePlatform">
         <comment>Supported game platforms in Bingo.</comment>
         <v>Next</v>

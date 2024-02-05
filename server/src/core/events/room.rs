@@ -8,7 +8,7 @@ use crate::{
         },
         room::PlayerUpdates,
     },
-    datatypes::{MatchConfiguration, RoomConfiguration},
+    datatypes::{ChatMessage, MatchConfiguration, RoomConfiguration},
     orm::composed::profile::PlayerProfile,
 };
 
@@ -38,4 +38,5 @@ pub enum RoomEvent {
         id: TeamIdentifier,
     },
     RoomSync(RoomState),
+    ChatMessage(ChatMessage),
 }

@@ -263,6 +263,8 @@ namespace Network {
             NetworkHandlers::MapRerolled(body);
         } else if (event == "CellPinged") {
             NetworkHandlers::CellPinged(body);
+        } else if (event == "ChatMessage") {
+            NetworkHandlers::ChatMessage(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }
@@ -495,6 +497,12 @@ namespace Network {
         auto body = Json::Object();
         body["cell_id"] = NetParams::RerollCellId;
         Network::Post("CastRerollVote", body, true);
+    }
+
+    void SendChatMessage() {
+        auto body = Json::Object();
+        body["message"] = NetParams::ChatMessage;
+        Network::Post("SendChatMessage", body, false);
     }
 
     void GetDailyResults() {

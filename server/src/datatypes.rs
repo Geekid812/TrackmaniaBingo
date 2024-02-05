@@ -82,6 +82,21 @@ pub struct CampaignMap {
 	pub map: i32,
 }
 
+/* A message sent by a player in a text chat. */
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
+#[derivative(Default)]
+#[serde(default)]
+pub struct ChatMessage {
+    pub uid: u32,
+    pub name: String,
+    pub title: Option<String>,
+    #[serde_as(as = "TimestampSeconds")]
+	pub timestamp: DateTime<Utc>,
+    pub content: String,
+    pub team_message: bool,
+}
+
 /* Supported game platforms in Bingo. */
 #[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
 #[repr(u8)]

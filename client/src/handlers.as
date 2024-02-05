@@ -352,4 +352,9 @@ namespace NetworkHandlers {
 
         UI::ShowNotification(Icons::Bell + " \\$" + UIColor::GetHex(team.color) + string(data["player"]["name"]) + " \\$zpinged a cell");
     }
+
+    void ChatMessage(Json::Value@ data) {
+        auto message = ChatMessage::Deserialize(data);
+        UIChat::MessageHistory.InsertLast(message);
+    }
 }

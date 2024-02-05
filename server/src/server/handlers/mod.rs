@@ -16,6 +16,7 @@ mod match_join;
 mod ping;
 mod ping_cell;
 mod reload_maps;
+mod send_chat;
 mod start_match;
 mod submit_run;
 mod unsubscribe_roomlist;

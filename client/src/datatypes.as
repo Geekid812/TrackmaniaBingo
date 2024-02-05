@@ -165,6 +165,42 @@ namespace CampaignMap {
     }
 }
 
+/* A message sent by a player in a text chat. */
+class ChatMessage {
+    uint uid;
+    string name;
+    string title;
+    uint64 timestamp;
+    string content;
+    bool teamMessage;
+    ChatMessage() {}
+}
+namespace ChatMessage {
+    Json::Value@ Serialize(ChatMessage cls) {
+        auto value = Json::Object();
+        value["uid"] = cls.uid;
+        value["name"] = cls.name;
+        value["title"] = cls.title;
+        value["timestamp"] = cls.timestamp;
+        value["content"] = cls.content;
+        value["team_message"] = cls.teamMessage;
+
+        return value;
+    }
+
+    ChatMessage Deserialize(Json::Value@ value) {
+        auto cls = ChatMessage();
+        cls.uid = value["uid"];
+        cls.name = value["name"];
+        if (value["title"].GetType() != Json::Type::Null) cls.title = value["title"];
+        cls.timestamp = value["timestamp"];
+        cls.content = value["content"];
+        cls.teamMessage = value["team_message"];
+
+        return cls;
+    }
+}
+
 /* Supported game platforms in Bingo. */
 enum GamePlatform {
     Next,

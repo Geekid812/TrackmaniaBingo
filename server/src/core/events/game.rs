@@ -11,7 +11,7 @@ use crate::{
             team::{BaseTeam, TeamIdentifier},
         },
     },
-    datatypes::PlayerRef,
+    datatypes::{ChatMessage, PlayerRef},
     orm::composed::profile::PlayerProfile,
 };
 
@@ -72,4 +72,5 @@ pub enum GameEvent {
         cell_id: usize,
         player: PlayerRef,
     },
+    ChatMessage(ChatMessage),
 }

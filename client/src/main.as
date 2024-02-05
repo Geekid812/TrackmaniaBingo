@@ -63,6 +63,7 @@ void Render() {
     UITeams::Render();
     SettingsWindow::Render();
     UIMapSelect::Render();
+    UIChat::Render();
 
     Font::Unset();
 }
@@ -76,6 +77,10 @@ void RenderInterface() {
     UIDailyHistory::Render();
 
     Font::Unset();
+}
+
+UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
+    return UIChat::OnKeyPress(down, key);
 }
 
 void Update(float dt) {
