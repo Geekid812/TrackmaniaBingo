@@ -52,6 +52,7 @@ namespace Network {
     void ResetGameState() {
         @Room = null;
         @Match = null;
+        UIChat::MessageHistory.Resize(0);
     }
 
     void Connect() {

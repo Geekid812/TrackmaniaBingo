@@ -356,5 +356,6 @@ namespace NetworkHandlers {
     void ChatMessage(Json::Value@ data) {
         auto message = ChatMessage::Deserialize(data);
         UIChat::MessageHistory.InsertLast(message);
+        UIChat::LastMessageTimestamp = Time::Now;
     }
 }
