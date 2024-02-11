@@ -14,7 +14,7 @@ impl Request for CastRerollVote {
         ctx.game_sync();
         if let Some(game) = ctx.game_match() {
             let mut lock = game.lock();
-            let result = lock.submit_reroll_vote(self.cell_id, ctx.profile.player.uid);
+            let result = lock.submit_reroll_vote(self.cell_id, ctx.get_player_ref());
             if let Err(e) = result {
                 return Box::new(generic::Error {
                     error: e.to_string(),

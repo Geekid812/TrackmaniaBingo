@@ -51,6 +51,7 @@ void RenderMenu() {
 }
 
 void Render() {
+    if (!UI::IsGameUIVisible()) return;
     if (!Font::Initialized) return;
     Font::Set(Font::Style::Regular, 20);
 
@@ -64,6 +65,10 @@ void Render() {
     SettingsWindow::Render();
     UIMapSelect::Render();
     UIChat::Render();
+
+    for (uint i = 0; i < Polls.Length; i++) {
+        UIPoll::RenderPoll(Polls[i], i);
+    }
 
     Font::Unset();
 }

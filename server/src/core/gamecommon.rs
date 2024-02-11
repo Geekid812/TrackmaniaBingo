@@ -2,7 +2,9 @@ use std::{str::FromStr, sync::Arc};
 
 use once_cell::sync::Lazy;
 
-use crate::{config::CONFIG, orm::composed::profile::PlayerProfile, server};
+use crate::{config::CONFIG, orm::composed::profile::PlayerProfile, server, transport::Tx};
+
+pub type PlayerId = u32;
 
 pub static TEAMS: Lazy<Vec<(String, Color)>> = Lazy::new(|| {
     CONFIG
@@ -41,6 +43,7 @@ pub struct PlayerData {
     pub team: TeamIdentifier,
     pub operator: bool,
     pub disconnected: bool,
+    pub writer: Arc<Tx>,
 }
 
 impl From<&PlayerData> for PlayerRef {

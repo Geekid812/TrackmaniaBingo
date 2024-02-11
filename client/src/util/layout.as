@@ -1,7 +1,7 @@
 
 namespace Layout {
     float GetPadding(float windowSize, float elementSize, float alignment) {
-        return (windowSize - elementSize) * alignment;
+        return Math::Max((windowSize - elementSize) * alignment, 0.);
     }
 
     void BeginLabelAlign() {
@@ -16,7 +16,20 @@ namespace Layout {
         UI::SetCursorPos(vec2(x, UI::GetCursorPos().y));
     }
 
+    void MoveToY(float y) {
+        UI::SetCursorPos(vec2(UI::GetCursorPos().x, y));
+    }
+
     float ButtonWidth(const string&in text) {
         return Draw::MeasureString(text, Font::Current()).x + 2 * UI::GetStyleVarVec2(UI::StyleVar::FramePadding).x;
+    }
+
+    void AlignButton(const string&in text, float alignment) {
+        float width = ButtonWidth(text);
+        MoveTo(GetPadding(UI::GetWindowSize().x, width, alignment));
+    }
+
+    void AlignText(const string&in text, float alignment) {
+        MoveTo(GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, Font::Current()).x, alignment));
     }
 }

@@ -11,7 +11,7 @@ use crate::{
             team::{BaseTeam, TeamIdentifier},
         },
     },
-    datatypes::{ChatMessage, PlayerRef},
+    datatypes::{ChatMessage, PlayerRef, Poll},
     orm::composed::profile::PlayerProfile,
 };
 
@@ -73,4 +73,17 @@ pub enum GameEvent {
         player: PlayerRef,
     },
     ChatMessage(ChatMessage),
+    PollStart {
+        #[serde(flatten)]
+        poll: Poll,
+        votes: Vec<i32>,
+    },
+    PollVotesUpdate {
+        id: u32,
+        votes: Vec<i32>,
+    },
+    PollResult {
+        id: u32,
+        selected: Option<u32>,
+    },
 }

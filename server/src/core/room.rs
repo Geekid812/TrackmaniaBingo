@@ -30,7 +30,7 @@ use crate::{
     datatypes::{GamePlatform, MatchConfiguration, RoomConfiguration},
     orm::composed::profile::PlayerProfile,
     server::{context::ClientContext, mapload},
-    transport::Channel,
+    transport::{Channel, Tx},
 };
 
 pub struct GameRoom {
@@ -180,6 +180,7 @@ impl GameRoom {
         ctx: &ClientContext,
         profile: &PlayerProfile,
         operator: bool,
+        writer: Arc<Tx>,
     ) -> TeamIdentifier {
         let team = self
             .get_least_populated_team()
@@ -191,6 +192,7 @@ impl GameRoom {
             team,
             operator,
             disconnected: false,
+            writer,
         });
         self.channel
             .subscribe(profile.player.uid, ctx.writer.clone());
@@ -229,7 +231,7 @@ impl GameRoom {
             return Err(JoinRoomError::PlayerAlreadyJoined);
         }
 
-        let team = self.add_player(ctx, profile, false);
+        let team = self.add_player(ctx, profile, false, ctx.writer.clone());
         self.channel.broadcast(&RoomEvent::PlayerJoin {
             profile: profile.clone(),
             team,

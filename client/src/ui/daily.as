@@ -113,24 +113,16 @@ namespace UIDaily {
         UI::SetCursorPos(vec2(x, y + yOffset));
     }
 
-    void CenterText(const string&in text) {
-        UI::Font@ font = Font::Current();
-        Layout::MoveTo(Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
-        UI::PushFont(font);
-        UI::Text(text);
-        UI::PopFont();
-    }
-
     void LoadingIndicator() {
-        CenterText("Loading daily challenge...");
+        UITools::CenterText("Loading daily challenge...");
     }
 
     void ErrorIndicator() {
-        CenterText("Could not load the daily challenge.");
+        UITools::CenterText("Could not load the daily challenge.");
     }
 
     void InactiveIndicator() {
-        CenterText("The daily challenge is not currently active.");
+        UITools::CenterText("The daily challenge is not currently active.");
     }
 
     string GetYesterdayTimestring() {

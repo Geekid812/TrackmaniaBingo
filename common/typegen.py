@@ -24,8 +24,9 @@ types = {
     "uint": TypeDef("uint", "u32"),
     "string": TypeDef("string", "String"),
     "bool": TypeDef("bool", "bool"),
+    "rgbColor": TypeDef("vec3", "Color"),
     "datetime": TypeDef("uint64", "DateTime<Utc>", serde_as="TimestampSeconds"),
-    "duration": TypeDef("int64", "Duration", serde_as="DurationMilliSeconds<i64>")
+    "duration": TypeDef("int64", "Duration", serde_as="DurationMilliSeconds<i64>"),
 }
 
 rust_header = """\
@@ -37,6 +38,8 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::{serde_as, DurationMilliSeconds, TimestampSeconds};
+
+use crate::core::util::Color;
 """
 
 rust_struct = """\
@@ -232,16 +235,25 @@ def as_serialize(struct: dict) -> str:
     for m in struct['m']:
         tname, _, is_list, _ = parse_member(m)
         is_enum_type = tname in [e['@name'] for e in xs['enum']]
-        is_struct_type = not (tname in types) and not is_enum_type
+        is_struct_type = (not (tname in types)
+                          and not is_enum_type)
         mname = snake_case_to_camel_case(m['@name'])
+        if tname == 'rgbColor':
+            tname = 'Color'
+            is_struct_type = True
 
         cls = f"cls.{mname}"
         if is_struct_type:
-            cls = f"{tname}::Serialize({cls})"
+            cls = f"{tname}::Serialize({cls}{'[i]' if is_list else ''})"
         if is_enum_type:
             cls = f"int({cls})"
 
-        stmt = f"value[\"{m['@name']}\"] = {cls};"
+        if is_list and (is_struct_type or is_enum_type):
+            stmt = "array<Json::Value@> {0} = {{}};\n        for (uint i = 0; i < {1}.Length; i++) {{\n            {0}.InsertLast({2});\n        }}\n        value[\"{3}\"] = {0};".format(
+                mname, f"cls.{mname}", cls, m['@name'])
+        else:
+            stmt = f"value[\"{m['@name']}\"] = {cls};"
+
         statements.append(stmt)
 
     return "\n        ".join(statements)
@@ -255,8 +267,12 @@ def as_deserialize(struct: dict) -> str:
     for m in struct['m']:
         tname, optional, is_list, _ = parse_member(m)
         is_enum_type = tname in [e['@name'] for e in xs['enum']]
-        is_struct_type = not (tname in types) and not is_enum_type
+        is_struct_type = (not (tname in types)
+                          and not is_enum_type)
         mname = snake_case_to_camel_case(m["@name"])
+        if tname == 'rgbColor':
+            tname = 'Color'
+            is_struct_type = True
 
         value = f"value[\"{m['@name']}\"]"
         if is_list:

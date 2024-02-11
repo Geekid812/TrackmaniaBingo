@@ -201,6 +201,69 @@ namespace ChatMessage {
     }
 }
 
+/* One of the available options in a poll. */
+class PollChoice {
+    string text;
+    vec3 color;
+    PollChoice() {}
+}
+namespace PollChoice {
+    Json::Value@ Serialize(PollChoice cls) {
+        auto value = Json::Object();
+        value["text"] = cls.text;
+        value["color"] = Color::Serialize(cls.color);
+
+        return value;
+    }
+
+    PollChoice Deserialize(Json::Value@ value) {
+        auto cls = PollChoice();
+        cls.text = value["text"];
+        cls.color = Color::Deserialize(value["color"]);
+
+        return cls;
+    }
+}
+
+/* A set of choices to which players can answer. */
+class Poll {
+    uint id;
+    string title;
+    vec3 color;
+    int64 duration;
+    array<PollChoice> choices;
+    Poll() {}
+}
+namespace Poll {
+    Json::Value@ Serialize(Poll cls) {
+        auto value = Json::Object();
+        value["id"] = cls.id;
+        value["title"] = cls.title;
+        value["color"] = Color::Serialize(cls.color);
+        value["duration"] = cls.duration;
+        array<Json::Value@> choices = {};
+        for (uint i = 0; i < cls.choices.Length; i++) {
+            choices.InsertLast(PollChoice::Serialize(cls.choices[i]));
+        }
+        value["choices"] = choices;
+
+        return value;
+    }
+
+    Poll Deserialize(Json::Value@ value) {
+        auto cls = Poll();
+        cls.id = value["id"];
+        cls.title = value["title"];
+        cls.color = Color::Deserialize(value["color"]);
+        cls.duration = value["duration"];
+        for (uint i = 0; i < value["choices"].Length; i++) {
+            cls.choices.InsertLast(PollChoice::Deserialize(value["choices"][i]));
+        }
+
+        return cls;
+    }
+}
+
 /* Supported game platforms in Bingo. */
 enum GamePlatform {
     Next,

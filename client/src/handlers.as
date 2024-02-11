@@ -358,4 +358,23 @@ namespace NetworkHandlers {
         UIChat::MessageHistory.InsertLast(message);
         UIChat::LastMessageTimestamp = Time::Now;
     }
+
+    void PollStart(Json::Value@ data) {
+        Poll poll = Poll::Deserialize(data);
+        array<int> votes;
+        for (uint i = 0; i < data["votes"].Length; i++) {
+            votes.InsertLast(int(data["votes"][i]));
+        }
+
+        PollData@ poll_data = PollData(poll, votes, Time::Now);
+        Polls.InsertLast(poll_data);
+    }
+
+    void PollVotesUpdate(Json::Value@ data) {
+
+    }
+
+    void PollResult(Json::Value@ data) {
+
+    }
 }

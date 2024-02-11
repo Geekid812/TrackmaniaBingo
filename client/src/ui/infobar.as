@@ -105,11 +105,10 @@ namespace UIInfoBar {
             UITools::PlayerTag(leadingClaim.player);
 
             UI::Separator();
-            float width = UI::GetWindowSize().x;
-            float padding = Layout::GetPadding(width, 110., 0.5);
-            Layout::MoveTo(padding);
+            string buttonText = Icons::ListOl + " Map Records";
+            Layout::AlignButton(buttonText, 0.5);
             UIColor::Custom(myTeam.color);
-            if (UI::Button(Icons::ListOl + " Map Records")) {
+            if (UI::Button(buttonText)) {
                 MapLeaderboardUid = Playground::GetCurrentMap().EdChallengeId;
             }
             UIColor::Reset();

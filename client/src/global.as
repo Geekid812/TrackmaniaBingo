@@ -15,3 +15,6 @@ MatchConfiguration MatchConfig;
 
 // Name of the local player
 string LocalUsername;
+
+// Globally active polls
+array<PollData@> Polls;

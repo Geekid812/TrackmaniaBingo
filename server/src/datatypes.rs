@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::{serde_as, DurationMilliSeconds, TimestampSeconds};
 
+use crate::core::util::Color;
+
 /* A simple reference to a registered player. */
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
@@ -95,6 +97,31 @@ pub struct ChatMessage {
 	pub timestamp: DateTime<Utc>,
     pub content: String,
     pub team_message: bool,
+}
+
+/* One of the available options in a poll. */
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
+#[derivative(Default)]
+#[serde(default)]
+pub struct PollChoice {
+    pub text: String,
+    pub color: Color,
+}
+
+/* A set of choices to which players can answer. */
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
+#[derivative(Default)]
+#[serde(default)]
+pub struct Poll {
+    pub id: u32,
+    pub title: String,
+    pub color: Color,
+    #[derivative(Default(value = "Duration::milliseconds(0)"))]
+	#[serde_as(as = "DurationMilliSeconds<i64>")]
+	pub duration: Duration,
+    pub choices: Vec<PollChoice>,
 }
 
 /* Supported game platforms in Bingo. */

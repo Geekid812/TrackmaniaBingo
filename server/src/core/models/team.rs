@@ -1,7 +1,9 @@
 use palette::serde::as_array;
 use serde::{Deserialize, Serialize};
 
+use crate::core::events::game::GameEvent;
 use crate::core::{teams::Team, util::Color};
+use crate::transport::Channel;
 
 use super::player::Player;
 use super::room::RoomTeam;
@@ -44,6 +46,8 @@ pub struct GameTeam {
     pub base: BaseTeam,
     pub members: Vec<Player>,
     #[serde(skip)]
+    pub channel: Channel<GameEvent>,
+    #[serde(skip)]
     pub winner: bool,
 }
 
@@ -52,6 +56,7 @@ impl From<BaseTeam> for GameTeam {
         Self {
             base: value,
             members: Vec::new(),
+            channel: Channel::new(),
             winner: false,
         }
     }
@@ -62,6 +67,7 @@ impl From<RoomTeam> for GameTeam {
         Self {
             base: value.base,
             members: value.members,
+            channel: Channel::new(),
             winner: false,
         }
     }

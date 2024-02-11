@@ -266,6 +266,12 @@ namespace Network {
             NetworkHandlers::CellPinged(body);
         } else if (event == "ChatMessage") {
             NetworkHandlers::ChatMessage(body);
+        } else if (event == "PollStart") {
+            NetworkHandlers::PollStart(body);
+        } else if (event == "PollVotesUpdate") {
+            NetworkHandlers::PollVotesUpdate(body);
+        } else if (event == "PollResult") {
+            NetworkHandlers::PollResult(body);
         } else {
             warn("Network: Unknown event: " + string(body["event"]));
         }

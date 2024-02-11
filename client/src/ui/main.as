@@ -163,7 +163,7 @@ namespace UIMainWindow {
     void InGameHeader() {
         UI::PushStyleColor(UI::Col::ChildBg, vec4(.9, .2, .2, .1));
         UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
-        UI::BeginChild("###bingoingame", vec2(0, 62), true);
+        UI::BeginChild("###bingoingame", vec2(0, 72), true);
         
         UI::Text("\\$f44IN GAME");
 

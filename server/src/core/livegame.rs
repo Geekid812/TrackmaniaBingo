@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     config::CONFIG,
-    datatypes::{CampaignMap, MatchConfiguration},
+    datatypes::{CampaignMap, MatchConfiguration, PlayerRef, Poll, PollChoice},
     orm::{
         self,
         models::matches::{Match, PlayerToMatch},
@@ -20,11 +20,12 @@ use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
 use sqlx::QueryBuilder;
-use tracing::error;
+use tracing::{error, warn};
 
 use super::{
     directory::{Owned, Shared, MATCHES},
     events::game::GameEvent,
+    gamecommon::PlayerId,
     models::{
         livegame::{GameCell, MapClaim, MatchPhase, MatchState},
         map::GameMap,
@@ -33,7 +34,7 @@ use super::{
     },
     room::GameRoom,
     teams::TeamsManager,
-    util::base64,
+    util::{base64, Color},
 };
 
 pub struct LiveMatch {
@@ -47,12 +48,18 @@ pub struct LiveMatch {
     started: Option<DateTime<Utc>>,
     phase: MatchPhase,
     channel: Channel<GameEvent>,
+    polls: Vec<Owned<PollData>>,
 }
 
 struct MatchOptions {
     start_countdown: Duration,
     player_join: bool,
     is_daily: bool,
+}
+
+struct PollData {
+    pub poll: Poll,
+    pub votes: Vec<Vec<PlayerId>>,
 }
 
 impl LiveMatch {
@@ -79,6 +86,7 @@ impl LiveMatch {
             started: None,
             phase: MatchPhase::Starting,
             channel: Channel::new(),
+            polls: Vec::new(),
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
@@ -460,7 +468,7 @@ impl LiveMatch {
     pub fn submit_reroll_vote(
         &mut self,
         cell_id: usize,
-        player_id: i32,
+        player: PlayerRef,
     ) -> Result<(), anyhow::Error> {
         if !self.config.rerolls {
             return Err(anyhow!("rerolls are disabled for this match"));
@@ -473,28 +481,36 @@ impl LiveMatch {
             ));
         }
 
-        let cell = &mut self.cells[cell_id];
-        let mut added = false;
-        if cell.reroll_ids.iter().any(|id| *id == player_id) {
-            cell.reroll_ids.retain(|id| *id != player_id);
-        } else {
-            cell.reroll_ids.push(player_id);
-            added = true;
+        let poll_id = 0x10000 | cell_id as u32;
+        let already_voting = self.polls.iter().any(|p| p.lock().poll.id == poll_id);
+        if already_voting {
+            return Err(anyhow!("there is already a reroll vote for this map"));
         }
 
-        let count = cell.reroll_ids.len();
-        let required = self.player_count() / 2 + 1; // TODO: make this customizable
-        self.channel.broadcast(&GameEvent::RerollVoteCast {
-            player_id,
-            cell_id,
-            added,
-            count,
-            required,
-        });
+        let cell = &self.cells[cell_id];
+        let poll = Poll {
+            id: poll_id,
+            title: format!(
+                "{} asks: Reroll \\$ff8{}\\$z?",
+                player.name,
+                cell.map.name()
+            ),
+            color: Color::new(128, 128, 128),
+            duration: Duration::seconds(30),
+            choices: vec![
+                PollChoice {
+                    text: "Yes".to_string(),
+                    color: Color::new(0, 100, 0),
+                },
+                PollChoice {
+                    text: "No".to_string(),
+                    color: Color::new(100, 0, 0),
+                },
+            ],
+        };
 
-        if added && count >= required {
-            self.reroll_map(cell_id)?;
-        }
+        let initial_votes = vec![vec![player.uid], Vec::new()];
+        self.start_poll(poll, initial_votes);
 
         Ok(())
     }
@@ -635,6 +651,47 @@ impl LiveMatch {
         }
 
         winner
+    }
+
+    pub fn start_poll(&mut self, poll: Poll, initial_votes: Vec<Vec<PlayerId>>) {
+        let delay = poll.duration.to_std().unwrap();
+        let votes_count = initial_votes.iter().map(|v| v.len() as i32).collect();
+        let event = GameEvent::PollStart {
+            poll: poll.clone(),
+            votes: votes_count,
+        };
+        let poll_data = Arc::new(Mutex::new(PollData {
+            poll,
+            votes: initial_votes,
+        }));
+        let poll_ref = Arc::downgrade(&poll_data);
+        self.polls.push(poll_data);
+
+        execute_delayed_task(
+            self.ptr.clone(),
+            move |_self| LiveMatch::poll_end(_self, poll_ref),
+            delay,
+        );
+        self.channel.broadcast(&event);
+    }
+
+    fn poll_end(&mut self, poll_ref: Shared<PollData>) {
+        if let Some(lock) = poll_ref.upgrade() {
+            let poll = lock.lock();
+            let (selected_choice, _) = poll
+                .votes
+                .iter()
+                .enumerate()
+                .max_by_key(|(_i, v)| v.len())
+                .expect("expected at least one choice");
+
+            self.channel.broadcast(&GameEvent::PollResult {
+                id: poll.poll.id,
+                selected: Some(selected_choice as u32),
+            });
+        } else {
+            warn!("Poll cancelled by dropped reference.");
+        }
     }
 
     fn nobingo_phase_change(&mut self) {

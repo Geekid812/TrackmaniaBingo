@@ -6,8 +6,8 @@ namespace Board {
     array<CellPing> Pings;
 
     const float STROKE_WIDTH = 8.;
-    const float CELL_HIGHLIGHT_PADDING = 2.5; // Multiplier for BorderSize, inside offset
-    const vec4 CELL_HIGHLIGHT_COLOR = vec4(1, 1, 0, 0.9);
+    const float CELL_HIGHLIGHT_PADDING = 3.5; // Multiplier for BorderSize, inside offset
+    const vec4 CELL_HIGHLIGHT_COLOR = vec4(1, 1, 1, 0.9);
     const vec4 BINGO_STROKE_COLOR = vec4(1, 0.6, 0, 0.9);
     const uint64 ANIMATION_START_TIME = 4000;
 
@@ -79,8 +79,10 @@ namespace Board {
         }
 
         // Cell highlight
-        const float highlightWidth = sizes.border * CELL_HIGHLIGHT_PADDING;
-        const float highlightMarginOffset = sizes.border * (CELL_HIGHLIGHT_PADDING - 1.);
+        float highlightBlinkValue = (Math::Sin(float(Time::Now) / 1000.) + 1) / 2;
+        float paddingValue = CELL_HIGHLIGHT_PADDING * (0.8 + 0.2 * highlightBlinkValue);
+        const float highlightWidth = sizes.border * paddingValue;
+        const float highlightMarginOffset = sizes.border * (paddingValue - 1.);
         CGameCtnChallenge@ currentMap = Playground::GetCurrentMap();
         int cellId = (@currentMap != null) ? Match.GetMapCellId(currentMap.EdChallengeId) : -1;
         if (cellId != -1) {

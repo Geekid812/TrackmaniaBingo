@@ -74,6 +74,21 @@
         <m name="team_message" type="bool" />
     </struct>
 
+    <struct name="PollChoice">
+        <comment>One of the available options in a poll.</comment>
+        <m name="text" type="string" />
+        <m name="color" type="rgbColor" />
+    </struct>
+
+    <struct name="Poll">
+        <comment>A set of choices to which players can answer.</comment>
+        <m name="id" type="uint" />
+        <m name="title" type="string" />
+        <m name="color" type="rgbColor" />
+        <m name="duration" type="duration" />
+        <m name="choices" type="list[PollChoice]" />
+    </struct>
+
     <enum name="GamePlatform">
         <comment>Supported game platforms in Bingo.</comment>
         <v>Next</v>
