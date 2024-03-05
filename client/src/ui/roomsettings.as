@@ -4,8 +4,8 @@ namespace UIRoomSettings {
     const uint GRID_SIZE_MAX = 8;
     const int TIMELIMIT_MAX = 180;
     const int NOBINGO_MAX = 120;
-    const float CHECKBOXES_ALIGN_X = 180;
-    const float GAME_SETTINGS_ALIGN_X = 150;
+    const float CHECKBOXES_ALIGN_X = 200;
+    const float GAME_SETTINGS_ALIGN_X = 180;
 
     FeaturedMappack@ SelectedPack;
     int State;
@@ -236,6 +236,14 @@ namespace UIRoomSettings {
         UITools::HelpTooltip("Players can vote to reroll an unclaimed map if the majority of players agree.");
     }
 
+    void CompetitvePatchToggle() {
+        UITools::AlignedLabel(Icons::Trophy + " Competitive Patch");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch);
+        UI::SameLine();
+        UITools::HelpTooltip("In game map replays will be disabled.");
+    }
+
     void TotalTimeIndicator() {
         UITools::AlignedLabel(Icons::PlayCircle + "  Total Game Time: " + TimeFormat(MatchConfig.timeLimit + MatchConfig.noBingoDuration));
         UI::NewLine();
@@ -279,8 +287,9 @@ namespace UIRoomSettings {
         if (MatchConfig.timeLimit != 0) {
             OvertimeToggle();
         }
-        // FFAToggle();
+        FFAToggle();
         RerollsToggle();
+        CompetitvePatchToggle();
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0) TotalTimeIndicator();
     }
 

@@ -220,4 +220,18 @@ namespace Playground {
         }
         mapClaimData.retries = 0;
     }
+
+    void SetMapLeaderboardVisible(bool visible) {
+        auto network = GetApp().Network;
+        if (@network is null) return;
+        auto appPlayground = network.ClientManiaAppPlayground;
+        if (@appPlayground is null) return;
+        auto uiLayers = appPlayground.UILayers;
+        for (uint i = 0; i < uiLayers.Length; i++) {
+            auto module = uiLayers[i];
+            if (@module !is null && module.ManialinkPage.SubStr(0, 100).Contains("UIModule_Race_Record")) {
+                module.IsVisible = visible;
+            }
+        }
+    }
 }

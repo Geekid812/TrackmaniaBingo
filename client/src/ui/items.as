@@ -66,7 +66,9 @@ namespace UITools {
     }
 
     void SectionHeader(string&in text) {
+        Font::Set(Font::Bold, 20.);
         UI::Text(text);
+        Font::Unset();
     }
 
     void HelpTooltip(const string&in content) {

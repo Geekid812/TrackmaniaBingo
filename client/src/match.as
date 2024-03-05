@@ -228,9 +228,9 @@ enum MatchPhase {
 namespace Game {
     // Game tick function
     void Tick() {
-        if (@Match == null) return;
         if (!Match.endState.HasEnded()) {
             Playground::CheckRunFinished();
+            if (Match.config.competitvePatch) Playground::SetMapLeaderboardVisible(false);
         }
     }
 }

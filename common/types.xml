@@ -45,6 +45,7 @@
         <m name="overtime" type="bool" />
         <m name="free_for_all" type="bool" />
         <m name="rerolls" type="bool" />
+        <m name="competitve_patch" type="bool" />
         <m name="mappack_id" type="uint" optional="true" />
         <m name="campaign_selection" type="list[uint]" optional="true" />
         <m name="map_tag" type="int" optional="true" default="1" />

@@ -89,5 +89,5 @@ UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
 }
 
 void Update(float dt) {
-    Game::Tick();
+    if (@Match !is null) Game::Tick();
 }

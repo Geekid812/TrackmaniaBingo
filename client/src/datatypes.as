@@ -66,6 +66,7 @@ class MatchConfiguration {
     bool overtime;
     bool freeForAll;
     bool rerolls;
+    bool competitvePatch;
     uint mappackId;
     array<uint> campaignSelection;
     int mapTag = 1;
@@ -83,6 +84,7 @@ namespace MatchConfiguration {
         value["overtime"] = cls.overtime;
         value["free_for_all"] = cls.freeForAll;
         value["rerolls"] = cls.rerolls;
+        value["competitve_patch"] = cls.competitvePatch;
         value["mappack_id"] = cls.mappackId;
         value["campaign_selection"] = cls.campaignSelection;
         value["map_tag"] = cls.mapTag;
@@ -101,6 +103,7 @@ namespace MatchConfiguration {
         cls.overtime = value["overtime"];
         cls.freeForAll = value["free_for_all"];
         cls.rerolls = value["rerolls"];
+        cls.competitvePatch = value["competitve_patch"];
         if (value["mappack_id"].GetType() != Json::Type::Null) cls.mappackId = value["mappack_id"];
         if (value["campaign_selection"].GetType() != Json::Type::Null) for (uint i = 0; i < value["campaign_selection"].Length; i++) {
             cls.campaignSelection.InsertLast(value["campaign_selection"][i]);

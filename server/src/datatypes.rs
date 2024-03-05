@@ -54,6 +54,7 @@ pub struct MatchConfiguration {
     pub overtime: bool,
     pub free_for_all: bool,
     pub rerolls: bool,
+    pub competitve_patch: bool,
     pub mappack_id: Option<u32>,
     pub campaign_selection: Option<Vec<u32>>,
     #[derivative(Default(value = "Some(1)"))]
