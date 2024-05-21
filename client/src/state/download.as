@@ -6,7 +6,6 @@ enum AssetType {
 
 namespace DownloadManager {
 
-
     /* Queue a file URL for download. */
     void AddToQueue(const string&in url, AssetType type) {
         __internal::AssetData mapData(url, type, Time::Now);
