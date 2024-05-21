@@ -1,50 +1,48 @@
 
 namespace Framework {
 
-    /* Callback definition for the result of a DownloadMap call. */
-    funcdef void DownloadCallback(const string&in key);
-
-    /* Download and save a map locally. */
-    void DownloadMap(const string&in key, string&in filename = "", DownloadCallback@ successCallback = null, DownloadCallback@ failureCallback = null) {
-        if (filename == "") filename = key;
-
-        trace("[Framework::DownloadMap] Downloading map '" + filename + "'...");
-        __internal::DownloadMapCoroutineData data(key, filename, successCallback, failureCallback);
-        __internal::DownloadMapCoroutine(data);
+    /* Download a remote file. */
+    void Download(
+        const string&in url,
+        __internal::DownloadCallbackSuccess@ successCallback = null,
+        __internal::DownloadCallbackFailure@ failureCallback = null
+    ) {
+        trace("[Framework::Download] Downloading '" + url + "'");
+        __internal::DownloadCoroutineData data(url, successCallback, failureCallback);
+        startnew(__internal::DownloadCoroutine, data);
     }
 
     namespace __internal {
-        class DownloadMapCoroutineData {
-            string key;
-            string filename;
-            DownloadCallback@ successCallback;
-            DownloadCallback@ failureCallback;
+        /* Callback definition for the result of a Download call. */
+        funcdef void DownloadCallbackSuccess(const string&in url, MemoryBuffer@ buffer);
+        funcdef void DownloadCallbackFailure(const string&in url);
 
-            DownloadMapCoroutineData() {}
-            DownloadMapCoroutineData(const string&in key, const string&in filename, DownloadCallback@ successCallback, DownloadCallback@ failureCallback) {
-                this.key = key;
-                this.filename = filename;
+        class DownloadCoroutineData {
+            string url;
+            DownloadCallbackSuccess@ successCallback;
+            DownloadCallbackFailure@ failureCallback;
+
+            DownloadCoroutineData() {}
+            DownloadCoroutineData(const string&in url, DownloadCallbackSuccess@ successCallback, DownloadCallbackFailure@ failureCallback) {
+                this.url = url;
                 @this.successCallback = successCallback;
                 @this.failureCallback = failureCallback;
             }
         }
 
-        void DownloadMapCoroutine(ref@ arg) {
-            DownloadMapCoroutineData data = cast<DownloadMapCoroutineData>(arg);
-            string url = URL_BASE + Settings::BackendAddress + Routes::MAPS_DOWNLOAD + "/" + data.key;
+        void DownloadCoroutine(ref@ arg) {
+            DownloadCoroutineData data = cast<DownloadCoroutineData>(arg);
 
-            Net::HttpRequest@ req = Net::HttpGet(url);
+            uint64 progress = 0;
+            Net::HttpRequest@ req = Net::HttpGet(data.url);
             while (!req.Finished()) yield();
-            if (Net::Extra::RequestRaiseError("Framework::DownloadMap", req)) {
-                if (@data.failureCallback !is null) data.failureCallback(data.key);
+            if (Extra::Net::RequestRaiseError("Framework::Download", req)) {
+                if (@data.failureCallback !is null) data.failureCallback(data.url);
                 return;
             }
 
-            string filePath = IO::Extra::FromMapDownloadsFolder(data.filename);
-            req.SaveToFile(filePath);
-
-            trace("[Framework::DownloadMap] Downloading map '" + data.filename + "' completed.");    
-            if (@data.successCallback !is null) data.successCallback(data.key);        
+            trace("[Framework::Download] Download of '" + data.url + "' completed. Total size: " + Extra::IO::FormatFileSize(req.Buffer().GetSize()));    
+            if (@data.successCallback !is null) data.successCallback(data.url, req.Buffer());        
         }
     }
 }
