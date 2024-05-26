@@ -14,6 +14,6 @@ namespace Settings {
     [Setting name="Server Ping Interval" category="Debug"]
     uint PingInterval = 30000;
 
-    [Setting name="Developer Mode" category="Debug"]
-    bool DevMode = false;
+    [Setting name="Enable Developer Tools" category="Debug"]
+    bool DevTools = false;
 }

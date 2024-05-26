@@ -81,10 +81,10 @@ namespace UIMapList {
 
             UI::BeginGroup();
             vec2 thumbnailSize = vec2(160 * uiScale, 116 * uiScale);
-            if (@cell.mapImage !is null && @cell.mapImage.m_texture != null) {
-                UI::Image(cell.mapImage.m_texture, thumbnailSize);
-            } else if (@cell.thumbnail !is null && @cell.thumbnail.m_texture != null) {
-                UI::Image(cell.thumbnail.m_texture, thumbnailSize);
+            if (@cell.mapImage !is null && @cell.mapImage.data != null) {
+                UI::Image(cell.mapImage.data, thumbnailSize);
+            } else if (@cell.thumbnail !is null && @cell.thumbnail.data != null) {
+                UI::Image(cell.thumbnail.data, thumbnailSize);
             } else {
                 UI::Dummy(thumbnailSize);
             }

@@ -8,6 +8,10 @@ namespace DownloadManager {
 
     /* Queue a file URL for download. */
     void AddToQueue(const string&in url, AssetType type) {
+        if (IsUrlQueued(url)) {
+            return;
+        }
+
         __internal::AssetData mapData(url, type, Time::Now);
         __internal::itemsInQueue.InsertLast(mapData);
 
@@ -16,6 +20,15 @@ namespace DownloadManager {
             __internal::OnDownloadCompleted,
             __internal::OnDownloadCancelled
         );
+    }
+
+    /* Return whether this URL is queued for download. */
+    bool IsUrlQueued(const string&in url) {
+        for (uint i = 0; i < __internal::itemsInQueue.Length; i++) {
+            if (__internal::itemsInQueue[i].url == url) return true;
+        }
+
+        return false;
     }
 
     /* Return the number of items waiting to be downloaded in the queue. */
@@ -49,11 +62,29 @@ namespace DownloadManager {
         array<AssetData>@ itemsInQueue = {};
 
         void OnDownloadCompleted(const string&in url, MemoryBuffer@ buffer) {
+            int assetType = -1;
+
             for (uint i = 0; i < itemsInQueue.Length; i++) {
                 if (itemsInQueue[i].url == url) {
+                    assetType = int(itemsInQueue[i].type);
                     itemsInQueue.RemoveAt(i);
-                    return;
+                    break;
                 }
+            }
+
+            if (assetType == -1) return;
+            switch (AssetType(assetType)) {
+                case AssetType::Map:
+                    break;
+                case AssetType::Image: {
+                    UI::Texture@ texture = UI::LoadTexture(buffer);
+                    if (texture.GetSize().x != 0 && @texture != null) {
+                        LocalStorage::AddTextureResource(url, texture);
+                    }
+                    break;
+                }
+                default:
+                    warn("[DownloadManager::OnDownloadCompleted] Unhandled AssetType " + assetType);
             }
         }
 

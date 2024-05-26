@@ -65,10 +65,13 @@ void Render() {
     SettingsWindow::Render();
     UIMapSelect::Render();
     UIChat::Render();
-    UIDownloads::Render();
 
     for (uint i = 0; i < Polls.Length; i++) {
         UIPoll::RenderPoll(Polls[i], i);
+    }
+
+    if (Settings::DevTools) {
+        UIDownloads::Render();
     }
 
     Font::Unset();

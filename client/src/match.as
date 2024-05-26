@@ -113,8 +113,8 @@ class MapCell {
     array<MapClaim>@ attemptRanking = {};
     vec3 paintColor = vec3();
     array<uint> rerollIds = {};
-    CachedImage@ thumbnail;
-    CachedImage@ mapImage;
+    Image@ thumbnail;
+    Image@ mapImage;
 
     MapCell() { }
 
@@ -122,11 +122,11 @@ class MapCell {
         @this.map = map;
 #if TURBO
         auto url = Turbo::GetCampaignThumbnailUrl(map.uid);
-        @this.mapImage = Images::CachedFromURL(url);
-        @this.thumbnail = Images::FindExisting(url);
+        @this.mapImage = Image(url);
+        @this.thumbnail = Image(url);
 #elif TMNEXT
-        @this.thumbnail = Images::CachedFromURL("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
-        @this.mapImage = Images::CachedFromURL("https://trackmania.exchange/maps/" + map.id + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
+        @this.thumbnail = Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
+        @this.mapImage = Image("https://trackmania.exchange/maps/" + map.id + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
 #endif
     }
 

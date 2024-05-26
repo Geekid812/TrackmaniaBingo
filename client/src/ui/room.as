@@ -141,7 +141,7 @@ namespace UIGameRoom {
 
         if (Room.localPlayerIsHost) {
             UIColor::DarkGreen();
-            bool startDisabled = Room.players.Length < 2 && !Settings::DevMode;
+            bool startDisabled = Room.players.Length < 2 && !Settings::DevTools;
             UI::BeginDisabled(startDisabled);
             
             UI::SameLine();
