@@ -27,17 +27,15 @@ pub static CLIENT_COUNT: AtomicU32 = AtomicU32::new(0);
 async fn main() {
     // Logging setup
     let subscriber = FmtSubscriber::builder()
-        .with_max_level(match CONFIG.log_level.to_uppercase().as_str() {
-            "TRACE" => Level::TRACE,
-            "DEBUG" => Level::DEBUG,
-            "INFO" => Level::INFO,
-            "WARN" => Level::WARN,
-            "ERROR" => Level::ERROR,
-            _ => panic!("Invalid log level"),
-        })
+        .with_max_level(Level::DEBUG)
         .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("logging could not be initialized");
 
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber");
+    info!("Trackmania Bingo Server: Version {VERSION}");
+
+    // Load configuration
+    config::initialize();
+    config::enumerate_keys();
 
     // Database setup
     info!("opening database connections");
@@ -63,7 +61,10 @@ async fn main() {
         .set_reuseaddr(true)
         .expect("socket to be able to be reused");
     socket
-        .bind(SocketAddr::from(([0, 0, 0, 0], CONFIG.tcp_port)))
+        .bind(SocketAddr::from((
+            [0, 0, 0, 0],
+            config::get_integer("network.tcp_port").expect("key network.tcp_port not set") as u16,
+        )))
         .expect("socket address to bind");
     let listener = socket.listen(1024).expect("tcp listener to be created");
     info!(

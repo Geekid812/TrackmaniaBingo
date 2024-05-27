@@ -6,7 +6,7 @@ use serde::Serialize;
 use serde_json::json;
 use warp::{Filter, Rejection};
 
-use crate::CONFIG;
+use crate::{config, CONFIG};
 
 use self::routes::auth::auth_routes;
 
@@ -40,7 +40,10 @@ pub async fn main() {
         .or(authenticate().and(protected))
         .or(auth_routes());
     warp::serve(routes)
-        .run(([0, 0, 0, 0], CONFIG.http_port))
+        .run((
+            [0, 0, 0, 0],
+            config::get_integer("network.http_port").expect("key network.http_port not set") as u16,
+        ))
         .await;
 }
 

@@ -1,8 +1,8 @@
 [package]
 name = "bingohost"
-version = "0.1.0"
+description = "Server application for Trackmania Bingo."
+version = "1.5.0-dev"
 edition = "2021"
-
 
 [dependencies]
 # Serialization framework
