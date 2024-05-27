@@ -9,6 +9,7 @@ pub mod datatypes;
 pub mod integrations;
 pub mod orm;
 pub mod server;
+pub mod store;
 pub mod transport;
 pub mod web;
 
@@ -38,7 +39,9 @@ async fn main() {
     config::enumerate_keys();
 
     // Database setup
-    info!("opening database connections");
+    info!("opening main database store");
+    store::initialize_primary_store("main.db").await;
+
     orm::start_database(&CONFIG.database_url).await;
     orm::mapcache::start_database(&CONFIG.mapcache_url).await;
 

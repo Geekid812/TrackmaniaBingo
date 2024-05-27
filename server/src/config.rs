@@ -123,7 +123,10 @@ fn populate_configuration_keys(
 
 /// Initialize configuration. Only call this once.
 pub fn initialize() -> bool {
-    let default_data = include_str!("../data/config.default.toml");
+    let default_data = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/data/config.default.toml"
+    ));
 
     info!("intializing configuration");
     let mut configuration = HashMap::new();
