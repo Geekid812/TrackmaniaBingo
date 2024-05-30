@@ -203,6 +203,11 @@ pub fn enumerate_keys() {
     }
 }
 
+/// Return whether the current environment has development status enabled.
+pub fn is_development() -> bool {
+    get_string("environment").is_some_and(|v| v == "dev")
+}
+
 #[derive(Deserialize)]
 #[serde(default)]
 pub struct Config {

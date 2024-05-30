@@ -8,3 +8,6 @@ environment = "dev"     # or "live"
 [network]
 tcp_port = 43333        # local port for TCP server
 http_port = 8080        # local port for HTTP server
+
+[keys]
+openplanet = "KEY"      # secret key for Openplanet authentication

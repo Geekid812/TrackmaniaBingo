@@ -1,4 +1,9 @@
-use std::{collections::HashMap, fs, path::Path, sync::OnceLock};
+use std::{
+    collections::HashMap,
+    fs,
+    path::Path,
+    sync::{Arc, OnceLock},
+};
 
 use sqlx::{
     query::Query,
@@ -13,6 +18,11 @@ static DATABASE_VERSIONS: [&'static str; 1] = [include_str!(concat!(
 ))];
 
 static PRIMARY_STORE: OnceLock<SqlitePool> = OnceLock::new();
+
+pub mod player;
+
+pub type StoreReadResult = ();
+pub type StoreWriteResult = Result<(), sqlx::Error>;
 
 /// Creates an empty file if the path specified doesn't exist.
 fn file_create(path: &str) {
@@ -143,4 +153,9 @@ async fn get_master_configuration(pool: &SqlitePool) -> Result<HashMap<String, S
     let master_config: HashMap<String, String> = HashMap::from_iter(rows_iter);
 
     Ok(master_config)
+}
+
+/// Get a handle to the connection pool. Panics if it has not been initialized.
+fn get_store() -> &'static SqlitePool {
+    PRIMARY_STORE.get().expect("store not initialized")
 }
