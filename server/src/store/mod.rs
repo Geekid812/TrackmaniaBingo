@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::Path};
+use std::{collections::HashMap, fs, path::Path, sync::OnceLock};
 
 use sqlx::{
     query::Query,
@@ -11,6 +11,8 @@ static DATABASE_VERSIONS: [&'static str; 1] = [include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/db/versions/v1.sql"
 ))];
+
+static PRIMARY_STORE: OnceLock<SqlitePool> = OnceLock::new();
 
 /// Creates an empty file if the path specified doesn't exist.
 fn file_create(path: &str) {
@@ -73,6 +75,7 @@ pub async fn initialize_primary_store(path: &str) {
     };
 
     apply_database_updates(&connection_pool, &configuration).await;
+    PRIMARY_STORE.get_or_init(|| connection_pool);
 }
 
 /// Run SQL migrations to update the database to the latest version.
