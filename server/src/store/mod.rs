@@ -1,10 +1,11 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use sqlx::{
-    sqlite::{SqlitePoolOptions, SqliteQueryResult, SqliteRow},
-    Row, SqlitePool,
+    query::Query,
+    sqlite::{SqliteArguments, SqlitePoolOptions, SqliteQueryResult, SqliteRow},
+    Row, Sqlite, SqlitePool,
 };
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 static DATABASE_VERSIONS: [&'static str; 1] = [include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -22,6 +23,22 @@ fn file_create(path: &str) {
 /// Execute an SQL query.
 async fn execute(connection: &SqlitePool, sql: &str) -> Result<SqliteQueryResult, sqlx::Error> {
     sqlx::query(sql)
+        .execute(connection)
+        .await
+        .inspect_err(|e| error!("error running SQL query: {e}"))
+}
+
+/// Execute an SQL query with bound parameters.
+async fn execute_with_arguments<'q>(
+    connection: &SqlitePool,
+    sql: &'q str,
+    arguments: impl FnOnce(
+        Query<'q, Sqlite, SqliteArguments<'q>>,
+    ) -> Query<'q, Sqlite, SqliteArguments<'q>>,
+) -> Result<SqliteQueryResult, sqlx::Error> {
+    let mut query = sqlx::query(sql);
+    query = arguments(query);
+    query
         .execute(connection)
         .await
         .inspect_err(|e| error!("error running SQL query: {e}"))
@@ -54,10 +71,57 @@ pub async fn initialize_primary_store(path: &str) {
         Ok(config) => config,
         Err(_) => return,
     };
-    debug!("database configuration: {configuration:?}");
-    // TODO
+
+    apply_database_updates(&connection_pool, &configuration).await;
 }
 
+/// Run SQL migrations to update the database to the latest version.
+async fn apply_database_updates(pool: &SqlitePool, configuration: &HashMap<String, String>) {
+    let mut version: usize = match configuration
+        .get("version")
+        .and_then(|value_str| value_str.parse().ok())
+    {
+        Some(v) => v,
+        None => {
+            error!("database configuration table does not a valid 'version' key");
+            return;
+        }
+    };
+
+    let latest_version = DATABASE_VERSIONS.len();
+    while version < latest_version {
+        version += 1;
+        if !apply_version_update(pool, version).await {
+            error!("an error occured applying database updates, aborting");
+            return;
+        };
+    }
+}
+
+/// Apply a migration to upgrade from version (v - 1) to version v.
+async fn apply_version_update(pool: &SqlitePool, v: usize) -> bool {
+    info!(
+        "applying update from schema version {} to version {}",
+        v - 1,
+        v
+    );
+
+    let sql_query = DATABASE_VERSIONS[v - 1];
+    execute(&pool, sql_query).await.is_ok() && set_database_version(pool, v).await
+}
+
+/// Set the database version value.
+async fn set_database_version(pool: &SqlitePool, v: usize) -> bool {
+    execute_with_arguments(
+        pool,
+        "UPDATE master SET value = ? WHERE key = 'version'",
+        |query| query.bind(v as i32),
+    )
+    .await
+    .is_ok()
+}
+
+/// Retreive all key-value pairs in the database configuration table.
 async fn get_master_configuration(pool: &SqlitePool) -> Result<HashMap<String, String>, ()> {
     chained_query(
         pool,
