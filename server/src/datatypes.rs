@@ -69,8 +69,7 @@ pub struct MatchConfiguration {
 pub struct HandshakeRequest {
     pub version: String,
     pub game: GamePlatform,
-    pub username: Option<String>,
-    pub token: Option<String>,
+    pub token: String,
 }
 
 /* A map identifier for an official campaign. */

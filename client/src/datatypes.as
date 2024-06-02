@@ -118,7 +118,6 @@ namespace MatchConfiguration {
 class HandshakeRequest {
     string version;
     GamePlatform game;
-    string username;
     string token;
     HandshakeRequest() {}
 }
@@ -127,7 +126,6 @@ namespace HandshakeRequest {
         auto value = Json::Object();
         value["version"] = cls.version;
         value["game"] = int(cls.game);
-        value["username"] = cls.username;
         value["token"] = cls.token;
 
         return value;
@@ -137,8 +135,7 @@ namespace HandshakeRequest {
         auto cls = HandshakeRequest();
         cls.version = value["version"];
         cls.game = GamePlatform(int(value["game"]));
-        if (value["username"].GetType() != Json::Type::Null) cls.username = value["username"];
-        if (value["token"].GetType() != Json::Type::Null) cls.token = value["token"];
+        cls.token = value["token"];
 
         return cls;
     }

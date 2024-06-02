@@ -55,8 +55,7 @@
         <comment>Request to open a connection by the client.</comment>
         <m name="version" type="string" />
         <m name="game" type="GamePlatform" />
-        <m name="username" type="string" optional="true" />
-        <m name="token" type="string" optional="true" />
+        <m name="token" type="string" />
     </struct>
 
     <struct name="CampaignMap">

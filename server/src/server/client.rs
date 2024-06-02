@@ -54,6 +54,22 @@ impl NetClient {
         self.messager.clone()
     }
 
+    /// Sets the message handler to a provided callback.
+    pub fn set_message_handler<F>(&mut self, handler: F)
+    where
+        F: 'static + Send + Sync + Fn(&mut NetClient, BytesMut) -> PinFuture<()>,
+    {
+        self.callbacks.set_message_handler(handler);
+    }
+
+    /// Sets the close handler to a provided callback.
+    pub fn set_close_handler<F>(&mut self, handler: F)
+    where
+        F: 'static + Send + Sync + Fn(&mut NetClient) -> PinFuture<()>,
+    {
+        self.callbacks.set_close_handler(handler);
+    }
+
     /// Handler for all incoming messages.
     async fn handle_message(&mut self, bytes: BytesMut) {
         let callback = self.callbacks.wrap_message_handler();

@@ -1,15 +1,6 @@
-use std::{
-    collections::HashMap,
-    fs,
-    path::Path,
-    sync::{Arc, OnceLock},
-};
+use std::{collections::HashMap, fs, path::Path, sync::OnceLock};
 
-use sqlx::{
-    query::Query,
-    sqlite::{SqliteArguments, SqlitePoolOptions, SqliteQueryResult, SqliteRow},
-    Row, Sqlite, SqlitePool,
-};
+use sqlx::{sqlite::SqlitePoolOptions, Row, SqlitePool};
 use tracing::{error, info};
 
 static DATABASE_VERSIONS: [&'static str; 1] = [include_str!(concat!(
@@ -19,9 +10,12 @@ static DATABASE_VERSIONS: [&'static str; 1] = [include_str!(concat!(
 
 static PRIMARY_STORE: OnceLock<SqlitePool> = OnceLock::new();
 
+mod operations;
 pub mod player;
 
-pub type StoreReadResult = ();
+use operations::*;
+
+pub type StoreReadResult<V> = Result<V, sqlx::Error>;
 pub type StoreWriteResult = Result<(), sqlx::Error>;
 
 /// Creates an empty file if the path specified doesn't exist.
@@ -30,43 +24,6 @@ fn file_create(path: &str) {
         info!("file '{path}' does not exist, creating it.");
         fs::write(path, &[]).expect("error creating new file");
     }
-}
-
-/// Execute an SQL query.
-async fn execute(connection: &SqlitePool, sql: &str) -> Result<SqliteQueryResult, sqlx::Error> {
-    sqlx::query(sql)
-        .execute(connection)
-        .await
-        .inspect_err(|e| error!("error running SQL query: {e}"))
-}
-
-/// Execute an SQL query with bound parameters.
-async fn execute_with_arguments<'q>(
-    connection: &SqlitePool,
-    sql: &'q str,
-    arguments: impl FnOnce(
-        Query<'q, Sqlite, SqliteArguments<'q>>,
-    ) -> Query<'q, Sqlite, SqliteArguments<'q>>,
-) -> Result<SqliteQueryResult, sqlx::Error> {
-    let mut query = sqlx::query(sql);
-    query = arguments(query);
-    query
-        .execute(connection)
-        .await
-        .inspect_err(|e| error!("error running SQL query: {e}"))
-}
-
-/// Execute an SQL query.
-async fn query_all(connection: &SqlitePool, sql: &str) -> Result<Vec<SqliteRow>, sqlx::Error> {
-    sqlx::query(sql)
-        .fetch_all(connection)
-        .await
-        .inspect_err(|e| error!("error running SQL query: {e}"))
-}
-
-/// Type-erased query function, same as `execute`.
-async fn chained_query(connection: &SqlitePool, sql: &str) -> Result<(), ()> {
-    execute(connection, sql).await.map(|_| ()).map_err(|_| ())
 }
 
 /// Initialize the primary database. Only call this once.

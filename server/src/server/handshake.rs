@@ -1,118 +1,131 @@
-use std::io;
-use std::sync::atomic::{AtomicI32, Ordering};
-use std::time::Duration;
-
-use futures::executor::block_on;
-use futures::{select, FutureExt, StreamExt};
+use bytes::BytesMut;
 use serde::Serialize;
 use serde_json::from_str;
 use serde_repr::Serialize_repr;
-use sqlx::FromRow;
-use tokio::pin;
-use tokio::time::sleep;
-use tracing::error;
+use tracing::{info, warn};
 
+use super::client::NetClient;
 use super::version::Version;
-use crate::datatypes::{GamePlatform, HandshakeRequest};
-use crate::orm;
-use crate::orm::composed::profile::{get_profile, PlayerProfile};
-use crate::orm::models::player::Player;
-use crate::{transport::client::tcpnative::NativeClientProtocol, CONFIG};
+use crate::datatypes::HandshakeRequest;
+use crate::{config, store};
 
-static EPHEMERAL_UID: AtomicI32 = AtomicI32::new(-1000);
+/// Message handler for an unauthenticated client. Main logic of the connection handshake.
+pub async fn handshake_message_received(client: &mut NetClient, message: BytesMut) {
+    let required_version: Version = get_required_version_config();
 
-pub async fn do_handshake(
-    client: &mut NativeClientProtocol,
-) -> Result<PlayerProfile, HandshakeCode> {
-    pin! {
-        let next_message = client.receive_message().fuse();
-        let timeout = sleep(Duration::from_secs(30)).fuse();
-    }
-    let handshake: HandshakeRequest = select! {
-        msg = next_message => {
-            if msg.is_none() { return Err(HandshakeCode::ReadError); }
-            match &msg.unwrap() {
-                // FIXME: intentionally broken
-                Ok(handshake_msg) => from_str("").map_err(|_| HandshakeCode::ParseError)?,
-                Err(e) => {
-                    error!("{}", e);
-                    return Err(HandshakeCode::ReadError);
-                },
-            }
-        },
-        _ = timeout => return Err(HandshakeCode::ReadError),
+    let message = match String::from_utf8(message.to_vec()) {
+        Ok(str) => str,
+        Err(e) => {
+            handshake_rejection(client, format!("could not decode utf-8 message: {}", e));
+            return;
+        }
     };
 
-    let client_version =
-        Version::try_from(handshake.version.clone()).map_err(|_| HandshakeCode::InvalidVersion)?;
+    let handshake: HandshakeRequest = match from_str(&message) {
+        Ok(req) => req,
+        Err(e) => {
+            handshake_rejection(client, format!("could not parse handshake request: {}", e));
+            return;
+        }
+    };
+
+    let Ok(client_version) = Version::try_from(handshake.version.clone()) else {
+        handshake_rejection(client, "could not parse version string".into());
+        return;
+    };
 
     // Client version check
-    if client_version
-        < Version::try_from(CONFIG.min_client.clone()).expect("invalid client version in config")
-    {
-        return Err(HandshakeCode::IncompatibleVersion);
-    }
-
-    if is_ephemeral_player(&handshake) {
-        if let Some(name) = handshake.username {
-            return Ok(PlayerProfile {
-                player: Player {
-                    uid: EPHEMERAL_UID.fetch_add(-1, Ordering::Relaxed),
-                    username: name,
-                    ..Player::default()
-                },
-                ..PlayerProfile::default()
-            });
-        } else {
-            return Err(HandshakeCode::NoUsername);
-        }
+    if client_version < required_version {
+        handshake_rejection(
+            client,
+            format!(
+                "out of date: minimum plugin version is {}, you have {}",
+                required_version, client_version
+            ),
+        );
+        return;
     }
 
     // Match token to a valid user in storage
-    let player_record = orm::execute(|mut conn| {
-        let query =
-            sqlx::query("SELECT * FROM players WHERE client_token = ?").bind(handshake.token);
-        let row = block_on(query.fetch_one(&mut *conn))?;
-        let player = Player::from_row(&row).expect("Player from_row failed");
-        block_on(get_profile(&mut conn, player))
-    })
-    .await;
+    let player_record = store::player::get_player_from_token(&handshake.token).await;
 
-    let profile = match player_record {
+    let player = match player_record {
         Ok(player) => player,
+        Err(sqlx::Error::RowNotFound) => {
+            handshake_rejection(client, format!("authentication token rejected"));
+            return;
+        }
         Err(e) => {
-            return Err(match e {
-                sqlx::Error::RowNotFound => HandshakeCode::AuthRefused,
-                _ => {
-                    error!("Auth failure: {:?}", e);
-                    HandshakeCode::AuthFailure
-                }
-            })
+            handshake_rejection(client, format!("store error: {}", e));
+            return;
         }
     };
 
-    return Ok(profile);
+    handshake_success(
+        client,
+        HandshakeSuccess {
+            uid: player.uid,
+            display_name: player.display_name,
+            can_reconnect: false,
+        },
+    );
+    // TODO: handshake completed, stop listening and switch handlers
 }
 
-fn is_ephemeral_player(request: &HandshakeRequest) -> bool {
-    // In Turbo, player profiles are not saved
-    return request.game == GamePlatform::Turbo;
+/// Send a rejection message with the provided reason message.
+fn handshake_rejection(client: &NetClient, reason: String) {
+    warn!(cid = client.cid(), "rejected: {}", reason);
+    client.messager().send(&HandshakeResponse::failure(reason));
 }
 
-pub async fn deny_socket(client: &mut NativeClientProtocol, code: HandshakeCode) {}
+/// Send a success message for completing the handshake.
+fn handshake_success(client: &NetClient, data: HandshakeSuccess) {
+    info!(
+        cid = client.cid(),
+        "authenticated: {} (uid {})", data.display_name, data.uid
+    );
+    client.messager().send(&HandshakeResponse::success(data));
+}
 
-pub async fn accept_socket(client: &mut NativeClientProtocol, data: HandshakeSuccess) {}
+/// Get the client minimum version from the configuration.
+fn get_required_version_config() -> Version {
+    config::get_string("client.required_version")
+        .expect("configuration key client.required_version not specified")
+        .try_into()
+        .expect("invalid value for client.required_version")
+}
 
 #[derive(Serialize)]
 struct HandshakeResponse {
-    code: HandshakeCode,
+    success: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<String>,
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
     data: Option<HandshakeSuccess>,
 }
 
+impl HandshakeResponse {
+    fn failure(reason: String) -> Self {
+        Self {
+            success: false,
+            reason: Some(reason),
+            data: None,
+        }
+    }
+
+    fn success(data: HandshakeSuccess) -> Self {
+        Self {
+            success: true,
+            reason: None,
+            data: Some(data),
+        }
+    }
+}
+
 #[derive(Serialize)]
 pub struct HandshakeSuccess {
-    pub profile: PlayerProfile,
+    pub uid: u32,
+    pub display_name: String,
     pub can_reconnect: bool,
 }
 

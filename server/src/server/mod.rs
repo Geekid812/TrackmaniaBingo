@@ -14,7 +14,7 @@ pub mod mapload;
 mod messager;
 pub mod requests;
 pub mod tasks;
-pub mod version;
+mod version;
 
 /// Main TCP server internal structure that listens to incoming player connections.
 pub struct NetServer {
