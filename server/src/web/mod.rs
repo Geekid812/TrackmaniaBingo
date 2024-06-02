@@ -1,13 +1,10 @@
-use std::convert::Infallible;
+use warp::{get, path, Filter};
 
-use warp::{fs, get, path, Filter, Rejection};
-
-use crate::{config, CONFIG};
+use crate::config;
 
 use self::routes::auth;
 
 mod actions;
-mod reject;
 mod roomlist;
 mod routes;
 

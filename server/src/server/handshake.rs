@@ -17,20 +17,23 @@ use crate::datatypes::{GamePlatform, HandshakeRequest};
 use crate::orm;
 use crate::orm::composed::profile::{get_profile, PlayerProfile};
 use crate::orm::models::player::Player;
-use crate::{transport::client::tcpnative::TcpNativeClient, CONFIG};
+use crate::{transport::client::tcpnative::NativeClientProtocol, CONFIG};
 
 static EPHEMERAL_UID: AtomicI32 = AtomicI32::new(-1000);
 
-pub async fn do_handshake(client: &mut TcpNativeClient) -> Result<PlayerProfile, HandshakeCode> {
+pub async fn do_handshake(
+    client: &mut NativeClientProtocol,
+) -> Result<PlayerProfile, HandshakeCode> {
     pin! {
-        let next_message = client.inner.next().fuse();
+        let next_message = client.receive_message().fuse();
         let timeout = sleep(Duration::from_secs(30)).fuse();
     }
     let handshake: HandshakeRequest = select! {
         msg = next_message => {
             if msg.is_none() { return Err(HandshakeCode::ReadError); }
             match &msg.unwrap() {
-                Ok(handshake_msg) => from_str(handshake_msg).map_err(|_| HandshakeCode::ParseError)?,
+                // FIXME: intentionally broken
+                Ok(handshake_msg) => from_str("").map_err(|_| HandshakeCode::ParseError)?,
                 Err(e) => {
                     error!("{}", e);
                     return Err(HandshakeCode::ReadError);
@@ -96,26 +99,9 @@ fn is_ephemeral_player(request: &HandshakeRequest) -> bool {
     return request.game == GamePlatform::Turbo;
 }
 
-pub async fn deny_socket(
-    client: &mut TcpNativeClient,
-    code: HandshakeCode,
-) -> Result<(), io::Error> {
-    client
-        .serialize(&HandshakeResponse { code, data: None })
-        .await
-}
+pub async fn deny_socket(client: &mut NativeClientProtocol, code: HandshakeCode) {}
 
-pub async fn accept_socket(
-    client: &mut TcpNativeClient,
-    data: HandshakeSuccess,
-) -> Result<(), io::Error> {
-    client
-        .serialize(&HandshakeResponse {
-            code: HandshakeCode::Ok,
-            data: Some(data),
-        })
-        .await
-}
+pub async fn accept_socket(client: &mut NativeClientProtocol, data: HandshakeSuccess) {}
 
 #[derive(Serialize)]
 struct HandshakeResponse {

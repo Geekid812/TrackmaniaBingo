@@ -8,6 +8,7 @@ environment = "dev"     # or "live"
 [network]
 tcp_port = 43333        # local port for TCP server
 http_port = 8080        # local port for HTTP server
+timeout = 300           # delay in seconds until TCP connection is closed when idle
 
 [keys]
 openplanet = "KEY"      # secret key for Openplanet authentication
