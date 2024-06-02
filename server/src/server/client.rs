@@ -1,8 +1,10 @@
 use bytes::BytesMut;
-use futures::FutureExt;
-use std::io;
+use futures::{Future, FutureExt};
+use std::pin::Pin;
 use std::sync::atomic::{self, AtomicU64};
+use std::sync::Arc;
 use std::time::Duration;
+use std::{future, io};
 use tokio::net::TcpStream;
 use tokio::select;
 use tokio::sync::mpsc::unbounded_channel;
@@ -25,6 +27,7 @@ pub struct NetClient {
     messager: NetMessager,
     receiver: TransportReader,
     timeout: Duration,
+    callbacks: NetClientCallbacks,
 }
 
 impl NetClient {
@@ -37,6 +40,7 @@ impl NetClient {
             messager: new_messager(tx),
             receiver: rx,
             timeout,
+            callbacks: NetClientCallbacks::new(),
         }
     }
 
@@ -45,8 +49,22 @@ impl NetClient {
         self.cid
     }
 
-    /// Generic handler for all incoming messages.
-    fn handle_message(&mut self, bytes: BytesMut) {}
+    /// Get a handle to the `NetMessager` of this connection.
+    pub fn messager(&self) -> NetMessager {
+        self.messager.clone()
+    }
+
+    /// Handler for all incoming messages.
+    async fn handle_message(&mut self, bytes: BytesMut) {
+        let callback = self.callbacks.wrap_message_handler();
+        callback(self, bytes).await;
+    }
+
+    /// Handler for closing the connection.
+    async fn handle_close(&mut self) {
+        let callback = self.callbacks.wrap_close_handler();
+        callback(self).await;
+    }
 
     /// Run the main loop of the client.
     pub async fn run(mut self) {
@@ -61,7 +79,7 @@ impl NetClient {
                     Ok(option_message) => match option_message {
                         Some(result) => match result {
                             Ok(message) => {
-                                self.handle_message(message);
+                                self.handle_message(message).await;
                                 timeout_deadline = Instant::now() + self.timeout;
                             },
                             Err(err) => {
@@ -97,13 +115,80 @@ impl NetClient {
                 }
             }
         }
+
+        self.handle_close().await;
     }
 }
 
+/// Return type for an async callback.
+type PinFuture<Output> = Pin<Box<dyn Send + Future<Output = Output>>>;
+
+/// Internal callback state of `NetClient`.
+struct NetClientCallbacks<Message = BytesMut> {
+    message_handler: Option<Arc<dyn Send + Sync + Fn(&mut NetClient, Message) -> PinFuture<()>>>,
+    close_handler: Option<Arc<dyn Send + Sync + Fn(&mut NetClient) -> PinFuture<()>>>,
+}
+
+impl<Message> NetClientCallbacks<Message> {
+    /// Create a new `NetClient`.
+    pub fn new() -> Self {
+        Self {
+            message_handler: None,
+            close_handler: None,
+        }
+    }
+
+    /// Sets the message handler to a provided callback.
+    pub fn set_message_handler<F>(&mut self, handler: F)
+    where
+        F: 'static + Send + Sync + Fn(&mut NetClient, Message) -> PinFuture<()>,
+    {
+        self.message_handler = Some(Arc::new(handler));
+    }
+
+    /// Sets the close handler to a provided callback.
+    pub fn set_close_handler<F>(&mut self, handler: F)
+    where
+        F: 'static + Send + Sync + Fn(&mut NetClient) -> PinFuture<()>,
+    {
+        self.close_handler = Some(Arc::new(handler));
+    }
+
+    /// Return a closure that calls the async message handler.
+    pub fn wrap_message_handler(&self) -> impl FnOnce(&mut NetClient, Message) -> PinFuture<()> {
+        let opt_handler = self.message_handler.clone();
+        |client, message| {
+            if let Some(handler) = opt_handler {
+                return handler(client, message);
+            }
+            Box::pin(future::ready(()))
+        }
+    }
+
+    /// Return a closure that calls the async close handler.
+    pub fn wrap_close_handler(&self) -> impl FnOnce(&mut NetClient) -> PinFuture<()> {
+        let opt_handler = self.close_handler.clone();
+        |client: &mut NetClient| {
+            if let Some(handler) = opt_handler {
+                return handler(client);
+            }
+            Box::pin(future::ready(()))
+        }
+    }
+}
+
+/// Static assertion to check that a type implements Send and Sync.
+#[allow(dead_code)]
+const fn assert_is_send_sync<T: Send + Sync>() {}
+
+const _: () = assert_is_send_sync::<NetClientCallbacks>();
+const _: () = assert_is_send_sync::<NetClient>();
+
+// -- old code
 fn handle_recv(ctx: &mut ClientContext, result: Result<String, io::Error>) -> bool {
     let msg = match result {
         Ok(msg) => msg,
-        Err(e) => return false,
+        Err(_) => return false,
     };
     debug!("received: {}", msg);
 
