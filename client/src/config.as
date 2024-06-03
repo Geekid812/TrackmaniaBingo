@@ -16,16 +16,12 @@ namespace Config {
         Json::Value json;
         try {
             json = Json::Parse(req.String());
+            if (json.HasKey("error")) throw(json["error"]);
         } catch {
             trace("Config: Response parse failed. Status code: " + req.ResponseCode() + " | Body: " + req.String());
-        }
-
-        try {
-            //StatusMessage = json["message"];
-        } catch {
-            warn("Config: Invalid JSON message. That proably means you are not connected.");
             return;
         }
+
         CanPlay = json["canPlay"];
 
         News = {};
