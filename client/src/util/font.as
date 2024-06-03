@@ -93,7 +93,7 @@ namespace Font {
         LoadFont(Style::Bold, 16);
         LoadFont(Style::Mono, 16);
 
-        trace("Font: Fonts loaded.");
+        trace("[Font::Init] Fonts loaded.");
         Initialized = true;
     }
 

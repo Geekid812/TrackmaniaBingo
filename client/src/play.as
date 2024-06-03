@@ -164,7 +164,7 @@ namespace Playground {
         }
         mapClaimData.campaign = campaign;
 
-        trace("Claiming map '" + mapCell.map.uid + "' with time of " + result.time);
+        trace("[Playground::CheckRunFinished] Claiming map '" + mapCell.map.uid + "' with time of " + result.time);
         startnew(ClaimMedalCoroutine);
     }
 
@@ -209,14 +209,14 @@ namespace Playground {
             bool Success = Network::ClaimCell(mapClaimData.mapUid, mapClaimData.campaign, mapClaimData.mapResult);
             mapClaimData.retries -= 1;
             if (Success) {
-                trace("Map successfully claimed.");
+                trace("[Playground::ClaimMedalCoroutine] Map successfully claimed.");
                 ok = true;
                 break;
             }
-            else trace("Map claim failed, retrying... (" + mapClaimData.retries + " attempts left)");
+            else trace("[Playground::ClaimMedalCoroutine] Map claim failed, retrying... (" + mapClaimData.retries + " attempts left)");
         }
         if (!ok) {
-            warn("Warning! Failed to claim a map after several retries.");
+            warn("[Playground::ClaimMedalCoroutine] Warning! Failed to claim a map after several retries.");
         }
         mapClaimData.retries = 0;
     }

@@ -17,34 +17,34 @@ class Protocol {
         
         // Socket Creation
         if (!socket.Connect(host, port)) {
-            trace("Protocol: Could not create socket to connect to " + host + ":" + port + ".");
+            trace("[Protocol] Could not create socket to connect to " + host + ":" + port + ".");
             Fail();
             return -1;
         }
-        trace("Protocol: Socket bound and ready to connect to " + host + ":" + port + ".");
+        trace("[Protocol] Socket bound and ready to connect to " + host + ":" + port + ".");
 
         // Connection
         uint64 timeoutDate = Time::Now + Settings::NetworkTimeout;
         uint64 initialDate = Time::Now;
         while (!socket.CanWrite() && Time::Now < timeoutDate) { yield(); }
         if (!socket.CanWrite()) {
-            trace("Protocol: Connection timed out after " + Settings::NetworkTimeout + "ms.");
+            trace("[Protocol] Connection timed out after " + Settings::NetworkTimeout + "ms.");
             Fail();
             return -1;
         }
-        trace("Protocol: Connected to server after " + (Time::Now - initialDate) + "ms.");
+        trace("[Protocol] Connected to server after " + (Time::Now - initialDate) + "ms.");
 
         // Opening Handshake
         if (!InnerSend(Json::Write(HandshakeRequest::Serialize(handshake)))) {
-            trace("Protocol: Failed sending opening handshake.");
+            trace("[Protocol] Failed sending opening handshake.");
             Fail();
             return -1;
         }
-        trace("Protocol: Opening handshake sent.");
+        trace("[Protocol] Opening handshake sent.");
 
         string handshakeReply = BlockRecv(Settings::NetworkTimeout);
         if (handshakeReply == "") {
-            trace("Protocol: Handshake reply reception timed out after " + Settings::NetworkTimeout + "ms.");
+            trace("[Protocol] Handshake reply reception timed out after " + Settings::NetworkTimeout + "ms.");
             Fail();
             return -1;
         }
@@ -60,16 +60,16 @@ class Protocol {
                 LocalUsername = Profile.username;
             }
         } catch {
-            trace("Protocol: Handshake reply parse failed. Got: " + handshakeReply);
+            trace("[Protocol] Handshake reply parse failed. Got: " + handshakeReply);
             Fail();
             return -1;
         }
 
         if (statusCode == 0 || statusCode == 5) {
-            trace("Protocol: Handshake reply validated. Connection has been established!");
+            trace("[Protocol] Handshake reply validated. Connection has been established!");
             state = ConnectionState::Connected;
         } else {
-            trace("Protocol: Received non-zero code " + statusCode + " in handshake.");
+            trace("[Protocol] Received non-zero code " + statusCode + " in handshake.");
             Fail();
         }
         return statusCode;
@@ -103,7 +103,7 @@ class Protocol {
             if (socket.Available() >= 4) {
                 int Size = socket.ReadInt32();
                 if (Size <= 0) {
-                    trace("Protocol: buffer size violation (got " + Size + ").");
+                    trace("[Protocol] buffer size violation (got " + Size + ").");
                     Fail();
                     return "";
                 }
@@ -124,7 +124,7 @@ class Protocol {
 
     void Fail() {
         if (state == ConnectionState::Closed) return;
-        trace("Protocol: Connection fault. Closing.");
+        trace("[Protocol] Connection fault. Closing.");
         if (@socket != null && socket.CanWrite()) socket.Close();
 
         state = ConnectionState::Closed;
