@@ -1,5 +1,6 @@
 use std::{net::SocketAddr, time::Duration};
 
+use client::ClientCallbackImplementation;
 use tokio::net::TcpSocket;
 use tracing::debug;
 
@@ -52,7 +53,8 @@ impl NetServer {
                 .await
                 .expect("failed to accept an incoming connection");
 
-            let client = NetClient::new(incoming, client_timeout);
+            let mut client = NetClient::new(incoming, client_timeout);
+            client.set_callback_mode(ClientCallbackImplementation::Handshake);
             debug!(cid = client.cid(), "new connection: {}", remote_addr);
             tokio::spawn(async move { client.run().await });
         }

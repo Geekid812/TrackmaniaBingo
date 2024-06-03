@@ -286,3 +286,10 @@ enum Medal {
     Bronze,
     None,
 }
+
+/* When a connection to the server fails, give the client a hint of what it should do. */
+enum HandshakeFailureIntentCode {
+    ShowError,
+    RequireUpdate,
+    Reauthenticate,
+}

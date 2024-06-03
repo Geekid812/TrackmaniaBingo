@@ -111,4 +111,11 @@
         <v>Bronze</v>
         <v>None</v>
     </enum>
+
+    <enum name="HandshakeFailureIntentCode">
+        <comment>When a connection to the server fails, give the client a hint of what it should do.</comment>
+        <v>ShowError</v>
+        <v>RequireUpdate</v>
+        <v>Reauthenticate</v>
+    </enum>
 </datatypes>

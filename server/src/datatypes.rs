@@ -155,3 +155,13 @@ pub enum Medal {
     Bronze,
     None,
 }
+
+/* When a connection to the server fails, give the client a hint of what it should do. */
+#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
+#[repr(u8)]
+pub enum HandshakeFailureIntentCode {
+    #[default]
+    ShowError,
+    RequireUpdate,
+    Reauthenticate,
+}

@@ -4,9 +4,9 @@ use serde_json::from_str;
 use serde_repr::Serialize_repr;
 use tracing::{info, warn};
 
-use super::client::NetClient;
+use super::client::{ClientCallbackImplementation, NetClient};
 use super::version::Version;
-use crate::datatypes::HandshakeRequest;
+use crate::datatypes::{HandshakeFailureIntentCode, HandshakeRequest};
 use crate::{config, store};
 
 /// Message handler for an unauthenticated client. Main logic of the connection handshake.
@@ -90,7 +90,9 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
             can_reconnect: false,
         },
     );
+
     // TODO: handshake completed, stop listening and switch handlers
+    client.set_callback_mode(ClientCallbackImplementation::Mainloop);
 }
 
 /// Send a rejection message with the provided reason message.
@@ -154,12 +156,4 @@ pub struct HandshakeSuccess {
     pub uid: u32,
     pub display_name: String,
     pub can_reconnect: bool,
-}
-
-#[derive(Serialize_repr, PartialEq, Eq)]
-#[repr(i32)]
-pub enum HandshakeFailureIntentCode {
-    ShowError = 0,
-    RequireUpdate = 1,
-    Reauthenticate = 2,
 }

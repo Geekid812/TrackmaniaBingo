@@ -31,6 +31,6 @@ impl NetMessageWriter {
             }
         };
 
-        self.writer.send(serialized.into_bytes());
+        let _ = self.writer.send(serialized.into_bytes());
     }
 }

@@ -1,4 +1,9 @@
-// Implementation of a full TCP custom protocol, similar to websockets
+// Implementation of a full TCP custom protocol, similar to websockets.
+// It works by sending JSON messages back and forth on the server.
+//
+// The connection will time out automatically if the server receives no messages,
+// so it is the client's responsability to send a ping message at least regularly to keep
+// the connection alive.
 class Protocol {
     Net::Socket@ socket;
     ConnectionState state;
@@ -17,62 +22,71 @@ class Protocol {
         
         // Socket Creation
         if (!socket.Connect(host, port)) {
-            trace("[Protocol] Could not create socket to connect to " + host + ":" + port + ".");
+            trace("[Protocol::Connect] Could not create socket to connect to " + host + ":" + port + ".");
             Fail();
             return -1;
         }
-        trace("[Protocol] Socket bound and ready to connect to " + host + ":" + port + ".");
+        trace("[Protocol::Connect] Socket bound and ready to connect to " + host + ":" + port + ".");
 
         // Connection
         uint64 timeoutDate = Time::Now + Settings::NetworkTimeout;
         uint64 initialDate = Time::Now;
-        while (!socket.CanWrite() && Time::Now < timeoutDate) { yield(); }
-        if (!socket.CanWrite()) {
-            trace("[Protocol] Connection timed out after " + Settings::NetworkTimeout + "ms.");
+        while (!socket.IsReady() && Time::Now < timeoutDate) { yield(); }
+        if (!socket.IsReady()) {
+            trace("[Protocol::Connect] Connection timed out after " + Settings::NetworkTimeout + "ms.");
             Fail();
             return -1;
         }
-        trace("[Protocol] Connected to server after " + (Time::Now - initialDate) + "ms.");
+        trace("[Protocol::Connect] Connected to server after " + (Time::Now - initialDate) + "ms.");
 
         // Opening Handshake
         if (!InnerSend(Json::Write(HandshakeRequest::Serialize(handshake)))) {
-            trace("[Protocol] Failed sending opening handshake.");
+            trace("[Protocol::Connect] Failed sending opening handshake.");
             Fail();
             return -1;
         }
-        trace("[Protocol] Opening handshake sent.");
+        trace("[Protocol::Connect] Opening handshake sent.");
 
         string handshakeReply = BlockRecv(Settings::NetworkTimeout);
         if (handshakeReply == "") {
-            trace("[Protocol] Handshake reply reception timed out after " + Settings::NetworkTimeout + "ms.");
+            trace("[Protocol::Connect] Handshake reply reception timed out after " + Settings::NetworkTimeout + "ms.");
             Fail();
             return -1;
         }
 
         // Handshake Check
-        int statusCode;
+        bool success = false;
         try {
             Json::Value@ reply = Json::Parse(handshakeReply);
-            statusCode = reply["code"];
-            if (reply.HasKey("profile")) {
-                @Profile = PlayerProfile::Deserialize(reply["profile"]);
-                PersistantStorage::LocalProfile = Json::Write(reply["profile"]);
-                LocalUsername = Profile.username;
+            success = reply["success"];
+            if (!success) {
+                HandshakeFailureIntentCode code = HandshakeFailureIntentCode(int(reply["intent_code"]));
+                string reason = string(reply["reason"]);
+                switch (code) {
+                    case HandshakeFailureIntentCode::ShowError:
+                        err("Protocol::Connect", "Connection to server failed: " + reason);
+                        break;
+                    case HandshakeFailureIntentCode::RequireUpdate:
+                        UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required: " + reason, vec4(.4, .4, 1., 1.), 15000);
+                        print("[Protocol::Connect] New update required: " + reason);
+                        break;
+                    case HandshakeFailureIntentCode::Reauthenticate:
+                        print("[Protocol::Connect] Reauthenticating: " + reason);
+                        Login::Login();
+                        break;
+                }
+                Fail();
+                return -1;
             }
         } catch {
-            trace("[Protocol] Handshake reply parse failed. Got: " + handshakeReply);
+            trace("[Protocol::Connect] Handshake reply parse failed. Got: " + handshakeReply);
             Fail();
             return -1;
         }
 
-        if (statusCode == 0 || statusCode == 5) {
-            trace("[Protocol] Handshake reply validated. Connection has been established!");
-            state = ConnectionState::Connected;
-        } else {
-            trace("[Protocol] Received non-zero code " + statusCode + " in handshake.");
-            Fail();
-        }
-        return statusCode;
+        trace("[Protocol::Connect] Handshake completed. Connection has been established!");
+        state = ConnectionState::Connected;
+        return 0;
     }
 
     private bool InnerSend(const string&in data) {
@@ -103,7 +117,7 @@ class Protocol {
             if (socket.Available() >= 4) {
                 int Size = socket.ReadInt32();
                 if (Size <= 0) {
-                    trace("[Protocol] buffer size violation (got " + Size + ").");
+                    trace("[Protocol::Recv] buffer size violation (got " + Size + ").");
                     Fail();
                     return "";
                 }
@@ -124,7 +138,7 @@ class Protocol {
 
     void Fail() {
         if (state == ConnectionState::Closed) return;
-        trace("[Protocol] Connection fault. Closing.");
+        trace("[Protocol::Fail] Connection fault. Closing.");
         if (@socket != null && socket.CanWrite()) socket.Close();
 
         state = ConnectionState::Closed;

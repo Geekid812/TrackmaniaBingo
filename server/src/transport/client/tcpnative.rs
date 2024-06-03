@@ -1,6 +1,6 @@
 use std::io;
 
-use bytes::{Bytes, BytesMut};
+use bytes::BytesMut;
 use futures::{SinkExt, StreamExt};
 use serde::Serialize;
 use tokio::{net::TcpStream, sync::mpsc::error::SendError};

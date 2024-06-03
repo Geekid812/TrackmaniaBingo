@@ -12,7 +12,7 @@ namespace UIDevActions {
     }
 
     void ClientTokenControl() {
-        UI::Text("Client Token: " + (Login::IsLoggedIn() ? PersistantStorage::ClientToken : "[NONE]"));
+        PersistantStorage::ClientToken = UI::InputText("Client Token", PersistantStorage::ClientToken);
         UI::SameLine();
         if (UI::Button("Clear")) {
             PersistantStorage::ClientToken = "";
