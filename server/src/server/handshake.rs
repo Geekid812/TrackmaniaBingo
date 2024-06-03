@@ -16,7 +16,11 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
     let message = match String::from_utf8(message.to_vec()) {
         Ok(str) => str,
         Err(e) => {
-            handshake_rejection(client, format!("could not decode utf-8 message: {}", e));
+            handshake_rejection(
+                client,
+                format!("could not decode utf-8 message: {}", e),
+                HandshakeFailureIntentCode::ShowError,
+            );
             return;
         }
     };
@@ -24,13 +28,21 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
     let handshake: HandshakeRequest = match from_str(&message) {
         Ok(req) => req,
         Err(e) => {
-            handshake_rejection(client, format!("could not parse handshake request: {}", e));
+            handshake_rejection(
+                client,
+                format!("could not parse handshake request: {}", e),
+                HandshakeFailureIntentCode::ShowError,
+            );
             return;
         }
     };
 
     let Ok(client_version) = Version::try_from(handshake.version.clone()) else {
-        handshake_rejection(client, "could not parse version string".into());
+        handshake_rejection(
+            client,
+            "could not parse version string".into(),
+            HandshakeFailureIntentCode::ShowError,
+        );
         return;
     };
 
@@ -42,6 +54,7 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
                 "out of date: minimum plugin version is {}, you have {}",
                 required_version, client_version
             ),
+            HandshakeFailureIntentCode::RequireUpdate,
         );
         return;
     }
@@ -52,11 +65,19 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
     let player = match player_record {
         Ok(player) => player,
         Err(sqlx::Error::RowNotFound) => {
-            handshake_rejection(client, format!("authentication token rejected"));
+            handshake_rejection(
+                client,
+                format!("authentication token rejected"),
+                HandshakeFailureIntentCode::Reauthenticate,
+            );
             return;
         }
         Err(e) => {
-            handshake_rejection(client, format!("store error: {}", e));
+            handshake_rejection(
+                client,
+                format!("store error: {}", e),
+                HandshakeFailureIntentCode::ShowError,
+            );
             return;
         }
     };
@@ -73,9 +94,11 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
 }
 
 /// Send a rejection message with the provided reason message.
-fn handshake_rejection(client: &NetClient, reason: String) {
+fn handshake_rejection(client: &NetClient, reason: String, code: HandshakeFailureIntentCode) {
     warn!(cid = client.cid(), "rejected: {}", reason);
-    client.messager().send(&HandshakeResponse::failure(reason));
+    client
+        .messager()
+        .send(&HandshakeResponse::failure(reason, code));
 }
 
 /// Send a success message for completing the handshake.
@@ -100,15 +123,18 @@ struct HandshakeResponse {
     success: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    intent_code: Option<HandshakeFailureIntentCode>,
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
     data: Option<HandshakeSuccess>,
 }
 
 impl HandshakeResponse {
-    fn failure(reason: String) -> Self {
+    fn failure(reason: String, code: HandshakeFailureIntentCode) -> Self {
         Self {
             success: false,
             reason: Some(reason),
+            intent_code: Some(code),
             data: None,
         }
     }
@@ -117,6 +143,7 @@ impl HandshakeResponse {
         Self {
             success: true,
             reason: None,
+            intent_code: None,
             data: Some(data),
         }
     }
@@ -131,13 +158,8 @@ pub struct HandshakeSuccess {
 
 #[derive(Serialize_repr, PartialEq, Eq)]
 #[repr(i32)]
-pub enum HandshakeCode {
-    Ok = 0,
-    ParseError = 1,
-    IncompatibleVersion = 2,
-    AuthFailure = 3,
-    AuthRefused = 4,
-    ReadError = 5,
-    InvalidVersion = 6,
-    NoUsername = 7,
+pub enum HandshakeFailureIntentCode {
+    ShowError = 0,
+    RequireUpdate = 1,
+    Reauthenticate = 2,
 }

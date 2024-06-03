@@ -3,37 +3,58 @@ namespace Login {
 
     void EnsureLoggedIn() {
         if (!IsLoggedIn()) {
-            print("Login: No client token in store, attempting to authenticate.");
+            print("[Login::EnsureLoggedIn] No client token in store, attempting to authenticate.");
             Login();
         } else {
-            trace("Login: Client is logged in.");
+            trace("[Login::EnsureLoggedIn] Client is logged in.");
         }
     }
 
     bool IsLoggedIn() {
-#if TURBO
-        return true;
-#else
         return PersistantStorage::ClientToken != "";
-#endif
     }
 
     void Login() {
 #if TURBO
         throw("Login() called on Turbo! This is invalid.");
 #else
-        trace("Auth: Fetching a new authentication token...");
-        string authToken = FetchAuthToken();
-        if (authToken != "") {
-            trace("Auth: Received new authentication token.");
-        } else {
-            err("Auth", "Failed to authenticate with the Openplanet servers. Please check for connection issues.");
-            return;
+        trace("[Login] Fetching a new authentication token...");
+        string authToken;
+        string authenticationMethod = "Openplanet";
+        try {
+            authToken = FetchAuthToken();
+
+            if (authToken != "") {
+                trace("[Login] Received new authentication token.");
+            } else {
+                err("Login", "Failed to authenticate with the Openplanet servers. Please check for connection issues.");
+                return;
+            }
+        } catch {
+            print("[Login] Openplanet authentication unavailable: " + getExceptionInfo());
+            print("[Login] Falling back to basic authentication.");
+            authenticationMethod = "None";
         }
 
-        trace("Login: Attempting to login to " + Settings::BackendAddress + "...");
-        string url = "http://" + Settings::BackendAddress + ":" + Settings::HttpPort + "/auth/login?token=" + Net::UrlEncode(authToken);
-        auto req = Net::HttpGet(url);
+        Settings::BackendConfiguration backend = Settings::GetBackendConfiguration();
+        trace("[Login] Attempting to login to " + backend.NetworkAddress + "...");
+        string url = Settings::HttpScheme(backend) + backend.NetworkAddress + ":" + backend.HttpPort + "/auth/login";
+
+        Json::Value@ body = Json::Object();
+        body["authentication"] = authenticationMethod;
+        body["account_id"] = GetAccountId();
+        body["display_name"] = GetLocalUsername();
+        if (authenticationMethod == "Openplanet") body["token"] = authToken;
+
+        auto req = Net::HttpRequest();
+        req.Url = url;
+        req.Method = Net::HttpMethod::Post;
+        req.Body = Json::Write(body);
+        req.Headers = {
+            {"content-type", "application/json"}
+        };
+        req.Start();
+
         while (!req.Finished()) { yield(); }
     
         int status = req.ResponseCode();
@@ -48,7 +69,7 @@ namespace Login {
         }
 
         PersistantStorage::ClientToken = req.String();
-        trace("Login: Success.");
+        trace("[Login] Success.");
 #endif
     }
 

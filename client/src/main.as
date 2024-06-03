@@ -1,5 +1,6 @@
 const string WindowName = Icons::Th + " \\$zBingo";
 const string MenuItemName = "\\$ff0" + WindowName;
+const string DeveloperMenuItemName = "\\$82a" + Icons::Th + " \\$zDeveloper Tools";
 
 #if TMNEXT
 const GamePlatform CurrentGame = GamePlatform::Next;
@@ -48,6 +49,10 @@ void RenderMenu() {
             startnew(Network::Connect);
         }
     }
+
+    if (Settings::DevTools && UI::MenuItem(DeveloperMenuItemName, "", UIDevActions::Visible)) {
+        UIDevActions::Visible = !UIDevActions::Visible;
+    }
 }
 
 void Render() {
@@ -84,6 +89,7 @@ void RenderInterface() {
     UIMainWindow::Render();
     UINews::Render();
     UIDailyHistory::Render();
+    UIDevActions::Render();
 
     Font::Unset();
 }

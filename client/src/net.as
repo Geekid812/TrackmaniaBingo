@@ -95,11 +95,11 @@ namespace Network {
         while (!IsConnected() && retries > 0) {
             auto handshake = HandshakeRequest();
             handshake.version = Meta::ExecutingPlugin().Version;
-            handshake.username = GetLocalUsername();
             handshake.token = PersistantStorage::ClientToken;
             handshake.game = CurrentGame;
 
-            int code = _protocol.Connect(Settings::BackendAddress, Settings::NetworkPort, handshake);
+            Settings::BackendConfiguration@ backend = Settings::GetBackendConfiguration();
+            int code = _protocol.Connect(backend.NetworkAddress, backend.TcpPort, handshake);
 
             // If the handshake code was not handled, this is the last retry.
             if (code != -1 && !HandleHandshakeCode(HandshakeCode(code))) retries = 1;

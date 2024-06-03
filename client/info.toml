@@ -1,9 +1,8 @@
 [meta]
-version = "4.3-dev"
+version = "5.0-dev"
 name = "Bingo"
 author = "TheGeekid"
 category = "Game"
-siteid = 271
 
 [script]
 exports = ["src/export/definitions.as"]
