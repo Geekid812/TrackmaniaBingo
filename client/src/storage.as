@@ -21,13 +21,13 @@ namespace PersistantStorage {
     [Setting hidden]
     int LastConnectedMatchTeamId = -1;
 
-    void LoadPersistentItems() {
+    void LoadItems() {
         try {
             if (LocalProfile != "") {
                 @Profile = PlayerProfile::Deserialize(Json::Parse(LocalProfile));
             }
         } catch {
-            warn("LoadPersistentItems: Deserialize of LocalProfile failed (" + getExceptionInfo() + ")");
+            warn("[PersistantStorage::LoadItems] Deserialize of LocalProfile failed (" + getExceptionInfo() + ")");
         }
 
         try {
@@ -37,7 +37,7 @@ namespace PersistantStorage {
                 MatchConfig = MatchConfiguration::Deserialize(configs["game"]);
             }
         } catch {
-            warn("LoadPersistentItems: Deserialize of LastConfig failed (" + getExceptionInfo() + ")");
+            warn("[PersistantStorage::LoadItems] Deserialize of LastConfig failed (" + getExceptionInfo() + ")");
         }
     }
 

@@ -102,35 +102,13 @@ namespace Network {
             int code = _protocol.Connect(backend.NetworkAddress, backend.TcpPort, handshake);
 
             // If the handshake code was not handled, this is the last retry.
-            if (code != -1 && !HandleHandshakeCode(HandshakeCode(code))) retries = 1;
+            if (code == -2) retries = 1;
 
             if (!IsConnected()) {
                 retries -= 1;
                 trace("[Network] Failed to connect. " + retries + " retry attempts left.");
             }
         }
-    }
-
-    bool HandleHandshakeCode(HandshakeCode code) {
-        if (code == HandshakeCode::Ok) {
-            return false;
-        }
-        if (code == HandshakeCode::CanReconnect) {
-            // The server indicates that reconnecting is possible
-            warn("Error code" + int(HandshakeCode::CanReconnect) + " is obsolete as of version 4.3. This should not have happened!");
-        } else if (code == HandshakeCode::IncompatibleVersion) {
-            // Update required
-            UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required to play Bingo. Please update the plugin to the latest version in the plugin manager.", vec4(.4, .4, 1., 1.), 10000);
-            trace("[Network] Received update handshake code. We will not attempt to retry the connection.");
-            return false;
-        } else if (code == HandshakeCode::AuthRefused || code == HandshakeCode::AuthFailure) {
-            // Auth error (we should try and update our logins)
-            trace("[Network] Received auth error handshake code (" + code + "). Attempting to refresh credentials...");
-            Login::Login();
-        } else {
-            // Plugin error (this should not happen)
-        }
-        return true;
     }
 
     void Loop() {

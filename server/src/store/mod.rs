@@ -3,10 +3,10 @@ use std::{collections::HashMap, fs, path::Path, sync::OnceLock};
 use sqlx::{sqlite::SqlitePoolOptions, Row, SqlitePool};
 use tracing::{error, info};
 
-static DATABASE_VERSIONS: [&'static str; 1] = [include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/db/versions/v1.sql"
-))];
+static DATABASE_VERSIONS: [&'static str; 2] = [
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/db/versions/v1.sql")),
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/db/versions/v2.sql")),
+];
 
 static PRIMARY_STORE: OnceLock<SqlitePool> = OnceLock::new();
 

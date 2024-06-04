@@ -1,5 +1,7 @@
 mod models;
 
+use crate::datatypes::{PlayerProfile, PlayerRef};
+
 use super::{
     execute_with_arguments, get_store, query_with_arguments, StoreReadResult, StoreWriteResult,
 };
@@ -31,4 +33,12 @@ pub async fn get_player_from_token(token: &str) -> StoreReadResult<PlayerIdentif
         uid: row.get(0),
         display_name: row.get(1),
     })
+}
+
+pub async fn get_player_profile(uid: i32) -> StoreReadResult<PlayerProfile> {
+    query_with_arguments(get_store(),
+    "SELECT username, account_id, created_at, country_code, title, games_played, games_won, score FROM players WHERE uid = ?", 
+    |query| query.bind(uid))
+    .await
+    .map(|row| PlayerProfile { uid, name: row.get(0) , account_id: row.get(1), created_at: row.get(2), last_played_at: row.get(2), country_code: row.get(3), title: row.get(4), games_played: row.get(5), games_won: row.get(6), score: row.get(7) })
 }

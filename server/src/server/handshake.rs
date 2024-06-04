@@ -1,12 +1,11 @@
 use bytes::BytesMut;
 use serde::Serialize;
 use serde_json::from_str;
-use serde_repr::Serialize_repr;
 use tracing::{info, warn};
 
 use super::client::{ClientCallbackImplementation, NetClient};
 use super::version::Version;
-use crate::datatypes::{HandshakeFailureIntentCode, HandshakeRequest};
+use crate::datatypes::{HandshakeFailureIntentCode, HandshakeRequest, PlayerProfile};
 use crate::{config, store};
 
 /// Message handler for an unauthenticated client. Main logic of the connection handshake.
@@ -82,11 +81,23 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
         }
     };
 
+    // Load that player's profile
+    let profile = match store::player::get_player_profile(player.uid).await {
+        Ok(profile) => profile,
+        Err(e) => {
+            handshake_rejection(
+                client,
+                format!("store error: {}", e),
+                HandshakeFailureIntentCode::ShowError,
+            );
+            return;
+        }
+    };
+
     handshake_success(
         client,
         HandshakeSuccess {
-            uid: player.uid,
-            display_name: player.display_name,
+            profile,
             can_reconnect: false,
         },
     );
@@ -107,7 +118,7 @@ fn handshake_rejection(client: &NetClient, reason: String, code: HandshakeFailur
 fn handshake_success(client: &NetClient, data: HandshakeSuccess) {
     info!(
         cid = client.cid(),
-        "authenticated: {} (uid {})", data.display_name, data.uid
+        "authenticated: {} (uid {})", data.profile.name, data.profile.uid
     );
     client.messager().send(&HandshakeResponse::success(data));
 }
@@ -153,7 +164,6 @@ impl HandshakeResponse {
 
 #[derive(Serialize)]
 pub struct HandshakeSuccess {
-    pub uid: u32,
-    pub display_name: String,
+    pub profile: PlayerProfile,
     pub can_reconnect: bool,
 }

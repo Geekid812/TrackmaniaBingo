@@ -19,6 +19,26 @@ pub struct PlayerRef {
     pub name: String,
 }
 
+/* A player's detailed profile. */
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
+#[derivative(Default)]
+#[serde(default)]
+pub struct PlayerProfile {
+    pub uid: i32,
+    pub name: String,
+    pub account_id: String,
+    #[serde_as(as = "TimestampSeconds")]
+	pub created_at: DateTime<Utc>,
+    #[serde_as(as = "TimestampSeconds")]
+	pub last_played_at: DateTime<Utc>,
+    pub country_code: String,
+    pub title: Option<String>,
+    pub games_played: u32,
+    pub games_won: u32,
+    pub score: u32,
+}
+
 /* Room parameters set by the host. */
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]

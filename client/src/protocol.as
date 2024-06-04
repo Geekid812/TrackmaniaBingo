@@ -65,11 +65,11 @@ class Protocol {
                 switch (code) {
                     case HandshakeFailureIntentCode::ShowError:
                         err("Protocol::Connect", "Connection to server failed: " + reason);
-                        break;
+                        return -2;
                     case HandshakeFailureIntentCode::RequireUpdate:
                         UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required: " + reason, vec4(.4, .4, 1., 1.), 15000);
                         print("[Protocol::Connect] New update required: " + reason);
-                        break;
+                        return -2;
                     case HandshakeFailureIntentCode::Reauthenticate:
                         print("[Protocol::Connect] Reauthenticating: " + reason);
                         Login::Login();
@@ -78,11 +78,15 @@ class Protocol {
                 Fail();
                 return -1;
             }
+            @Profile = PlayerProfile::Deserialize(reply["profile"]);
         } catch {
-            trace("[Protocol::Connect] Handshake reply parse failed. Got: " + handshakeReply);
+            err("Protocol::Connect", "Could not connect to the server, received an invalid response.");
+            error("Got this message: " + handshakeReply);
+            error("Error: " + getExceptionInfo());
             Fail();
-            return -1;
+            return -2;
         }
+
 
         trace("[Protocol::Connect] Handshake completed. Connection has been established!");
         state = ConnectionState::Connected;

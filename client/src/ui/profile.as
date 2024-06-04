@@ -13,13 +13,8 @@ namespace UIProfile {
             NameTitle(profile.title);
         }
 
-        MatchCount(profile.matchCount);
-        if (profile.dailyWins > 0) {
-            UI::SameLine();
-            DailyWins(profile.dailyWins);
-        }
+        MatchCount(profile.gamesPlayed);
         UI::SetCursorPos(playerPos);
-        // RatingDisplay(profile.score, profile.deviation);
         UI::NewLine();
         if (showId) PlayerId(profile.uid);
 #elif TURBO
@@ -37,7 +32,7 @@ namespace UIProfile {
     }
 
     void PlayerName(PlayerProfile profile, bool bold) {
-        UI::Text(profile.username);
+        UI::Text(profile.name);
     }
 
     void MatchCount(int matches) {

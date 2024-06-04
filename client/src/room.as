@@ -92,7 +92,7 @@ class Player {
 
     Player(PlayerProfile profile, Team team) {
         this.profile = profile;
-        this.name = profile.username;
+        this.name = profile.name;
         this.team = team;
     }
 

@@ -16,15 +16,19 @@
         <m name="name" type="string" />
     </struct>
 
-    <!-- <struct name="PlayerProfile">
-
+    <struct name="PlayerProfile">
+        <comment>A player's detailed profile.</comment>
+        <m name="uid" type="int" />
+        <m name="name" type="string" />
+        <m name="account_id" type="string" />
         <m name="created_at" type="datetime" />
+        <m name="last_played_at" type="datetime" />
         <m name="country_code" type="string" />
-        <m name="match_count" type="int" />
-        <m name="daily_count" type="int" />
-        <m name="daily_wins" type="int" />
         <m name="title" type="string" optional="true" />
-    </struct> -->
+        <m name="games_played" type="uint" />
+        <m name="games_won" type="uint" />
+        <m name="score" type="uint" />
+    </struct>
 
     <struct name="RoomConfiguration">
         <comment>Room parameters set by the host.</comment>

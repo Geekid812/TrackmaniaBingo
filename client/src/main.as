@@ -11,7 +11,7 @@ const GamePlatform CurrentGame = GamePlatform::Turbo;
 void Main() {
     Font::Init();
     startnew(Login::EnsureLoggedIn);
-    PersistantStorage::LoadPersistentItems();
+    PersistantStorage::LoadItems();
     Config::FetchConfig();
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
