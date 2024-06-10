@@ -11,7 +11,7 @@ use crate::{
         self,
         models::matches::{Match, PlayerToMatch},
     },
-    server::{context::ClientContext, tasks::execute_delayed_task},
+    server::{context::PlayerContext, tasks::execute_delayed_task},
     transport::Channel,
 };
 use chrono::{DateTime, Duration, Utc};
@@ -218,7 +218,7 @@ impl LiveMatch {
 
     pub fn player_join(
         &mut self,
-        ctx: &ClientContext,
+        ctx: &PlayerContext,
         mut requested_team: Option<TeamIdentifier>,
     ) -> Result<TeamIdentifier, anyhow::Error> {
         let already_joined_team = self.get_player_team(ctx.profile.player.uid);
@@ -242,7 +242,7 @@ impl LiveMatch {
 
     fn add_player(
         &mut self,
-        ctx: &ClientContext,
+        ctx: &PlayerContext,
         team: Option<TeamIdentifier>,
     ) -> Result<TeamIdentifier, anyhow::Error> {
         let team = match team {

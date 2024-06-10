@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     core::{directory, gamecommon::setup_room, models::team::BaseTeam, room::GameRoom},
     datatypes::{MatchConfiguration, RoomConfiguration},
-    server::context::{ClientContext, RoomContext},
+    server::context::{PlayerContext, RoomContext},
 };
 
 use super::{Request, Response};
@@ -24,7 +24,7 @@ pub struct CreateRoomResponse {
 
 #[typetag::deserialize]
 impl Request for CreateRoom {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             ctx.trace("already in a room, leaving previous game");
             room.lock().player_remove(ctx.profile.player.uid);

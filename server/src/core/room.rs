@@ -29,7 +29,7 @@ use super::{
 use crate::{
     datatypes::{GamePlatform, MatchConfiguration, RoomConfiguration},
     orm::composed::profile::PlayerProfile,
-    server::{context::ClientContext, mapload},
+    server::{context::PlayerContext, mapload},
     transport::{Channel, Tx},
 };
 
@@ -177,7 +177,7 @@ impl GameRoom {
 
     pub fn add_player(
         &mut self,
-        ctx: &ClientContext,
+        ctx: &PlayerContext,
         profile: &PlayerProfile,
         operator: bool,
         writer: Arc<Tx>,
@@ -218,7 +218,7 @@ impl GameRoom {
 
     pub fn player_join(
         &mut self,
-        ctx: &ClientContext,
+        ctx: &PlayerContext,
         profile: &PlayerProfile,
     ) -> Result<(), JoinRoomError> {
         if self.at_size_capacity() {

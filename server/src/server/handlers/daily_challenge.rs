@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::models::livegame::MatchState,
-    server::{context::ClientContext, daily::DAILY_MATCH},
+    server::{context::PlayerContext, daily::DAILY_MATCH},
 };
 
 use super::{generic, Request, Response};
@@ -20,7 +20,7 @@ pub struct DailyNotLoaded;
 
 #[typetag::deserialize]
 impl Request for SubscribeDailyChallenge {
-    fn handle(&self, _ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, _ctx: &mut PlayerContext) -> Box<dyn Response> {
         let lock = DAILY_MATCH.lock();
         match lock.as_deref() {
             Some(challenge) => {
@@ -40,7 +40,7 @@ pub struct UnsubscribeDailyChallenge;
 
 #[typetag::deserialize]
 impl Request for UnsubscribeDailyChallenge {
-    fn handle(&self, _ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, _ctx: &mut PlayerContext) -> Box<dyn Response> {
         let lock = DAILY_MATCH.lock();
         if let Some(_challenge) = lock.as_deref() {
             // challenge

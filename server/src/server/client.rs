@@ -12,7 +12,7 @@ use tracing::{debug, error, warn};
 use super::handshake;
 use super::messager::{new_messager, NetMessager};
 use super::requests::BaseRequest;
-use crate::server::context::ClientContext;
+use crate::server::context::PlayerContext;
 use crate::transport::client::tcpnative::NativeClientProtocol;
 use crate::transport::{TransportReader, TransportWriter};
 
@@ -136,7 +136,7 @@ pub enum ClientCallbackImplementation {
 }
 
 // -- old code
-fn handle_recv(ctx: &mut ClientContext, result: Result<String, io::Error>) -> bool {
+fn handle_recv(ctx: &mut PlayerContext, result: Result<String, io::Error>) -> bool {
     let msg = match result {
         Ok(msg) => msg,
         Err(_) => return false,

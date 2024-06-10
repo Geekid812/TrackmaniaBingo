@@ -1,4 +1,4 @@
-use crate::{core::models::team::TeamIdentifier, server::context::ClientContext};
+use crate::{core::models::team::TeamIdentifier, server::context::PlayerContext};
 use serde::Deserialize;
 
 use super::{generic, Request, Response};
@@ -10,7 +10,7 @@ pub struct ChangeTeam {
 
 #[typetag::deserialize]
 impl Request for ChangeTeam {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             let mut lock = room.lock();
             lock.change_team(ctx.profile.player.uid, self.team_id);

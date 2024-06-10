@@ -1,5 +1,9 @@
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::{Arc, OnceLock},
+};
 
+use parking_lot::Mutex;
 use tracing::debug;
 
 use crate::{
@@ -11,24 +15,32 @@ use crate::{
     },
     datatypes::PlayerRef,
     orm::composed::profile::PlayerProfile,
-    transport::Tx,
 };
 
-pub struct ClientContext {
-    pub room: Option<RoomContext>,
-    pub game: Option<GameContext>,
-    pub profile: PlayerProfile,
-    pub writer: Arc<Tx>,
+/// Global mapping of all global `PlayerContext` structures by uid.
+static CONTEXTS: OnceLock<Mutex<HashMap<i32, Owned<PlayerContext>>>> = OnceLock::new();
+
+/// Get a handle to a player's global context, that is: its main controller interface.
+pub fn get_context(uid: i32) -> Owned<PlayerContext> {
+    let mut lock = CONTEXTS.get_or_init(|| Mutex::new(HashMap::new())).lock();
+    if let Some(ctx) = lock.get(&uid) {
+        ctx.clone()
+    } else {
+        // Context has not been created for this uid, initialize it now
+        let ctx = Arc::new(Mutex::new(PlayerContext::new(uid)));
+        lock.insert(uid, ctx.clone());
+        ctx
+    }
 }
 
-impl ClientContext {
-    pub fn new(profile: PlayerProfile, writer: Arc<Tx>) -> Self {
-        Self {
-            room: None,
-            game: None,
-            profile,
-            writer,
-        }
+/// The player context is a facade for handling any kind of operation for a given player.
+pub struct PlayerContext {
+    pub uid: i32,
+}
+
+impl PlayerContext {
+    pub fn new(uid: i32) -> Self {
+        Self { uid }
     }
 
     pub fn game_room(&self) -> Option<Owned<GameRoom>> {
@@ -62,7 +74,7 @@ impl ClientContext {
     }
 }
 
-impl Drop for ClientContext {
+impl Drop for PlayerContext {
     fn drop(&mut self) {
         debug!("ClientContext dropped");
         self.room.as_mut().map(|r| r.cleanup());

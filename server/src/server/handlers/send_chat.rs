@@ -1,7 +1,7 @@
 use crate::{
     core::events::{game::GameEvent, room::RoomEvent},
     datatypes::{ChatMessage, PlayerRef},
-    server::context::ClientContext,
+    server::context::PlayerContext,
 };
 use chrono::Utc;
 use serde::Deserialize;
@@ -33,7 +33,7 @@ fn build_chat_message(message: &str, player: PlayerRef) -> ChatMessage {
 
 #[typetag::deserialize]
 impl Request for SendChatMessage {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         ctx.game_sync();
         let player = ctx.get_player_ref();
         let message = build_chat_message(&self.message, player);

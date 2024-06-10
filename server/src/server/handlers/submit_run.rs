@@ -1,7 +1,7 @@
 use crate::{
     core::models::{livegame::MapClaim, player::PlayerRef},
     datatypes::{CampaignMap, Medal},
-    server::context::ClientContext,
+    server::context::PlayerContext,
 };
 use serde::Deserialize;
 
@@ -17,7 +17,7 @@ pub struct SubmitRun {
 
 #[typetag::deserialize]
 impl Request for SubmitRun {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         ctx.game_sync();
         if let Some(game) = ctx.game_match() {
             let claim = MapClaim {

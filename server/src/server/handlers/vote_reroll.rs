@@ -1,4 +1,4 @@
-use crate::server::context::ClientContext;
+use crate::server::context::PlayerContext;
 use serde::Deserialize;
 
 use super::{generic, Request, Response};
@@ -10,7 +10,7 @@ pub struct CastRerollVote {
 
 #[typetag::deserialize]
 impl Request for CastRerollVote {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         ctx.game_sync();
         if let Some(game) = ctx.game_match() {
             let mut lock = game.lock();

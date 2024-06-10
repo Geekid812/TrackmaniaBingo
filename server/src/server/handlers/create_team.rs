@@ -1,4 +1,4 @@
-use crate::{core::gamecommon, server::context::ClientContext};
+use crate::{core::gamecommon, server::context::PlayerContext};
 use serde::Deserialize;
 
 use super::{generic, Request, Response};
@@ -8,7 +8,7 @@ pub struct CreateTeam;
 
 #[typetag::deserialize]
 impl Request for CreateTeam {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             let mut lock = room.lock();
             if !lock.get_player(ctx.profile.player.uid).unwrap().operator {

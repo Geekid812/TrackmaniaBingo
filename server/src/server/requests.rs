@@ -5,7 +5,7 @@ use super::handlers::{Request, Response};
 #[derive(Deserialize, Debug)]
 pub struct BaseRequest {
     #[serde(rename = "seq")]
-    sequence: u32,
+    sequence: i32,
     #[serde(flatten)]
     pub request: Box<dyn Request>,
 }
@@ -22,45 +22,17 @@ impl BaseRequest {
 #[derive(Serialize, Debug)]
 pub struct BaseResponse {
     #[serde(rename = "seq")]
-    sequence: u32,
+    sequence: i32,
     #[serde(flatten)]
     pub response: Box<dyn Response>,
 }
 
-// #[derive(Deserialize)]
-// #[serde(tag = "request")]
-// pub enum Request {
-//     Ping,
-//     CreateRoom(CreateRoomRequest),
-//     JoinRoom {
-//         join_code: String,
-//     },
-//     EditRoomConfig {
-//         config: RoomConfiguration,
-//     },
-//     CreateTeam,
-//     StartGame,
-//     ClaimCell {
-//         uid: String,
-//         time: u64,
-//         medal: Medal,
-//     },
-//     Sync,
-// }
-
-// #[derive(Serialize)]
-// #[serde(untagged)]
-// pub enum Response {
-//     Pong,
-//     Ok,
-//     Error {
-//         error: String,
-//     },
-//     CreateRoom(CreateRoomResponse),
-//     JoinRoom {
-//         name: String,
-//         config: RoomConfiguration,
-//         status: RoomStatus,
-//     },
-//     Sync(SyncPacket),
-// }
+impl BaseResponse {
+    /// Build a `BaseResponse` without a matching sequence identifier.
+    pub fn bare(response: Box<dyn Response>) -> Self {
+        Self {
+            sequence: -1,
+            response,
+        }
+    }
+}

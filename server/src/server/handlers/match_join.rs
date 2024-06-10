@@ -5,7 +5,7 @@ use crate::{
         directory::MATCHES,
         models::{livegame::MatchState, team::TeamIdentifier},
     },
-    server::context::{ClientContext, GameContext},
+    server::context::{GameContext, PlayerContext},
 };
 
 use super::{generic, Request, Response};
@@ -23,7 +23,7 @@ pub struct JoinMatchOk {
 
 #[typetag::deserialize]
 impl Request for JoinMatch {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             ctx.trace("already in a room, leaving previous game");
             room.lock().player_remove(ctx.profile.player.uid);

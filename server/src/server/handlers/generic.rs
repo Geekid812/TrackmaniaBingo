@@ -13,6 +13,14 @@ pub struct Error {
     pub error: String,
 }
 
+impl Error {
+    pub fn new<E: Into<String>>(error: E) -> Self {
+        Self {
+            error: error.into(),
+        }
+    }
+}
+
 impl From<anyhow::Error> for Error {
     fn from(value: anyhow::Error) -> Self {
         Self {

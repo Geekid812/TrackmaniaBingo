@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::server::context::ClientContext;
+use crate::server::context::PlayerContext;
 
 use super::{generic, Request, Response};
 
@@ -9,7 +9,7 @@ pub struct Ping;
 
 #[typetag::deserialize]
 impl Request for Ping {
-    fn handle(&self, _ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, _ctx: &mut PlayerContext) -> Box<dyn Response> {
         Box::new(generic::Ok)
     }
 }

@@ -1,4 +1,4 @@
-use crate::{core::events::game::GameEvent, server::context::ClientContext};
+use crate::{core::events::game::GameEvent, server::context::PlayerContext};
 use serde::Deserialize;
 
 use super::{generic, Request, Response};
@@ -10,7 +10,7 @@ pub struct PingCell {
 
 #[typetag::deserialize]
 impl Request for PingCell {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         ctx.game_sync();
         if let Some(game) = ctx.game_match() {
             let mut lock = game.lock();

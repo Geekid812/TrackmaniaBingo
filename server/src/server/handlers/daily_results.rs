@@ -6,7 +6,7 @@ use crate::{
         self,
         composed::daily::{self, DailyResults},
     },
-    server::context::ClientContext,
+    server::context::PlayerContext,
 };
 
 use super::{generic, Request, Response};
@@ -18,7 +18,7 @@ pub struct GetDailyResults {
 
 #[typetag::deserialize]
 impl Request for GetDailyResults {
-    fn handle(&self, _ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, _ctx: &mut PlayerContext) -> Box<dyn Response> {
         let time_period = self.period.clone();
         match block_on(orm::execute(move |mut conn| {
             block_on(daily::get_daily_results(&mut conn, &time_period))

@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::server::context::ClientContext;
+use crate::server::context::PlayerContext;
 
 use super::{generic, Request, Response};
 
@@ -9,7 +9,7 @@ pub struct StartMatch;
 
 #[typetag::deserialize]
 impl Request for StartMatch {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             let mut lock = room.lock();
             if !lock.get_player(ctx.profile.player.uid).unwrap().operator {

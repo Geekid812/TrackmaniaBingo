@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use crate::{
     datatypes::{MatchConfiguration, RoomConfiguration},
-    server::context::ClientContext,
+    server::context::PlayerContext,
 };
 
 use super::{generic, Request, Response};
@@ -15,7 +15,7 @@ pub struct EditConfig {
 
 #[typetag::deserialize]
 impl Request for EditConfig {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             let mut lock = room.lock();
             if !lock.get_player(ctx.profile.player.uid).unwrap().operator {

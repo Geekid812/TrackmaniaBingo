@@ -5,7 +5,7 @@ use crate::{
         directory::{PUB_ROOMS_CHANNEL, ROOMS},
         models::room::NetworkRoom,
     },
-    server::context::ClientContext,
+    server::context::PlayerContext,
 };
 
 use super::{Request, Response};
@@ -20,7 +20,7 @@ pub struct PublicRoomsList {
 
 #[typetag::deserialize]
 impl Request for GetPublicRooms {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         PUB_ROOMS_CHANNEL
             .lock()
             .subscribe(ctx.profile.player.uid, ctx.writer.clone());

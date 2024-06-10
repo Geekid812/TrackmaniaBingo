@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     core::{directory::ROOMS, models::room::RoomTeam, room::JoinRoomError},
     datatypes::{MatchConfiguration, RoomConfiguration},
-    server::context::{ClientContext, RoomContext},
+    server::context::{PlayerContext, RoomContext},
 };
 
 use super::{generic, Request, Response};
@@ -22,7 +22,7 @@ pub struct JoinRoomResponse {
 
 #[typetag::deserialize]
 impl Request for JoinRoom {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+    fn handle(&self, ctx: &mut PlayerContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             ctx.trace("already in a room, leaving previous game");
             room.lock().player_remove(ctx.profile.player.uid);
