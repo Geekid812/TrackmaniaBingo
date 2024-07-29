@@ -27,14 +27,14 @@ namespace UIInfoBar {
         UIColor::Reset();
 
         if (UI::Button("Exit")) {
-            Network::LeaveRoom();
+            Gamemaster::Shutdown();
             UIMainWindow::Visible = true;
             startnew(Network::Connect);
         }
         SubwindowEnd(geometry);
     }
 
-    void MapLeaderboard(MapCell map) {
+    void MapLeaderboard(GameTile map) {
         vec4 geometry = SubwindowBegin("Bingo Map Leaderboard");
         if (map.attemptRanking.Length == 0 && Match.config.targetMedal == Medal::None) {
             UI::Text("\\$888Complete this map to claim it!");
@@ -44,6 +44,7 @@ namespace UIInfoBar {
 
         for (uint i = 0; i < map.attemptRanking.Length; i++) {
             MapClaim claim = map.attemptRanking[i];
+            Player@ claimingPlayer = claim.player;
             UI::Text(tostring(i + 1) + ".");
             UI::SameLine();
             if (i == 0) {
@@ -52,7 +53,7 @@ namespace UIInfoBar {
 
             Font::Style textStyle = Font::Style::Regular;
             if (i == 0) textStyle = Font::Style::Bold;
-            Font::Set(textStyle, 16.);
+            Font::Set(textStyle, Font::Size::Medium);
 
             Layout::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
             UI::Text(claim.result.Display());
@@ -60,7 +61,8 @@ namespace UIInfoBar {
             if (i == 0) {
                 UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 6));
             }
-            UITools::PlayerTag(claim.player);
+            UITools::PlayerTag(claimingPlayer);
+
             Font::Unset();
         }
         if (Match.config.targetMedal != Medal::None) {
@@ -83,14 +85,14 @@ namespace UIInfoBar {
         SubwindowEnd(geometry);
     }
 
-    void TimeToBeatDisplay(MapCell cell) {
+    void TimeToBeatDisplay(GameTile cell) {
         vec4 geometry = SubwindowBegin("Bingo Map Info");
 
         string displayText = "\\$ff8Time to beat: ";
         Team myTeam = Match.GetSelf().team;
         if (cell.IsClaimed()) {
             MapClaim leadingClaim = cell.LeadingRun();
-            if (leadingClaim.player.team == myTeam) {
+            if (leadingClaim.teamId == myTeam.id) {
                 displayText = "\\$ff8Your team's time: ";
             }
             string claimingText = leadingClaim.result.Display() + " by";
@@ -100,9 +102,10 @@ namespace UIInfoBar {
             UI::Text(displayText);
             UI::Text(claimingText);
 
+            Player@ topPlayer = leadingClaim.player;
             UI::SameLine();
             UI::SetCursorPos(UI::GetCursorPos() - vec2(6., 0.));
-            UITools::PlayerTag(leadingClaim.player);
+            UITools::PlayerTag(topPlayer);
 
             UI::Separator();
             string buttonText = Icons::ListOl + " Map Records";
@@ -142,12 +145,13 @@ namespace UIInfoBar {
     }
 
     void Render() {
-        if (@Match == null) return;
+        if (!Gamemaster::IsBingoActive()) return;
         
-        // Time since the game has started. If we are in countdown, don't show up yet
-        int64 stopwatchTime = Time::Milliseconds(@Match);
-        MatchPhase phase = Match.GetPhase();
-        if (phase == MatchPhase::Starting) return;
+        int64 stopwatchTime = GameTime::CurrentClock();
+        GamePhase phase = Gamemaster::GetPhase();
+
+        // If we are in the countdown at game start, don't show up yet
+        if (phase == GamePhase::Starting) return;
 
         Player@ self = Match.GetSelf();
         Team team;
@@ -160,13 +164,13 @@ namespace UIInfoBar {
 
         string colorPrefix;
         switch (phase) {
-            case MatchPhase::NoBingo:
+            case GamePhase::NoBingo:
                 colorPrefix = "\\$fe6";
                 break;
-            case MatchPhase::Overtime:
+            case GamePhase::Overtime:
                 colorPrefix = "\\$e44+";
                 break;
-            case MatchPhase::Ended:
+            case GamePhase::Ended:
                 colorPrefix = "\\$fb0";
                 break;
         }
@@ -175,14 +179,14 @@ namespace UIInfoBar {
         string phaseText;
         vec3 color;
         bool animate = true;
-        if (phase == MatchPhase::NoBingo) {
+        if (phase == GamePhase::NoBingo) {
             phaseText = "Grace Period";
             color = vec3(.7, .6, .2);
             animate = false;
-        } else if (phase == MatchPhase::Overtime) {
+        } else if (phase == GamePhase::Overtime) {
             phaseText = "Overtime";
             color = vec3(.6, .15, .15);
-        } else if (phase == MatchPhase::Ended) {
+        } else if (phase == GamePhase::Ended) {
             Team@ winningTeam = Match.endState.team;
 
             if (winningTeam !is null) {
@@ -208,12 +212,14 @@ namespace UIInfoBar {
         }
 
         // If playing with a time limit, timer counts down to 0
+        /* FIXME
         if (Match.config.timeLimit != 0 || Match.config.noBingoDuration != 0) stopwatchTime = Time::GetMaxTimeMilliseconds(@Match) - stopwatchTime;
-        if (phase == MatchPhase::NoBingo) stopwatchTime -= Time::GetTimelimitMilliseconds(@Match);
+        if (phase == GamePhase::NoBingo) stopwatchTime -= Time::GetTimelimitMilliseconds(@Match);
         if (stopwatchTime < 0) stopwatchTime = -stopwatchTime;
-        if (phase == MatchPhase::Overtime) stopwatchTime = Time::Now - Match.overtimeStartTime;
+        if (phase == GamePhase::Overtime) stopwatchTime = Time::Now - Match.overtimeStartTime;
+        */
 
-        Font::Set(Font::Style::Mono, 28);
+        Font::Set(Font::Style::Mono, Font::Size::XLarge);
         UI::Text(colorPrefix + Time::Format(stopwatchTime, false, true, true));
         Font::Unset();
 
@@ -231,7 +237,7 @@ namespace UIInfoBar {
         }
         UIColor::Reset();
         
-        MapCell cell = Match.GetCurrentMap();
+        GameTile cell = Match.GetCurrentMap();
         CGameCtnChallenge@ gameMap = Playground::GetCurrentMap();
         if (@cell.map !is null) {
             if (gameMap.EdChallengeId == MapLeaderboardUid || Match.endState.HasEnded()) {
@@ -242,7 +248,7 @@ namespace UIInfoBar {
         }
 
         UIColor::Gray();
-        if (Match.GetPhase() == MatchPhase::Ended) {
+        if (phase == GamePhase::Ended) {
             InfobarControls();
         }
         UIColor::Reset();

@@ -10,7 +10,7 @@ namespace UIHome {
     }
 
     void Title() {
-        Font::Set(Font::Style::Bold, 26);
+        Font::Set(Font::Style::Bold, Font::Size::Huge);
 
         string title = "\\$ff5Trackmania Bingo \\$888" + Meta::ExecutingPlugin().Version;
         float titleSize = Draw::MeasureString(title, Font::Current()).x; 

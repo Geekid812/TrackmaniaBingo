@@ -15,12 +15,7 @@ pub static TEAMS: Lazy<Vec<(String, Color)>> = Lazy::new(|| {
         .collect()
 });
 
-use super::{
-    directory::Owned,
-    models::{player::PlayerRef, team::TeamIdentifier},
-    room::GameRoom,
-    util::Color,
-};
+use super::{directory::Owned, models::team::TeamIdentifier, room::GameRoom, util::Color};
 
 pub fn setup_room(room_arc: &Owned<GameRoom>) {
     let mut room = room_arc.lock();
@@ -44,13 +39,4 @@ pub struct PlayerData {
     pub operator: bool,
     pub disconnected: bool,
     pub writer: NetMessager,
-}
-
-impl From<&PlayerData> for PlayerRef {
-    fn from(value: &PlayerData) -> Self {
-        Self {
-            uid: value.uid,
-            team: value.team,
-        }
-    }
 }

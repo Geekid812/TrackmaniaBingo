@@ -2,13 +2,13 @@
 class LiveMatch {
     string uid;
     MatchConfiguration config;
-    array<MapCell>@ gameMaps = {};
+    array<GameTile>@ tiles = {};
     array<Team>@ teams = {};
     array<Player>@ players = {};
     int64 startTime = 0;
     int64 overtimeStartTime = 0;
     int64 endTime = 0;
-    MatchPhase phase = MatchPhase::Starting;
+    GamePhase phase = GamePhase::Starting;
     bool canReroll = false;
     EndState endState;
 
@@ -41,8 +41,8 @@ class LiveMatch {
 
     uint GetTeamCellCount(Team team) {
         uint sum = 0;
-        for (uint i = 0; i < gameMaps.Length; i++) {
-            if (gameMaps[i].IsClaimed() && gameMaps[i].LeadingRun().player.team == team) {
+        for (uint i = 0; i < tiles.Length; i++) {
+            if (tiles[i].IsClaimed() && tiles[i].LeadingRun().player.team == team) {
                 sum += 1;
             }
         }
@@ -60,55 +60,37 @@ class LiveMatch {
         return null;
     }
 
-    MapCell GetMapWithUid(string&in uid) {
-        for (uint i = 0; i < this.gameMaps.Length; i++) {
-            MapCell selectedMap = this.gameMaps[i];
+    GameTile GetMapWithUid(string&in uid) {
+        for (uint i = 0; i < this.tiles.Length; i++) {
+            GameTile selectedMap = this.tiles[i];
             if (selectedMap.map.uid == uid) return selectedMap;
         }
 
-        return MapCell();
+        return GameTile();
     }
 
-    MapCell GetCurrentMap() {
+    GameTile GetCurrentMap() {
         CGameCtnChallenge@ currentMap = Playground::GetCurrentMap();
-        if (@currentMap == null) return MapCell();
+        if (@currentMap == null) return GameTile();
         return GetMapWithUid(currentMap.EdChallengeId);
     }
     
     int GetMapCellId(string&in uid) {
-        for (uint i = 0; i < this.gameMaps.Length; i++) {
-            MapCell selectedMap = this.gameMaps[i];
+        for (uint i = 0; i < this.tiles.Length; i++) {
+            GameTile selectedMap = this.tiles[i];
             if (selectedMap.map.uid == uid) return i;
         }
 
         return -1;
     }
 
-    MapCell GetCell(int id) {
-        return this.gameMaps[id];
-    }
-
-    MatchPhase GetPhase() {
-        return this.phase;
-    }
-
-    void SetPhase(MatchPhase phase) {
-        auto previous = this.phase;
-        this.phase = phase;
-
-        if (previous == MatchPhase::Starting) {
-            UIGameRoom::Visible = false;
-            UIMapList::Visible = true;
-        }
-
-        if (phase == MatchPhase::Overtime) {
-            overtimeStartTime = Time::Now;
-        }
+    GameTile GetCell(int id) {
+        return this.tiles[id];
     }
 }
 
 
-class MapCell {
+class GameTile {
     GameMap@ map = null;
     array<MapClaim>@ attemptRanking = {};
     vec3 paintColor = vec3();
@@ -116,9 +98,9 @@ class MapCell {
     Image@ thumbnail;
     Image@ mapImage;
 
-    MapCell() { }
+    GameTile() { }
 
-    MapCell(GameMap map) {
+    GameTile(GameMap map) {
         @this.map = map;
 #if TURBO
         auto url = Turbo::GetCampaignThumbnailUrl(map.uid);
@@ -217,7 +199,7 @@ enum BingoDirection {
     Diagonal
 }
 
-enum MatchPhase {
+enum GamePhase {
     Starting,
     NoBingo,
     Running,

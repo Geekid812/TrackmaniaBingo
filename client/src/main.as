@@ -1,18 +1,29 @@
-const string WindowName = Icons::Th + " \\$zBingo";
-const string MenuItemName = "\\$ff0" + WindowName;
-const string DeveloperMenuItemName = "\\$82a" + Icons::Th + " \\$zDeveloper Tools";
+const string MAIN_WINDOW_NAME = Icons::Th + " \\$zBingo";
+const string MAIN_MENUITEM_NAME = "\\$ff0" + MAIN_WINDOW_NAME;
+
+const string DEVELOPER_WINDOW_NAME = Icons::Th + " \\$zDeveloper Tools";
+const string DEVELOPER_MENUITEM_NAME = "\\$82a" + DEVELOPER_WINDOW_NAME;
+
+const string BINGO_REPO_URL = "https://github.com/Geekid812/TrackmaniaBingo";
+const string BINGO_ISSUES_URL = "https://github.com/Geekid812/TrackmaniaBingo/issues";
 
 #if TMNEXT
-const GamePlatform CurrentGame = GamePlatform::Next;
+const GamePlatform CURRENT_GAME = GamePlatform::Next;
 #elif TURBO
-const GamePlatform CurrentGame = GamePlatform::Turbo;
+const GamePlatform CURRENT_GAME = GamePlatform::Turbo;
 #endif
 
 void Main() {
+    // Initialization
     Font::Init();
-    startnew(Login::EnsureLoggedIn);
+
+    // Load configuration settings
     PersistantStorage::LoadItems();
     Config::FetchConfig();
+
+    // If this is the first time, try to login to the game server
+    Login::EnsureLoggedIn();
+
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
     if (PersistantStorage::LastConnectedMatchId != "") {
@@ -41,7 +52,7 @@ void Main() {
 }
 
 void RenderMenu() {
-    if (UI::MenuItem(MenuItemName, "", UIMainWindow::Visible)) {
+    if (UI::MenuItem(MAIN_MENUITEM_NAME, "", UIMainWindow::Visible)) {
         UIMainWindow::Visible = !UIMainWindow::Visible;
         // Connect to server when opening plugin window the first time
         if (UIMainWindow::Visible && Network::GetState() == ConnectionState::Closed) {
@@ -50,7 +61,7 @@ void RenderMenu() {
         }
     }
 
-    if (Settings::DevTools && UI::MenuItem(DeveloperMenuItemName, "", UIDevActions::Visible)) {
+    if (Settings::DevTools && UI::MenuItem(DEVELOPER_MENUITEM_NAME, "", UIDevActions::Visible)) {
         UIDevActions::Visible = !UIDevActions::Visible;
     }
 }
@@ -58,7 +69,7 @@ void RenderMenu() {
 void Render() {
     if (!UI::IsGameUIVisible()) return;
     if (!Font::Initialized) return;
-    Font::Set(Font::Style::Regular, 20);
+    Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIGameRoom::Render();
     BoardLocator::Render();
@@ -83,7 +94,7 @@ void Render() {
 
 void RenderInterface() {
     if (!Font::Initialized) return;
-    Font::Set(Font::Style::Regular, 20);
+    Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIMainWindow::Render();
     UINews::Render();

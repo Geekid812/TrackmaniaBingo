@@ -100,4 +100,11 @@ class Player {
         if (@Profile is null) return false;
         return profile.uid == Profile.uid;
     }
+    
+    PlayerRef AsRef() {
+        PlayerRef playerRef();
+        playerRef.name = this.name;
+        playerRef.uid = this.profile.uid;
+        return playerRef;
+    }
 }

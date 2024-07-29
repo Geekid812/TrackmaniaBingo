@@ -637,7 +637,7 @@ impl LiveMatch {
                 .clone()
                 .filter(|cell| {
                     cell.leading_claim().is_some()
-                        && cell.leading_claim().unwrap().player.team == team.base.id
+                        && cell.leading_claim().unwrap().team_id == team.base.id
                 })
                 .count();
             if score > max_score {
@@ -765,10 +765,10 @@ fn iter_check_unique_team<'a>(
         .expect("invalid grid_size")
         .leading_claim()
         .as_ref()
-        .map(|c| c.player.team);
+        .map(|c| c.team_id);
     iter.fold(first, |acc, x| {
         acc.and_then(|y| {
-            if x.leading_claim().as_ref().map(|c| c.player.team) == Some(y) {
+            if x.leading_claim().as_ref().map(|c| c.team_id) == Some(y) {
                 Some(y)
             } else {
                 None

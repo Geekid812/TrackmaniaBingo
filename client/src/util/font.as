@@ -1,10 +1,5 @@
 
 namespace Font {
-    // Only attempt to load new requested fonts after the given delay in
-    // milliseconds expires. It avoids loading fonts which were on display
-    // for a shorter timeframe than this amount.
-    const int64 FONT_LOAD_DELAY = 800;
-
     // Don't try to load another font if the size difference is smaller
     // than this bound (in pixels).
     const float FONT_SIZE_THRESHOLD = 3.;
@@ -13,13 +8,20 @@ namespace Font {
     array<UI::Font@> FontCache_Bold;
     array<UI::Font@> FontCache_Mono;
     array<UI::Font@> FontStack;
-    uint64 FontRequest_CompletionTime;
     bool Initialized;
 
     enum Style {
         Regular,
         Bold,
         Mono
+    }
+
+    enum Size {
+        Small = 12,
+        Medium = 16,
+        Large = 20,
+        XLarge = 26,
+        Huge = 36
     }
 
     class FontLoadCoroutineData {
@@ -43,9 +45,10 @@ namespace Font {
         cache.InsertLast(font);
     }
 
-    UI::Font@ RetrieveFont(array<UI::Font@>@ cache, float size) {
+    UI::Font@ RetrieveFont(array<UI::Font@>@ cache, Size size) {
+        float fontSize = int(size);
         for (uint i = 0; i < cache.Length; i++) {
-            if (size - FONT_SIZE_THRESHOLD <= cache[i].FontSize) return cache[i];
+            if (fontSize - FONT_SIZE_THRESHOLD <= cache[i].FontSize) return cache[i];
         }
 
         return cache[cache.Length - 1];
@@ -88,6 +91,7 @@ namespace Font {
 
     void Init() {
         // Load free fonts included by default in Openplanet
+        LoadFont(Style::Regular, 16);
         LoadFont(Style::Regular, 20);
         LoadFont(Style::Regular, 26);
         LoadFont(Style::Bold, 16);
@@ -97,7 +101,7 @@ namespace Font {
         Initialized = true;
     }
 
-    UI::Font@ Get(Style style, float size) {
+    UI::Font@ Get(Style style, Size size) {
         switch (style) {
             case Style::Regular:
                 return RetrieveFont(FontCache_Regular, size);
@@ -110,25 +114,17 @@ namespace Font {
         }
     }
 
-    void RequestFontLoad() {
-        if (FontRequest_CompletionTime == 0) {
-            FontRequest_CompletionTime = Time::Now + FONT_LOAD_DELAY;
-        }
-    }
-
-    void Set(Style style, float size) {
+    // Set the current font style.
+    void Set(Style style, Size size) {
         UI::Font@ font = Get(style, size);
-        float fontSizeDifference = Math::Abs(size - font.FontSize);
+
+        float fontSize = int(size);
+        float fontSizeDifference = Math::Abs(fontSize - font.FontSize);
 
         if (fontSizeDifference > FONT_SIZE_THRESHOLD) {
             // This font has an inaccurate size. Start a new font loading
             // request and, if completed, load a new matching font.
-            RequestFontLoad();
-
-            if (Time::Now > FontRequest_CompletionTime) {
-                startnew(LoadFontCoroutine, FontLoadCoroutineData(style, size));
-                ResetLoadTimings();
-            }
+            startnew(LoadFontCoroutine, FontLoadCoroutineData(style, fontSize));
         }
 
         FontStack.InsertLast(font);
@@ -146,15 +142,9 @@ namespace Font {
         return FontStack[FontStack.Length - 1];
     }
 
-    void ResetLoadTimings() {
-        if (FontRequest_CompletionTime != 0 && Time::Now > FontRequest_CompletionTime) {
-            FontRequest_CompletionTime = 0;
-        }
-    }
-
     // Debugging function: display cache information in the UI.
-    void InspectFontCache(array<UI::Font@>&in cache, const string&in windowName = "Font Cache Inspector") {
-        UI::Begin(Icons::Bug + " " + windowName);
+    void InspectFontCache(array<UI::Font@>&in cache, bool&out open, const string&in windowName = "Font Cache Inspector") {
+        UI::Begin(Icons::Bug + " " + windowName, open);
         for (uint i = 0; i < cache.Length; i++) {
             UI::Text(i + ": " + cache[i].FontSize);
         }

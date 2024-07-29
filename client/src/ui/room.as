@@ -20,12 +20,13 @@ namespace UIGameRoom {
             // Room window was closed, should disconnect the player.
             // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
             // So for now, the player will get yeeted out.
-            Network::LeaveRoom();
+            @Room = null;
+            Network::CloseConnection();
             CleanupUI();
             return;
         }
         if (windowOpen) {
-            bool gameIsStarting = @Match !is null && Match.GetPhase() == MatchPhase::Starting;
+            bool gameIsStarting = Gamemaster::IsBingoActive() && Gamemaster::GetPhase() == GamePhase::Starting;
             UI::BeginDisabled(gameIsStarting);
             RenderContent();
             UI::EndDisabled();
@@ -135,7 +136,7 @@ namespace UIGameRoom {
             UI::NewLine();
         }
         
-        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null) || Room.matchConfig.freeForAll, true, Room.CanCreateMoreTeams() && @Match is null, Room.CanDeleteTeams());
+        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null) || Room.matchConfig.freeForAll, true, Room.CanCreateMoreTeams() && !Gamemaster::IsBingoActive(), Room.CanDeleteTeams());
 
         LeaveButton();
 
@@ -157,7 +158,8 @@ namespace UIGameRoom {
     void LeaveButton() {
         UIColor::DarkRed();
         if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-            startnew(Network::LeaveRoom);
+            @Room = null;
+            startnew(Network::CloseConnection);
         }
         UIColor::Reset();
     }

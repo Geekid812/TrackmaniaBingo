@@ -19,7 +19,7 @@ use super::{
     models::{
         self,
         map::GameMap,
-        player::{Player, PlayerRef},
+        player::Player,
         room::{RoomState, RoomTeam},
         team::{BaseTeam, GameTeam, TeamIdentifier},
     },
@@ -27,7 +27,7 @@ use super::{
     util::Color,
 };
 use crate::{
-    datatypes::{GamePlatform, MatchConfiguration, PlayerProfile, RoomConfiguration},
+    datatypes::{GamePlatform, MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
     server::{context::ClientContext, mapload},
     transport::{Channel, Tx},
 };

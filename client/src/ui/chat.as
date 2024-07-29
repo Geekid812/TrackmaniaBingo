@@ -66,13 +66,13 @@ namespace UIChat {
     }
 
     void RenderChatMessage(ChatMessage msg) {
-        Font::Set(Font::Style::Bold, 20.);
+        Font::Set(Font::Style::Bold, Font::Size::Medium);
         UI::Text(msg.name + ":");
         Font::Unset();
         
         UI::SameLine();
 
-        Font::Set(Font::Style::Regular, 20.);
+        Font::Set(Font::Style::Regular, Font::Size::Medium);
         UI::TextWrappedWindow(msg.content);
         Font::Unset();
     }

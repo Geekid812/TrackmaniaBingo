@@ -7,11 +7,12 @@ use serde_with::TimestampSeconds;
 
 use crate::datatypes::MatchConfiguration;
 use crate::datatypes::Medal;
+use crate::datatypes::PlayerRef;
 
 use super::map::GameMap;
 
-use super::player::PlayerRef;
 use super::team::GameTeam;
+use super::team::TeamIdentifier;
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -42,6 +43,7 @@ impl GameCell {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MapClaim {
     pub player: PlayerRef,
+    pub team_id: TeamIdentifier,
     pub time: u64,
     pub medal: Medal,
 }

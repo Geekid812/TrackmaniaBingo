@@ -42,8 +42,8 @@ namespace Login {
 
         Json::Value@ body = Json::Object();
         body["authentication"] = authenticationMethod;
-        body["account_id"] = GetAccountId();
-        body["display_name"] = GetLocalUsername();
+        body["account_id"] = User::GetAccountId();
+        body["display_name"] = User::GetLocalUsername();
         if (authenticationMethod == "Openplanet") body["token"] = authToken;
 
         auto req = Net::HttpRequest();

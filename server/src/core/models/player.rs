@@ -21,9 +21,3 @@ impl From<&PlayerData> for Player {
         }
     }
 }
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct PlayerRef {
-    pub uid: i32,
-    pub team: TeamIdentifier,
-}

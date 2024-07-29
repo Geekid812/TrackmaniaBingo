@@ -105,18 +105,6 @@ namespace UIRoomSettings {
         UI::EndDisabled();
     }
 
-    void MapSelectButton() {
-        if (MatchConfig.campaignSelection.Length < 7) {
-            MatchConfig.campaignSelection = {0, 0, 0, 0, 0, 0, 0};
-        }
-
-        UIColor::Crimson();
-        if (UI::Button(Icons::Map + " Select Maps")) {
-            UIMapSelect::Visible = !UIMapSelect::Visible;
-        }
-        UIColor::Reset();
-    }
-
     void TimeLimitControl() {
         UITools::AlignedLabel(Icons::ClockO + "  Time Limit");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
@@ -271,8 +259,7 @@ namespace UIRoomSettings {
         UITools::SectionHeader("Game Settings");
         MapModeSelector();
         if (MatchConfig.selection == MapMode::Campaign) {
-            UI::SameLine();
-            MapSelectButton();
+            // FIXME: Does not exist anymore
         }
         if (MatchConfig.selection == MapMode::Mappack) {
             MappackIdInput();

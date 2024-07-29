@@ -1,5 +1,5 @@
 use crate::{
-    core::models::{livegame::MapClaim, player::PlayerRef},
+    core::models::livegame::MapClaim,
     datatypes::{CampaignMap, Medal},
     server::context::ClientContext,
 };
@@ -21,10 +21,8 @@ impl Request for SubmitRun {
         ctx.game_sync();
         if let Some(game) = ctx.game_match() {
             let claim = MapClaim {
-                player: PlayerRef {
-                    uid: ctx.profile.uid,
-                    team: ctx.game.as_ref().unwrap().team(),
-                },
+                player: ctx.get_player_ref(),
+                team_id: ctx.game.as_ref().unwrap().team(),
                 time: self.time,
                 medal: self.medal,
             };

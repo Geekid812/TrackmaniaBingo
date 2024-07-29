@@ -1,18 +1,18 @@
 /* Reference to an image, it may not yet be loaded. */
 class Image {
     string resourceUrl;
-    UI::Texture@ data;
+    UI::Texture@ _data;
 
     Image(const string&in resourceUrl) {
         this.resourceUrl = resourceUrl;
-        @this.data = LocalStorage::GetTextureResource(resourceUrl);
+        @this._data = LocalStorage::GetTextureResource(resourceUrl);
 
-        if (@this.data is null) DownloadManager::AddToQueue(resourceUrl, AssetType::Image);
+        if (@this._data is null) DownloadManager::AddToQueue(resourceUrl, AssetType::Image);
     }
 
-    UI::Texture@ Get_Data() {
-        if (@this.data is null) @this.data = LocalStorage::GetTextureResource(this.resourceUrl);
-        return @this.data;
+    UI::Texture@ get_data() {
+        if (@this._data is null) @this._data = LocalStorage::GetTextureResource(this.resourceUrl);
+        return @this._data;
     }
 }
 
