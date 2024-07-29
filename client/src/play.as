@@ -137,7 +137,7 @@ namespace Playground {
 
     // Watching task that claims cells when a run has ended
     void CheckRunFinished() {
-        if (@Match == null) return;
+        if (!Gamemaster::IsBingoActive()) return;
         if (mapClaimData.retries > 0) return; // Request in progress
         RunResult result = GetRunResult();
         if (result.time == -1) return;
@@ -169,10 +169,10 @@ namespace Playground {
     }
 
     RunResult@ GetCurrentTimeToBeat(bool basetime = false) {
-        if (@Match == null) return null;
+        if (!Gamemaster::IsBingoActive()) return null;
         CGameCtnChallenge@ map = GetCurrentMap();
         if (@map == null) return null;
-        MapCell cell = Match.GetMapWithUid(map.EdChallengeId);
+        GameTile cell = Match.GetMapWithUid(map.EdChallengeId);
         if (@cell.map is null) return null;
         if (!basetime && cell.IsClaimed()) return cell.LeadingRun().result;
 
@@ -196,7 +196,7 @@ namespace Playground {
         return -1;
     }
 
-    void DebugClaim(MapCell mapCell) {
+    void DebugClaim(GameTile mapCell) {
         mapClaimData.retries = 3;
         mapClaimData.mapUid = mapCell.map.uid;
         mapClaimData.mapResult = RunResult(3600000, Medal::None);

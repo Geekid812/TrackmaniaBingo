@@ -43,15 +43,15 @@ namespace NetworkHandlers {
     }
 
     void LoadMaps(Json::Value@ mapList) {
-        @Match.gameMaps = {};
+        @Match.tiles = {};
         for (uint i = 0; i < mapList.Length; i++) {
             auto jsonMap = mapList[i];
-            Match.gameMaps.InsertLast(GameMap::Deserialize(jsonMap));
+            Match.tiles.InsertLast(GameMap::Deserialize(jsonMap));
         }
     }
 
     void RunSubmitted(Json::Value@ data) {
-            MapCell@ claimedMap = Match.GetCell(int(data["cell_id"]));
+            GameTile@ claimedMap = Match.GetCell(int(data["cell_id"]));
             int position = int(data["position"]);
             MapClaim claim = MapClaim::Deserialize(data["claim"]);
 
@@ -89,7 +89,7 @@ namespace NetworkHandlers {
         auto netRoom = NetworkRoom::Deserialize(room);
         UIRoomMenu::PublicRooms.InsertLast(netRoom);
 
-        if (PersistantStorage::SubscribeToRoomUpdates && @Match is null && @Room is null) {
+        if (PersistantStorage::SubscribeToRoomUpdates && !Gamemaster::IsBingoActive() && @Room is null) {
             array<string> params = {
                 stringof(netRoom.matchConfig.selection),
                 netRoom.matchConfig.gridSize + "x" + netRoom.matchConfig.gridSize,
@@ -194,7 +194,7 @@ namespace NetworkHandlers {
         UI::ShowNotification(Icons::Trophy + " Bingo!", textContent, vec4(.9, .6, 0, 1), 20000);
 
         Match.endState.endTime = Time::Now;
-        Match.SetPhase(MatchPhase::Ended);
+        Gamemaster::SetPhase(GamePhase::Ended);
         PersistantStorage::ResetConnectedMatch();
     }
 
@@ -217,11 +217,11 @@ namespace NetworkHandlers {
     }
 
     void PhaseChange(Json::Value@ data) {
-        if (@Match is null) {
-            warn("Handlers [PhaseChange]: Match is null!");
+        if (!Gamemaster::IsBingoActive()) {
+            warn("Handlers [PhaseChange]: Bingo game is inactive!");
             return;
         }
-        Match.SetPhase(MatchPhase(int(data["phase"])));
+        Gamemaster::SetPhase(GamePhase(int(data["phase"])));
     }
 
     void LoadGameData(Json::Value@ data) {
@@ -270,7 +270,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         @Match.endState.team = team;
-        Match.SetPhase(MatchPhase::Ended);
+        Gamemaster::SetPhase(GamePhase::Ended);
         PersistantStorage::ResetConnectedMatch();
     }
 
@@ -278,7 +278,7 @@ namespace NetworkHandlers {
         UI::ShowNotification(Icons::HourglassEnd + " Game End", "The game has ended in a tie.", vec4(.5, .5, .5, 1), 20000);
 
         Match.endState.endTime = Time::Now;
-        Match.SetPhase(MatchPhase::Ended);
+        Gamemaster::SetPhase(GamePhase::Ended);
         PersistantStorage::ResetConnectedMatch();
     }
 
@@ -291,19 +291,19 @@ namespace NetworkHandlers {
     }
 
     void MatchPlayerJoin(Json::Value@ data) {
-        if (@Match is null) return;
+        if (!Gamemaster::IsBingoActive()) return;
         Match.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Match.GetTeamWithId(data["team"])));
     }
 
     void RerollVoteCast(Json::Value@ data) {
-        if (@Match is null) {
-            warn("Handlers: got RerollVoteCast event but Match is null.");
+        if (!Gamemaster::IsBingoActive()) {
+            warn("Handlers: got RerollVoteCast event but game is inactive.");
             return;
         }
 
         uint id = uint(data["cell_id"]);
         uint player_id = uint(data["player_id"]);
-        MapCell cell = Match.GetCell(id);
+        GameTile cell = Match.GetCell(id);
         if (bool(data["added"])) {
             cell.rerollIds.InsertLast(player_id);
 
@@ -321,23 +321,23 @@ namespace NetworkHandlers {
     }
 
     void MapRerolled(Json::Value@ data) {
-        if (@Match is null) {
-            warn("Handlers: got MapRerolled event but Match is null.");
+        if (!Gamemaster::IsBingoActive()) {
+            warn("Handlers: got MapRerolled event but game is inactive.");
             return;
         }
 
         uint id = uint(data["cell_id"]);
-        string oldName = ColoredString(Match.gameMaps[id].map.trackName);
-        Match.gameMaps.RemoveAt(id);
-        Match.gameMaps.InsertAt(id, MapCell(GameMap::Deserialize(data["map"])));
+        string oldName = ColoredString(Match.tiles[id].map.trackName);
+        Match.tiles.RemoveAt(id);
+        Match.tiles.InsertAt(id, GameTile(GameMap::Deserialize(data["map"])));
         Match.canReroll = bool(data["can_reroll"]);
 
         UI::ShowNotification(Icons::Kenney::ReloadInverse + " Map Rerolled", "The map \\$fd8" + oldName + " \\$zhas been rerolled.", vec4(0., .6, .6, 1.), 10000);
     }
 
     void CellPinged(Json::Value@ data) {
-        if (@Match is null) {
-            warn("Handlers: got CellPinged event but Match is null.");
+        if (!Gamemaster::IsBingoActive()) {
+            warn("Handlers: got CellPinged event but game is inactive.");
             return;
         }
 

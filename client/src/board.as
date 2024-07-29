@@ -26,8 +26,21 @@ namespace Board {
         uint cellId;
     }
 
+    /**
+     * Determine which color the tile should be.
+     */
+    vec4 GetTileFillColor(GameTile@ tile) {
+        if (tile is null) return vec4(0, 0, 0, .8);
+        if (tile.paintColor != vec3())
+            return UIColor::GetAlphaColor(tile.paintColor, .8);
+        else if (tile.IsClaimed())
+            return UIColor::GetAlphaColor(tile.LeadingRun().player.team.color, .8);
+        else
+            return vec4(.3, .3, .3, .8);
+    }
+
     void Draw() {
-        if (@Match == null) return;
+        if (!Gamemaster::IsBingoActive()) return;
 
         uint cellsPerRow = Match.config.gridSize;
         BoardSizes sizes = CalculateBoardSizes(cellsPerRow);
@@ -60,22 +73,21 @@ namespace Board {
 
         // Cell Fill Color
         float colorAnimProgress = Animation::GetProgress(animationTime, 2000, 500);
-        for (uint i = 0; i < cellsPerRow; i++) {
-            for (uint j = 0; j < cellsPerRow; j++) {
-                auto map = Match.gameMaps[j * cellsPerRow + i];
+        for (uint x = 0; x < cellsPerRow; x++) {
+            
+            for (uint y = 0; y < cellsPerRow; y++) {
+                GameTile@ tile = Gamemaster::GetTileOnGrid(x, y);
+
+                vec2 cellPosition = CellPosition(x, y, sizes);
+                vec4 color = GetTileFillColor(tile);
+                color.w *= colorAnimProgress; // opacity modifier
+                
                 nvg::BeginPath();
-                vec2 cellPosition = CellPosition(i, j, sizes);
-                vec4 color;
-                if (map.paintColor != vec3())
-                    color = UIColor::GetAlphaColor(map.paintColor, .8);
-                else if (map.IsClaimed())
-                    color = UIColor::GetAlphaColor(map.LeadingRun().player.team.color, .8);
-                else
-                    color = vec4(.3, .3, .3, .8 * colorAnimProgress);
                 nvg::FillColor(color);
                 nvg::Rect(cellPosition.x, cellPosition.y, sizes.cell, sizes.cell);
                 nvg::Fill();
             }
+        
         }
 
         // Cell highlight

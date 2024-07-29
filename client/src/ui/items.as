@@ -66,7 +66,7 @@ namespace UITools {
     }
 
     void SectionHeader(string&in text) {
-        Font::Set(Font::Bold, 20.);
+        Font::Set(Font::Style::Bold, Font::Size::Large);
         UI::Text(text);
         Font::Unset();
     }

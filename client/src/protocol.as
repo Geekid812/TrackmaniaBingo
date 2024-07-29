@@ -143,7 +143,7 @@ class Protocol {
     void Fail() {
         if (state == ConnectionState::Closed) return;
         trace("[Protocol::Fail] Connection fault. Closing.");
-        if (@socket != null && socket.CanWrite()) socket.Close();
+        if (@socket != null && socket.IsReady()) socket.Close();
 
         state = ConnectionState::Closed;
         @socket = null;

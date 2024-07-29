@@ -6,8 +6,8 @@ namespace BoardLocator {
     const int DOUBLE_CLICK_MILLIS = 500;
 
     void Render() {
-        if (@Match is null) return;
-        if (Time::MillisecondsElapsed(@Match) < 0 && Board::Position != vec2(0, 0)) return;
+        if (!Gamemaster::IsBingoActive()) return;
+        
         UI::SetNextWindowPos(int(79 * Board::Unit()), int(Board::Unit()), UI::Cond::FirstUseEver);
         UI::SetNextWindowSize(int(20 * Board::Unit()), int(20 * Board::Unit()), UI::Cond::FirstUseEver);
 
@@ -38,7 +38,7 @@ namespace BoardLocator {
     }
 
     void OnCellClicked(int row, int col) {
-        if (@Match is null) return;
+        if (!Gamemaster::IsBingoActive()) return;
         int cellId = row * Match.config.gridSize + col;
         uint64 clickNow = Time::Now;
 

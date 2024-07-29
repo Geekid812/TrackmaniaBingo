@@ -7,7 +7,7 @@ namespace UIDaily {
     void DailyHome() {
         string formattedDate = Time::FormatStringUTC("%d %B %Y", Time::Stamp);
 
-        Font::Set(Font::Style::Bold, 26);
+        Font::Set(Font::Style::Bold, Font::Size::Large);
         UI::Text("\\$ff8Daily Challenge - " + formattedDate);
         Font::Unset();
 
@@ -89,7 +89,7 @@ namespace UIDaily {
         // Hardcoded to fit a 5x5 grid
         CenterRemainingSpace(446, 446);
         UI::BeginChild("bingodailygrid", vec2(446, 446), false);
-        bool interacted = UIMapList::MapGrid(DailyMatch.gameMaps, DailyMatch.config.gridSize, 0.5, true);
+        bool interacted = UIMapList::MapGrid(DailyMatch.tiles, DailyMatch.config.gridSize, 0.5, true);
         if (interacted) {
             @Match = DailyMatch;
             NetParams::MatchJoinUid = DailyMatch.uid;
@@ -99,7 +99,7 @@ namespace UIDaily {
         UI::EndChild();
 
         UI::SetCursorPos(UI::GetCursorPos() - vec2(0., 48.));
-        string countdownText = Time::Format(Math::Max(Time::MillisecondsRemaining(DailyMatch), 0), false, true, true);
+        string countdownText = Time::Format(Math::Max(-9999, 0), false, true, true); // FIXME
         float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(countdownText, Font::Current(), 26.).x, 0.5);
         Layout::MoveTo(padding);
         UI::Text("\\$f90" + countdownText);

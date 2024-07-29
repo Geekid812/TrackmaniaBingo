@@ -1,64 +1,43 @@
 
-namespace Time {
+namespace GameTime {
     /**
-     * Get the match's timelimit in milliseconds.
+     * Get the game timer's current value, in milliseconds.
      */
-    uint64 GetTimelimitMilliseconds(LiveMatch@ match) {
-        if (@match == null) return 0;
-        return match.config.timeLimit;
+    int64 CurrentClock() {
+        return CurrentTimeElapsed(); // TODO
+    }
+
+    /**
+     * Get the time elapased since the game started, in milliseconds.
+     * Can be negative before the game has started.
+     * Will be 0 if a start time was not specified.
+     */
+    int64 CurrentTimeElapsed() {
+        int64 startTime = Gamemaster::GetStartTime();
+        if (startTime == 0) return 0;
+
+        int64 currentTime = Time::Now;
+        return currentTime - startTime;
+    }
+
+    /**
+     * Get the match's timelimit in normal phase, in milliseconds.
+     */
+    int64 GetRunningPhaseTime() {
+        return Gamemaster::GetConfiguration().timeLimit;
     }
 
     /**
      * Get the match's no bingo time period in milliseconds.
      */
-    uint64 GetNoBingoMilliseconds(LiveMatch@ match) {
-        if (@match == null) return 0;
-        return match.config.noBingoDuration;
+    int64 GetNoBingoPhaseTime() {
+        return Gamemaster::GetConfiguration().noBingoDuration;
     }
-
 
     /**
      * Get the match's total max time, excluding overtime.
      */
-    uint64 GetMaxTimeMilliseconds(LiveMatch@ match) {
-        return GetTimelimitMilliseconds(match) + GetNoBingoMilliseconds(match);
-    }
-
-    /**
-     * Get the milliseconds elapsed since game start.
-     * Can be negative during the countdown phase.
-     */
-    int64 MillisecondsElapsed(LiveMatch@ match) {
-        if (@match == null) return 0;
-        uint64 curTime = Time::Now;
-        return curTime - match.startTime;
-    }
-
-    /**
-     * Get the milliseconds elapsed since game start.
-     * Will always be strictly within the time limit range.
-     */
-    int64 MillisecondsBounded(LiveMatch@ match) {
-        if (@match == null) return 0;
-        if (match.config.timeLimit == 0) return MillisecondsElapsed(match);
-        return Math::Clamp(MillisecondsElapsed(match), 0, GetMaxTimeMilliseconds(match));
-    }
-
-    /**
-     * Get the game's time in milliseconds. It is always within range and stops when the game has ended.
-     */
-    int64 Milliseconds(LiveMatch@ match) {
-        if (@match == null) return 0;
-        int64 millis = MillisecondsBounded(match);
-        if (match.endState.HasEnded()) millis = match.endState.endTime - match.startTime;
-        return millis;
-    }
-
-    /**
-     * Get the milliseconds remaining if playing on a time limit.
-     */
-    int64 MillisecondsRemaining(LiveMatch@ match) {
-        if (@match == null || match.config.timeLimit == 0) return 0;
-        return GetTimelimitMilliseconds(match) - MillisecondsElapsed(match) + GetNoBingoMilliseconds(match);
+    int64 GetMaxTimeMilliseconds() {
+        return GetRunningPhaseTime() + GetNoBingoPhaseTime();
     }
 }

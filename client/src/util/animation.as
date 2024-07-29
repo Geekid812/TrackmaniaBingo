@@ -1,9 +1,15 @@
 
 namespace Animation {
+    /**
+     * Get the animation time value using the given easing function.
+     */
     float GetProgress(float elapsed, float start, float duration, Easing easing = Easing::Linear) {
         return ComputeEasing(Math::Clamp((elapsed - start) / duration, 0., 1.), easing);
     }
 
+    /**
+     * Compute the easing value by the function given by parameter e.
+     */
     float ComputeEasing(float x, Easing e) {
         switch (e) {
             case Easing::Linear:
@@ -25,6 +31,9 @@ namespace Animation {
         }
     }
 
+    /**
+     * An easing function.
+     */
     enum Easing {
         Linear,
         SineIn,

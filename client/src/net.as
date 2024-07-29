@@ -96,7 +96,7 @@ namespace Network {
             auto handshake = HandshakeRequest();
             handshake.version = Meta::ExecutingPlugin().Version;
             handshake.token = PersistantStorage::ClientToken;
-            handshake.game = CurrentGame;
+            handshake.game = CURRENT_GAME;
 
             Settings::BackendConfiguration@ backend = Settings::GetBackendConfiguration();
             int code = _protocol.Connect(backend.NetworkAddress, backend.TcpPort, handshake);
@@ -317,7 +317,7 @@ namespace Network {
     }
 
     void CreateRoom() {
-        MatchConfig.game = CurrentGame;
+        MatchConfig.game = CURRENT_GAME;
 
         auto body = Json::Object();
         body["config"] = RoomConfiguration::Serialize(RoomConfig);
@@ -437,13 +437,6 @@ namespace Network {
         SettingsWindow::Visible = false;
     }
 
-    void LeaveRoom() {
-        // TODO: this is rudimentary, it doesn't keep connection alive
-        trace("[Network] LeaveRoom requested.");
-        PersistantStorage::ResetConnectedMatch();
-        CloseConnection();
-    }
-
     void JoinTeam(Team team) {
         if (Room.GetSelf().team == team)
             return;
@@ -510,7 +503,7 @@ namespace Network {
         UI::ShowNotification(Icons::Globe + " Reconnecting to your Bingo match...");
         JoinMatch();
 
-        if (@Match is null || Match.uid != PersistantStorage::LastConnectedMatchId) {
+        if (!Gamemaster::IsBingoActive() || Match.uid != PersistantStorage::LastConnectedMatchId) {
             trace("[Network] Reconnection failure, forgetting previous game save.");
             PersistantStorage::ResetConnectedMatch();
         }

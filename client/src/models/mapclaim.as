@@ -18,8 +18,8 @@ namespace MapClaim {
 
     MapClaim Deserialize(Json::Value@ value, LiveMatch@ match = null) {
         auto mapClaim = MapClaim();
-        if (@match is null) @match = @Match;
-        if (@match is null) {
+        if (!Gamemaster::IsBingoActive()) @match = @Match;
+        if (!Gamemaster::IsBingoActive()) {
             error("MapClaim: attemping to deserialize when Match == null.");
             return mapClaim;
         }

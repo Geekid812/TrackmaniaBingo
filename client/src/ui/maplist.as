@@ -18,7 +18,7 @@ namespace UIMapList {
         UI::SameLine();
         float uiScale = GridScaleSlider();
 
-        MapGrid(Match.gameMaps, Match.config.gridSize, uiScale);
+        MapGrid(Match.tiles, Match.config.gridSize, uiScale);
         
         UI::EndDisabled();
         UI::End();
@@ -60,11 +60,11 @@ namespace UIMapList {
         return uiScale;
     }
 
-    bool MapGrid(array<MapCell>@&in maps, int gridSize, float uiScale = 1.0, bool interactable = true) {
+    bool MapGrid(array<GameTile>@&in maps, int gridSize, float uiScale = 1.0, bool interactable = true) {
         bool interacted = false;
         auto drawList = UI::GetWindowDrawList();
 
-        Font::Set(Font::Style::Regular, 20 * uiScale);
+        Font::Set(Font::Style::Regular, Font::Size::Medium);
 
         UI::PushStyleVar(UI::StyleVar::CellPadding, vec2(8 * uiScale, 8 * uiScale));
         UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2(2, 2));
