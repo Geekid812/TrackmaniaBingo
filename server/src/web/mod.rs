@@ -5,7 +5,6 @@ use crate::config;
 use self::routes::auth;
 
 mod actions;
-mod roomlist;
 mod routes;
 
 pub async fn main() {

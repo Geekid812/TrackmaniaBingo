@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::{serde_as, DurationMilliSeconds, TimestampSeconds};
 
-use crate::core::util::Color;
+use crate::util::Color;
 
 /* A simple reference to a registered player. */
 #[serde_as]

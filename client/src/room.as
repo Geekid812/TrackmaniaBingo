@@ -9,7 +9,7 @@ class GameRoom {
     bool localPlayerIsHost;
     LiveMatch@ activeMatch;
 
-    Player@ GetSelf(){
+    Player@ GetSelf() {
         for (uint i = 0; i < players.Length; i++){
             auto player = players[i];
             if (player.IsSelf())

@@ -2,18 +2,15 @@ use std::net::{Ipv4Addr, SocketAddrV4};
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
-pub mod core;
 pub mod datatypes;
 pub mod integrations;
-pub mod orm;
 pub mod server;
 pub mod store;
 pub mod transport;
+pub mod util;
 pub mod web;
 
 pub mod config;
-
-use config::CONFIG;
 
 use crate::server::NetServer;
 

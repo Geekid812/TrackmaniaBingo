@@ -9,7 +9,7 @@ use crate::datatypes::{HandshakeFailureIntentCode, HandshakeRequest, PlayerProfi
 use crate::{config, store};
 
 /// Message handler for an unauthenticated client. Main logic of the connection handshake.
-pub async fn handshake_message_received(client: &mut NetClient, message: BytesMut) {
+pub async fn handshake_message_received(client: &mut NetClient, message: BytesMut) -> bool {
     let required_version: Version = get_required_version_config();
 
     let message = match String::from_utf8(message.to_vec()) {
@@ -20,7 +20,7 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
                 format!("could not decode utf-8 message: {}", e),
                 HandshakeFailureIntentCode::ShowError,
             );
-            return;
+            return false;
         }
     };
 
@@ -32,7 +32,7 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
                 format!("could not parse handshake request: {}", e),
                 HandshakeFailureIntentCode::ShowError,
             );
-            return;
+            return false;
         }
     };
 
@@ -42,7 +42,7 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
             "could not parse version string".into(),
             HandshakeFailureIntentCode::ShowError,
         );
-        return;
+        return false;
     };
 
     // Client version check
@@ -55,7 +55,7 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
             ),
             HandshakeFailureIntentCode::RequireUpdate,
         );
-        return;
+        return false;
     }
 
     // Match token to a valid user in storage
@@ -69,7 +69,7 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
                 format!("authentication token rejected"),
                 HandshakeFailureIntentCode::Reauthenticate,
             );
-            return;
+            return false;
         }
         Err(e) => {
             handshake_rejection(
@@ -77,7 +77,7 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
                 format!("store error: {}", e),
                 HandshakeFailureIntentCode::ShowError,
             );
-            return;
+            return false;
         }
     };
 
@@ -90,7 +90,7 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
                 format!("store error: {}", e),
                 HandshakeFailureIntentCode::ShowError,
             );
-            return;
+            return false;
         }
     };
 
@@ -102,8 +102,8 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
         },
     );
 
-    // TODO: handshake completed, stop listening and switch handlers
     client.set_callback_mode(ClientCallbackImplementation::Mainloop);
+    true
 }
 
 /// Send a rejection message with the provided reason message.

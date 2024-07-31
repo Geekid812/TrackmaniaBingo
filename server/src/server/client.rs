@@ -1,18 +1,15 @@
 use bytes::BytesMut;
 use futures::FutureExt;
-use std::io;
 use std::sync::atomic::{self, AtomicU64};
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::select;
 use tokio::sync::mpsc::unbounded_channel;
 use tokio::time::{timeout_at, Instant};
-use tracing::{debug, error, warn};
+use tracing::{debug, error};
 
-use super::handshake;
 use super::messager::{new_messager, NetMessager};
-use super::requests::BaseRequest;
-use crate::server::context::PlayerContext;
+use super::{handshake, mainloop};
 use crate::transport::client::tcpnative::NativeClientProtocol;
 use crate::transport::{TransportReader, TransportWriter};
 
@@ -58,13 +55,19 @@ impl NetClient {
         self.callback_mode = mode;
     }
 
-    /// Handler for all incoming messages.
-    async fn handle_message(&mut self, bytes: BytesMut) {
+    /// Handler for all incoming messages. Returns a boolean of whether to keep the connection alive.
+    async fn handle_message(&mut self, bytes: BytesMut) -> bool {
         match self.callback_mode.clone() {
             ClientCallbackImplementation::Handshake => {
                 handshake::handshake_message_received(self, bytes).await
             }
-            _ => debug!(cid = self.cid(), "message event was dropped"),
+            ClientCallbackImplementation::Mainloop => {
+                mainloop::mainloop_message_received(self, bytes).await
+            }
+            _ => {
+                debug!(cid = self.cid(), "message event was dropped");
+                false
+            }
         }
     }
 
@@ -86,7 +89,12 @@ impl NetClient {
                     Ok(option_message) => match option_message {
                         Some(result) => match result {
                             Ok(message) => {
-                                self.handle_message(message).await;
+                                let keep_alive = self.handle_message(message).await;
+
+                                if !keep_alive {
+                                    break;
+                                }
+
                                 timeout_deadline = Instant::now() + self.timeout;
                             },
                             Err(err) => {
@@ -133,29 +141,4 @@ pub enum ClientCallbackImplementation {
     Handshake,
     Mainloop,
     None,
-}
-
-// -- old code
-fn handle_recv(ctx: &mut PlayerContext, result: Result<String, io::Error>) -> bool {
-    let msg = match result {
-        Ok(msg) => msg,
-        Err(_) => return false,
-    };
-    debug!("received: {}", msg);
-
-    // Match a request
-    match serde_json::from_str::<BaseRequest>(&msg) {
-        Ok(incoming) => {
-            let response = incoming.request.handle(ctx);
-            let outgoing = incoming.build_reply(response);
-            let res_text = serde_json::to_string(&outgoing).expect("response serialization failed");
-            debug!("response: {}", &res_text);
-            let sent = ctx.writer.send(res_text);
-            if sent.is_err() {
-                return false; // Explicit disconnect
-            }
-        }
-        Err(e) => warn!("Unknown message received: {e}"),
-    };
-    true
 }

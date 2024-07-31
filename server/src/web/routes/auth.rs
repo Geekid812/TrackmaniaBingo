@@ -7,11 +7,11 @@ use tracing::error;
 use warp::{http::Response, Filter};
 use warp::{post, Rejection, Reply};
 
-use crate::core::util::base64;
 use crate::integrations::openplanet::Authenticator;
 use crate::integrations::openplanet::ValidationError;
 use crate::integrations::tmio::CountryIdentifier;
 use crate::store::player::NewPlayer;
+use crate::util::base64;
 use crate::{config, store};
 
 static AUTHENTICATOR: Lazy<Option<Arc<Authenticator>>> = Lazy::new(|| {
