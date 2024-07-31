@@ -145,32 +145,13 @@ namespace UIInfoBar {
         if (!Gamemaster::IsBingoActive()) return;
         
         int64 stopwatchTime = GameTime::CurrentClock();
+        string stopwatchPrefix = GameTime::CurrentClockColorPrefix();
         GamePhase phase = Gamemaster::GetPhase();
 
         // If we are in the countdown at game start, don't show up yet
         if (phase == GamePhase::Starting) return;
 
-        Player@ self = Match.GetSelf();
-        Team team;
-        if (@self is null) {
-            team = Team(0, "", vec3(.5, .5, .5));
-        } else {
-            team = self.team;
-        }
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
-
-        string colorPrefix;
-        switch (phase) {
-            case GamePhase::NoBingo:
-                colorPrefix = "\\$fe6";
-                break;
-            case GamePhase::Overtime:
-                colorPrefix = "\\$e44+";
-                break;
-            case GamePhase::Ended:
-                colorPrefix = "\\$fb0";
-                break;
-        }
 
         // Phase indicator
         string phaseText;
@@ -195,6 +176,7 @@ namespace UIInfoBar {
                 color = vec3(.5, .5, .5);
             }
         }
+
         if (phaseText != "" && !UI::IsWindowAppearing()) {
             float sideMargins = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding).x * 2.;
             float size = UI::GetWindowSize().x - sideMargins;
@@ -208,39 +190,20 @@ namespace UIInfoBar {
             UI::PopStyleColor(3);
         }
 
-        // If playing with a time limit, timer counts down to 0
-        /* FIXME
-        if (Match.config.timeLimit != 0 || Match.config.noBingoDuration != 0) stopwatchTime = Time::GetMaxTimeMilliseconds(@Match) - stopwatchTime;
-        if (phase == GamePhase::NoBingo) stopwatchTime -= Time::GetTimelimitMilliseconds(@Match);
-        if (stopwatchTime < 0) stopwatchTime = -stopwatchTime;
-        if (phase == GamePhase::Overtime) stopwatchTime = Time::Now - Match.overtimeStartTime;
-        */
+        Font::Set(Font::Style::Bold, Font::Size::Huge);
 
-        Font::Set(Font::Style::Mono, Font::Size::XLarge);
-        UI::Text(colorPrefix + Time::Format(stopwatchTime, false, true, true));
+        string stopwatchText = Time::Format(stopwatchTime, false, true, true);
+        UI::Text(stopwatchPrefix + stopwatchText);
+
         Font::Unset();
-
-        UI::SameLine();
-        UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(6, 5));
-        UIColor::Custom(team.color);
-        if (UI::Button(Icons::Map + " Map Grid")) {
-            UIMapList::Visible = !UIMapList::Visible;
-        }
-        UI::SameLine();
-        UIColor::Reset();
-        UIColor::Custom(UIColor::Brighten(team.color, 0.6));
-        if (UI::Button("Teams")) {
-            UITeams::Visible = !UITeams::Visible;
-        }
-        UIColor::Reset();
         
-        GameTile cell = Match.GetCurrentMap();
+        GameTile@ tile = Gamemaster::GetCurrentTile();
         CGameCtnChallenge@ gameMap = Playground::GetCurrentMap();
-        if (@cell.map !is null) {
+        if (tile !is null) {
             if (gameMap.EdChallengeId == MapLeaderboardUid || Match.endState.HasEnded()) {
-                MapLeaderboard(cell);
+                MapLeaderboard(tile);
             } else {
-                TimeToBeatDisplay(cell);
+                TimeToBeatDisplay(tile);
             }
         }
 
@@ -249,7 +212,6 @@ namespace UIInfoBar {
             InfobarControls();
         }
         UIColor::Reset();
-        UI::PopStyleVar();
 
         SubwindowOffset = 0.;
         vec2 windowSize = UI::GetWindowSize();

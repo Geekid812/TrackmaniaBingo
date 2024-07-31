@@ -51,7 +51,7 @@ namespace Network {
 
     void ResetGameState() {
         @Room = null;
-        @Match = null;
+        Gamemaster::Shutdown();
         UIChat::MessageHistory.Resize(0);
     }
 
@@ -452,9 +452,9 @@ namespace Network {
         Post("StartMatch", Json::Object(), true);
     }
 
-    bool ClaimCell(string&in uid, CampaignMap campaign, RunResult result) {
+    bool ClaimCell(int tileIndex, CampaignMap campaign, RunResult result) {
         auto body = Json::Object();
-        body["map_uid"] = uid;
+        body["tile_index"] = tileIndex;
         body["time"] = result.time;
         body["medal"] = result.medal;
         if (campaign.campaignId != -1) body["campaign"] = CampaignMap::Serialize(campaign);

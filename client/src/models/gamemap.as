@@ -39,7 +39,7 @@ namespace GameMap {
 
     Json::Value SerializeTMX(GameMap map) {
         auto value = Json::Object();
-        value["type"] = int(map.type);
+        value["type"] = tostring(map.type);
         value["tmxid"] = map.id;
         value["uid"] = map.uid;
         value["userid"] = map.userid;

@@ -30,11 +30,15 @@ namespace Board {
      * Determine which color the tile should be.
      */
     vec4 GetTileFillColor(GameTile@ tile) {
-        if (tile is null) return vec4(0, 0, 0, .8);
+        if (tile is null || tile.map is null)
+            return vec4(0, 0, 0, .8);
+
         if (tile.paintColor != vec3())
             return UIColor::GetAlphaColor(tile.paintColor, .8);
+
         else if (tile.IsClaimed())
             return UIColor::GetAlphaColor(tile.LeadingRun().player.team.color, .8);
+
         else
             return vec4(.3, .3, .3, .8);
     }

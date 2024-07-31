@@ -20,6 +20,18 @@ namespace Gamemaster {
     }
 
     /**
+     * Return whether the game logic should be running.
+     * Currently, it implies that Bingo is active and that the current phase is not 'Starting' or 'Ended'.
+     */
+    bool IsBingoPlaying() {
+        if (!IsBingoActive()) return false;
+
+        GamePhase phase = GetPhase();
+        return phase != GamePhase::Starting && phase != GamePhase::Ended;
+    }
+
+
+    /**
      * Return the match UID.
      */
     string GetMatchId() {
@@ -58,6 +70,7 @@ namespace Gamemaster {
      */
     void SetConfiguration(MatchConfiguration config) {
         Match.config = config;
+        InitializeTiles();
     }
 
     /**
@@ -75,13 +88,48 @@ namespace Gamemaster {
     }
 
     /**
+     * Ensure the size of the interal Tiles array is at least the grid's total cell count.
+     * Automatically called after the game configuration is changed.
+     */
+    void InitializeTiles() {
+        uint gridCellCount = Match.config.gridSize * Match.config.gridSize;
+
+        for (uint i = Match.tiles.Length; i < gridCellCount; i++) {
+            Match.tiles.InsertLast(GameTile());
+        }
+    }
+
+    /**
+     * Get the total amount of tiles on the Bingo board.
+     * The tiles should be initalized.
+     */
+    uint GetTileCount() {
+        return Math::Min(Match.config.gridSize * Match.config.gridSize, Match.tiles.Length);
+    }
+
+    /**
+     * Get the amount of tiles a team has claimed on the Bingo board.
+     */
+    uint GetTileCountForTeam(Team team) {
+        uint count = 0;
+        for (uint i = 0; i < GetTileCount(); i++) {
+            GameTile@ tile = Match.tiles[i];
+
+            if (tile !is null && tile.IsClaimed() && tile.LeadingRun().player.team.id == team.id)
+                count += 1;
+        }
+
+        return count;
+    }
+
+    /**
      * Get the tile located at the given coordinates on the Bingo grid.
      */
     GameTile@ GetTileOnGrid(uint x, uint y) {        
         uint gridSize = Match.config.gridSize;
         uint index = y * gridSize + x;
 
-        if (index >= Match.tiles.Length) return null;
+        if (index >= GetTileCount()) return null;
         return Match.tiles[index];
     }
 
@@ -107,6 +155,82 @@ namespace Gamemaster {
         if (phase == GamePhase::Overtime) {
             Match.overtimeStartTime = Time::Now;
         }
+    }
+
+    /**
+     * Get the local player's Bingo team.
+     */
+    Team@ GetOwnTeam() {
+        Player@ self = Match.GetSelf();
+
+        if (self is null) {
+            return null;
+        } else {
+            return self.team;
+        }
+    }
+
+    /**
+     * Get the local player's team color.
+     */
+    vec3 GetOwnTeamColor() {
+        Team@ team = GetOwnTeam();
+
+        return team is null ? vec3(.5, .5, .5): team.color;
+    }
+
+    /**
+     * Get the tile which the local player is currently playing.
+     */
+    GameTile@ GetCurrentTile() {
+        return Match.GetCurrentTile();
+    }
+
+    /**
+     * Return whether the current map has been internally flagged as 'broken'.
+     */
+    bool IsCurrentMapBroken() {
+        return Match.currentTileInvalid;
+    }
+
+    /**
+     * Flag the current map as 'broken', meaning something isn't right or we couldn't load it.
+     */
+    void FlagCurrentMapAsBroken() {
+        Match.currentTileInvalid = true;
+    }
+
+    /**
+     * Get the current tile's index on the Bingo board. It identifies the map we're playing.
+     * Can be an invalid index if we're not in a map.
+     */
+    int GetCurrentTileIndex() {
+        return Match.currentTileIndex;
+    }
+
+    /**
+     * Get the objective time to beat on the current map.
+     */
+    RunResult@ GetObjectiveTimeToBeat() {
+        return Playground::GetCurrentTimeToBeat();
+    }
+
+    /**
+     * Get the baseline time to reach to register a claim on the current map.
+     */
+    RunResult@ GetBaselineTimeToBeat() {
+        return Playground::GetCurrentTimeToBeat(true);
+    }
+
+    /**
+     * Set the GameMap corresponding to the specified tile index.
+     */
+    void TileSetMap(uint tileIndex, GameMap map) {
+        GameTile@ tile = Match.tiles[tileIndex];
+        tile.SetMap(map);
+
+        // The map is changed, we are no longer on that tile
+        if (int(tileIndex) == Match.currentTileIndex) Match.SetCurrentTileIndex(-1);
     }
 
     /**

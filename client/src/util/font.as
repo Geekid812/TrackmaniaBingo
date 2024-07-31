@@ -21,7 +21,8 @@ namespace Font {
         Medium = 16,
         Large = 20,
         XLarge = 26,
-        Huge = 36
+        XXLarge = 32,
+        Huge = 38
     }
 
     class FontLoadCoroutineData {

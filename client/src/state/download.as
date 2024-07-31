@@ -77,10 +77,17 @@ namespace DownloadManager {
                 case AssetType::Map:
                     break;
                 case AssetType::Image: {
+                    if (buffer.GetSize() == 0)
+                        break;
+
                     UI::Texture@ texture = UI::LoadTexture(buffer);
-                    if (texture.GetSize().x != 0 && @texture != null) {
+
+                    if (texture !is null && texture.GetSize().x != 0) {
                         LocalStorage::AddTextureResource(url, texture);
+                    } else {
+                        warn("[DownloadManager::OnDownloadCompleted] Could not load image.");
                     }
+                    
                     break;
                 }
                 default:

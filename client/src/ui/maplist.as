@@ -81,24 +81,24 @@ namespace UIMapList {
 
             UI::BeginGroup();
             vec2 thumbnailSize = vec2(160 * uiScale, 116 * uiScale);
-            if (@cell.mapImage !is null && @cell.mapImage.data != null) {
-                UI::Image(cell.mapImage.data, thumbnailSize);
-            } else if (@cell.thumbnail !is null && @cell.thumbnail.data != null) {
-                UI::Image(cell.thumbnail.data, thumbnailSize);
+            if (cell.mapImage !is null && cell.mapImage.Data !is null) {
+                UI::Image(cell.mapImage.Data, thumbnailSize);
+            } else if (cell.thumbnail !is null && cell.thumbnail.Data !is null) {
+                UI::Image(cell.thumbnail.Data, thumbnailSize);
             } else {
                 UI::Dummy(thumbnailSize);
             }
 
             UI::BeginChild("bingomapname" + i, vec2(160. * uiScale, UI::GetTextLineHeight()));
 
-            string mapName = ColoredString(cell.map.trackName);
+            string mapName = cell.map !is null ? Text::OpenplanetFormatCodes(cell.map.trackName) : "";
             UI::Text(mapName);
 
             UI::EndChild();
 
             UI::EndGroup();
             bool mapHovered = UI::IsItemHovered();
-            if (mapHovered) {
+            if (mapHovered && cell.map !is null) {
                 UI::BeginTooltip();
                 UI::Text(mapName);
 
@@ -138,7 +138,7 @@ namespace UIMapList {
                 } else {
                     Visible = false;
 #if TMNEXT
-                    Playground::LoadMap(cell.map.id);
+                    Playground::PlayMap(cell.map);
 #elif TURBO
                     Playground::LoadMapCampaign(cell.map.id);
 #endif

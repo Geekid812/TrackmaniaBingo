@@ -12,6 +12,10 @@ class LiveMatch {
     bool canReroll = false;
     EndState endState;
 
+    // Local state
+    int currentTileIndex = -1;
+    bool currentTileInvalid = false;
+
     Player@ GetSelf(){
         for (uint i = 0; i < players.Length; i++){
             auto player = players[i];
@@ -60,25 +64,18 @@ class LiveMatch {
         return null;
     }
 
-    GameTile GetMapWithUid(string&in uid) {
-        for (uint i = 0; i < this.tiles.Length; i++) {
-            GameTile selectedMap = this.tiles[i];
-            if (selectedMap.map.uid == uid) return selectedMap;
-        }
-
-        return GameTile();
-    }
-
-    GameTile GetCurrentMap() {
+    GameTile@ GetCurrentTile() {
         CGameCtnChallenge@ currentMap = Playground::GetCurrentMap();
-        if (@currentMap == null) return GameTile();
-        return GetMapWithUid(currentMap.EdChallengeId);
+        if (currentMap is null) return null;
+
+        if (currentTileIndex >= 0 && currentTileIndex < int(tiles.Length)) return tiles[currentTileIndex];
+        return null;
     }
     
     int GetMapCellId(string&in uid) {
         for (uint i = 0; i < this.tiles.Length; i++) {
-            GameTile selectedMap = this.tiles[i];
-            if (selectedMap.map.uid == uid) return i;
+            GameTile@ tile = this.tiles[i];
+            if (tile !is null && tile.map !is null && tile.map.uid == uid) return i;
         }
 
         return -1;
@@ -86,6 +83,11 @@ class LiveMatch {
 
     GameTile GetCell(int id) {
         return this.tiles[id];
+    }
+
+    void SetCurrentTileIndex(int index) {
+        this.currentTileIndex = index;
+        this.currentTileInvalid = false;
     }
 }
 
@@ -101,6 +103,10 @@ class GameTile {
     GameTile() { }
 
     GameTile(GameMap map) {
+        SetMap(map);
+    }
+
+    void SetMap(GameMap map) {
         @this.map = map;
 #if TURBO
         auto url = Turbo::GetCampaignThumbnailUrl(map.uid);
@@ -205,14 +211,4 @@ enum GamePhase {
     Running,
     Overtime,
     Ended
-}
-
-namespace Game {
-    // Game tick function
-    void Tick() {
-        if (!Match.endState.HasEnded()) {
-            Playground::CheckRunFinished();
-            if (Match.config.competitvePatch) Playground::SetMapLeaderboardVisible(false);
-        }
-    }
 }
