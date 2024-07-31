@@ -58,10 +58,9 @@ namespace NetworkHandlers {
 
             if (position == 1) {
                 Team claimingTeam = Match.GetTeamWithId(claim.teamId);
-                Team leadingTeam = Match.GetTeamWithId(claimedMap.LeadingRun().teamId);
 
-                bool isImprove = claimedMap.IsClaimed() && leadingTeam == claimingTeam;
-                bool isReclaim = claimedMap.IsClaimed() && leadingTeam != claimingTeam;
+                bool isImprove = claimedMap.IsClaimed() && Match.GetTeamWithId(claimedMap.LeadingRun().teamId) == claimingTeam;
+                bool isReclaim = claimedMap.IsClaimed() && Match.GetTeamWithId(claimedMap.LeadingRun().teamId) != claimingTeam;
 
                 string deltaTime = claimedMap.IsClaimed() ? "-" + Time::Format(claimedMap.LeadingRun().result.time - claim.result.time) : "";
                 string playerName = claim.player.name;
@@ -379,6 +378,10 @@ namespace NetworkHandlers {
     }
 
     void PollResult(Json::Value@ data) {
+        PollData@ pollData = Poll::GetById(int(data["id"]));
+        if (pollData is null) return;
 
+        pollData.resultIndex = int(data["selected"]);
+        pollData.expireTime = Time::Now + Poll::POLL_EXPIRE_MILLIS;
     }
 }

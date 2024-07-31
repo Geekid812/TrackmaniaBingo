@@ -8,6 +8,23 @@ namespace GameTime {
     }
 
     /**
+     * Get the current text color code for the game timer.
+     */
+    string CurrentClockColorPrefix() {
+        GamePhase phase = Gamemaster::GetPhase();
+        switch (phase) {
+            case GamePhase::NoBingo:
+                return "\\$fe6";
+            case GamePhase::Overtime:
+                return "\\$e44+";
+            case GamePhase::Ended:
+                return "\\$fb0";
+            default:
+                return "\\$7e7";
+        }
+    }
+
+    /**
      * Get the time elapased since the game started, in milliseconds.
      * Can be negative before the game has started.
      * Will be 0 if a start time was not specified.

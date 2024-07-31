@@ -10,7 +10,7 @@ class Image {
         if (@this._data is null) DownloadManager::AddToQueue(resourceUrl, AssetType::Image);
     }
 
-    UI::Texture@ get_data() {
+    UI::Texture@ get_Data() {
         if (@this._data is null) @this._data = LocalStorage::GetTextureResource(this.resourceUrl);
         return @this._data;
     }
@@ -50,6 +50,17 @@ namespace LocalStorage {
     /* Return whether a texture resource is stored in local cache. */
     bool IsTextureInStorage(const string&in resourceUrl) {
         return __internal::textureLocalStorage.Exists(resourceUrl);
+    }
+
+    /* Debug helper: print all resource URLs in local cache. */
+    void DebugEnumerateTextureStorage() {
+        array<string> keys = __internal::textureLocalStorage.GetKeys();
+        for (uint i = 0; i < keys.Length; i++) {
+            UI::Texture@ value;
+            __internal::textureLocalStorage.Get(keys[i], @value);
+
+            print("[LocalStorage::DebugEnumerateTextureStorage] Cache resource: " + keys[i] + " -> " + (value is null ? "null" : "UI::Texture@"));
+        }
     }
 
     namespace __internal {

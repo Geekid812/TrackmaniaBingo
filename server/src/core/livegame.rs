@@ -494,7 +494,7 @@ impl LiveMatch {
                 cell.map.name()
             ),
             color: Color::new(128, 128, 128),
-            duration: Duration::seconds(30),
+            duration: Duration::seconds(60),
             choices: vec![
                 PollChoice {
                     text: "Yes".to_string(),

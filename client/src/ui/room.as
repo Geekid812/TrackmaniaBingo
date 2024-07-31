@@ -138,7 +138,8 @@ namespace UIGameRoom {
         
         UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null) || Room.matchConfig.freeForAll, true, Room.CanCreateMoreTeams() && !Gamemaster::IsBingoActive(), Room.CanDeleteTeams());
 
-        LeaveButton();
+        // Quit early if we disconnected from the room
+        if (LeaveButton()) return;
 
         if (Room.localPlayerIsHost) {
             UIColor::DarkGreen();
@@ -155,13 +156,23 @@ namespace UIGameRoom {
         }
     }
 
-    void LeaveButton() {
+    bool LeaveButton() {
+        bool hasDisconnected = false;
+
         UIColor::DarkRed();
         if (UI::Button(Icons::Kenney::Exit + " Leave")) {
             @Room = null;
-            startnew(Network::CloseConnection);
+            Gamemaster::Shutdown();
+            hasDisconnected = true;
+
+            // Reopen the connection if the main window is open
+            if (UIMainWindow::Visible) {
+                startnew(Network::Connect);
+            }
         }
+
         UIColor::Reset();
+        return hasDisconnected;
     }
 
     string[] MatchConfigInfo(MatchConfiguration config) {

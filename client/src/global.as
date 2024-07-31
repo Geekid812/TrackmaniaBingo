@@ -13,8 +13,8 @@ RoomConfiguration RoomConfig;
 // Local match configuration
 MatchConfiguration MatchConfig;
 
-// Name of the local player
-string LocalUsername;
-
 // Globally active polls
 array<PollData@> Polls;
+
+// Local cache of TrackmaniaExchange maps (for development use)
+array<GameMap> MapCache;

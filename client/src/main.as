@@ -109,5 +109,6 @@ UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
 }
 
 void Update(float dt) {
-    if (@Match !is null) Game::Tick();
+    if (Gamemaster::IsBingoPlaying())
+        GameUpdates::Tick();
 }

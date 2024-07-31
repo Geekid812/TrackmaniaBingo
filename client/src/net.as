@@ -37,7 +37,6 @@ namespace Network {
     }
 
     void Reset() {
-        ResetGameState();
         _protocol = Protocol();
         Internal::SuspendUI = false;
         Internal::ConnectionOpen = false;
@@ -47,12 +46,6 @@ namespace Network {
         Internal::Errors = {};
         Timings::LastPingSent = 0;
         Timings::LastPingReceived = 0;
-    }
-
-    void ResetGameState() {
-        @Room = null;
-        @Match = null;
-        UIChat::MessageHistory.Resize(0);
     }
 
     void Connect() {
@@ -165,7 +158,7 @@ namespace Network {
         Reset();
         Connect();
         if (!IsConnected()) {
-            Reset();
+            Gamemaster::Shutdown();
             UI::ShowNotification(Icons::Exclamation + " Bingo: You have been disconnected!", "Use the plugin interface to reconnect.", vec4(.9, .1, .1, 1.), 10000);
             Internal::OfflineMode = true;
         } else {
@@ -257,7 +250,6 @@ namespace Network {
 
     void CloseConnection() {
         Reset();
-        UIMainWindow::Visible = false;
         trace("[Network::CloseConnection] Connection closed.");
     }
 
@@ -455,9 +447,9 @@ namespace Network {
         Post("StartMatch", Json::Object(), true);
     }
 
-    bool ClaimCell(string&in uid, CampaignMap campaign, RunResult result) {
+    bool ClaimCell(int tileIndex, CampaignMap campaign, RunResult result) {
         auto body = Json::Object();
-        body["map_uid"] = uid;
+        body["tile_index"] = tileIndex;
         body["time"] = result.time;
         body["medal"] = result.medal;
         if (campaign.campaignId != -1) body["campaign"] = CampaignMap::Serialize(campaign);

@@ -24,8 +24,8 @@ namespace UIProfile {
 
     void CountryFlag(const string&in countryCode, vec2 size) {
         Image flagImage(PLAYER_FLAG_URL + countryCode + ".jpg");
-        if (@flagImage.data != null) {
-            UI::Image(flagImage.data, size);
+        if (@flagImage.Data != null) {
+            UI::Image(flagImage.Data, size);
         } else {
             UI::Dummy(size);
         }

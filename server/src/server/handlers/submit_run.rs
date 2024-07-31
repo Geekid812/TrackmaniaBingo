@@ -9,10 +9,9 @@ use super::{generic, Request, Response};
 
 #[derive(Deserialize, Debug)]
 pub struct SubmitRun {
-    map_uid: String,
+    tile_index: usize,
     time: u64,
     medal: Medal,
-    campaign: Option<CampaignMap>,
 }
 
 #[typetag::deserialize]
@@ -27,19 +26,7 @@ impl Request for SubmitRun {
                 medal: self.medal,
             };
             let mut lock = game.lock();
-            let cell: Option<usize>;
-            if self.campaign.is_some() {
-                cell = lock.get_cell_from_campaign(&self.campaign.clone().unwrap());
-            } else {
-                cell = lock.get_cell_from_map_uid(self.map_uid.clone());
-            }
-            if let Some(id) = cell {
-                lock.add_submitted_run(id, claim);
-            } else {
-                return Box::new(generic::Error {
-                    error: "invalid map uid".to_owned(),
-                });
-            }
+            lock.add_submitted_run(self.tile_index, claim);
         } else {
             return Box::new(generic::Error {
                 error: "not in a game".to_owned(),

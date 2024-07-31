@@ -14,8 +14,8 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::Pencil + "  Room Name");
         UI::SetNextItemWidth(220);
         RoomConfig.name = UI::InputText("##bingoroomname", RoomConfig.name);
-        if (RoomConfig.name == "" && LocalUsername != "") {
-            RoomConfig.name = LocalUsername + "'s Bingo Room";
+        if (RoomConfig.name == "") {
+            RoomConfig.name = User::GetLocalUsername() + "'s Bingo Room";
         }
     }
 

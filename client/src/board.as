@@ -30,7 +30,7 @@ namespace Board {
      * Determine which color the tile should be.
      */
     vec4 GetTileFillColor(GameTile@ tile) {
-        if (tile is null) return vec4(0, 0, 0, .8);
+        if (tile is null || tile.map is null) return vec4(0, 0, 0, .8);
         
         if (tile.paintColor != vec3())
             return UIColor::GetAlphaColor(tile.paintColor, .8);
@@ -101,11 +101,11 @@ namespace Board {
         float paddingValue = CELL_HIGHLIGHT_PADDING * (0.8 + 0.2 * highlightBlinkValue);
         const float highlightWidth = sizes.border * paddingValue;
         const float highlightMarginOffset = sizes.border * (paddingValue - 1.);
-        CGameCtnChallenge@ currentMap = Playground::GetCurrentMap();
-        int cellId = (@currentMap != null) ? Match.GetMapCellId(currentMap.EdChallengeId) : -1;
-        if (cellId != -1) {
-            int row = cellId / cellsPerRow;
-            int col = cellId % cellsPerRow;
+        
+        int currentTileIndex = Gamemaster::GetCurrentTileIndex();
+        if (currentTileIndex != -1) {
+            int row = currentTileIndex / cellsPerRow;
+            int col = currentTileIndex % cellsPerRow;
             nvg::BeginPath();
             nvg::FillColor(CELL_HIGHLIGHT_COLOR);
             nvg::Rect(Position.x + sizes.step * col, Position.y + sizes.step * row, sizes.cell + sizes.border * 2, highlightWidth);
