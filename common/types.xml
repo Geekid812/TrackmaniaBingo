@@ -60,6 +60,7 @@
         <m name="version" type="string" />
         <m name="game" type="GamePlatform" />
         <m name="token" type="string" />
+        <m name="room_id" type="string" optional="true" />
     </struct>
 
     <struct name="CampaignMap">

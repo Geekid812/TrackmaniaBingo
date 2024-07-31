@@ -12,18 +12,19 @@ namespace UIMainWindow {
     bool ClipboardHovered;
     bool ClipboardCopied;
 
-    enum WindowTab {
-        Home,
-        Play,
-        Create
+    string GetWindowTitle() {
+        return "";
+    }
+
+    vec4 GetWindowTitleColor() {
+        return false ? vec4(.5, .1, 0, .95) : UI::GetStyleColor(UI::Col::WindowBg);
     }
 
     void Render() {
         if (!Visible) return;
 
-        bool offline = Network::IsOfflineMode();
-        string title = (offline ? Icons::PowerOff + " Offline Mode" : "") + "###bingomain";
-        vec4 titleColor = offline ? vec4(.5, .1, 0, .95) : UI::GetStyleColor(UI::Col::WindowBg);
+        string title = GetWindowTitle() + "###bingomain";
+        vec4 titleColor = GetWindowTitleColor();
         UI::PushStyleColor(UI::Col::TitleBg, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleColor(UI::Col::TitleBgActive, titleColor);
         Window::Create(title, Visible, 600, 800);
@@ -35,18 +36,6 @@ namespace UIMainWindow {
     }
 
     void RenderContent() {
-        if (Network::IsOfflineMode()) {
-            UI::PushStyleColor(UI::Col::ChildBg, vec4(.3, .3, 0., .9));
-            UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
-            UI::BeginChild("###bingooffline", vec2(0, 70), true);
-            OfflineWarning();
-            UI::EndChild();
-            UI::PopStyleVar();
-            UI::PopStyleColor();
-
-            UI::Dummy(vec2(0, 20));
-        }
-
         UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 10));
         if (@Profile != null) {
             UIProfile::RenderProfile(Profile);

@@ -167,6 +167,7 @@ class HandshakeRequest {
     string version;
     GamePlatform game;
     string token;
+    string roomId;
     HandshakeRequest() {}
 }
 namespace HandshakeRequest {
@@ -175,6 +176,7 @@ namespace HandshakeRequest {
         value["version"] = cls.version;
         value["game"] = int(cls.game);
         value["token"] = cls.token;
+        value["room_id"] = cls.roomId;
 
         return value;
     }
@@ -184,6 +186,7 @@ namespace HandshakeRequest {
         cls.version = value["version"];
         cls.game = GamePlatform(int(value["game"]));
         cls.token = value["token"];
+        if (value["room_id"].GetType() != Json::Type::Null) cls.roomId = value["room_id"];
 
         return cls;
     }

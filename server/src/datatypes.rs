@@ -90,6 +90,7 @@ pub struct HandshakeRequest {
     pub version: String,
     pub game: GamePlatform,
     pub token: String,
+    pub room_id: Option<String>,
 }
 
 /* A map identifier for an official campaign. */

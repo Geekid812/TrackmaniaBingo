@@ -249,6 +249,9 @@ namespace Gamemaster {
     void ResetAll() {
         SetBingoActive(false);
         ClearMatchId();
+        
+        @Room = null;
         @Match = null;
+        UIChat::MessageHistory.Resize(0);
     }
 }

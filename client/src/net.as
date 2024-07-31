@@ -2,13 +2,11 @@
 namespace Network {
     const int SECRET_LENGTH = 32;
 
-    namespace Internal {
+    namespace __internal {
         // Disable UI interactions while a blocking request is happening
         bool SuspendUI = false;
         // Connection indicator
         bool ConnectionOpen = false;
-        // Offline mode indicator
-        bool OfflineMode = false;
         // Sequence counter
         uint SequenceNext = 0;
         // Temporary buffer of server request messages
@@ -36,46 +34,27 @@ namespace Network {
         }
     }
 
-    void Reset() {
-        ResetGameState();
+    void ResetConnection() {
         _protocol = Protocol();
-        Internal::SuspendUI = false;
-        Internal::ConnectionOpen = false;
-        Internal::OfflineMode = false;
-        Internal::SequenceNext = 0;
-        Internal::Received = {};
-        Internal::Errors = {};
+        __internal::SuspendUI = false;
+        __internal::ConnectionOpen = false;
+        __internal::SequenceNext = 0;
+        __internal::Received = {};
+        __internal::Errors = {};
         Timings::LastPingSent = 0;
         Timings::LastPingReceived = 0;
     }
 
-    void ResetGameState() {
-        @Room = null;
-        Gamemaster::Shutdown();
-        UIChat::MessageHistory.Resize(0);
-    }
-
     void Connect() {
-        SetOfflineMode(false);
-
         Login::EnsureLoggedIn();
         if (!Login::IsLoggedIn()) {
-            SetOfflineMode(true);
             return;
         }
+
         Timings::LastPingSent = Time::Now;
         Timings::LastPingReceived = Time::Now;
         OpenConnection();
-        Internal::ConnectionOpen = IsConnected();
-        SetOfflineMode(!Internal::ConnectionOpen);
-    }
-
-    bool IsOfflineMode() {
-        return Internal::OfflineMode;
-    }
-
-    void SetOfflineMode(bool offline) {
-        Internal::OfflineMode = offline;
+        __internal::ConnectionOpen = IsConnected();
     }
 
     bool IsConnected() {
@@ -87,7 +66,7 @@ namespace Network {
     }
 
     bool IsUISuspended() {
-        return Internal::SuspendUI;
+        return __internal::SuspendUI;
     }
 
     void OpenConnection() {
@@ -113,7 +92,7 @@ namespace Network {
 
     void Loop() {
         if (!IsConnected()) {
-            if (Internal::ConnectionOpen) OnDisconnect();
+            if (__internal::ConnectionOpen) OnDisconnect();
             return;
         }
 
@@ -162,12 +141,11 @@ namespace Network {
 
     void OnDisconnect() {
         trace("[Network] Disconnected! Attempting to reconnect...");
-        Reset();
+        ResetConnection();
         Connect();
         if (!IsConnected()) {
-            Reset();
+            ResetConnection();
             UI::ShowNotification(Icons::Exclamation + " Bingo: You have been disconnected!", "Use the plugin interface to reconnect.", vec4(.9, .1, .1, 1.), 10000);
-            Internal::OfflineMode = true;
         } else {
             trace("[Network] Reconnected to server.");
         }
@@ -185,7 +163,7 @@ namespace Network {
         if (body.HasKey("seq")) {
             uint SequenceCode = body["seq"];
             Response@ res = Response(SequenceCode, body);
-            Internal::Received.InsertLast(res);
+            __internal::Received.InsertLast(res);
             yield();
             return;
         }
@@ -256,15 +234,15 @@ namespace Network {
     }
 
     void CloseConnection() {
-        Reset();
+        ResetConnection();
         UIMainWindow::Visible = false;
         trace("[Network::CloseConnection] Connection closed.");
     }
 
     int AddSequenceValue(Json::Value@ val) {
-        uint seq = Internal::SequenceNext;
+        uint seq = __internal::SequenceNext;
         val["seq"] = seq;
-        Internal::SequenceNext += 1;
+        __internal::SequenceNext += 1;
         return seq;
     }
 
@@ -273,11 +251,11 @@ namespace Network {
         Json::Value@ message = null;
         while (Time::Now < timeoutDate && @message is null) {
             yield();
-            for (uint i = 0; i < Internal::Received.Length; i++) {
-                auto msg = Internal::Received[i];
+            for (uint i = 0; i < __internal::Received.Length; i++) {
+                auto msg = __internal::Received[i];
                 if (msg.sequence == SequenceCode) {
                     @message = msg.body;
-                    Internal::Received.RemoveAt(i);
+                    __internal::Received.RemoveAt(i);
                     break;       
                 }
             }
@@ -294,25 +272,25 @@ namespace Network {
             if (Network::IsConnected()) OnDisconnect();
             return null;
         } // TODO: connection fault?
-        Internal::Errors.Delete(type);
-        Internal::SuspendUI = blocking;
+        __internal::Errors.Delete(type);
+        __internal::SuspendUI = blocking;
         Json::Value@ reply = ExpectReply(Sequence, timeout);
-        if (blocking) Internal::SuspendUI = false;
+        if (blocking) __internal::SuspendUI = false;
 
         if (reply !is null && reply.HasKey("error")) {
             string err = string(reply["error"]);
             trace("[Network::Post] Request [" + type + "]: Error: " + err);
             UI::ShowNotification("", Icons::Times + " Error in " + type + ": " + err, vec4(.8, 0., 0., 1.), 10000);
-            Internal::Errors[type] = err;
+            __internal::Errors[type] = err;
             return null;
         }
-        if (reply is null) Internal::Errors[type] = "timeout";
+        if (reply is null) __internal::Errors[type] = "timeout";
         return reply;
     }
 
     string GetError(string&in type) {
         string err = "";
-        Internal::Errors.Get(type, err);
+        __internal::Errors.Get(type, err);
         return err;
     }
 
