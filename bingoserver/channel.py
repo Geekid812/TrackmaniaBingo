@@ -3,15 +3,14 @@ from fastapi import APIRouter, Depends, Body, status
 
 from models.channel import (
     ChannelModel,
-    NewChannelModel,
+    ChannelParamsModel,
     ThreadModel,
     TeamModel,
     NewTeamModel,
     ChannelStatusModel,
-    ChannelConfigModel,
 )
 from models.user import UserModel
-from user import get_user
+from user import get_user, require_channel_operator
 
 channels: dict[str, ChannelModel] = {}
 
@@ -33,9 +32,10 @@ def resolve_join_code(code: str) -> ChannelModel: ...
 
 @router.put("", status_code=status.HTTP_201_CREATED)
 def create_channel(
-    user: Annotated[UserModel, Depends(get_user)], new_channel: NewChannelModel
+    user: Annotated[UserModel, Depends(get_user)], new_channel: ChannelParamsModel
 ) -> ChannelModel:
-    channel = ChannelModel(name=new_channel.name, public=new_channel.public)
+    channel = ChannelModel(name=new_channel.name,
+                           public=new_channel.public, host=user)
 
     channels[channel.id] = channel
 
@@ -49,11 +49,15 @@ def get_channel(channel=Depends(get_channel)) -> ChannelModel:
 
 @router.patch("/{channel_id}")
 def edit_channel(
-    config: Annotated[ChannelConfigModel, Body()],
-    channel=Depends(get_channel),
-    user=Depends(get_user),
+    config: Annotated[ChannelParamsModel, Body()],
+    channel: ChannelModel = Depends(get_channel),
+    user: UserModel = Depends(get_user),
 ):
-    raise NotImplementedError()
+    require_channel_operator(user, channel)
+
+    channel.name = config.name
+    channel.public = config.public
+    channel.game_rules = config.game_rules
 
 
 @router.delete("/{channel_id}")
@@ -62,7 +66,9 @@ def delete_channel(
     channel=Depends(get_channel),
     user=Depends(get_user),
 ):
-    raise NotImplementedError()
+    require_channel_operator(user, channel)
+
+    channels.pop(channel.id, None)
 
 
 @router.put("/{channel_id}/players")

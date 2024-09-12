@@ -7,13 +7,14 @@ from models.user import UserModel
 from models.game import GameRulesModel
 
 
-class NewChannelModel(BaseModel):
+class ChannelParamsModel(BaseModel):
     name: str
     public: bool
     game_rules: GameRulesModel
 
 
-class ChannelModel(NewChannelModel):
+class ChannelModel(ChannelParamsModel):
+    host: UserModel
     id: str = Field(default_factory=lambda: uuid4().hex)
     code: Optional[str] = Field(default=None)
 
