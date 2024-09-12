@@ -229,7 +229,7 @@ namespace UIRoomSettings {
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         GameConfig.hasCompetitvePatch = UI::Checkbox("##bingopatch", GameConfig.hasCompetitvePatch);
         UI::SameLine();
-        UITools::HelpTooltip("In game map replays will be disabled.");
+        UITools::HelpTooltip("Replays will be disabled.");
     }
 
     void TotalTimeIndicator() {
