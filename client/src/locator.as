@@ -52,7 +52,6 @@ namespace BoardLocator {
     }
 
     void OnCellDoubleClicked(int cellId) {
-        NetParams::PingCellId = cellId;
-        startnew(Network::PingCell);
+        // TODO: there was cell ping, now what?
     }
 }

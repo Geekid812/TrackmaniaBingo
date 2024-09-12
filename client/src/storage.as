@@ -13,13 +13,7 @@ namespace PersistantStorage {
     string LastConfig = "";
 
     [Setting hidden]
-    bool SubscribeToRoomUpdates = false;
-
-    [Setting hidden]
-    string LastConnectedMatchId = "";
-
-    [Setting hidden]
-    int LastConnectedMatchTeamId = -1;
+    string ReconnectChannelId = "";
 
     [Setting hidden]
     string DevelMapCache = "[]";
@@ -39,7 +33,7 @@ namespace PersistantStorage {
             if (LastConfig != "") {
                 Json::Value@ configs = Json::Parse(LastConfig);
                 RoomConfig = RoomConfiguration::Deserialize(configs["room"]);
-                MatchConfig = MatchConfiguration::Deserialize(configs["game"]);
+                GameConfig = GameRules::Deserialize(configs["game"]);
                 
             }
         } catch {
@@ -68,8 +62,7 @@ namespace PersistantStorage {
     }
     
     void ResetConnectedMatch() {
-        LastConnectedMatchId = "";
-        LastConnectedMatchTeamId = -1;
+        ReconnectChannelId = "";
         Meta::SaveSettings();
     }
 
@@ -79,9 +72,7 @@ namespace PersistantStorage {
         LocalProfile = "";
         MapListUiScale = 1.0f;
         LastConfig = "";
-        SubscribeToRoomUpdates = false;
-        LastConnectedMatchId = "";
-        LastConnectedMatchTeamId = -1;
+        ReconnectChannelId = "";
         DevelMapCache = "[]";
     }
 }

@@ -20,8 +20,8 @@ namespace UIGameRoom {
             // Room window was closed, should disconnect the player.
             // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
             // So for now, the player will get yeeted out.
-            @Room = null;
-            Network::CloseConnection();
+            // Update: 2 years later, it still works the same way. There might be a TODO waiting
+            Gamemaster::Shutdown();
             CleanupUI();
             return;
         }
@@ -151,15 +151,13 @@ namespace UIGameRoom {
             }
             UI::EndDisabled();
             UIColor::Reset();
-            UITools::ErrorMessage("StartMatch");
         }
     }
 
     void LeaveButton() {
         UIColor::DarkRed();
         if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-            @Room = null;
-            startnew(Network::CloseConnection);
+            Gamemaster::Shutdown();
         }
         UIColor::Reset();
     }

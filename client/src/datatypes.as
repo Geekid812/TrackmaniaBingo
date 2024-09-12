@@ -315,27 +315,12 @@ namespace Poll {
     }
 }
 
-/* Supported game platforms in Bingo. */
-enum GamePlatform {
-    Next,
-    Turbo,
-}
-
 /* Available map selection modes. */
 enum MapMode {
     RandomTMX,
     Tags,
     Mappack,
     Campaign,
-}
-
-/* A Trackmania medal ranking. */
-enum Medal {
-    Author,
-    Gold,
-    Silver,
-    Bronze,
-    None,
 }
 
 /* When a connection to the server fails, give the client a hint of what it should do. */

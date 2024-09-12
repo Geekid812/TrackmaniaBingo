@@ -60,15 +60,6 @@ namespace UIMainWindow {
             UIRoomMenu::RoomMenu();
             UI::EndChild();
             UI::EndTabItem();
-        } else {
-            if (UIRoomMenu::RoomsLoad != LoadStatus::NotLoaded && !PersistantStorage::SubscribeToRoomUpdates) {
-                UIRoomMenu::RoomsLoad = LoadStatus::NotLoaded;
-                startnew(Network::UnsubscribeRoomlist);
-            }
-            if (UIRoomMenu::RoomsLoad == LoadStatus::NotLoaded && PersistantStorage::SubscribeToRoomUpdates) {
-                UIRoomMenu::RoomsLoad = LoadStatus::Loading;
-                startnew(Network::GetPublicRooms);
-            }
         }
 
         if (UI::BeginTabItem(Icons::PlusSquare + " Create")) {
@@ -78,21 +69,6 @@ namespace UIMainWindow {
             UI::EndTabItem();
         }
 
-#if TMNEXT
-        if (UI::BeginTabItem(Icons::Star + " Daily")) {
-            UI::BeginChild("bingodaily");
-            UIDaily::DailyHome();
-            UI::EndChild();
-            UI::EndTabItem();
-        } else {
-            if (UIDaily::DailyLoad != LoadStatus::NotLoaded) {
-                if (@UIDaily::DailyMatch !is null) startnew(Network::UnsubscribeDailyChallenge);
-                UIDaily::DailyLoad = LoadStatus::NotLoaded;
-                @UIDaily::DailyMatch = null;
-            }
-        }
-#endif
-
 
         UI::EndTabBar();
         UIColor::Reset();
@@ -101,13 +77,11 @@ namespace UIMainWindow {
     void CreateTab() {
         UIRoomSettings::SettingsView();
         CreateRoomButton();
-        UITools::ConnectingIndicator();
-        UITools::ErrorMessage("CreateRoom");
     }
 
     void CreateRoomButton() {
         UI::NewLine();
-        bool disabled = !Config::CanPlay || !Network::IsConnected() || Network::IsUISuspended();
+        bool disabled = !Config::CanPlay || Network::IsUISuspended();
         UI::BeginDisabled(disabled);
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Create Room")) {
@@ -122,7 +96,7 @@ namespace UIMainWindow {
         UI::Text("\\$ff4" + Icons::ExclamationTriangle + "  \\$zAn error occured while connecting to the Bingo server.");
         UIColor::Red();
         if (UI::Button(Icons::Repeat + " Retry")) {
-            startnew(Network::Connect);
+            // TODO: no connection logic, eh?
         }
         UIColor::Reset();
         UI::SameLine();
@@ -144,11 +118,7 @@ namespace UIMainWindow {
         if (@Room !is null) {
             UIRoomMenu::RoomInfo(Room.NetworkState());
         } else {
-            if (@UIDaily::DailyMatch !is null && Match.uid == UIDaily::DailyMatch.uid) {
-                UI::Text("Daily Challenge");
-            } else {
-                UI::NewLine();
-            }
+            UI::NewLine();
 
             UI::Text(string::Join(UIGameRoom::MatchConfigInfo(Match.config), "\t"));
         }

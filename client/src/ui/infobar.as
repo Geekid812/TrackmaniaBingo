@@ -29,7 +29,6 @@ namespace UIInfoBar {
         if (UI::Button("Exit")) {
             Gamemaster::Shutdown();
             UIMainWindow::Visible = true;
-            startnew(Network::Connect);
         }
         SubwindowEnd(geometry);
     }

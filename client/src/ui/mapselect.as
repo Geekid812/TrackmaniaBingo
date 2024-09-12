@@ -14,7 +14,7 @@ namespace UIMapSelect {
     }
 
     void RenderCampaignSelect() {
-        auto selectionBitfields = MatchConfig.campaignSelection;
+        array<int> selectionBitfields = {0}; // TODO: needs to be reimplemented for Turbo
 
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(5, 3));
         UI::PushStyleVar(UI::StyleVar::CellPadding, vec2(8, 6));

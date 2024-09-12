@@ -10,6 +10,7 @@ from models.game import GameRulesModel
 class NewChannelModel(BaseModel):
     name: str
     public: bool
+    game_rules: GameRulesModel
 
 
 class ChannelModel(NewChannelModel):
@@ -17,13 +18,16 @@ class ChannelModel(NewChannelModel):
     code: Optional[str] = Field(default=None)
 
 
-class ChannelStatusModel(BaseModel): ...
+class ChannelStatusModel(BaseModel):
+    ...
 
 
-class ThreadModel(BaseModel): ...
+class ThreadModel(BaseModel):
+    ...
 
 
-class PlayerModel(UserModel): ...
+class PlayerModel(UserModel):
+    ...
 
 
 class NewTeamModel(BaseModel):
@@ -37,7 +41,3 @@ class TeamModel(NewTeamModel):
 
 class PopulatedTeamModel(TeamModel):
     members: list[PlayerModel]
-
-
-class ChannelConfigModel(BaseModel):
-    game_rules: GameRulesModel

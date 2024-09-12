@@ -10,8 +10,8 @@ LiveMatch@ Match;
 // Local room configuration
 RoomConfiguration RoomConfig;
 
-// Local match configuration
-MatchConfiguration MatchConfig;
+// Local game configuration
+GameRules GameConfig;
 
 // Globally active polls
 array<PollData@> Polls;

@@ -134,3 +134,8 @@ def update_status(
     user=Depends(get_user),
 ):
     raise NotImplementedError()
+
+
+@router.get("/{channel_id}/poll")
+def poll_channel_events(seq: int, channel=Depends(get_channel), user=Depends(get_user)):
+    raise NotImplementedError()

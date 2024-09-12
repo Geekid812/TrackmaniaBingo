@@ -67,7 +67,6 @@ namespace UIRoomMenu {
         } else if (RoomsLoad == LoadStatus::Error) {
             UI::Text("\\$888Public rooms failed to load.");
             UI::SameLine();
-            UITools::ReconnectButton();
         } else {
             if (PublicRooms.Length == 0) {
                 UI::Text("\\$888There are no open public rooms at the moment.\nGo ahead and create one!");
@@ -139,26 +138,16 @@ namespace UIRoomMenu {
         UI::Text(string::Join(UIGameRoom::MatchConfigInfo(room.matchConfig), "\t"));
     }
 
-    void SubscribeCheckbox() {
-        PersistantStorage::SubscribeToRoomUpdates = UI::Checkbox("Send a notification when a new public game is created", PersistantStorage::SubscribeToRoomUpdates);
-    }
 
     void RoomMenu() {
         UITools::SectionHeader("Public Rooms");
-        if (Network::GetState() == ConnectionState::Connected) {
-            PublicRoomList();
-        }
+        PublicRoomList();
 
         UITools::SectionHeader("Join a Private Room");
         RoomCodeInput();
 
-        UI::BeginDisabled(!Config::CanPlay || !Network::IsConnected() || Network::IsUISuspended());
+        UI::BeginDisabled(!Config::CanPlay || Network::IsUISuspended());
         JoinPrivateRoomButton();
         UI::EndDisabled();
-
-        UITools::ConnectingIndicator();
-        UI::NewLine();
-        UI::Separator();
-        SubscribeCheckbox();
     }
 }

@@ -1,8 +1,10 @@
 
 namespace API {
 
-    /// Generic coroutine for API calls. Handles all network errors in a generic pattern.
-    /// Returns a null pointer if the request did not succeed.
+    /**
+     * Generic coroutine for API calls. Handles all network errors in a generic pattern.
+     * Returns a null pointer if the request did not succeed.
+     */
     Net::HttpRequest@ MakeRequest(Net::HttpMethod method, const string&in path, const string&in body = "") {
         Settings::BackendConfiguration backend = Settings::GetBackendConfiguration();
 
@@ -17,11 +19,21 @@ namespace API {
         while (!req.Finished()) yield();
 
         int responseCode = req.ResponseCode();
-        string body = req.String();
-        trace(tostring(req.Method).ToUpper() + " " + path + " " + responseCode + " " + Extra::IO::FormatFileSize(body.Length));
+        string responseBody = req.String();
+        trace(tostring(req.Method).ToUpper() + " " + path + " " + responseCode + " " + Extra::IO::FormatFileSize(responseBody.Length));
 
-        if (!HandleResponseCode(responseCode, req.Error(), body)) return null;
+        if (!HandleResponseCode(responseCode, req.Error(), responseBody)) return null;
         return req;
+    }
+
+    /**
+     * Convenience function to receive a JSON body from an API request. It wraps the generic MakeRequest() method.
+     */
+    Json::Value@ MakeRequestJson(Net::HttpMethod method, const string&in path, const string&in body = "") {
+        auto response = MakeRequest(method, path, body);
+        if (response is null) return null;
+
+        return response.Json();
     }
 
     bool HandleResponseCode(int responseCode, const string&in error, const string&in body) {
@@ -33,7 +45,7 @@ namespace API {
         if (responseCode >= 400) {
             if (responseCode < 500) {
                 Json::Value@ bodyJson;
-                try { bodyJson = Json::Parse(body); }
+                try { bodyJson = Json::Parse(body); } catch {}
 
                 string errorMessage = "The plugin encountered an error in a network request";
 

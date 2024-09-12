@@ -26,39 +26,15 @@ void Main() {
 
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
-    if (PersistantStorage::LastConnectedMatchId != "") {
-        trace("[Main] Plugin was previously connected, attempting to reconnect.");
-        Network::Connect();
-
-        if (Network::IsConnected()) {
-            NetParams::MatchJoinUid = PersistantStorage::LastConnectedMatchId;
-            NetParams::MatchJoinTeamId = PersistantStorage::LastConnectedMatchTeamId;
-            startnew(Network::Reconnect);
-        }
-    }
-
-    // We are interested in roomlist notifications, so we should connect
-    if (PersistantStorage::SubscribeToRoomUpdates) {
-        trace("[Main] Player is subscribed to roomlist updates, connecting to the servers.");
-        Network::Connect();
-        UIRoomMenu::RoomsLoad = LoadStatus::Loading;
-        startnew(Network::GetPublicRooms);
-    }
-
-    while (true) {
-        Network::Loop();
-        yield();
+    if (PersistantStorage::ReconnectChannelId != "") {
+        trace("[Main] Plugin was previously connected, attempting to reconnect to channel: " + PersistantStorage::ReconnectChannelId);
+        // TODO: Reconnect properly
     }
 }
 
 void RenderMenu() {
     if (UI::MenuItem(MAIN_MENUITEM_NAME, "", UIMainWindow::Visible)) {
         UIMainWindow::Visible = !UIMainWindow::Visible;
-        // Connect to server when opening plugin window the first time
-        if (UIMainWindow::Visible && Network::GetState() == ConnectionState::Closed) {
-            trace("[Main] Plugin window opened, connecting to the servers.");
-            startnew(Network::Connect);
-        }
     }
 
     if (Settings::DevTools && UI::MenuItem(DEVELOPER_MENUITEM_NAME, "", UIDevActions::Visible)) {
@@ -99,7 +75,6 @@ void RenderInterface() {
 
     UIMainWindow::Render();
     UINews::Render();
-    UIDailyHistory::Render();
     UIDevActions::Render();
 
     Font::Unset();

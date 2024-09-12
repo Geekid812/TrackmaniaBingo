@@ -32,28 +32,27 @@ namespace Gamemaster {
 
 
     /**
-     * Return the match UID.
+     * Return the channel ID.
      */
-    string GetMatchId() {
+    string GetChannelId() {
         return Match.uid;
     }
 
     /**
-     * Set the match UID.
-     * If the match UID is set, the plugin will try to reconnect to that match.
+     * Set the channel ID.
+     * If the channel ID is set, the plugin will try to reconnect if possible.
      */
-    void SetMatchId(const string&in uid) {
+    void SetChannelId(const string&in uid) {
         Match.uid = uid;
 
-        PersistantStorage::LastConnectedMatchId = uid;
+        PersistantStorage::ReconnectChannelId = uid;
         Meta::SaveSettings();
     }
 
     /**
-     * Unset the match UID.
-     * This also has the effect of disabling reconnection.
+     * Unset the channel ID.
      */
-    void ClearMatchId() {
+    void ClearChannelId() {
         if (Match !is null) Match.uid = "";
         PersistantStorage::ResetConnectedMatch();
     }
@@ -240,7 +239,6 @@ namespace Gamemaster {
         // TODO: this is rudimentary, it doesn't keep connection alive
         trace("[Gamemaster::Shutdown] Closing the game.");
         ResetAll();
-        Network::CloseConnection();
     }
 
     /**
@@ -248,7 +246,9 @@ namespace Gamemaster {
      */
     void ResetAll() {
         SetBingoActive(false);
-        ClearMatchId();
+        ClearChannelId();
+        
+        Network::ResetNetworkParameters();
         
         @Room = null;
         @Match = null;

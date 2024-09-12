@@ -79,35 +79,7 @@ namespace UITools {
             UI::EndTooltip();
         }
     }
-
-    void ErrorMessage(const string&in type) {
-        string err = Network::GetError(type);
-        if (err != "") {
-            string message = "\\$ff8" + err;
-            if (err == "timeout") message = "\\$888It looks like the server is not responding.\nIf this is an issue, try reconnecting to the server.";
-            UI::TextWrapped(message);
-
-            if (err == "timeout") {
-                UI::SameLine();
-                ReconnectButton();
-            }
-        }
-    }
-
-    void ReconnectButton() {
-        if (UI::Button(Icons::Globe + " Reconnect")) startnew(function()  {
-            Network::CloseConnection();
-            Network::Connect();
-        });
-    }
-
-    void ConnectingIndicator() {
-        if (Network::GetState() == ConnectionState::Connecting) {
-            UI::SameLine();
-            UI::Text("\\$58f" + GetConnectingIcon() + " \\$zConnecting to server...");
-        }
-    }
-
+    
     string GetConnectingIcon() {
         int sequence = int(Time::Now / 333) % 3;
         if (sequence == 0)

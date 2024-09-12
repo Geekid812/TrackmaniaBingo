@@ -35,11 +35,6 @@ namespace NetworkHandlers {
         LoadMaps(match["maps"]);
         UIGameRoom::GrabFocus = true;
         UIMapList::Visible = false;
-
-        PersistantStorage::LastConnectedMatchId = Match.uid;
-        auto self = Match.GetSelf();
-        if (@self !is null) PersistantStorage::LastConnectedMatchTeamId = self.team.id;
-        Meta::SaveSettings(); // Ensure MatchId is saved, even in the event of a crash
     }
 
     void LoadMaps(Json::Value@ mapList) {
@@ -88,19 +83,6 @@ namespace NetworkHandlers {
     void AddRoomListing(Json::Value@ room) {
         auto netRoom = NetworkRoom::Deserialize(room);
         UIRoomMenu::PublicRooms.InsertLast(netRoom);
-
-        if (PersistantStorage::SubscribeToRoomUpdates && !Gamemaster::IsBingoActive() && @Room is null) {
-            array<string> params = {
-                stringof(netRoom.matchConfig.selection),
-                netRoom.matchConfig.gridSize + "x" + netRoom.matchConfig.gridSize,
-                stringof(netRoom.matchConfig.targetMedal)
-            };
-            if (netRoom.matchConfig.timeLimit != 0) {
-                params.InsertLast((netRoom.matchConfig.timeLimit / 60000) + " minutes");
-            }
-            string paramsString = string::Join(params, ", ");
-            UI::ShowNotification(Icons::PlusCircle + " Bingo: New game started", netRoom.hostName + " is hosting a new game: \\$ee4" + netRoom.name + "\n\\$z(" + paramsString + ")", vec4(0.27,0.50,0.29, 1.), 10000);
-        }
     }
 
     void RemoveRoomListing(Json::Value@ data) {
@@ -222,33 +204,6 @@ namespace NetworkHandlers {
             return;
         }
         Gamemaster::SetPhase(GamePhase(int(data["phase"])));
-    }
-
-    void LoadGameData(Json::Value@ data) {
-//        Room.StartTime = Time::Now - uint(data["start_time"]);
-        for (uint i = 0; i < data["cells"].Length; i++) {
-            Json::Value@ cell = data["cells"][i];
-            if (cell["claim"].GetType() == Json::Type::Null) continue;
-//            Room.MapList[i].ClaimedRun = RunResult(cell["claim"]["time"], Medal(int(cell["claim"]["medal"])));
-//            Room.MapList[i].ClaimedPlayerName = cell["claim"]["player"]["name"];
-//            @Room.MapList[i].ClaimedTeam = Room.GetTeamWithId(cell["claim"]["player"]["team"]);
-        }
-    }
-
-    void LoadDailyChallenge(Json::Value@ data) {
-        if (data is null) {
-            UIDaily::DailyLoad = LoadStatus::Error;
-            return;
-        }
-
-        UIDaily::DailyLoad = LoadStatus::Ok;
-        if (data["res"] == "DailyNotLoaded") {
-            @UIDaily::DailyMatch = null;
-            return;
-        }
-
-        LiveMatch match = LiveMatch::Deserialize(data["state"]);
-        @UIDaily::DailyMatch = match;
     }
 
     void RoomSync(Json::Value@ data) {
