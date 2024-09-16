@@ -11,3 +11,6 @@ with open("config.toml", "rb") as f:
 
 def get(key: str):
     return config[key]
+
+def is_development() -> bool:
+    return get("environment") == "dev"
