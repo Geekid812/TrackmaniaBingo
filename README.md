@@ -1,5 +1,7 @@
 # ![Trackmania Bingo](.github/img/bingo_thumbnail.png)
 
+> **Warning:** You are currently viewing the main development branch, which is being heavily modified and does not reflect the current stable version. To use the current live Bingo version, check out the `stable` branch.
+
 > **[Trackmania Bingo](https://openplanet.dev/plugin/trackmaniabingo)** is a new gamemode where two or more teams compete be the first to complete a row, column or diagonal on the game board. Each cell on this board corresponds to a track that players can claim for their team by achieving a specific medal on that track.
 
 This repository contains the source code for the game client, an Openplanet plugin written in [Angelscript](https://www.angelcode.com/angelscript/), as well as the backend, a web application and TCP game server written in [Rust](https://www.rust-lang.org/). Feel free to contribute to the development of this project by submitting an issue or pull request!
