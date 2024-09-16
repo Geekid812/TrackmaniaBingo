@@ -1,5 +1,5 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, Body, status
+from typing import Annotated, Any, Optional
+from fastapi import APIRouter, Depends, Body, status, HTTPException, status
 
 from models.channel import (
     ChannelModel,
@@ -10,12 +10,25 @@ from models.channel import (
     ChannelStatusModel,
 )
 from models.user import UserModel
-from user import get_user, require_channel_operator
+from models.events import EventModel, ChannelEvent, PlayerEvent
+from user import get_user, get_user_from_id, require_channel_operator, require_self_operation
+from message import MessageQueue
 
 channels: dict[str, ChannelModel] = {}
+messagers: dict[str, MessageQueue] = {}
+toplevel_messager = MessageQueue()
 
 
-def get_channel(channel_id: str) -> ChannelModel: ...
+def get_channel(channel_id: str) -> ChannelModel:
+    channel = channels.get(channel_id)
+    if not channel:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "unknown channel ID")
+
+    return channel
+
+
+def get_messager(channel: ChannelModel) -> MessageQueue:
+    return messagers[channel.id]
 
 
 router = APIRouter(prefix="/channels", tags=["channel"])
@@ -35,15 +48,17 @@ def create_channel(
     user: Annotated[UserModel, Depends(get_user)], new_channel: ChannelParamsModel
 ) -> ChannelModel:
     channel = ChannelModel(name=new_channel.name,
-                           public=new_channel.public, host=user)
+                           public=new_channel.public, game_rules=new_channel.game_rules, host=user)
 
     channels[channel.id] = channel
+    toplevel_messager.broadcast(ChannelEvent(
+        event="ChannelCreated", channel=channel))
 
     return channel
 
 
 @router.get("/{channel_id}")
-def get_channel(channel=Depends(get_channel)) -> ChannelModel:
+def get_channel(channel: ChannelModel = Depends(get_channel)) -> ChannelModel:
     return channel
 
 
@@ -59,6 +74,9 @@ def edit_channel(
     channel.public = config.public
     channel.game_rules = config.game_rules
 
+    get_messager(channel).broadcast(ChannelEvent(
+        event="ChannelModified", channel=channel))
+
 
 @router.delete("/{channel_id}")
 def delete_channel(
@@ -69,18 +87,37 @@ def delete_channel(
     require_channel_operator(user, channel)
 
     channels.pop(channel.id, None)
+    toplevel_messager.broadcast(ChannelEvent(
+        event="ChannelDeleted", channel=channel))
 
 
 @router.put("/{channel_id}/players")
-def add_player(target_uid: int, channel=Depends(get_channel), user=Depends(get_user)):
-    raise NotImplementedError()
+def add_player(target_uid: int, channel: ChannelModel = Depends(get_channel), user: UserModel = Depends(get_user)):
+    target = get_user_from_id(target_uid)
+    require_self_operation(user, target)
+
+    if user in channel.players:
+        raise HTTPException(status.HTTP_304_NOT_MODIFIED,
+                            "user already joined the channel")
+
+    channel.players.append(user)
+    get_messager(channel).broadcast(
+        PlayerEvent(event="PlayerAdded", user=user))
 
 
 @router.delete("/{channel_id}/players")
 def remove_player(
-    target_uid: int, channel=Depends(get_channel), user=Depends(get_user)
+    target_uid: int, channel: ChannelModel = Depends(get_channel), user: UserModel = Depends(get_user)
 ):
-    raise NotImplementedError()
+    target = get_user_from_id(target_uid)
+    require_self_operation(user, target)
+
+    if user not in channel.players:
+        raise HTTPException(status.HTTP_304_NOT_MODIFIED,
+                            "user is not in the channel")
+
+    channel.players.remove(user)
+    get_messager(channel).broadcast(PlayerEvent(event="PlayerRemoved", user=user))
 
 
 @router.get("/{channel_id}/chat/{thread_id}")
@@ -143,5 +180,5 @@ def update_status(
 
 
 @router.get("/{channel_id}/poll")
-def poll_channel_events(seq: int, channel=Depends(get_channel), user=Depends(get_user)):
-    raise NotImplementedError()
+async def poll_channel_events(channel: ChannelModel = Depends(get_channel), user: UserModel = Depends(get_user)) -> Optional[EventModel]:
+    return await get_messager(channel).get(user.uid)

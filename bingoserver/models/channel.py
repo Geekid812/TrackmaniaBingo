@@ -17,18 +17,16 @@ class ChannelModel(ChannelParamsModel):
     host: UserModel
     id: str = Field(default_factory=lambda: uuid4().hex)
     code: Optional[str] = Field(default=None)
+    players: list[UserModel] = Field(default_factory=list)
 
 
-class ChannelStatusModel(BaseModel):
-    ...
+class ChannelStatusModel(BaseModel): ...
 
 
-class ThreadModel(BaseModel):
-    ...
+class ThreadModel(BaseModel): ...
 
 
-class PlayerModel(UserModel):
-    ...
+class PlayerModel(UserModel): ...
 
 
 class NewTeamModel(BaseModel):
