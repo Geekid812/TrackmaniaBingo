@@ -1,0 +1,10 @@
+# Configuration file for the Trackmania Bingo game server.
+
+# Options should be modified in the `config.toml` file at the toplevel directory.
+# A new copy is created upon starting the server for the first time.
+
+version = "5.0"     # server version
+environment = "dev" # or "live"
+
+[keys]
+openplanet = "KEY" # secret key for Openplanet authentication
