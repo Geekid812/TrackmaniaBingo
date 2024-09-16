@@ -2,7 +2,7 @@ from datetime import datetime
 
 import sqlalchemy
 from sqlalchemy.sql.functions import now
-from sqlmodel import SQLModel, Field, Session
+from sqlmodel import SQLModel, Field, Session, select
 
 import config
 
@@ -18,9 +18,16 @@ def init_database():
 
 class PlayerSchema(SQLModel, table=True):
     uid: int | None = Field(default=None, primary_key=True)
-    account_id: str
+    account_id: str = Field(unique=True)
     username: str
     created_at: datetime = Field(default=now())
     country_code: str = Field(default="WOR")
     games_played: int = Field(default=0)
     title: str | None = Field(default=None)
+
+
+def get_player(uid: int) -> PlayerSchema | None:
+    with Session(engine) as session:
+        stmt = select(PlayerSchema).where(PlayerSchema.uid == uid)
+        res = session.exec(stmt)
+        return res.one_or_none()

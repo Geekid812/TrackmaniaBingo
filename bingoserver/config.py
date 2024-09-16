@@ -10,7 +10,13 @@ with open("config.toml", "rb") as f:
 
 
 def get(key: str):
-    return config[key]
+    paths = key.split('.')
+    value = config
+    for path in paths:
+        value = value[path]
+
+    return value
+
 
 def is_development() -> bool:
     return get("environment") == "dev"

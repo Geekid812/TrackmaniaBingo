@@ -3,8 +3,16 @@
 # Options should be modified in the `config.toml` file at the toplevel directory.
 # A new copy is created upon starting the server for the first time.
 
+
 version = "5.0"     # server version
 environment = "dev" # or "live"
 
+
+[network]
+# FIXME: add a contact mail or Discord handle!
+user-agent = "Trackmania Bingo server (github.com/Geekid812/TrackmaniaBingo) | admin contact: @FIXME"
+
+
 [keys]
 openplanet = "KEY" # secret key for Openplanet authentication
+system_token = ""  # client token for system account (uid 0), disabled if empty
