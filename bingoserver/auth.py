@@ -14,7 +14,14 @@ VALIDATION_URL = "https://openplanet.dev/api/auth/validate"
 TMIO_API_PLAYER_URL = "https://trackmania.io/api/player"
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-http_client = ClientSession(headers={"user-agent": config.get("network.user-agent")})
+http_client: ClientSession = None
+
+
+async def init_client():
+    global http_client
+    http_client = ClientSession(
+        headers={"user-agent": config.get("network.user-agent")}
+    )
 
 
 @router.post("/login")

@@ -22,6 +22,11 @@ app.include_router(game.router)
 db.init_database()
 
 
+@app.on_event("startup")
+async def on_startup():
+    await auth.init_client()
+
+
 @app.get("/me")
 def get_my_account(user: Annotated[UserModel, Depends(get_user)]) -> UserModel:
     return user

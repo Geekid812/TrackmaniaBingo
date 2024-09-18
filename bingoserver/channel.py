@@ -8,9 +8,10 @@ from models.channel import (
     TeamModel,
     NewTeamModel,
     ChannelStatusModel,
+    PopulatedTeamModel,
 )
 from models.user import UserModel
-from models.events import EventModel, ChannelEvent, PlayerEvent
+from models.events import EventModel, ChannelEvent, PlayerEvent, TeamEvent
 from user import (
     get_user,
     get_user_from_id,
@@ -156,10 +157,24 @@ def write_chat(
 @router.put("/{channel_id}/teams", status_code=status.HTTP_201_CREATED)
 def create_team(
     team: Annotated[NewTeamModel, Body()],
-    channel=Depends(get_channel),
-    user=Depends(get_user),
+    channel: ChannelModel = Depends(get_channel),
+    user: UserModel = Depends(get_user),
 ) -> TeamModel:
-    raise NotImplementedError()
+    require_channel_operator(user, channel)
+
+    def new_team_id(teams: list[PopulatedTeamModel]) -> int:
+        id = 0
+        while any(t.id == id for t in teams):
+            id += 1
+
+        return id
+
+    new_id = new_team_id(channel.teams)
+    new_team = PopulatedTeamModel(id=new_id, name=team.name, color=team.color)
+    channel.teams.append(new_team)
+
+    get_messager(channel).broadcast(TeamEvent(event="TeamCreated", team=new_team))
+    return new_team
 
 
 @router.patch("/{channel_id}/teams/{team_id}")
