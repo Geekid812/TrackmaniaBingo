@@ -4,7 +4,7 @@ namespace UIRoomSettings {
     const uint GRID_SIZE_MAX = 8;
     const int TIMELIMIT_MAX = 180;
     const int NOBINGO_MAX = 120;
-    const float CHECKBOXES_ALIGN_X = 200;
+    const float CHECKBOXES_ALIGN_X = 180;
     const float GAME_SETTINGS_ALIGN_X = 180;
 
     FeaturedMappack@ SelectedPack;
@@ -12,30 +12,13 @@ namespace UIRoomSettings {
 
     void RoomNameInput() {
         UITools::AlignedLabel(Icons::Pencil + "  Room Name");
+
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(220);
         RoomConfig.name = UI::InputText("##bingoroomname", RoomConfig.name);
         if (RoomConfig.name == "") {
             RoomConfig.name = User::GetLocalUsername() + "'s Bingo Room";
         }
-    }
-
-    void PlayerLimitToggle() {
-        UITools::AlignedLabel(Icons::User + "  Enable Player Limit");
-        Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
-        bool toggle = UI::Checkbox("##bingomaxplayers", hasPlayerLimit(RoomConfig));
-        if (toggle != hasPlayerLimit(RoomConfig)) RoomConfig.size = toggle ? 4 : 0;
-    }
-
-    void PlayerLimitInput() {
-        UITools::AlignedLabel(Icons::Users + "  Maximum");
-        UI::SetNextItemWidth(200);
-        RoomConfig.size = Math::Clamp(UI::InputInt(" players allowed", RoomConfig.size), 2, 1000);
-    }
-
-    void RandomizeToggle() {
-        UITools::AlignedLabel(Icons::Random + "  Randomize Teams");
-        Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
-        RoomConfig.randomize = UI::Checkbox("##bingorandomize", RoomConfig.randomize);
     }
 
     void AccessToggle() {
@@ -214,12 +197,16 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::Users + " Enable Free For All");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         GameConfig.hasFreeForAll = UI::Checkbox("##bingoffa", GameConfig.hasFreeForAll);
+
+        UI::SameLine();
+        UITools::HelpTooltip("Everyone is on their own team.");
     }
 
     void RerollsToggle() {
         UITools::AlignedLabel(Icons::Kenney::ReloadInverse + " Enable Map Rerolls");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         GameConfig.hasRerolls = UI::Checkbox("##bingorerolls", GameConfig.hasRerolls);
+
         UI::SameLine();
         UITools::HelpTooltip("All players can vote to reroll an unclaimed map.");
     }
@@ -228,8 +215,9 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::Trophy + " Competitive Patch");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         GameConfig.hasCompetitvePatch = UI::Checkbox("##bingopatch", GameConfig.hasCompetitvePatch);
+
         UI::SameLine();
-        UITools::HelpTooltip("Replays will be disabled.");
+        UITools::HelpTooltip("Ingame replays will be disabled.");
     }
 
     void TotalTimeIndicator() {
@@ -238,25 +226,10 @@ namespace UIRoomSettings {
     }
 
     void SettingsView() {
-        UITools::SectionHeader("Room Settings");
+        UITools::SectionHeader("Game Settings");
         RoomNameInput();
         UI::SameLine();
         AccessToggle();
-        PlayerLimitToggle();
-
-        UI::BeginDisabled(GameConfig.hasFreeForAll);
-        RandomizeToggle();
-        UI::EndDisabled();
-        if (GameConfig.hasFreeForAll) {
-            RoomConfig.randomize = false;
-        }
-
-        if (hasPlayerLimit(RoomConfig)) {
-            PlayerLimitInput();
-        }
-
-        UI::NewLine();
-        UITools::SectionHeader("Game Settings");
 
         MapModeSelector();
         TargetMedalSelector();
@@ -267,18 +240,16 @@ namespace UIRoomSettings {
         if (GameConfig.mainDuration != 0) {
             OvertimeToggle();
         }
+        if (GameConfig.noBingoDuration != 0 && GameConfig.mainDuration != 0) {
+            TotalTimeIndicator();   
+        }
+
+        UI::NewLine();
+        UITools::SectionHeader("Challenge Options");
 
         FFAToggle();
         RerollsToggle();
         CompetitvePatchToggle();
 
-        if (GameConfig.noBingoDuration != 0 && GameConfig.mainDuration != 0) TotalTimeIndicator();
-    }
-
-    void SaveConfiguredSettings() {
-        Json::Value@ configs = Json::Object();
-        configs["room"] = RoomConfiguration::Serialize(RoomConfig);
-        configs["game"] = GameRules::Serialize(GameConfig);
-        PersistantStorage::LastConfig = Json::Write(configs);
     }
 }

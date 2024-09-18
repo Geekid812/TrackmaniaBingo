@@ -76,7 +76,7 @@ namespace NetworkHandlers {
     }
 
     void UpdateConfig(Json::Value@ data) {
-        Room.config = RoomConfiguration::Deserialize(data["config"]);
+        Room.config = ChannelConfiguration::Deserialize(data["config"]);
         Room.matchConfig = MatchConfiguration::Deserialize(data["match_config"]);
     }
 
@@ -98,7 +98,6 @@ namespace NetworkHandlers {
 
     void RoomlistUpdateConfig(Json::Value@ data) {
         NetworkRoom@ room = UIRoomMenu::GetRoom(data["code"]);
-        room.config = RoomConfiguration::Deserialize(data["config"]);
         room.matchConfig = MatchConfiguration::Deserialize(data["match_config"]);
     }
 
@@ -207,7 +206,7 @@ namespace NetworkHandlers {
     }
 
     void RoomSync(Json::Value@ data) {
-        Room.config = RoomConfiguration::Deserialize(data["config"]);
+        Room.config = ChannelConfiguration::Deserialize(data["config"]);
         Room.matchConfig = MatchConfiguration::Deserialize(data["matchconfig"]);
         Room.joinCode = data["join_code"];
         LoadRoomTeams(data["teams"]);

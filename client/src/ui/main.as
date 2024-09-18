@@ -85,7 +85,7 @@ namespace UIMainWindow {
         UI::BeginDisabled(disabled);
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Create Room")) {
-            UIRoomSettings::SaveConfiguredSettings();
+            PersistantStorage::SaveConfigurations();
             startnew(Network::CreateRoom);
         }
         UIColor::Reset();
@@ -149,7 +149,7 @@ namespace SettingsWindow {
 
         UIColor::Cyan();
         if (UI::Button(Icons::CheckCircle + " Update Settings")) {
-            UIRoomSettings::SaveConfiguredSettings();
+            PersistantStorage::SaveConfigurations();
             startnew(Network::EditConfig);
         }
         UIColor::Reset();

@@ -1,4 +1,6 @@
 namespace UIDevActions {
+    const float TEXT_INPUT_WIDTH = 500.;
+
     bool Visible;
 
     void Render() {
@@ -10,6 +12,8 @@ namespace UIDevActions {
         if (UI::BeginTabItem(Icons::Bug + " Actions")) {
             // Token controller
             ClientTokenControl();
+            LocalProfileControl();
+            LastConfigControl();
 
             UIColor::Cyan();
 
@@ -49,10 +53,32 @@ namespace UIDevActions {
     }
 
     void ClientTokenControl() {
+        UI::SetNextItemWidth(TEXT_INPUT_WIDTH);
         PersistantStorage::ClientToken = UI::InputText("Client Token", PersistantStorage::ClientToken);
+
         UI::SameLine();
         if (UI::Button("Clear")) {
             PersistantStorage::ClientToken = "";
+        };
+    }
+
+    void LocalProfileControl() {
+        UI::SetNextItemWidth(TEXT_INPUT_WIDTH);
+        PersistantStorage::LocalProfile = UI::InputText("Local Profile", PersistantStorage::LocalProfile);
+
+        UI::SameLine();
+        if (UI::Button("Clear")) {
+            PersistantStorage::LocalProfile = "";
+        };
+    }
+
+    void LastConfigControl() {
+        UI::SetNextItemWidth(TEXT_INPUT_WIDTH);
+        PersistantStorage::LastConfig = UI::InputText("Last Config", PersistantStorage::LastConfig);
+
+        UI::SameLine();
+        if (UI::Button("Clear")) {
+            PersistantStorage::LastConfig = "";
         };
     }
 

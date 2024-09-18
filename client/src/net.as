@@ -103,12 +103,13 @@ namespace Network {
         if (response is null) return;
 
         @Profile = PlayerProfile::Deserialize(response);
+        PersistantStorage::LocalProfile = Json::Write(response);
     }
 
     void CreateRoom() {
         GameConfig.game = CURRENT_GAME;
 
-        auto body = Json::Object();
+        auto body = ChannelConfiguration::Serialize(RoomConfig);
         body["game_rules"] = GameRules::Serialize(GameConfig);
 
         Json::Value@ response = API::MakeRequestJson(Net::HttpMethod::Put, "/channels", Json::Write(body));

@@ -25,36 +25,6 @@ namespace PlayerRef {
     }
 }
 
-/* Room parameters set by the host. */
-class RoomConfiguration {
-    string name;
-    bool public;
-    bool randomize;
-    uint size;
-    RoomConfiguration() {}
-}
-namespace RoomConfiguration {
-    Json::Value@ Serialize(RoomConfiguration cls) {
-        auto value = Json::Object();
-        value["name"] = cls.name;
-        value["public"] = cls.public;
-        value["randomize"] = cls.randomize;
-        value["size"] = cls.size;
-
-        return value;
-    }
-
-    RoomConfiguration Deserialize(Json::Value@ value) {
-        auto cls = RoomConfiguration();
-        cls.name = value["name"];
-        cls.public = value["public"];
-        cls.randomize = value["randomize"];
-        cls.size = value["size"];
-
-        return cls;
-    }
-}
-
 /* Match parameters set by the host. */
 class MatchConfiguration {
     GamePlatform game = GamePlatform::Next;

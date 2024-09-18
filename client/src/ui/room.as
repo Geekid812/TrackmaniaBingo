@@ -113,30 +113,7 @@ namespace UIGameRoom {
         }
         UI::NewLine();
 
-        if (Room.config.randomize) {
-            if (Room.localPlayerIsHost) {
-                UI::BeginDisabled(!Room.CanDeleteTeams());
-                if (UI::Button(Icons::MinusSquare)) {
-                    NetParams::DeletedTeamId = Room.teams[0].id;
-                    startnew(Network::DeleteTeam);
-                }
-                UI::EndDisabled();
-
-                UI::SameLine();
-                UI::BeginDisabled(!Room.CanCreateMoreTeams());
-                if (UI::Button(Icons::PlusSquare)) {
-                    startnew(Network::CreateTeam);
-                }
-                UI::EndDisabled();
-                UI::SameLine();
-            }
-            
-            UI::Text("\\$ff8Number of teams: \\$z" + Room.teams.Length);
-        } else {
-            UI::NewLine();
-        }
-        
-        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null) || Room.matchConfig.freeForAll, true, Room.CanCreateMoreTeams() && !Gamemaster::IsBingoActive(), Room.CanDeleteTeams());
+        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, Room.matchConfig.freeForAll, true, Room.CanCreateMoreTeams() && !Gamemaster::IsBingoActive(), Room.CanDeleteTeams());
 
         LeaveButton();
 
@@ -206,6 +183,6 @@ namespace UIGameRoom {
 
     string PlayerCount() {
         if (@Room is null) return "";
-        return Room.players.Length + (hasPlayerLimit(Room.config) ? "/" + Room.config.size : "");
+        return tostring(Room.players.Length);
     }
 }

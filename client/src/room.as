@@ -1,6 +1,6 @@
 class GameRoom {
     string name;
-    RoomConfiguration config;
+    ChannelConfiguration config;
     MatchConfiguration matchConfig;
     string joinCode;
     array<Team>@ teams = {};
@@ -45,7 +45,7 @@ class GameRoom {
     }
 
     bool CanCreateMoreTeams() {
-        return teams.Length < uint(Math::Min(maxTeams, hasPlayerLimit(config) ? config.size : maxTeams));
+        return teams.Length < uint(Math::Min(maxTeams, maxTeams));
     }
 
     bool CanDeleteTeams() {
@@ -56,7 +56,6 @@ class GameRoom {
     NetworkRoom NetworkState() {
         auto netroom = NetworkRoom();
         netroom.name = this.name;
-        netroom.config = this.config;
         netroom.matchConfig = this.matchConfig;
         netroom.playerCount = this.players.Length;
         netroom.hostName = "";

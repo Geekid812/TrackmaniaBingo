@@ -32,7 +32,7 @@ namespace PersistantStorage {
         try {
             if (LastConfig != "") {
                 Json::Value@ configs = Json::Parse(LastConfig);
-                RoomConfig = RoomConfiguration::Deserialize(configs["room"]);
+                RoomConfig = ChannelConfiguration::Deserialize(configs["room"]);
                 GameConfig = GameRules::Deserialize(configs["game"]);
                 
             }
@@ -59,6 +59,14 @@ namespace PersistantStorage {
 
         string textJson = Json::Write(jsonCache);
         PersistantStorage::DevelMapCache = textJson;
+    }
+
+    void SaveConfigurations() {
+        Json::Value@ object = Json::Object();
+        object["room"] = ChannelConfiguration::Serialize(RoomConfig);
+        object["game"] = GameRules::Serialize(GameConfig);
+        
+        PersistantStorage::LastConfig = Json::Write(object);
     }
     
     void ResetConnectedMatch() {

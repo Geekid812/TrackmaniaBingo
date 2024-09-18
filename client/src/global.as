@@ -8,7 +8,7 @@ GameRoom@ Room;
 LiveMatch@ Match;
 
 // Local room configuration
-RoomConfiguration RoomConfig;
+ChannelConfiguration RoomConfig;
 
 // Local game configuration
 GameRules GameConfig;
