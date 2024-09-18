@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 from fastapi import FastAPI, Depends
 
@@ -10,21 +11,24 @@ import config
 import channel
 import game
 
+
+@asynccontextmanager
+async def lifecycle(app: FastAPI):
+    await auth.init_client()
+    yield  # Run the app
+
+
 app = FastAPI(
     title="Trackmania Bingo API",
     version=config.get("version"),
     debug=config.is_development(),
+    lifespan=lifecycle
 )
 app.include_router(auth.router)
 app.include_router(channel.router)
 app.include_router(game.router)
 
 db.init_database()
-
-
-@app.on_event("startup")
-async def on_startup():
-    await auth.init_client()
 
 
 @app.get("/me")

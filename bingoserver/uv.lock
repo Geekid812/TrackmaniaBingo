@@ -1,6 +1,6 @@
 version = 1
 requires-python = ">=3.12"
-environment-markers = [
+resolution-markers = [
     "python_full_version < '3.13'",
     "python_full_version >= '3.13'",
 ]
@@ -106,7 +106,7 @@ wheels = [
 [[package]]
 name = "bingoserver"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "fastapi", extra = ["standard"] },
@@ -191,12 +191,10 @@ wheels = [
 [package.optional-dependencies]
 standard = [
     { name = "email-validator" },
-    { name = "fastapi-cli" },
     { name = "fastapi-cli", extra = ["standard"] },
     { name = "httpx" },
     { name = "jinja2" },
     { name = "python-multipart" },
-    { name = "uvicorn" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -215,7 +213,6 @@ wheels = [
 
 [package.optional-dependencies]
 standard = [
-    { name = "uvicorn" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 

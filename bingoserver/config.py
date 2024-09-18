@@ -10,10 +10,14 @@ with open("config.toml", "rb") as f:
 
 
 def get(key: str):
-    paths = key.split(".")
-    value = config
-    for path in paths:
-        value = value[path]
+    try:
+        paths = key.split(".")
+        value = config
+        for path in paths:
+            value = value[path]
+    except KeyError as e:
+        raise ValueError(
+            f"The key '{key}' has not been defined in the configuration file.") from e
 
     return value
 
