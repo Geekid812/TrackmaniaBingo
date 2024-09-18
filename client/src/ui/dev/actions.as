@@ -8,10 +8,14 @@ namespace UIDevActions {
         UI::BeginTabBar("bingodev_tabs");
 
         if (UI::BeginTabItem(Icons::Bug + " Actions")) {
+            // Token controller
             ClientTokenControl();
 
             UIColor::Cyan();
 
+            // Various actions row
+            Reauthenticate();
+            UI::SameLine();
             CacheCleaner();
             UI::SameLine();
             DummyGameLauncher();
@@ -19,6 +23,7 @@ namespace UIDevActions {
             UIColor::Reset();
             UIColor::Dark();
 
+            // Cache lookup
             TextureResourceCache();
 
             UIColor::Reset();
@@ -49,6 +54,12 @@ namespace UIDevActions {
         if (UI::Button("Clear")) {
             PersistantStorage::ClientToken = "";
         };
+    }
+
+    void Reauthenticate() {
+        if (UI::Button(Icons::Users + " Reauthenticate")) {
+            startnew(Login::Login);
+        }
     }
 
     void CacheCleaner() {

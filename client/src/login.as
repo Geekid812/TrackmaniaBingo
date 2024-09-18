@@ -15,12 +15,11 @@ namespace Login {
     }
 
     void Login() {
-#if TURBO
-        throw("Login() called on Turbo! This is invalid.");
-#else
+        PersistantStorage::ClientToken = ""; // Clear previous token
+
         trace("[Login] Fetching a new authentication token...");
         string authToken;
-        string authenticationMethod = "Openplanet";
+        AuthenticationMethod authenticationMethod = AuthenticationMethod::Openplanet;
         try {
             authToken = FetchAuthToken();
 
@@ -33,42 +32,29 @@ namespace Login {
         } catch {
             print("[Login] Openplanet authentication unavailable: " + getExceptionInfo());
             print("[Login] Falling back to basic authentication.");
-            authenticationMethod = "None";
+            authenticationMethod = AuthenticationMethod::None;
         }
 
         Settings::BackendConfiguration backend = Settings::GetBackendConfiguration();
-        trace("[Login] Attempting to login to " + backend.NetworkAddress + "...");
-        string url = Settings::HttpScheme(backend) + backend.NetworkAddress + ":" + backend.HttpPort + "/auth/login";
+        string hostname = Settings::HttpScheme(backend) + backend.NetworkAddress + ":" + backend.HttpPort;
+        trace("[Login] Attempting to login to " + hostname + "...");
 
         Json::Value@ body = Json::Object();
         body["authentication"] = authenticationMethod;
+        body["username"] = User::GetLocalUsername();
         body["account_id"] = User::GetAccountId();
-        body["display_name"] = User::GetLocalUsername();
-        if (authenticationMethod == "Openplanet") body["token"] = authToken;
 
-        auto req = Net::HttpRequest();
-        req.Url = url;
-        req.Method = Net::HttpMethod::Post;
-        req.Body = Json::Write(body);
-        req.Headers = {
-            {"content-type", "application/json"}
-        };
-        req.Start();
-
-        while (!req.Finished()) { yield(); }
-        if (Extra::Net::RequestRaiseError("Login", req)) {
-            int status = req.ResponseCode();
-            err("Login", "Failed to login with the game server: " + req.String() + " (Error " + status + ")");
-        
-            if (status == 503) {
-                errnote("Error 503 indicates an issue with Openplanet authentication servers. Try again later if possible!");
-            }
-            return;
+        if (authenticationMethod == AuthenticationMethod::Openplanet) {
+            body["token"] = authToken;
         }
 
-        PersistantStorage::ClientToken = req.String();
-        trace("[Login] Success.");
-#endif
+        Json::Value@ res = API::MakeRequestJson(Net::HttpMethod::Post, "/auth/login", Json::Write(body));
+        if (res is null) return;
+
+        PersistantStorage::ClientToken = res["client_token"];
+
+        string userIdent = string(res["name"]) + " (uid " + int(res["uid"]) + ")";
+        trace("[Login] Success: Logged in as " + userIdent);
     }
 
 #if TMNEXT

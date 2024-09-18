@@ -12,10 +12,6 @@ tokens: dict[str, UserModel] = {}
 
 
 def set_user_token(user: UserModel, token: str):
-    for ktoken in tokens.keys():
-        if tokens[ktoken] == user:
-            tokens.pop(ktoken)
-
     tokens[token] = user
 
 

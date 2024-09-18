@@ -14,13 +14,20 @@ namespace API {
         req.Method = method;
         req.Url = url;
         req.Body = body;
+        req.Headers = {
+            {"content-type", "application/json"}
+        };
 
         req.Start();
         while (!req.Finished()) yield();
 
         int responseCode = req.ResponseCode();
         string responseBody = req.String();
-        trace(tostring(req.Method).ToUpper() + " " + path + " " + responseCode + " " + Extra::IO::FormatFileSize(responseBody.Length));
+        trace("[API] " + tostring(req.Method).ToUpper() + " " + path + " " + responseCode + " " + Extra::IO::FormatFileSize(responseBody.Length));
+        
+        if (Settings::Verbose) {
+            trace("[API] " + responseBody);
+        }
 
         if (!HandleResponseCode(responseCode, req.Error(), responseBody)) return null;
         return req;
@@ -45,17 +52,17 @@ namespace API {
         if (responseCode >= 400) {
             if (responseCode < 500) {
                 Json::Value@ bodyJson;
-                try { bodyJson = Json::Parse(body); } catch {}
+                try { @bodyJson = Json::Parse(body); } catch {}
 
                 string errorMessage = "The plugin encountered an error in a network request";
 
                 if (bodyJson !is null && bodyJson.HasKey("detail")) {
-                    errorMessage = tostring(bodyJson["detail"]);
+                    errorMessage = Json::Write(bodyJson["detail"]);
                 }
 
-                RaiseErrorMessage("Plugin Error", "The plugin encountered an unexpected error. Please report this!\n" + responseCode + ": " + errorMessage);
+                RaiseErrorMessage("Plugin Error", "The plugin encountered an unexpected error. Please report this!\n\n" + responseCode + ": " + errorMessage);
             } else {
-                RaiseErrorMessage("Server Error", "The Bingo server has encountered an unexpected error. Please report this!\n" + responseCode + ": " + body);
+                RaiseErrorMessage("Server Error", "The Bingo server has encountered an unexpected error. Please report this!\n\n" + responseCode + ": " + body);
             }
 
             return false;
@@ -66,7 +73,7 @@ namespace API {
     }
     
     void RaiseErrorMessage(const string&in title, const string&in message) {
-        error("[API] " + title + ": " + message.Replace("\n", " | "));
-        UI::ShowNotification(Icons::TimesCircle + " " + title, message, vec4(.9, .2, .2, .9), 15000);
+        error("[API] " + title + ": " + message);
+        UI::ShowNotification(Icons::TimesCircle + " " + title, message, vec4(.9, .2, .2, .9), 20000);
     }
 }

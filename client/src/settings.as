@@ -13,7 +13,7 @@ namespace Settings {
         }
     }
 
-    BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 8080, false);
+    BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 8000, false);
     BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 8085, true);
 
     enum BackendSelection {
@@ -42,6 +42,9 @@ namespace Settings {
 
     [Setting name="Enable Developer Tools" category="Debug"]
     bool DevTools = false;
+
+    [Setting name="Enable Verbose Logging" category="Debug"]
+    bool Verbose = false;
 
     // Gets the active backend configuration.
     BackendConfiguration@ GetBackendConfiguration() {
