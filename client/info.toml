@@ -4,7 +4,3 @@ name = "Bingo"
 author = "TheGeekid"
 category = "Game"
 perms = "paid"
-
-[script]
-exports = ["src/export/definitions.as"]
-shared_exports = ["src/export/shared.as"]
