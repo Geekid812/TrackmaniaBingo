@@ -29,8 +29,7 @@ namespace API {
             trace("[API] " + responseBody);
         }
 
-        if (!HandleResponseCode(responseCode, req.Error(), responseBody)) return null;
-        return req;
+        return HandleResponse(req);
     }
 
     /**
@@ -43,13 +42,22 @@ namespace API {
         return response.Json();
     }
 
-    bool HandleResponseCode(int responseCode, const string&in error, const string&in body) {
+    Net::HttpRequest@ HandleResponse(Net::HttpRequest@ req) {
+        int responseCode = req.ResponseCode();
         if (responseCode == 0) {
-            RaiseErrorMessage("Connection Error", "Communication with the server failed:\n" + error + "\n\nPlease check your connection!");
-            return false;
+            RaiseErrorMessage("Connection Error", "Communication with the server failed:\n" + req.Error() + "\n\nPlease check your connection!");
+            return null;
         }
 
         if (responseCode >= 400) {
+            if (responseCode == 403) {
+                // Note: this could cycle if Login returned a 403 error (this is currently not possible)
+                warn("[API] Handling HTTP_403_FORBIDDEN request silently: attempting login.");
+                Login::Login();
+                return null;
+            }
+
+            string body = req.String();
             if (responseCode < 500) {
                 Json::Value@ bodyJson;
                 try { @bodyJson = Json::Parse(body); } catch {}
@@ -65,11 +73,11 @@ namespace API {
                 RaiseErrorMessage("Server Error", "The Bingo server has encountered an unexpected error. Please report this!\n\n" + responseCode + ": " + body);
             }
 
-            return false;
+            return null;
         }
 
         // Other non-error status codes, should be all good!
-        return true;
+        return req;
     }
     
     void RaiseErrorMessage(const string&in title, const string&in message) {
