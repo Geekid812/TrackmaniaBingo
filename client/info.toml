@@ -3,7 +3,4 @@ version = "5.0-dev"
 name = "Bingo"
 author = "TheGeekid"
 category = "Game"
-
-[script]
-exports = ["src/export/definitions.as"]
-shared_exports = ["src/export/shared.as"]
+perms = "paid"
