@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from models.user import UserModel
-from models.channel import ChannelModel, ChannelParamsModel
+from models.channel import ChannelModel
 
 
 class EventModel(BaseModel):

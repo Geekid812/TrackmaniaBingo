@@ -25,5 +25,6 @@ class LoginModel(BaseModel):
     account_id: str
     token: str | None = Field(default=None)
 
+
 class LoginResponseModel(UserModel):
     client_token: str

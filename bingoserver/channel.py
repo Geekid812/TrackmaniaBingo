@@ -1,5 +1,5 @@
-from typing import Annotated, Any, Optional
-from fastapi import APIRouter, Depends, Body, status, HTTPException, status
+from typing import Annotated
+from fastapi import APIRouter, Depends, Body, HTTPException, status
 
 from models.channel import (
     ChannelModel,

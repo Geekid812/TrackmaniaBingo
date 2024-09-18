@@ -10,7 +10,7 @@ with open("config.toml", "rb") as f:
 
 
 def get(key: str):
-    paths = key.split('.')
+    paths = key.split(".")
     value = config
     for path in paths:
         value = value[path]

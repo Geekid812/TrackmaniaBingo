@@ -56,8 +56,7 @@ def is_channel_operator(user: UserModel, channel: ChannelModel) -> bool:
 
 def require_channel_operator(user: UserModel, channel: ChannelModel):
     if not is_channel_operator(user, channel):
-        raise HTTPException(status.HTTP_403_FORBIDDEN,
-                            "user is not a channel operator")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "user is not a channel operator")
 
 
 def require_self_operation(user: UserModel, other: UserModel):

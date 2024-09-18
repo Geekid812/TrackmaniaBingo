@@ -10,3 +10,6 @@ dependencies = [
     "ruff>=0.6.4",
     "sqlmodel>=0.0.22",
 ]
+
+[tool.setuptools]
+py-modules = []
