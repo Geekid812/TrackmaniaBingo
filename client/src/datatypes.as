@@ -25,54 +25,6 @@ namespace PlayerRef {
     }
 }
 
-/* A player's detailed profile. */
-class PlayerProfile {
-    int uid;
-    string name;
-    string accountId;
-    uint64 createdAt;
-    uint64 lastPlayedAt;
-    string countryCode;
-    string title;
-    uint gamesPlayed;
-    uint gamesWon;
-    uint score;
-    PlayerProfile() {}
-}
-namespace PlayerProfile {
-    Json::Value@ Serialize(PlayerProfile cls) {
-        auto value = Json::Object();
-        value["uid"] = cls.uid;
-        value["name"] = cls.name;
-        value["account_id"] = cls.accountId;
-        value["created_at"] = cls.createdAt;
-        value["last_played_at"] = cls.lastPlayedAt;
-        value["country_code"] = cls.countryCode;
-        value["title"] = cls.title;
-        value["games_played"] = cls.gamesPlayed;
-        value["games_won"] = cls.gamesWon;
-        value["score"] = cls.score;
-
-        return value;
-    }
-
-    PlayerProfile Deserialize(Json::Value@ value) {
-        auto cls = PlayerProfile();
-        cls.uid = value["uid"];
-        cls.name = value["name"];
-        cls.accountId = value["account_id"];
-        cls.createdAt = value["created_at"];
-        cls.lastPlayedAt = value["last_played_at"];
-        cls.countryCode = value["country_code"];
-        if (value["title"].GetType() != Json::Type::Null) cls.title = value["title"];
-        cls.gamesPlayed = value["games_played"];
-        cls.gamesWon = value["games_won"];
-        cls.score = value["score"];
-
-        return cls;
-    }
-}
-
 /* Room parameters set by the host. */
 class RoomConfiguration {
     string name;

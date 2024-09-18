@@ -35,6 +35,10 @@ void Main() {
 void RenderMenu() {
     if (UI::MenuItem(MAIN_MENUITEM_NAME, "", UIMainWindow::Visible)) {
         UIMainWindow::Visible = !UIMainWindow::Visible;
+
+        if (UIMainWindow::Visible) {
+            OnMainWindowOpened();
+        }
     }
 
     if (Settings::DevTools && UI::MenuItem(DEVELOPER_MENUITEM_NAME, "", UIDevActions::Visible)) {
@@ -87,4 +91,8 @@ UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
 void Update(float dt) {
     if (Gamemaster::IsBingoPlaying())
         GameUpdates::Tick();
+}
+
+void OnMainWindowOpened() {
+    startnew(Network::GetMyProfile);
 }

@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from pydantic import field_serializer
 import sqlalchemy
 from sqlalchemy.sql.functions import now
 from sqlmodel import SQLModel, Field, Session, select
@@ -24,6 +25,10 @@ class PlayerSchema(SQLModel, table=True):
     country_code: str = Field(default="WOR")
     games_played: int = Field(default=0)
     title: str | None = Field(default=None)
+
+    @field_serializer("created_at", when_used="json")
+    def dt_serialize(self, dt: datetime) -> int:
+        return int(dt.timestamp())
 
 
 def get_player(uid: int) -> PlayerSchema | None:

@@ -18,6 +18,11 @@ namespace API {
             {"content-type", "application/json"}
         };
 
+        string token = PersistantStorage::ClientToken;
+        if (token != "") {
+            req.Headers.Set("x-token", token);
+        }
+
         req.Start();
         while (!req.Finished()) yield();
 

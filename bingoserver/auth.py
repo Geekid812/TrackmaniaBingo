@@ -43,20 +43,17 @@ async def login(body: LoginModel = Body()) -> LoginResponseModel:
 
         token = body.token
         if not token:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST,
-                                "token not provided")
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "token not provided")
 
         async with http_client.get(
-            VALIDATION_URL, data=FormData(
-                {"token": token, "secret": openplanet_key})
+            VALIDATION_URL, data=FormData({"token": token, "secret": openplanet_key})
         ) as response:
             response.raise_for_status()
 
             res: dict = await response.json()
             if "error" in res.keys():
                 raise HTTPException(
-                    status.HTTP_400_BAD_REQUEST, "authentication error: " +
-                    res["error"]
+                    status.HTTP_400_BAD_REQUEST, "authentication error: " + res["error"]
                 )
 
             username, account_id = res["username"], res["account_id"]
@@ -70,8 +67,7 @@ async def login(body: LoginModel = Body()) -> LoginResponseModel:
 
     client_token = secrets.token_hex(16)
     set_user_token(
-        UserModel(uid=player.uid, name=player.username,
-                  account_id=player.account_id),
+        UserModel(uid=player.uid, name=player.username, account_id=player.account_id),
         client_token,
     )
 
@@ -103,8 +99,7 @@ def update_user(
     username: str, account_id: str, country_code: str = None
 ) -> PlayerSchema:
     with Session(db.engine) as session:
-        stmt = select(PlayerSchema).where(
-            PlayerSchema.account_id == account_id)
+        stmt = select(PlayerSchema).where(PlayerSchema.account_id == account_id)
         result = session.exec(stmt)
 
         player = result.one_or_none()

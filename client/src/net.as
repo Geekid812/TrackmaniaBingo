@@ -98,6 +98,13 @@ namespace Network {
         }
     }
 
+    void GetMyProfile() {
+        Json::Value@ response = API::MakeRequestJson(Net::HttpMethod::Get, "/me");
+        if (response is null) return;
+
+        @Profile = PlayerProfile::Deserialize(response);
+    }
+
     void CreateRoom() {
         GameConfig.game = CURRENT_GAME;
 

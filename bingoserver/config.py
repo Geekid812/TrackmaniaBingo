@@ -17,7 +17,8 @@ def get(key: str):
             value = value[path]
     except KeyError as e:
         raise ValueError(
-            f"The key '{key}' has not been defined in the configuration file.") from e
+            f"The key '{key}' has not been defined in the configuration file."
+        ) from e
 
     return value
 
