@@ -21,4 +21,11 @@ namespace User {
         auto network = cast<CTrackManiaNetwork>(GetApp().Network);
         return network.PlayerInfo.WebServicesUserId;
     }
+
+    /*
+    * Get the local player's UID.
+    */
+    int GetUid() {
+        return Profile.uid;
+    }
 }

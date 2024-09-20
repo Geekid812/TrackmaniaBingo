@@ -1,6 +1,11 @@
 
 
 namespace NetworkHandlers {
+    void SyncChannel(Json::Value@ channel) {
+        
+    }
+
+
     void TeamsUpdate(Json::Value@ status) {
         @Room.teams = {};
         auto JsonTeams = status["teams"];

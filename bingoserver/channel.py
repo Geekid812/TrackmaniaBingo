@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, Body, HTTPException, status
+from fastapi import APIRouter, Depends, Body, HTTPException, status, responses, Response
 
 from models.channel import (
     ChannelModel,
@@ -22,6 +22,7 @@ from message import MessageQueue
 
 channels: dict[str, ChannelModel] = {}
 messagers: dict[str, MessageQueue] = {}
+joincodes: dict[str, str] = {}
 toplevel_messager = MessageQueue()
 
 
@@ -47,8 +48,13 @@ def get_channels() -> list[ChannelModel]:
     return [channel for channel in channels.values() if channel.public]
 
 
-@router.get("/resolve")
-def resolve_join_code(code: str) -> ChannelModel: ...
+@router.get("/resolve", response_class=responses.PlainTextResponse)
+def resolve_join_code(code: str) -> str:
+    channel_id = joincodes.get(code)
+    if not channel_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"joincode {code} does not resolve to any channel")
+
+    return channel_id
 
 
 @router.put("", status_code=status.HTTP_201_CREATED)
@@ -108,18 +114,16 @@ def add_player(
     target_uid: int,
     channel: ChannelModel = Depends(get_channel),
     user: UserModel = Depends(get_user),
-):
+) -> ChannelModel:
     target = get_user_from_id(target_uid)
     require_self_operation(user, target)
 
     if user in channel.players:
-        raise HTTPException(
-            status.HTTP_304_NOT_MODIFIED, "user already joined the channel"
-        )
+        return Response(channel, status.HTTP_304_NOT_MODIFIED) # User is already in this channel
 
     channel.players.append(user)
     get_messager(channel).broadcast(PlayerEvent(event="PlayerAdded", user=user))
-
+    return channel
 
 @router.delete("/{channel_id}/players")
 def remove_player(

@@ -117,16 +117,50 @@ namespace Network {
 
     }
 
-    void CreateTeam() {
+    void ChannelOperationError() {
+        err("Network", "An operation on this room could not be completed: Channel ID has not been defined.\nThis is a plugin error!");
+    }
 
+    void CreateTeam() {
+        if (NetParams::ChannelId == "") {
+            ChannelOperationError();
+            return;
+        }
+
+        auto body = Json::Object();
+        body["name"] = NetParams::TeamName;
+        
+        Json::Value@ response = API::MakeRequestJson(Net::HttpMethod::Put, "/channels/" + NetParams::ChannelId + "/teams", Json::Write(body));
     }
 
     void DeleteTeam() {
-
+        if (NetParams::ChannelId == "") {
+            ChannelOperationError();
+            return;
+        }
+          
+        Json::Value@ response = API::MakeRequestJson(Net::HttpMethod::Delete, "/channels/" + NetParams::ChannelId + "/teams/" + NetParams::TeamId);
     }
 
     void JoinRoom() {
+        Net::HttpRequest@ response = API::MakeRequest(Net::HttpMethod::Get, "/channels/resolve?code=" + NetParams::JoinCode);
+        if (response is null) return;
 
+        string channelId = response.String();
+        NetParams::ChannelId = channelId;
+        ConnectChannel();
+    }
+
+    void ConnectChannel() {
+        if (NetParams::ChannelId == "") {
+            ChannelOperationError();
+            return;
+        }
+
+        Json::Value@ response = API::MakeRequestJson(Net::HttpMethod::Put, "/channels/" + NetParams::ChannelId + "/players?target_uid=" + User::GetUid());
+        if (response is null) return;
+
+        // TODO: finish up by starting a polling loop
     }
 
 
