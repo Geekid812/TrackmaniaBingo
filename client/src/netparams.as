@@ -18,6 +18,5 @@ namespace NetParams {
     int DeletedTeamId;
     int RerollCellId;
     int PingCellId;
-    string DailyResultDate;
     string ChatMessage;
 }
