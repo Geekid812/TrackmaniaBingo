@@ -17,7 +17,7 @@ namespace UIMainWindow {
     }
 
     vec4 GetWindowTitleColor() {
-        return false ? vec4(.5, .1, 0, .95) : UI::GetStyleColor(UI::Col::WindowBg);
+        return UI::GetStyleColor(UI::Col::WindowBg);
     }
 
     void Render() {
@@ -69,6 +69,13 @@ namespace UIMainWindow {
             UI::EndTabItem();
         }
 
+        if (UI::BeginTabItem(Icons::Star + " Events")) {
+            UI::BeginChild("bingoevents");
+            EventsTab();
+            UI::EndChild();
+            UI::EndTabItem();
+        }
+
 
         UI::EndTabBar();
         UIColor::Reset();
@@ -77,6 +84,10 @@ namespace UIMainWindow {
     void CreateTab() {
         UIRoomSettings::SettingsView();
         CreateRoomButton();
+    }
+
+    void EventsTab() {
+        UI::Text("Work in progress!");
     }
 
     void CreateRoomButton() {
