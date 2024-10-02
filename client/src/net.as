@@ -1,12 +1,15 @@
 
 namespace Network {
     const int SECRET_LENGTH = 32;
+    const int POLL_RETRY_DELAY = 30;
 
     namespace __internal {
         // Disable UI interactions while a blocking request is happening
         bool SuspendUI = false;
         // Sequence counter for received events
         uint SequenceNext = 0;
+        // Whether a polling loop is running
+        bool IsPolling = false;
     }
 
     void ResetNetworkParameters() {
@@ -27,11 +30,6 @@ namespace Network {
     }
 
     void Handle(Json::Value@ body) {
-        if (body.HasKey("seq")) {
-            uint SequenceCode = body["seq"];
-            yield();
-            return;
-        }
         if (!body.HasKey("event")) {
             warn("Invalid message, discarding.");
             return;
@@ -129,6 +127,11 @@ namespace Network {
 
         auto body = Json::Object();
         body["name"] = NetParams::TeamName;
+
+        body["color"] = Json::Array();
+        body["color"].Add(NetParams::TeamColor.x);
+        body["color"].Add(NetParams::TeamColor.y);
+        body["color"].Add(NetParams::TeamColor.z);
         
         Json::Value@ response = API::MakeRequestJson(Net::HttpMethod::Put, "/channels/" + NetParams::ChannelId + "/teams", Json::Write(body));
     }
@@ -160,7 +163,44 @@ namespace Network {
         Json::Value@ response = API::MakeRequestJson(Net::HttpMethod::Put, "/channels/" + NetParams::ChannelId + "/players?target_uid=" + User::GetUid());
         if (response is null) return;
 
-        // TODO: finish up by starting a polling loop
+        startnew(ChannelPollLoop);
+    }
+
+    void ChannelPollLoop() {
+        __internal::IsPolling = true;
+        try {
+            ChannelPollLoopInner();
+        } catch {
+            // catch this exception to run destruction code and don't throw
+            error("[Network] ChannelPollLoop threw an exception:" + getExceptionInfo());
+        }
+        __internal::IsPolling = false;
+    }
+
+    void ChannelPollLoopInner() {
+        while (true) {
+            if (NetParams::ChannelId == "") {
+                warn("[Network::ChannelPollLoop] Channel ID is not defined, stopping loop.");
+                return;
+            }
+
+            Json::Value@ response = API::MakeRequestJson(Net::HttpMethod::Get, "/channels/" + NetParams::ChannelId + "/poll");
+            if (response is null) {
+                warn("[Network::ChannelPollLoop] Polling failed, retrying in " + POLL_RETRY_DELAY + " seconds...");
+                sleep(POLL_RETRY_DELAY * 1000);
+                continue;
+            }
+
+            if (response.GetType() != Json::Type::Array) {
+                err("Network::ChannelPollLoop", "Unexpected JSON! Expected a value of type Array, got " + tostring(response.GetType()));
+                return;
+            }
+
+            for (uint i = 0; i < response.Length; i++) {
+                // Handle a received event
+                Handle(response[i]);
+            }
+        }
     }
 
 
