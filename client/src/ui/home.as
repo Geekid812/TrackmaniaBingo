@@ -10,7 +10,7 @@ namespace UIHome {
         "Get in there and make your team proud!",
         "It's all fun and games :)",
         "\"Oh my god there's a kacky map\"",
-        "Nothing in unbeatable! (except when the DD2 map shows up)",
+        "Nothing is unbeatable! (except when the DD2 map shows up)",
         "Communication is your top priority!",
         "Not sponsored by Wirtual!",
         "Rules? What are they?",
