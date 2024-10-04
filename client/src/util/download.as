@@ -46,12 +46,12 @@ namespace Framework {
 
                 yield();
             }
-            if (Extra::Net::RequestRaiseError("Framework::Download", req)) {
+            if (NetExtra::RequestRaiseError("Framework::Download", req)) {
                 if (@data.failureCallback !is null) data.failureCallback(data.url);
                 return;
             }
 
-            trace("[Framework::Download] Download of '" + data.url + "' completed. Total size: " + Extra::IO::FormatFileSize(req.Buffer().GetSize()));    
+            trace("[Framework::Download] Download of '" + data.url + "' completed. Total size: " + IOExtra::FormatFileSize(req.Buffer().GetSize()));    
             if (@data.successCallback !is null) data.successCallback(data.url, req.Buffer());        
         }
     }

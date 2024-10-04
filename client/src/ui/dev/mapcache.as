@@ -81,7 +81,7 @@ namespace UIDevMapCache {
             while (!req.Finished()) yield();
             
             amount -= 1;
-            if (Extra::Net::RequestRaiseError("UIDevMapCache::LoadTMXMapsCoroutine", req)) continue;
+            if (NetExtra::RequestRaiseError("UIDevMapCache::LoadTMXMapsCoroutine", req)) continue;
 
             Json::Value@ body = req.Json();
             body = body["results"][0];

@@ -1,5 +1,5 @@
 
-namespace Extra::Net {
+namespace NetExtra {
 
     /* Generic error handler for HTTP requests. Returns whether an error occured. */
     bool RequestRaiseError(const string&in ns, Net::HttpRequest@ req) {

@@ -1,5 +1,5 @@
 
-namespace Extra::IO {
+namespace IOExtra {
 
     /* Get the absolute path to a file within the map downloads user folder. */
     string FromMapDownloadsFolder(const string&in filename) {

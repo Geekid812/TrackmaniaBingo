@@ -28,7 +28,7 @@ namespace API {
 
         int responseCode = req.ResponseCode();
         string responseBody = req.String();
-        trace("[API] " + tostring(req.Method).ToUpper() + " " + path + " " + responseCode + " " + Extra::IO::FormatFileSize(responseBody.Length));
+        trace("[API] " + tostring(req.Method).ToUpper() + " " + path + " " + responseCode + " " + IOExtra::FormatFileSize(responseBody.Length));
         
         if (Settings::Verbose) {
             trace("[API] " + responseBody);

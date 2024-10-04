@@ -27,7 +27,7 @@ namespace MXTags {
         trace("[MXTags::LoadTags] Loading tags...");
         auto req = Net::HttpGet(MX_GETTAGS_URL);
         while (!req.Finished()) { yield(); }
-        if (Extra::Net::RequestRaiseError("MXTags::LoadTags", req)) return;
+        if (NetExtra::RequestRaiseError("MXTags::LoadTags", req)) return;
 
         auto data = Json::Parse(req.String());
         Tags = {};
