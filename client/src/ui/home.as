@@ -22,14 +22,27 @@ namespace UIHome {
         "Type 1 in chat if you see this!",
         "No drivers license required!",
         "Never gonna give you up!",
-        "Racing Edition ™",
-        "Good fun since 2022!"
+        "Racing Edition™",
+        "Good fun since November 2022!",
+        "All is fine until YEPTREE",
+        "Completely unrelated to tax evasion!",
+        "Add your quote here when you become a champion!",
+        "Do not tell the console players!",
+        "Finally, you're ready!",
+        "Also check out Tic Tac Go!",
+        "Finally getting updated again!",
+        "Made me crash my game!"
     };
+    uint SubtitleIndex = 0;
 
+    void RandomizeSubtitle() {
+        SubtitleIndex = Math::Rand(0, SUBTITLES.Length);
+    }
 
     void Render() {
         UI::SetWindowSize(vec2(550, 700), UI::Cond::FirstUseEver);
         Title();
+        Subtitle();
         UI::Dummy(vec2(0, 20));
         if (Config::News.Length > 0) UINews::NewsItem(Config::News[0]);
         if (Config::News.Length > 1) {
@@ -52,7 +65,7 @@ namespace UIHome {
     void Subtitle() {
         Font::Set(Font::Style::Regular, Font::Size::Large);
 
-        string subtitle = "\\$666" + SUBTITLES[Math::Rand(0, SUBTITLES.Length)];
+        string subtitle = "\\$666" + SUBTITLES[SubtitleIndex];
         float titleSize = Draw::MeasureString(subtitle, Font::Current()).x; 
         float titlePadding = Layout::GetPadding(UI::GetWindowSize().x, titleSize, 0.5);
         UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));

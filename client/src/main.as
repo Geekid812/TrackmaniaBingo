@@ -94,4 +94,5 @@ void Update(float dt) {
 
 void OnMainWindowOpened() {
     startnew(Network::GetMyProfile);
+    UIHome::RandomizeSubtitle();
 }
