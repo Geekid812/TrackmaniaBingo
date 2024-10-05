@@ -92,7 +92,7 @@ namespace UIMainWindow {
 
     void CreateRoomButton() {
         UI::NewLine();
-        bool disabled = !Config::CanPlay || Network::IsUISuspended();
+        bool disabled = Network::IsUISuspended();
         UI::BeginDisabled(disabled);
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Create Room")) {

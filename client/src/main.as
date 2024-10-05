@@ -19,7 +19,6 @@ void Main() {
 
     // Load configuration settings
     PersistantStorage::LoadItems();
-    Config::FetchConfig();
 
     // If this is the first time, try to login to the game server
     Login::EnsureLoggedIn();
@@ -77,7 +76,6 @@ void RenderInterface() {
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIMainWindow::Render();
-    UINews::Render();
     UIDevActions::Render();
 
     Font::Unset();

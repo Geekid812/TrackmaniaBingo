@@ -44,10 +44,6 @@ namespace UIHome {
         Title();
         Subtitle();
         UI::Dummy(vec2(0, 20));
-        if (Config::News.Length > 0) UINews::NewsItem(Config::News[0]);
-        if (Config::News.Length > 1) {
-            MoreNewsButton();
-        }
     }
 
     void Title() {
@@ -72,16 +68,5 @@ namespace UIHome {
         UI::Text(subtitle);
     
         Font::Unset();
-    }
-
-    void MoreNewsButton() {
-        string buttonText = Icons::ArrowRight + " More News";
-        UI::SameLine();
-        UI::SetCursorPos(vec2(Layout::GetPadding(UI::GetWindowSize().x, Layout::ButtonWidth(buttonText), 1.0), UI::GetCursorPos().y));
-        UIColor::Cyan();
-        if (UI::Button(buttonText)) {
-            UINews::Visible = !UINews::Visible;
-        }
-        UIColor::Reset();
     }
 }

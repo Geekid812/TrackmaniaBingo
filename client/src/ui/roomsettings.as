@@ -8,7 +8,6 @@ namespace UIRoomSettings {
     const float GAME_SETTINGS_ALIGN_X = 180;
     const string SETTING_COLOR_PREFIX = "\\$ff8";
 
-    FeaturedMappack@ SelectedPack;
     int State;
 
     void RoomNameInput() {
@@ -54,14 +53,13 @@ namespace UIRoomSettings {
         bool disabled = false;
 #if TURBO
         mapMode = MapMode::Campaign;
-        @SelectedPack = null;
         disabled = true;
 #endif
         UI::BeginDisabled(disabled);
         UITools::AlignedLabel(SETTING_COLOR_PREFIX + Icons::MapO + "  \\$zMap Selection");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
-        if (UI::BeginCombo("##bingomaps", @SelectedPack != null ? SelectedPack.name : stringof(mapMode))) {
+        if (UI::BeginCombo("##bingomaps", stringof(mapMode))) {
 
             if (UI::Selectable(stringof(MapMode::RandomTMX), mapMode == MapMode::RandomTMX)) {
 
@@ -71,15 +69,8 @@ namespace UIRoomSettings {
 
             }
 
-            if (UI::Selectable(stringof(MapMode::Mappack), mapMode == MapMode::Mappack && @SelectedPack == null)) {
+            if (UI::Selectable(stringof(MapMode::Mappack), mapMode == MapMode::Mappack)) {
 
-            }
-
-            for (uint i = 0; i < Config::FeaturedMappacks.Length; i++) {
-                FeaturedMappack pack = Config::FeaturedMappacks[i];
-                if (UI::Selectable("\\$ff8Featured Mappack: \\$z" + pack.name, @SelectedPack != null && SelectedPack.tmxid == pack.tmxid)) {
-
-                }
             }
 
             UI::EndCombo();
