@@ -4,7 +4,7 @@ class PollData {
     array<int> votes;
     uint64 startTime;
     uint64 expireTime;
-    uint resultIndex;
+    int resultIndex;
 
     PollData(Poll poll, array<int> votes, uint64 startTime) {
         this.poll = poll;

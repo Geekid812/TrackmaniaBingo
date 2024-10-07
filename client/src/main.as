@@ -16,6 +16,7 @@ const GamePlatform CURRENT_GAME = GamePlatform::Turbo;
 void Main() {
     // Initialization
     Font::Init();
+    UIHome::InitSubtitles();
 
     // Load configuration settings
     PersistantStorage::LoadItems();
@@ -54,6 +55,7 @@ void Main() {
 void RenderMenu() {
     if (UI::MenuItem(MAIN_MENUITEM_NAME, "", UIMainWindow::Visible)) {
         UIMainWindow::Visible = !UIMainWindow::Visible;
+        UIHome::RandomizeSubtitle();
         // Connect to server when opening plugin window the first time
         if (UIMainWindow::Visible && Network::GetState() == ConnectionState::Closed) {
             trace("[Main] Plugin window opened, connecting to the servers.");
