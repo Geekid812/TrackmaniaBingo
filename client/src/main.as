@@ -16,6 +16,7 @@ const GamePlatform CURRENT_GAME = GamePlatform::Turbo;
 void Main() {
     // Initialization
     Font::Init();
+    UIHome::InitSubtitles();
 
     // Load configuration settings
     PersistantStorage::LoadItems();
