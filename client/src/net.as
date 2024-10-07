@@ -113,6 +113,10 @@ namespace Network {
         Json::Value@ response = API::MakeRequestJson(Net::HttpMethod::Put, "/channels", Json::Write(body));
         if (response is null) return;
 
+        // Success, start the channel polling loop
+        string channelId = response["id"];
+        NetParams::ChannelId = channelId;
+        ConnectChannel();
     }
 
     void ChannelOperationError() {

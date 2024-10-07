@@ -4,6 +4,7 @@ from functools import lru_cache
 from fastapi import Header, HTTPException, status
 
 import config
+from db import get_player
 from models.user import UserModel
 from models.channel import ChannelModel
 
@@ -29,6 +30,7 @@ def get_user(x_token: Annotated[str, Header()] = None) -> UserModel:
     return user
 
 
+@lru_cache
 def get_user_from_id(uid: int) -> UserModel:
     user = try_get_user_from_id(uid)
 
@@ -41,7 +43,11 @@ def get_user_from_id(uid: int) -> UserModel:
 
 
 def try_get_user_from_id(uid: int) -> Optional[UserModel]:
-    return None
+    player = get_player(uid)
+    if not player:
+        return None
+
+    return UserModel(uid=player.uid, name=player.username, account_id=player.account_id)
 
 
 def is_system_user(user: UserModel) -> bool:

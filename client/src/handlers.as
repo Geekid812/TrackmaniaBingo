@@ -2,7 +2,7 @@
 
 namespace NetworkHandlers {
     void SyncChannel(Json::Value@ channel) {
-        
+        // TODO
     }
 
 
