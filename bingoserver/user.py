@@ -16,7 +16,9 @@ def set_user_token(user: UserModel, token: str):
 
 
 @lru_cache()
-def get_user(x_token: Annotated[str, Header()]) -> UserModel:
+def get_user(x_token: Annotated[str, Header()] = None) -> UserModel:
+    if x_token == None:
+        raise HTTPException(status_code=401, detail="X-Token header missing")
     if system_token != "" and x_token == system_token:
         return UserModel(uid=0, name="Pit Crew", account_id="0")
 

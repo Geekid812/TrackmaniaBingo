@@ -55,9 +55,9 @@ namespace API {
         }
 
         if (responseCode >= 400) {
-            if (responseCode == 403) {
-                // Note: this could cycle if Login returned a 403 error (this is currently not possible)
-                warn("[API] Handling HTTP_403_FORBIDDEN request silently: attempting login.");
+            if (responseCode == 403 || responseCode == 401) {
+                // Note: this could cycle if Login returned a 401/403 error (this is currently not possible)
+                warn("[API] Handling " + ( responseCode == 401 ? "HTTP_401_UNAUTHORIZED" : "HTTP_403_FORBIDDEN") + " request silently: attempting login.");
                 Login::Login();
                 return null;
             }
