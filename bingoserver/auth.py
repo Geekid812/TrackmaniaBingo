@@ -1,6 +1,6 @@
 import secrets
 
-from aiohttp import ClientSession, FormData, ClientResponseError
+from httpx import AsyncClient, HTTPStatusError
 from fastapi import APIRouter, Body, HTTPException, status
 from sqlmodel import Session, select
 
@@ -14,14 +14,12 @@ VALIDATION_URL = "https://openplanet.dev/api/auth/validate"
 TMIO_API_PLAYER_URL = "https://trackmania.io/api/player"
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-http_client: ClientSession = None
+http_client: AsyncClient = None
 
 
 async def init_client():
     global http_client
-    http_client = ClientSession(
-        headers={"user-agent": config.get("network.user-agent")}
-    )
+    http_client = AsyncClient(headers={"user-agent": config.get("network.user-agent")})
 
 
 @router.post("/login")
@@ -45,22 +43,22 @@ async def login(body: LoginModel = Body()) -> LoginResponseModel:
         if not token:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "token not provided")
 
-        async with http_client.get(
-            VALIDATION_URL, data=FormData({"token": token, "secret": openplanet_key})
-        ) as response:
-            response.raise_for_status()
+        response = await http_client.get(
+            VALIDATION_URL, data={"token": token, "secret": openplanet_key}
+        )
+        response.raise_for_status()
 
-            res: dict = await response.json()
-            if "error" in res.keys():
-                raise HTTPException(
-                    status.HTTP_400_BAD_REQUEST, "authentication error: " + res["error"]
-                )
+        res: dict = response.json()
+        if "error" in res.keys():
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, "authentication error: " + res["error"]
+            )
 
-            username, account_id = res["username"], res["account_id"]
+        username, account_id = res["username"], res["account_id"]
 
     try:
         country_code = await get_player_country_code(account_id)
-    except (KeyError, ClientResponseError):
+    except (KeyError, HTTPStatusError):
         country_code = None
 
     player = update_user(username, account_id, country_code)
@@ -80,19 +78,19 @@ async def login(body: LoginModel = Body()) -> LoginResponseModel:
 
 
 async def get_player_country_code(account_id: str) -> str:
-    async with http_client.get(TMIO_API_PLAYER_URL + "/" + account_id) as response:
-        response.raise_for_status()
+    response = await http_client.get(TMIO_API_PLAYER_URL + "/" + account_id)
+    response.raise_for_status()
 
-        res: dict = await response.json()
-        zone = res["trophies"]["zone"]
+    res: dict = response.json()
+    zone = res["trophies"]["zone"]
 
-        def is_country_code(code: str) -> bool:
-            return len(code) == 3 and code.isupper()
+    def is_country_code(code: str) -> bool:
+        return len(code) == 3 and code.isupper()
 
-        while not is_country_code(zone["flag"]):
-            zone = zone["parent"]
+    while not is_country_code(zone["flag"]):
+        zone = zone["parent"]
 
-        return zone["flag"]
+    return zone["flag"]
 
 
 def update_user(

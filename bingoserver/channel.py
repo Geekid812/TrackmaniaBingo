@@ -52,7 +52,10 @@ def get_channels() -> list[ChannelModel]:
 def resolve_join_code(code: str) -> str:
     channel_id = joincodes.get(code)
     if not channel_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, f"joincode {code} does not resolve to any channel")
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"joincode {code} does not resolve to any channel",
+        )
 
     return channel_id
 
@@ -119,11 +122,14 @@ def add_player(
     require_self_operation(user, target)
 
     if user in channel.players:
-        return Response(channel, status.HTTP_304_NOT_MODIFIED) # User is already in this channel
+        return Response(
+            channel, status.HTTP_304_NOT_MODIFIED
+        )  # User is already in this channel
 
     channel.players.append(user)
     get_messager(channel).broadcast(PlayerEvent(event="PlayerAdded", user=user))
     return channel
+
 
 @router.delete("/{channel_id}/players")
 def remove_player(
