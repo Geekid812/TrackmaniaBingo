@@ -47,6 +47,12 @@ namespace UIDevActions {
             UI::EndTabItem();
         }
 
+        if (UI::BeginTabItem(Icons::Th + " Grid")) {
+            UIDevBoard::Render();
+
+            UI::EndTabItem();
+        }
+
         UI::EndTabBar();
 
         UI::End();

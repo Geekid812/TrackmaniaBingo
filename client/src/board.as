@@ -1,5 +1,51 @@
 
 namespace Board {
+    class DrawState {
+        vec2 position;
+        float size;
+        uint resolution;
+        BoardSizes sizes;
+        vec4 borderColor = vec4(.9, .9, .9, 1.);
+        array<TileDraw@> tileData = {};
+
+        DrawState(vec2 position, float size, uint resolution) {
+            this.position = position;
+            this.size = size;
+            this.resolution = resolution;
+            CalculateInnerSizes();
+        }
+
+        void CalculateInnerSizes() {
+            uint cellsPerRow = this.resolution;
+
+            BoardSizes sizes();
+            sizes.borderSize = this.size / (30. * cellsPerRow);
+            sizes.cellSize = (this.size - sizes.borderSize * (float(cellsPerRow) + 1.)) / float(cellsPerRow);
+            sizes.stepLength = sizes.cellSize + sizes.borderSize;
+
+            this.sizes = sizes;
+        }
+
+        void ResizeTileData() {
+            uint numCells = this.resolution * this.resolution;
+
+            this.tileData.Resize(numCells);
+        }
+
+        TileDraw@ IndexTile(uint x, uint y) {
+            if (x >= this.resolution || y >= this.resolution) return null;
+        
+            return UncheckedIndexTile(x, y);
+        }
+
+        TileDraw@ UncheckedIndexTile(uint x, uint y) {
+            uint index = y * this.resolution + x;
+            return this.tileData[index];
+        }
+    }
+
+    class TileDraw {}
+
     // Controlled by BoardLocator
     float BoardSize;
     vec2 Position;
@@ -16,9 +62,9 @@ namespace Board {
     const float PING_SCALE = 1.5;
 
     class BoardSizes {
-        float border;
-        float cell;
-        float step;
+        float borderSize; // Width/Height of a border
+        float cellSize; // Size of one inner cell (without borders)
+        float stepLength; // Size of one cell, border + cell
     }
 
     class CellPing {
@@ -43,6 +89,82 @@ namespace Board {
             return vec4(.3, .3, .3, .8);
     }
 
+    void Render(DrawState@ state) {
+        if (state is null) throw("Board: state is null.");
+        DrawColumns(state);
+        DrawRows(state);
+    }
+
+    void DrawPositionHelper(DrawState@ state, vec4 color) {
+        nvg::FillColor(color);
+        nvg::BeginPath();
+        nvg::Rect(state.position, state.size);
+        nvg::Fill();
+    }
+
+    void DrawColumns(DrawState@ state) {
+        uint columns = state.resolution + 1;
+        nvg::FillColor(state.borderColor);
+
+        for (uint i = 0; i < columns; i++) {
+            float startX = state.position.x + (i * state.sizes.stepLength);
+            float borderSize = state.sizes.borderSize;
+
+            uint j = 0;
+            while (j < state.resolution) {
+                while (j < state.resolution && !IsColumnSegmentRendered(state, i, j)) j++;
+
+                uint startJ = j;
+                float startY = state.position.y + (j * state.sizes.stepLength);
+                while (j < state.resolution && IsColumnSegmentRendered(state, i, j)) j++;
+
+                if (j != startJ) {
+                    float length = (j - startJ) * state.sizes.stepLength;
+
+                    nvg::BeginPath();
+                    nvg::Rect(startX, startY, borderSize, length + borderSize);
+                    nvg::Fill();
+                }
+            }
+
+        }
+    }
+
+    void DrawRows(DrawState@ state) {
+        uint rows = state.resolution + 1;
+        nvg::FillColor(state.borderColor);
+
+        for (uint i = 0; i < rows; i++) {
+            float startY = state.position.y + (i * state.sizes.stepLength);
+            float borderSize = state.sizes.borderSize;
+
+            uint j = 0;
+            while (j < state.resolution) {
+                while (j < state.resolution && !IsRowSegmentRendered(state, j, i)) j++;
+
+                uint startJ = j;
+                float startX = state.position.x + (j * state.sizes.stepLength);
+                while (j < state.resolution && IsRowSegmentRendered(state, j, i)) j++;
+
+                if (j != startJ) {
+                    float length = (j - startJ) * state.sizes.stepLength;
+
+                    nvg::BeginPath();
+                    nvg::Rect(startX, startY, length + borderSize, borderSize);
+                    nvg::Fill();
+                }
+            }
+        }
+    }
+
+    bool IsColumnSegmentRendered(DrawState@ state, uint x, uint y) {        
+        return state.IndexTile(x - 1, y) !is null || state.IndexTile(x, y) !is null;
+    }
+
+    bool IsRowSegmentRendered(DrawState@ state, uint x, uint y) {
+        return state.IndexTile(x, y - 1) !is null || state.IndexTile(x, y) !is null;
+    }
+
     void Draw() {
         if (!Gamemaster::IsBingoActive()) return;
 
@@ -61,7 +183,7 @@ namespace Board {
         for (uint i = 0; i <= cellsPerRow; i++) {
             float animProgress = Animation::GetProgress(columnsAnimProgress, i * timePerBorder, timePerBorder);
             nvg::BeginPath();
-            nvg::Rect(Position.x + float(i) * sizes.step, Position.y, sizes.border, BoardSize * animProgress);
+            nvg::Rect(Position.x + float(i) * sizes.stepLength, Position.y, sizes.borderSize, BoardSize * animProgress);
             nvg::Fill();
         }
 
@@ -71,7 +193,7 @@ namespace Board {
         for (uint i = 0; i <= cellsPerRow; i++) {
             float animProgress = Animation::GetProgress(rowsAnimProgress, i * timePerBorder, timePerBorder);
             nvg::BeginPath();
-            nvg::Rect(Position.x, Position.y + float(i) * sizes.step, BoardSize * animProgress, sizes.border);
+            nvg::Rect(Position.x, Position.y + float(i) * sizes.stepLength, BoardSize * animProgress, sizes.borderSize);
             nvg::Fill();
         }
 
@@ -88,7 +210,7 @@ namespace Board {
                 
                 nvg::BeginPath();
                 nvg::FillColor(color);
-                nvg::Rect(cellPosition.x, cellPosition.y, sizes.cell, sizes.cell);
+                nvg::Rect(cellPosition.x, cellPosition.y, sizes.cellSize, sizes.cellSize);
                 nvg::Fill();
             }
         
@@ -97,8 +219,8 @@ namespace Board {
         // Cell highlight
         float highlightBlinkValue = (Math::Sin(float(Time::Now) / 1000.) + 1) / 2;
         float paddingValue = CELL_HIGHLIGHT_PADDING * (0.8 + 0.2 * highlightBlinkValue);
-        const float highlightWidth = sizes.border * paddingValue;
-        const float highlightMarginOffset = sizes.border * (paddingValue - 1.);
+        const float highlightWidth = sizes.borderSize * paddingValue;
+        const float highlightMarginOffset = sizes.borderSize * (paddingValue - 1.);
         CGameCtnChallenge@ currentMap = Playground::GetCurrentMap();
         int cellId = (@currentMap != null) ? Match.GetMapCellId(currentMap.EdChallengeId) : -1;
         if (cellId != -1) {
@@ -106,16 +228,16 @@ namespace Board {
             int col = cellId % cellsPerRow;
             nvg::BeginPath();
             nvg::FillColor(CELL_HIGHLIGHT_COLOR);
-            nvg::Rect(Position.x + sizes.step * col, Position.y + sizes.step * row, sizes.cell + sizes.border * 2, highlightWidth);
+            nvg::Rect(Position.x + sizes.stepLength * col, Position.y + sizes.stepLength * row, sizes.cellSize + sizes.borderSize * 2, highlightWidth);
             nvg::Fill();
             nvg::BeginPath();
-            nvg::Rect(Position.x + sizes.step * col, Position.y + sizes.step * (row + 1) - highlightMarginOffset, sizes.cell + sizes.border * 2, highlightWidth);
+            nvg::Rect(Position.x + sizes.stepLength * col, Position.y + sizes.stepLength * (row + 1) - highlightMarginOffset, sizes.cellSize + sizes.borderSize * 2, highlightWidth);
             nvg::Fill();
             nvg::BeginPath();
-            nvg::Rect(Position.x + sizes.step * col, Position.y + sizes.step * row, highlightWidth, sizes.cell + sizes.border * 2);
+            nvg::Rect(Position.x + sizes.stepLength * col, Position.y + sizes.stepLength * row, highlightWidth, sizes.cellSize + sizes.borderSize * 2);
             nvg::Fill();
             nvg::BeginPath();
-            nvg::Rect(Position.x + sizes.step * (col + 1) - highlightMarginOffset, Position.y + sizes.step * row, highlightWidth, sizes.cell + sizes.border * 2);
+            nvg::Rect(Position.x + sizes.stepLength * (col + 1) - highlightMarginOffset, Position.y + sizes.stepLength * row, highlightWidth, sizes.cellSize + sizes.borderSize * 2);
             nvg::Fill();
         }
 
@@ -136,11 +258,11 @@ namespace Board {
             for (uint n = 0; n < 2; n++) {
                 float pingAnimProgress = Animation::GetProgress(pingAnimationTime - n * 200, 0, 1000, Animation::Easing::SineOut);
                 float pingScale = pingAnimProgress * PING_SCALE;
-                float posOffset = sizes.cell / 2 - sizes.cell * pingScale / 2;
+                float posOffset = sizes.cellSize / 2 - sizes.cellSize * pingScale / 2;
 
                 nvg::BeginPath();
                 nvg::FillColor(vec4(1., 1., 1., (1. - pingAnimProgress)));
-                nvg::Rect(pos.x + posOffset, pos.y + posOffset, sizes.cell * pingScale, sizes.cell * pingScale);
+                nvg::Rect(pos.x + posOffset, pos.y + posOffset, sizes.cellSize * pingScale, sizes.cellSize * pingScale);
                 nvg::Fill();
             }
         }
@@ -153,21 +275,21 @@ namespace Board {
             nvg::StrokeColor(BINGO_STROKE_COLOR);
             nvg::StrokeWidth(STROKE_WIDTH);
             if (direction == BingoDirection::Horizontal) {
-                float yPos = Position.y + sizes.border + (sizes.cell / 2) + i * sizes.step;
+                float yPos = Position.y + sizes.borderSize + (sizes.cellSize / 2) + i * sizes.stepLength;
                 nvg::BeginPath();
-                nvg::MoveTo(vec2(Position.x - sizes.border, yPos));
-                nvg::LineTo(vec2(Position.x + BoardSize + sizes.border, yPos));
+                nvg::MoveTo(vec2(Position.x - sizes.borderSize, yPos));
+                nvg::LineTo(vec2(Position.x + BoardSize + sizes.borderSize, yPos));
                 nvg::Stroke();
             } else if (direction == BingoDirection::Vertical) {
-                float xPos = Position.x + sizes.border + (sizes.cell / 2) + i * sizes.step;
+                float xPos = Position.x + sizes.borderSize + (sizes.cellSize / 2) + i * sizes.stepLength;
                 nvg::BeginPath();
-                nvg::MoveTo(vec2(xPos, Position.y - sizes.border));
-                nvg::LineTo(vec2(xPos, Position.y + BoardSize + sizes.border));
+                nvg::MoveTo(vec2(xPos, Position.y - sizes.borderSize));
+                nvg::LineTo(vec2(xPos, Position.y + BoardSize + sizes.borderSize));
                 nvg::Stroke();
             } else if (direction == BingoDirection::Diagonal) {
                 nvg::BeginPath();
-                nvg::MoveTo(vec2(Position.x - sizes.border, Position.y - sizes.border + i * (BoardSize + 2 * sizes.border)));
-                nvg::LineTo(vec2(Position.x + BoardSize + sizes.border, Position.y - sizes.border + (1 - i) * (BoardSize + 2 * sizes.border)));
+                nvg::MoveTo(vec2(Position.x - sizes.borderSize, Position.y - sizes.borderSize + i * (BoardSize + 2 * sizes.borderSize)));
+                nvg::LineTo(vec2(Position.x + BoardSize + sizes.borderSize, Position.y - sizes.borderSize + (1 - i) * (BoardSize + 2 * sizes.borderSize)));
                 nvg::Stroke();
             }
 
@@ -176,14 +298,14 @@ namespace Board {
     }
 
     vec2 CellPosition(int row, int col, BoardSizes sizes) {
-        return vec2(Position.x + float(row) * sizes.step + sizes.border, Position.y + float(col) * sizes.step + sizes.border);
+        return vec2(Position.x + float(row) * sizes.stepLength + sizes.borderSize, Position.y + float(col) * sizes.stepLength + sizes.borderSize);
     }
 
     BoardSizes CalculateBoardSizes(uint cellsPerRow) {
         auto sizes = BoardSizes();
-        sizes.border = BoardSize / (30. * cellsPerRow);
-        sizes.cell = (BoardSize - sizes.border * (float(cellsPerRow) + 1.)) / float(cellsPerRow);
-        sizes.step = sizes.cell + sizes.border;
+        sizes.borderSize = BoardSize / (30. * cellsPerRow);
+        sizes.cellSize = (BoardSize - sizes.borderSize * (float(cellsPerRow) + 1.)) / float(cellsPerRow);
+        sizes.stepLength = sizes.cellSize + sizes.borderSize;
         return sizes;
     }
 
