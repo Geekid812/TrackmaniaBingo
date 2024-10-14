@@ -1,5 +1,17 @@
 
 namespace Board {
+    class BatchedRect {
+        vec2 position;
+        vec2 size;
+        vec4 color;
+
+        BatchedRect(float x, float y, float w, float h, vec4 color) {
+            this.position = vec2(x, y);
+            this.size = vec2(w, h);
+            this.color = color;
+        }
+    }
+
     class DrawState {
         vec2 position;
         float size;
@@ -89,10 +101,25 @@ namespace Board {
             return vec4(.3, .3, .3, .8);
     }
 
-    void Render(DrawState@ state) {
+    void BatchDraw(array<BatchedRect@>@ drawCalls) {
+        uint n = drawCalls.Length;
+        for (uint i = 0; i < n; i++) {
+            BatchedRect@ rect = drawCalls[i];
+            nvg::FillColor(rect.color);
+            nvg::BeginPath();
+            nvg::Rect(rect.position, rect.size);
+            nvg::Fill();
+        }
+    }
+
+    array<BatchedRect@>@ Render(DrawState@ state) {
         if (state is null) throw("Board: state is null.");
-        DrawColumns(state);
-        DrawRows(state);
+
+        array<BatchedRect@>@ drawCalls = {};
+        DrawColumns(state, drawCalls);
+        DrawRows(state, drawCalls);
+
+        return drawCalls;
     }
 
     void DrawPositionHelper(DrawState@ state, vec4 color) {
@@ -102,9 +129,8 @@ namespace Board {
         nvg::Fill();
     }
 
-    void DrawColumns(DrawState@ state) {
+    void DrawColumns(DrawState@ state, array<BatchedRect@>@ drawCalls) {
         uint columns = state.resolution + 1;
-        nvg::FillColor(state.borderColor);
 
         for (uint i = 0; i < columns; i++) {
             float startX = state.position.x + (i * state.sizes.stepLength);
@@ -121,18 +147,16 @@ namespace Board {
                 if (j != startJ) {
                     float length = (j - startJ) * state.sizes.stepLength;
 
-                    nvg::BeginPath();
-                    nvg::Rect(startX, startY, borderSize, length + borderSize);
-                    nvg::Fill();
+                    BatchedRect rect(startX, startY, borderSize, length + borderSize, state.borderColor);
+                    drawCalls.InsertLast(rect);
                 }
             }
 
         }
     }
 
-    void DrawRows(DrawState@ state) {
+    void DrawRows(DrawState@ state, array<BatchedRect@>@ drawCalls) {
         uint rows = state.resolution + 1;
-        nvg::FillColor(state.borderColor);
 
         for (uint i = 0; i < rows; i++) {
             float startY = state.position.y + (i * state.sizes.stepLength);
@@ -149,9 +173,8 @@ namespace Board {
                 if (j != startJ) {
                     float length = (j - startJ) * state.sizes.stepLength;
 
-                    nvg::BeginPath();
-                    nvg::Rect(startX, startY, length + borderSize, borderSize);
-                    nvg::Fill();
+                    BatchedRect rect(startX, startY, length + borderSize, borderSize, state.borderColor);
+                    drawCalls.InsertLast(rect);
                 }
             }
         }

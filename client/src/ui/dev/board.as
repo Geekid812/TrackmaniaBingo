@@ -2,7 +2,9 @@
 namespace UIDevBoard {
     bool PositionHelper = false;
     bool TileSelector = false;
+    bool RenderEveryFrame = false;
     Board::DrawState DrawState(vec2(100, 100), 500, 5);
+    array<Board::BatchedRect@>@ BatchedBoard = {};
 
     void Render() {
         DrawState.position = UI::SliderFloat2("Position", DrawState.position, 0, Draw::GetWidth());
@@ -14,10 +16,18 @@ namespace UIDevBoard {
         PositionHelper = UI::Checkbox("Show Position Helper", PositionHelper);
         if (PositionHelper) Board::DrawPositionHelper(DrawState, vec4(.9, .1, .9, .5));
 
+        RenderEveryFrame = UI::Checkbox("Compute Board Every Frame", RenderEveryFrame);
+        if (RenderEveryFrame) BatchedBoard = Board::Render(DrawState);
+
+        UI::SameLine();
+        if (UI::Button(Icons::ThumbTack + " Compute Once")) {
+            BatchedBoard = Board::Render(DrawState);
+        }
+
         TileSelector = UI::Checkbox("Show Tile Selector", TileSelector);
         if (TileSelector) BoardTileSelector();
 
-        Board::Render(DrawState);
+        Board::BatchDraw(BatchedBoard);
     }
 
     void BoardTileSelector() {
