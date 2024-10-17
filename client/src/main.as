@@ -53,7 +53,7 @@ void Render() {
 
     UIGameRoom::Render();
     BoardLocator::Render();
-    Board::Draw();
+    Board::RenderAll();
     UIInfoBar::Render();
     UIMapList::Render();
     UIPaintColor::Render();

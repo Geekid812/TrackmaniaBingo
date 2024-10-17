@@ -12,6 +12,10 @@ class LiveMatch {
     bool canReroll = false;
     EndState endState;
 
+    // Board state
+    Board::DrawState@ boardDrawState = Board::DrawState(vec2(), 0, 0);
+    array<Board::BatchedRect@>@ boardDrawCalls = {};
+
     // Local state
     int currentTileIndex = -1;
     bool currentTileInvalid = false;

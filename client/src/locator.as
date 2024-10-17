@@ -14,9 +14,12 @@ namespace BoardLocator {
         UI::PushStyleColor(UI::Col::WindowBg, vec4(0, 0, 0, 0));
         UI::PushStyleVar(UI::StyleVar::WindowPadding, vec2());
         UI::Begin("Board Locator", UI::WindowFlags::NoCollapse | UI::WindowFlags::NoTitleBar);
-        Board::BoardSize = UI::GetWindowSize().y;
-        Board::Position = UI::GetWindowPos();
-        UI::SetWindowSize(vec2(Board::BoardSize, Board::BoardSize), UI::Cond::Always);
+
+        float size = UI::GetWindowSize().y;
+        Gamemaster::SetBoardPosition(UI::GetWindowPos());
+        Gamemaster::SetBoardSize(size);
+
+        UI::SetWindowSize(vec2(size, size), UI::Cond::Always);
 
         // Cell zones
         uint cellsPerRow = Match.config.gridSize;

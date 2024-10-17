@@ -107,6 +107,7 @@ namespace UIDevActions {
 
             Gamemaster::SetBingoActive(true);
             Gamemaster::InitializeTiles();
+            Gamemaster::ReconfigureBoard();
 
             // Prefill tiles with maps from local cache
             for (uint i = 0; i < Gamemaster::GetTileCount(); i++) {

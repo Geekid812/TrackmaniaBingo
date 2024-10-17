@@ -214,7 +214,10 @@ namespace UIInfoBar {
 
         SubwindowOffset = 0.;
         vec2 windowSize = UI::GetWindowSize();
-        UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - windowSize.x) / 2, int(Board::Position.y) + int(Board::BoardSize) + BOARD_MARGIN), UI::Cond::Always);
+
+        vec2 boardPosition = Gamemaster::GetBoardPosition();
+        float boardSize = Gamemaster::GetBoardSize();
+        UI::SetWindowPos(vec2(int(boardPosition.x) + (int(boardSize) - windowSize.x) / 2, int(boardPosition.y) + int(boardSize) + BOARD_MARGIN), UI::Cond::Always);
         UI::End();
     }
 }

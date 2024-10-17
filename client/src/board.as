@@ -1,5 +1,7 @@
 
 namespace Board {
+    const float TILE_ALPHA = 0.8;
+
     class BatchedRect {
         vec2 position;
         vec2 size;
@@ -24,7 +26,7 @@ namespace Board {
             this.position = position;
             this.size = size;
             this.resolution = resolution;
-            CalculateInnerSizes();
+            if (resolution != 0) CalculateInnerSizes();
         }
 
         void CalculateInnerSizes() {
@@ -56,7 +58,9 @@ namespace Board {
         }
     }
 
-    class TileDraw {}
+    class TileDraw {
+        vec3 tileColor;
+    }
 
     // Controlled by BoardLocator
     float BoardSize;
@@ -112,12 +116,19 @@ namespace Board {
         }
     }
 
+    void RenderAll() {
+        if (Match !is null && Gamemaster::IsBingoActive()) {
+            BatchDraw(Match.boardDrawCalls);
+        }
+    }
+
     array<BatchedRect@>@ Render(DrawState@ state) {
         if (state is null) throw("Board: state is null.");
 
         array<BatchedRect@>@ drawCalls = {};
         DrawColumns(state, drawCalls);
         DrawRows(state, drawCalls);
+        FillTiles(state, drawCalls);
 
         return drawCalls;
     }
@@ -176,6 +187,20 @@ namespace Board {
                     BatchedRect rect(startX, startY, length + borderSize, borderSize, state.borderColor);
                     drawCalls.InsertLast(rect);
                 }
+            }
+        }
+    }
+
+    void FillTiles(DrawState@ state, array<BatchedRect@>@ drawCalls) {
+        for (uint x = 0; x < state.resolution; x++) {
+            for (uint y = 0; y < state.resolution; y++) {
+                TileDraw@ tileData = state.IndexTile(x, y);
+                if (tileData is null) continue;
+
+                float startX = state.position.x + state.sizes.borderSize + (x * state.sizes.stepLength);
+                float startY = state.position.y + state.sizes.borderSize + (y * state.sizes.stepLength);
+                BatchedRect rect(startX, startY, state.sizes.cellSize, state.sizes.cellSize, vec4(tileData.tileColor, TILE_ALPHA));
+                drawCalls.InsertLast(rect);
             }
         }
     }

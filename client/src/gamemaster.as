@@ -70,6 +70,7 @@ namespace Gamemaster {
     void SetConfiguration(MatchConfiguration config) {
         Match.config = config;
         InitializeTiles();
+        ReconfigureBoard();
     }
 
     /**
@@ -96,6 +97,22 @@ namespace Gamemaster {
         for (uint i = Match.tiles.Length; i < gridCellCount; i++) {
             Match.tiles.InsertLast(GameTile());
         }
+
+    }
+
+    /**
+     * Update internal board draw state after configuration changes.
+     */
+    void ReconfigureBoard() {
+        Match.boardDrawState.resolution = Match.config.gridSize;
+        Match.boardDrawState.ResizeTileData();
+
+        uint tileCount = Gamemaster::GetTileCount();
+        for (uint i = 0; i < tileCount; i++) {
+            @Match.boardDrawState.tileData[i] = Board::TileDraw();
+        }
+
+        DrawBoard();
     }
 
     /**
@@ -230,6 +247,50 @@ namespace Gamemaster {
 
         // The map is changed, we are no longer on that tile
         if (int(tileIndex) == Match.currentTileIndex) Match.SetCurrentTileIndex(-1);
+    }
+
+    /**
+     * Get the Bingo board position coordinates.
+     */
+    vec2 GetBoardPosition() {
+        return Match.boardDrawState.position;
+    }
+
+    /**
+     * Get the Bingo board's size in pixels.
+     */
+    float GetBoardSize() {
+        return Match.boardDrawState.size;
+    }
+
+    /**
+     * Set the Bingo board's position on-screen to the provided coordinates.
+     */
+    void SetBoardPosition(vec2 position) {
+        if (position != Match.boardDrawState.position) {
+            Match.boardDrawState.position = position;
+
+            DrawBoard();
+        }
+    }
+
+    /**
+     * Set the size of the Bingo board in pixels.
+     */
+    void SetBoardSize(float size) {
+        if (size != Match.boardDrawState.size) {
+            Match.boardDrawState.size = size;
+
+            Match.boardDrawState.CalculateInnerSizes();
+            DrawBoard();
+        }
+    }
+
+    /**
+     * Redraw the whole Bingo board. This may do some expensive computation!
+     */
+    void DrawBoard() {
+        @Match.boardDrawCalls = Board::Render(Match.boardDrawState);
     }
 
     /**
