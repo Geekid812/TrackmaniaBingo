@@ -9,7 +9,6 @@ class GameRules {
     string b64GridPattern;
 
     bool hasOvertime;
-    bool hasFreeForAll;
     bool hasRerolls;
     bool hasCompetitvePatch;
 
@@ -30,7 +29,6 @@ namespace GameRules {
         value["b64_grid_pattern"] = cls.b64GridPattern;
 
         value["has_overtime"] = cls.hasOvertime;
-        value["has_ffa"] = cls.hasFreeForAll;
         value["has_rerolls"] = cls.hasRerolls;
         value["has_competitve_patch"] = cls.hasCompetitvePatch;
         value["can_join_during_game"] = cls.canJoinDuringGame;
@@ -50,7 +48,6 @@ namespace GameRules {
         cls.b64GridPattern = value["b64_grid_pattern"];
 
         cls.hasOvertime = value["has_overtime"];
-        cls.hasFreeForAll = value["has_ffa"];
         cls.hasRerolls = value["has_rerolls"];
         cls.hasCompetitvePatch = value["has_competitve_patch"];
 

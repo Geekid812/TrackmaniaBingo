@@ -28,7 +28,6 @@ class GameRulesModel(BaseModel):
     b64_grid_pattern: str
 
     has_overtime: bool
-    has_ffa: bool
     has_rerolls: bool
     has_competitve_patch: bool
 

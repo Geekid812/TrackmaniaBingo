@@ -185,15 +185,6 @@ namespace UIRoomSettings {
         GameConfig.hasOvertime = UI::Checkbox("##bingoovertime", GameConfig.hasOvertime);
     }
 
-    void FFAToggle() {
-        UITools::AlignedLabel(SETTING_COLOR_PREFIX + Icons::Users + "  \\$zEnable Free For All");
-        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        GameConfig.hasFreeForAll = UI::Checkbox("##bingoffa", GameConfig.hasFreeForAll);
-
-        UI::SameLine();
-        UITools::HelpTooltip("Everyone is on their own team.");
-    }
-
     void RerollsToggle() {
         UITools::AlignedLabel(SETTING_COLOR_PREFIX + Icons::Kenney::ReloadInverse + "  \\$zEnable Map Rerolls");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
@@ -239,7 +230,6 @@ namespace UIRoomSettings {
         UI::NewLine();
         UITools::SectionHeader("Challenge Options");
 
-        FFAToggle();
         RerollsToggle();
         CompetitvePatchToggle();
 
