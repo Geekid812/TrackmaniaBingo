@@ -7,6 +7,7 @@ namespace BoardLocator {
 
     void Render() {
         if (!Gamemaster::IsBingoActive()) return;
+        vec2 windowPadding = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding);
         
         UI::SetNextWindowPos(int(79 * Board::Unit()), int(Board::Unit()), UI::Cond::FirstUseEver);
         UI::SetNextWindowSize(int(20 * Board::Unit()), int(20 * Board::Unit()), UI::Cond::FirstUseEver);
@@ -22,15 +23,21 @@ namespace BoardLocator {
         UI::SetWindowSize(vec2(size, size), UI::Cond::Always);
 
         // Cell zones
-        uint cellsPerRow = Match.config.gridSize;
-        auto sizes = Board::CalculateBoardSizes(cellsPerRow);
-        for (uint i = 0; i < cellsPerRow; i++) {
-            for (uint j = 0; j < cellsPerRow; j++) {
-                vec2 pos = Board::CellPosition(i, j, sizes);
+        Board::DrawState@ state = Gamemaster::GetDrawState();
+
+        uint tilesPerRow = state.resolution;
+        float cellSize = state.sizes.cellSize;
+        for (uint i = 0; i < tilesPerRow; i++) {
+            for (uint j = 0; j < tilesPerRow; j++) {
+                vec2 pos = Board::GetCellPosition(state, i, j);
+
                 UI::SetCursorPos(pos - UI::GetWindowPos());
-                UI::Dummy(vec2(sizes.cellSize, sizes.cellSize));
+                UI::Dummy(vec2(cellSize, cellSize));
                 if (UI::IsItemClicked()) {
-                    OnCellClicked(i, j);
+                    OnCellClicked(state, i, j);
+                }
+                if (UI::IsItemHovered()) {
+                    OnCellHovered(state, i, j, windowPadding);
                 }
             }
         }
@@ -40,21 +47,35 @@ namespace BoardLocator {
         UI::PopStyleColor();
     }
 
-    void OnCellClicked(int row, int col) {
+    void OnCellHovered(Board::DrawState@ state, uint x, uint y, vec2 windowPadding) {
         if (!Gamemaster::IsBingoActive()) return;
-        int cellId = row * Match.config.gridSize + col;
+        
+        // Tile hovered, show the map tooltip
+        UI::PushStyleVar(UI::StyleVar::WindowPadding, windowPadding);
+
+        GameTile@ tile = Gamemaster::GetTileOnGrid(x, y);
+        UIMapList::MapTooltip(tile);
+
+        UI::PopStyleVar();
+    }
+
+    void OnCellClicked(Board::DrawState@ state, uint x, uint y) {
+        if (!Gamemaster::IsBingoActive()) return;
+        uint tileId = Board::TileId(x, y, state.resolution);
         uint64 clickNow = Time::Now;
 
-        if (cellId == clickCell && (clickNow - lastClick <= DOUBLE_CLICK_MILLIS)) {
-            OnCellDoubleClicked(cellId);
+        if (int(tileId) == clickCell && (clickNow - lastClick <= DOUBLE_CLICK_MILLIS)) {
+            OnCellDoubleClicked(state, x, y);
             clickCell = -1;
         } else {
-            clickCell = cellId;
+            clickCell = tileId;
         }
         lastClick = clickNow;
     }
 
-    void OnCellDoubleClicked(int cellId) {
-        // TODO: there was cell ping, now what?
+    void OnCellDoubleClicked(Board::DrawState@ state, uint x, uint y) {
+        // Tile double clicked, quickly enter the selected tile
+        uint tileId = Board::TileId(x, y, state.resolution);
+        Gamemaster::TileEnter(tileId);
     }
 }

@@ -197,9 +197,8 @@ namespace Board {
                 TileDraw@ tileData = state.IndexTile(x, y);
                 if (tileData is null) continue;
 
-                float startX = state.position.x + state.sizes.borderSize + (x * state.sizes.stepLength);
-                float startY = state.position.y + state.sizes.borderSize + (y * state.sizes.stepLength);
-                BatchedRect rect(startX, startY, state.sizes.cellSize, state.sizes.cellSize, vec4(tileData.tileColor, TILE_ALPHA));
+                vec2 startPos = GetCellPosition(state, x, y);
+                BatchedRect rect(startPos.x, startPos.y, state.sizes.cellSize, state.sizes.cellSize, vec4(tileData.tileColor, TILE_ALPHA));
                 drawCalls.InsertLast(rect);
             }
         }
@@ -211,6 +210,10 @@ namespace Board {
 
     bool IsRowSegmentRendered(DrawState@ state, uint x, uint y) {
         return state.IndexTile(x, y - 1) !is null || state.IndexTile(x, y) !is null;
+    }
+
+    vec2 GetCellPosition(DrawState@ state, uint x, uint y) {
+        return vec2(state.position.x + state.sizes.borderSize + (x * state.sizes.stepLength), state.position.y + state.sizes.borderSize + (y * state.sizes.stepLength));
     }
 
     void Draw() {
@@ -343,6 +346,10 @@ namespace Board {
 
             nvg::ClosePath();
         }
+    }
+
+    uint TileId(uint x, uint y, uint resolution) {
+        return y * resolution + x;
     }
 
     vec2 CellPosition(int row, int col, BoardSizes sizes) {

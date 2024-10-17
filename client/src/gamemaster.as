@@ -287,10 +287,31 @@ namespace Gamemaster {
     }
 
     /**
+     * Get the internal draw state of the Bingo board.
+     */
+    Board::DrawState@ GetDrawState() {
+        return Match.boardDrawState;
+    }
+
+    /**
      * Redraw the whole Bingo board. This may do some expensive computation!
      */
     void DrawBoard() {
+        trace("Redrawing!");
         @Match.boardDrawCalls = Board::Render(Match.boardDrawState);
+    }
+
+    /**
+     * Start playing on the tile with the selected index.
+     * Most of the time, this has the effect of joining the selected map.
+     * Returns whether the tile could be entered.
+     */
+    bool TileEnter(uint tileIndex) {
+        GameTile@ tile = Match.tiles[tileIndex];
+        if (tile is null || tile.map is null) return false;
+
+        Playground::PlayMap(tile.map);
+        return true;
     }
 
     /**
