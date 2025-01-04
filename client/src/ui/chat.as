@@ -5,6 +5,7 @@ namespace UIChat {
     const int CHAT_WINDOW_MARGIN = 8;
     const uint64 CHAT_FADE_TIME_MILLIS = 500;
     const uint64 CHAT_HOLD_TIME_MILLIS = 500;
+    const uint64 CHAT_MESSAGE_EXPIRE_SECONDS = 15;
     const float MIN_CHAT_OPACITY = 0;
     const float MAX_CHAT_OPACITY = 0.7;
     array<ChatMessage> MessageHistory;
@@ -17,8 +18,19 @@ namespace UIChat {
         return @Room !is null || @Match !is null;
     }
 
+    void RemoveExpiredMessages() {
+        uint i = 0;
+        while (i < MessageHistory.Length) {
+            if (Time::Stamp - MessageHistory[i].timestamp >= CHAT_MESSAGE_EXPIRE_SECONDS)
+                MessageHistory.RemoveAt(i);
+            else
+                i++;
+        }
+    }
+
     void Render() {
         if (!ShouldDisplay()) return;
+        RemoveExpiredMessages();
         bool open = true;
 
         vec4 color = UI::GetStyleColor(UI::Col::WindowBg);
@@ -29,6 +41,10 @@ namespace UIChat {
         UI::SetNextWindowPos(CHAT_POSITION_OFFSET, Draw::GetHeight() - CHAT_POSITION_OFFSET - CHAT_INPUT_HEIGHT - CHAT_WINDOW_MARGIN, UI::Cond::Appearing, 0., 1.);
         Window::Create("##bingochat", open, 500, 200, UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoFocusOnAppearing | UI::WindowFlags::NoInputs | UI::WindowFlags::NoMove | UI::WindowFlags::NoResize);
         
+        // add a buffer zone to the chat window so that new messages appear at the bottom
+        for (uint i = 0; i < 10 - MessageHistory.Length; i++)
+            UI::NewLine();
+
         for (uint i = 0; i < MessageHistory.Length; i++) {
             RenderChatMessage(MessageHistory[i]);
         }
@@ -66,8 +82,10 @@ namespace UIChat {
     }
 
     void RenderChatMessage(ChatMessage msg) {
+        Player@ messageAuthor = Gamemaster::IsBingoActive() ? Match.GetPlayer(msg.uid) : null;
+
         Font::Set(Font::Style::Bold, Font::Size::Medium);
-        UI::Text(msg.name + ":");
+        UI::Text("\\$" + (messageAuthor is null ? "ccc" : UIColor::GetHex(messageAuthor.team.color)) + msg.name + ":");
         Font::Unset();
         
         UI::SameLine();
