@@ -274,9 +274,7 @@ namespace UIRoomSettings {
         if (MatchConfig.timeLimit != 0) {
             OvertimeToggle();
         }
-        FFAToggle();
         RerollsToggle();
-        CompetitvePatchToggle();
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0) TotalTimeIndicator();
     }
 
