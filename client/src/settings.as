@@ -16,7 +16,7 @@ namespace Settings {
     }
 
     BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 43333, 8080, false);
-    BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 3085, 8085, true);
+    BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 43333, 8085, false);
 
     enum BackendSelection {
         LocalDevelopment,
