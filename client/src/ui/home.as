@@ -1,4 +1,5 @@
 namespace UIHome {
+    const float FOOTER_SIZE = 48;
     array<string> Subtitles = {};
     uint SubtitleIndex = 0;
 
@@ -12,6 +13,8 @@ namespace UIHome {
         Subtitle();
         UI::Dummy(vec2(0, 20));
         if (Config::News.Length > 0) UINews::NewsItem(Config::News[0]);
+
+        LinksFooter();
     }
 
     void Title() {
@@ -72,5 +75,16 @@ namespace UIHome {
         Subtitles.InsertLast("Also check out Tic Tac Go!");
         Subtitles.InsertLast("Finally getting updated again!");
         Subtitles.InsertLast("Made me crash my game!");
+    }
+
+    void LinksFooter() {
+        Layout::MoveToY(UI::GetWindowSize().y - FOOTER_SIZE);
+        UI::Separator();
+
+        string unformattedText = "Discord - GitHub - Contact";
+        Layout::AlignText(unformattedText, 0.5);
+
+        UI::Markdown("[Discord](https://discord.gg/pJbeqptsEa) - [GitHub](https://github.com/Geekid812/TrackmaniaBingo) - [Contact](mailto:geekid812@gmail.com)");
+        UITools::CenterTextDisabled(Icons::Code + " Made by Geekid");
     }
 }

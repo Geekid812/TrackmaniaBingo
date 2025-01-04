@@ -133,6 +133,12 @@ namespace UITools {
         UI::TextWrapped(text);
     }
 
+    void CenterTextDisabled(const string&in text) {
+        UI::Font@ font = Font::Current();
+        Layout::MoveTo(Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
+        UI::TextDisabled(text);
+    }
+
     bool grzero(int x) { return x > 0; }
     int toint(bool x) { return x ? 1 : 0; } 
 }
