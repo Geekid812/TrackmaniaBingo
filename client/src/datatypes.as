@@ -111,7 +111,7 @@ class MatchConfiguration {
     Medal targetMedal = Medal::Author;
     int64 timeLimit;
     int64 noBingoDuration;
-    bool overtime;
+    bool overtime = true;
     bool freeForAll;
     bool rerolls;
     bool competitvePatch;

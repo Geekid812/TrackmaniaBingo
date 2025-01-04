@@ -71,7 +71,8 @@ pub struct MatchConfiguration {
     #[derivative(Default(value = "Duration::milliseconds(0)"))]
 	#[serde_as(as = "DurationMilliSeconds<i64>")]
 	pub no_bingo_duration: Duration,
-    pub overtime: bool,
+    #[derivative(Default(value = "true"))]
+	pub overtime: bool,
     pub free_for_all: bool,
     pub rerolls: bool,
     pub competitve_patch: bool,

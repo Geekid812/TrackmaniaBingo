@@ -46,7 +46,7 @@
         <m name="target_medal" type="Medal" default="Medal::Author" />
         <m name="time_limit" type="duration" />
         <m name="no_bingo_duration" type="duration" />
-        <m name="overtime" type="bool" />
+        <m name="overtime" type="bool" default="true" />
         <m name="free_for_all" type="bool" />
         <m name="rerolls" type="bool" />
         <m name="competitve_patch" type="bool" />
