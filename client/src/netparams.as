@@ -7,4 +7,6 @@ namespace NetParams {
     int RerollCellId;
     int PingCellId;
     string ChatMessage;
+    int PollId;
+    int PollChoiceIndex;
 }

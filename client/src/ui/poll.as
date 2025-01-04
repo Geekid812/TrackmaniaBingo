@@ -79,7 +79,9 @@ namespace UIPoll {
             float alignment = float(i + 1) / float(totalChoices + 1);
             Layout::AlignButton(buttonText, alignment);
             if (UI::Button(buttonText)) {
-
+                NetParams::PollId = data.poll.id;
+                NetParams::PollChoiceIndex = i;
+                startnew(Network::SubmitPollVote);
             }
             UIColor::Reset();
 

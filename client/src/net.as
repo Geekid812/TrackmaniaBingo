@@ -488,4 +488,11 @@ namespace Network {
         body["cell_id"] = NetParams::PingCellId;
         Network::Post("PingCell", body, false);
     }
+
+    void SubmitPollVote() {
+        auto body = Json::Object();
+        body["poll_id"] = NetParams::PollId;
+        body["choice"] = NetParams::PollChoiceIndex;
+        Network::Post("SubmitPollVote", body, false);
+    }
 }

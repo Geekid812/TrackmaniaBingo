@@ -289,7 +289,7 @@ namespace NetworkHandlers {
 
             int count = uint(data["count"]);
             int required = uint(data["required"]);
-            string trackName = ColoredString(cell.map.trackName);
+            string trackName = Text::StripFormatCodes(cell.map.trackName);
             Player player = Match.GetPlayer(player_id);
             string playerTag = "\\$" + UIColor::GetHex(player.team.color) + player.name; 
             UI::ShowNotification("", Icons::Kenney::ReloadInverse + " " + playerTag + " \\$zhas voted to reroll \\$fd8" + trackName + " \\$z(" + count + "/" + required + ")", vec4(0., .4, .4, 1.), 10000);
@@ -307,7 +307,7 @@ namespace NetworkHandlers {
         }
 
         uint id = uint(data["cell_id"]);
-        string oldName = ColoredString(Match.tiles[id].map.trackName);
+        string oldName = Text::StripFormatCodes(Match.tiles[id].map.trackName);
         Match.tiles.RemoveAt(id);
         Match.tiles.InsertAt(id, GameTile(GameMap::Deserialize(data["map"])));
         Match.canReroll = bool(data["can_reroll"]);
@@ -351,7 +351,12 @@ namespace NetworkHandlers {
     }
 
     void PollVotesUpdate(Json::Value@ data) {
+        PollData@ pollData = Poll::GetById(int(data["id"]));
+        if (pollData is null) return;
 
+        for (uint i = 0; i < pollData.poll.choices.Length; i++) {
+            pollData.votes[i] = int(data["votes"][i]);
+        }
     }
 
     void PollResult(Json::Value@ data) {

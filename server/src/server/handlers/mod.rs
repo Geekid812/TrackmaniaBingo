@@ -19,6 +19,7 @@ mod start_match;
 mod submit_run;
 mod unsubscribe_roomlist;
 mod vote_reroll;
+mod poll_vote;
 
 #[typetag::deserialize(tag = "req")]
 pub trait Request: Debug {

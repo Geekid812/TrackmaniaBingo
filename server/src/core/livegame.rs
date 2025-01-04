@@ -1,6 +1,8 @@
 use anyhow::anyhow;
 use std::{
+    collections::HashMap,
     iter::once,
+    ops::Index,
     sync::{Arc, Weak},
 };
 
@@ -48,17 +50,23 @@ pub struct LiveMatch {
     started: Option<DateTime<Utc>>,
     phase: MatchPhase,
     channel: Channel<GameEvent>,
-    polls: Vec<Owned<PollData>>,
+    polls: HashMap<u32, Owned<PollData>>,
 }
 
 struct MatchOptions {
     start_countdown: Duration,
-    player_join: bool
+    player_join: bool,
 }
 
 struct PollData {
     pub poll: Poll,
     pub votes: Vec<Vec<PlayerId>>,
+    pub callback: PollResultCallback,
+}
+
+pub enum PollResultCallback {
+    None,
+    Reroll(usize),
 }
 
 impl LiveMatch {
@@ -85,7 +93,7 @@ impl LiveMatch {
             started: None,
             phase: MatchPhase::Starting,
             channel: Channel::new(),
-            polls: Vec::new(),
+            polls: HashMap::new(),
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
@@ -463,7 +471,7 @@ impl LiveMatch {
         }
 
         let poll_id = 0x10000 | cell_id as u32;
-        let already_voting = self.polls.iter().any(|p| p.lock().poll.id == poll_id);
+        let already_voting = self.polls.contains_key(&poll_id);
         if already_voting {
             return Err(anyhow!("there is already a reroll vote for this map"));
         }
@@ -491,7 +499,7 @@ impl LiveMatch {
         };
 
         let initial_votes = vec![vec![player.uid], Vec::new()];
-        self.start_poll(poll, initial_votes);
+        self.start_poll(poll, initial_votes, PollResultCallback::Reroll(cell_id));
 
         Ok(())
     }
@@ -634,9 +642,16 @@ impl LiveMatch {
         winner
     }
 
-    pub fn start_poll(&mut self, poll: Poll, initial_votes: Vec<Vec<PlayerId>>) {
+    pub fn start_poll(
+        &mut self,
+        poll: Poll,
+        initial_votes: Vec<Vec<PlayerId>>,
+        callback: PollResultCallback,
+    ) {
+        let poll_id = poll.id;
         let delay = poll.duration.to_std().unwrap();
         let votes_count = initial_votes.iter().map(|v| v.len() as i32).collect();
+
         let event = GameEvent::PollStart {
             poll: poll.clone(),
             votes: votes_count,
@@ -644,15 +659,41 @@ impl LiveMatch {
         let poll_data = Arc::new(Mutex::new(PollData {
             poll,
             votes: initial_votes,
+            callback,
         }));
         let poll_ref = Arc::downgrade(&poll_data);
-        self.polls.push(poll_data);
+        self.polls.insert(poll_id, poll_data);
 
         execute_delayed_task(
             self.ptr.clone(),
             move |_self| LiveMatch::poll_end(_self, poll_ref),
             delay,
         );
+        self.channel.broadcast(&event);
+    }
+
+    pub fn poll_cast_vote(&mut self, poll_id: u32, uid: u32, choice: usize) {
+        let Some(poll) = self.polls.get(&poll_id) else {
+            return;
+        };
+
+        let mut lock = poll.lock();
+        let votes = &mut lock.votes;
+
+        for i in 0..votes.len() {
+            if i == choice {
+                if !votes[i].contains(&uid) {
+                    votes[i].push(uid);
+                }
+            } else if let Some(idx) = votes[i].iter().position(|x| *x == uid) {
+                votes[i].remove(idx);
+            }
+        }
+
+        let event = GameEvent::PollVotesUpdate {
+            id: poll_id,
+            votes: votes.iter().map(|v| v.len() as i32).collect(),
+        };
         self.channel.broadcast(&event);
     }
 
@@ -670,6 +711,18 @@ impl LiveMatch {
                 id: poll.poll.id,
                 selected: Some(selected_choice as u32),
             });
+
+            match poll.callback {
+                PollResultCallback::Reroll(cell_id)
+                    if poll.votes[0].len() > poll.votes[1].len() =>
+                {
+                    if let Err(e) = self.reroll_map(cell_id) {
+                        error!("{}", e);
+                    }
+                }
+                _ => (),
+            };
+            self.polls.remove(&poll.poll.id);
         } else {
             warn!("Poll cancelled by dropped reference.");
         }
