@@ -124,10 +124,7 @@ namespace UIMapList {
                     drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.LeadingRun().player.team.color, 0.1));
             } else {
                 if (!cell.IsClaimed()) {
-                    if (cell.rerollIds.Length > 0)
-                        drawList.AddRectFilled(rect, UIColor::GetAlphaColor(vec3(.0, .3, .3), 0.1));
-                    else 
-                        drawList.AddRectFilled(rect, UIColor::GetAlphaColor(vec3(.0, .6, .6), 0.1));
+                    drawList.AddRectFilled(rect, UIColor::GetAlphaColor(vec3(.0, .6, .6), 0.1));
                 }
             }
             if (mapHovered) drawList.AddRectFilled(rect, vec4(.5, .5, .5, .1));
@@ -164,12 +161,10 @@ namespace UIMapList {
         }
 
         if (RerollMenuOpen) {
-            uint requiredPlayers = Match.players.Length / 2 + 1;
             if (tile.IsClaimed()) {
                 UI::Text("\\$f88Cannot reroll this map, it has already been claimed.");
             } else {
-                UI::Text("\\$066Votes to reroll: " + tile.rerollIds.Length + "/" + requiredPlayers);
-                if (tile.rerollIds.Find(Profile.uid) != -1) UI::Text("\\$ff8You already voted to reroll this map, select this map again to undo.");
+                UI::Text("\\$066Click to start a vote to reroll this map.");
             }
         }
         UI::EndTooltip();

@@ -7,7 +7,6 @@ class LiveMatch {
     array<Player>@ players = {};
     int64 startTime = 0;
     int64 overtimeStartTime = 0;
-    int64 endTime = 0;
     GamePhase phase = GamePhase::Starting;
     bool canReroll = false;
     EndState endState;
@@ -96,7 +95,6 @@ class GameTile {
     GameMap@ map = null;
     array<MapClaim>@ attemptRanking = {};
     vec3 paintColor = vec3();
-    array<uint> rerollIds = {};
     Image@ thumbnail;
     Image@ mapImage;
 

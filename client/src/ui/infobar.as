@@ -9,12 +9,12 @@ namespace UIInfoBar {
     string MapLeaderboardUid;
 
     // Small controls window below the infobar for exiting
-    void InfobarControls() {
+    void PostgameControls() {
         vec4 geometry = SubwindowBegin("Bingo Infobar Controls");
         UIColor::LightGray();
         if (@Room !is null) {
             if (UI::Button("Back to room")) {
-                @Match = null;
+                Gamemaster::SetBingoActive(false);
                 UIGameRoom::Visible = true;
 
                 if (Room.localPlayerIsHost) {
@@ -154,14 +154,6 @@ namespace UIInfoBar {
         // If we are in the countdown at game start, don't show up yet
         if (phase == GamePhase::Starting) return;
 
-        Player@ self = Match.GetSelf();
-        Team team;
-        if (@self is null) {
-            team = Team(0, "", vec3(.5, .5, .5));
-        } else {
-            team = self.team;
-        }
-
         UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
         // Phase indicator
@@ -202,24 +194,13 @@ namespace UIInfoBar {
         }
 
         Font::Set(Font::Style::Bold, Font::Size::Huge);
-        string stopwatchText = Time::Format(stopwatchTime, false, true, true);
-        UI::Text(stopwatchPrefix + stopwatchText);
+        string stopwatchText = stopwatchPrefix + Time::Format(stopwatchTime, false, true, true);
+        
+        Layout::AlignText(stopwatchText, 0.5);
+        UI::Text(stopwatchText);
         Font::Unset();
-
-        UI::SameLine();
-        UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(6, 5));
-        UIColor::Custom(team.color);
-        if (UI::Button(Icons::Map + " Map Grid")) {
-            UIMapList::Visible = !UIMapList::Visible;
-        }
-        UI::SameLine();
-        UIColor::Reset();
-        UIColor::Custom(UIColor::Brighten(team.color, 0.6));
-        if (UI::Button("Teams")) {
-            UITeams::Visible = !UITeams::Visible;
-        }
-        UIColor::Reset();
-        UI::PopStyleVar();
+        
+        GameControls();
         
         GameTile@ tile = Gamemaster::GetCurrentTile();
         CGameCtnChallenge@ gameMap = Playground::GetCurrentMap();
@@ -233,7 +214,7 @@ namespace UIInfoBar {
 
         UIColor::Gray();
         if (phase == GamePhase::Ended) {
-            InfobarControls();
+            PostgameControls();
         }
         UIColor::Reset();
 
@@ -241,5 +222,28 @@ namespace UIInfoBar {
         vec2 windowSize = UI::GetWindowSize();
         UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - windowSize.x) / 2, int(Board::Position.y) + int(Board::BoardSize) + BOARD_MARGIN), UI::Cond::Always);
         UI::End();
+    }
+
+    void GameControls() {
+        Player@ self = Match.GetSelf();
+        Team team;
+        if (@self is null) {
+            team = Team(0, "", vec3(.5, .5, .5));
+        } else {
+            team = self.team;
+        }
+        UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(6, 5));
+        UIColor::Custom(team.color);
+        if (UI::Button(Icons::Map + " Map Grid")) {
+            UIMapList::Visible = !UIMapList::Visible;
+        }
+        UI::SameLine();
+        UIColor::Reset();
+        UIColor::Custom(UIColor::Brighten(team.color, 0.6));
+        if (UI::Button("Teams")) {
+            UITeams::Visible = !UITeams::Visible;
+        }
+        UIColor::Reset();
+        UI::PopStyleVar();
     }
 }

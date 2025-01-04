@@ -4,7 +4,23 @@ namespace GameTime {
      * Get the game timer's current value, in milliseconds.
      */
     int64 CurrentClock() {
-        return CurrentTimeElapsed(); // TODO
+        if (!Gamemaster::IsBingoActive()) return 0;
+
+        GamePhase phase = Gamemaster::GetPhase();
+        int64 elapsedTime = CurrentTimeElapsed();
+        bool isCountdown = Match.config.timeLimit != 0;
+
+        switch (phase) {
+            case GamePhase::NoBingo:
+                return Match.config.noBingoDuration - elapsedTime;
+            case GamePhase::Running:
+                return isCountdown ? (Match.config.timeLimit - elapsedTime + Match.config.noBingoDuration) : elapsedTime - Match.config.noBingoDuration;
+            case GamePhase::Overtime:
+                return Time::Now - Match.overtimeStartTime;
+            case GamePhase::Ended:
+                return Match.endState.endTime - Match.startTime - Match.config.noBingoDuration;
+        }
+        return 0;
     }
 
     /**

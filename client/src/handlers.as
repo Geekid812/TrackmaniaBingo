@@ -275,31 +275,6 @@ namespace NetworkHandlers {
         Match.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Match.GetTeamWithId(data["team"])));
     }
 
-    void RerollVoteCast(Json::Value@ data) {
-        if (!Gamemaster::IsBingoActive()) {
-            warn("Handlers: got RerollVoteCast event but game is inactive.");
-            return;
-        }
-
-        uint id = uint(data["cell_id"]);
-        uint player_id = uint(data["player_id"]);
-        GameTile cell = Match.GetCell(id);
-        if (bool(data["added"])) {
-            cell.rerollIds.InsertLast(player_id);
-
-            int count = uint(data["count"]);
-            int required = uint(data["required"]);
-            string trackName = Text::StripFormatCodes(cell.map.trackName);
-            Player player = Match.GetPlayer(player_id);
-            string playerTag = "\\$" + UIColor::GetHex(player.team.color) + player.name; 
-            UI::ShowNotification("", Icons::Kenney::ReloadInverse + " " + playerTag + " \\$zhas voted to reroll \\$fd8" + trackName + " \\$z(" + count + "/" + required + ")", vec4(0., .4, .4, 1.), 10000);
-        } else {
-            for (uint i = 0; i < cell.rerollIds.Length; i++) {
-                if (cell.rerollIds[i] == player_id) cell.rerollIds.RemoveAt(i);
-            }
-        }
-    }
-
     void MapRerolled(Json::Value@ data) {
         if (!Gamemaster::IsBingoActive()) {
             warn("Handlers: got MapRerolled event but game is inactive.");
