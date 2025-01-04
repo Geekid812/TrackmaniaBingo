@@ -45,15 +45,6 @@ namespace UIProfile {
         + " /\\$f88 " + losses + " \\$888loss" + (losses == 1 ? "" : "es") + ")");
     }
 
-    void DailyMatchStats(int plays, int wins) {
-        UI::Text(plays + " daily challenge" + (plays == 1 ? "" : "s")
-        + " played \\$888(\\$8f8" + wins + " \\$888win" + (wins == 1 ? "" : "s") + ")");
-    }
-
-    void DailyWins(int wins) {
-        UI::Text("\\$ffa" + wins + " daily challenge win" + (wins == 1 ? "" : "s"));
-    }
-
     void RatingDisplay(int rating, int deviation) {
         string ratingText = "\\$ff8" + tostring(rating);
         if (deviation >= 150) {

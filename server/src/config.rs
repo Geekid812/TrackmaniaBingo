@@ -249,16 +249,6 @@ pub struct GameConfig {
     pub mxrandom_max_author_time: Duration,
     #[serde_as(as = "DurationSeconds<i64>")]
     pub start_countdown: Duration,
-    pub daily_config: Option<MatchConfiguration>,
-    pub daily_reset: DailyResetConfig,
-}
-
-#[serde_with::serde_as]
-#[derive(Deserialize, Default)]
-#[serde(default)]
-pub struct DailyResetConfig {
-    pub hour: u32,
-    pub minute: u32,
 }
 
 #[derive(Deserialize)]
@@ -327,9 +317,7 @@ impl Default for GameConfig {
                 .map(|(s1, s2)| (s1.to_owned(), s2.to_owned())),
             ),
             mxrandom_max_author_time: Duration::minutes(5),
-            start_countdown: Duration::seconds(5),
-            daily_config: None,
-            daily_reset: DailyResetConfig::default(),
+            start_countdown: Duration::seconds(5)
         }
     }
 }

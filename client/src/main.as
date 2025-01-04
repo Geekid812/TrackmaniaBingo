@@ -100,7 +100,6 @@ void RenderInterface() {
 
     UIMainWindow::Render();
     UINews::Render();
-    UIDailyHistory::Render();
     UIDevActions::Render();
 
     Font::Unset();

@@ -228,30 +228,7 @@ namespace NetworkHandlers {
     }
 
     void LoadGameData(Json::Value@ data) {
-//        Room.StartTime = Time::Now - uint(data["start_time"]);
-        for (uint i = 0; i < data["cells"].Length; i++) {
-            Json::Value@ cell = data["cells"][i];
-            if (cell["claim"].GetType() == Json::Type::Null) continue;
-//            Room.MapList[i].ClaimedRun = RunResult(cell["claim"]["time"], Medal(int(cell["claim"]["medal"])));
-//            Room.MapList[i].ClaimedPlayerName = cell["claim"]["player"]["name"];
-//            @Room.MapList[i].ClaimedTeam = Room.GetTeamWithId(cell["claim"]["player"]["team"]);
-        }
-    }
 
-    void LoadDailyChallenge(Json::Value@ data) {
-        if (data is null) {
-            UIDaily::DailyLoad = LoadStatus::Error;
-            return;
-        }
-
-        UIDaily::DailyLoad = LoadStatus::Ok;
-        if (data["res"] == "DailyNotLoaded") {
-            @UIDaily::DailyMatch = null;
-            return;
-        }
-
-        LiveMatch match = LiveMatch::Deserialize(data["state"]);
-        @UIDaily::DailyMatch = match;
     }
 
     void RoomSync(Json::Value@ data) {

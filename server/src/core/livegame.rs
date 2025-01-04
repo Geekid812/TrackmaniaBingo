@@ -53,8 +53,7 @@ pub struct LiveMatch {
 
 struct MatchOptions {
     start_countdown: Duration,
-    player_join: bool,
-    is_daily: bool,
+    player_join: bool
 }
 
 struct PollData {
@@ -113,13 +112,6 @@ impl LiveMatch {
             panic!("attempted to change match options after starting");
         }
         self.options.player_join = enabled;
-    }
-
-    pub fn set_daily(&mut self, is_daily: bool) {
-        if self.started.is_some() {
-            panic!("attempted to change match options after starting");
-        }
-        self.options.is_daily = is_daily;
     }
 
     pub fn setup_match_start(&mut self, start_date: DateTime<Utc>) {
@@ -361,10 +353,8 @@ impl LiveMatch {
         ranking.insert(i, claim.clone());
         self.broadcast_submitted_run(id, claim, i + 1);
 
-        if !self.options.is_daily {
-            if self.do_bingo_checks() {
-                return;
-            }
+        if self.do_bingo_checks() {
+            return;
         }
         if self.phase == MatchPhase::Overtime {
             self.do_cell_winner_checks();
@@ -401,17 +391,10 @@ impl LiveMatch {
     }
 
     fn save_match(&mut self, draw: bool) {
-        let daily_timedate = if self.options.is_daily {
-            self.started
-                .map(|date| format!("{}", date.format("%Y-%m-%d")))
-        } else {
-            None
-        };
         let match_model = Match {
             uid: self.uid.clone(),
             started_at: self.started.map(|t| t.naive_utc()).unwrap_or_default(),
             ended_at: Utc::now().naive_utc(),
-            daily_timedate,
         };
         let mut player_results = Vec::new();
         for team in self.teams.get_teams() {
@@ -707,17 +690,6 @@ impl LiveMatch {
             return;
         }
 
-        if self.options.is_daily {
-            let bingos = self.check_for_bingos();
-            if bingos.len() >= 1 {
-                self.announce_bingo_and_game_end(bingos);
-            } else {
-                self.channel.broadcast(&GameEvent::AnnounceDraw);
-                self.set_game_ended(true);
-            }
-            return;
-        }
-
         if self.do_cell_winner_checks() {
             return;
         }
@@ -736,7 +708,6 @@ impl Default for MatchOptions {
         Self {
             start_countdown: CONFIG.game.start_countdown,
             player_join: false,
-            is_daily: false,
         }
     }
 }

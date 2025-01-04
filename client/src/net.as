@@ -457,15 +457,6 @@ namespace Network {
         return Request !is null;
     }
 
-    void LoadDailyChallenge() {
-        auto response = Post("SubscribeDailyChallenge", Json::Object(), false);
-        NetworkHandlers::LoadDailyChallenge(response);   
-    }
-
-    void UnsubscribeDailyChallenge() {
-        Post("UnsubscribeDailyChallenge", Json::Object(), false);
-    }
-
     void RerollCell() {
         auto body = Json::Object();
         body["cell_id"] = NetParams::RerollCellId;
@@ -477,19 +468,7 @@ namespace Network {
         body["message"] = NetParams::ChatMessage;
         Network::Post("SendChatMessage", body, false);
     }
-
-    void GetDailyResults() {
-        auto body = Json::Object();
-        body["period"] = NetParams::DailyResultDate;
-        auto response = Network::Post("GetDailyResults", body, false);
-        if (@response is null) return;
-
-        auto dates = response["results"].GetKeys();
-        for (uint i = 0; i < dates.Length; i++) {
-            if (!UIDaily::DailyResults.Exists(dates[i])) UIDaily::DailyResults.Set(dates[i], DailyResult::Deserialize(response["results"][dates[i]]));
-        }
-    }
-
+    
     void ReloadMaps() {
         Network::Post("ReloadMaps", Json::Object(), false);
     }

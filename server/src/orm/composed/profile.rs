@@ -10,8 +10,6 @@ struct PlayerProfile {
     pub match_count: i32,
     pub wins: i32,
     pub losses: i32,
-    pub daily_count: i32,
-    pub daily_wins: i32,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -71,7 +69,5 @@ pub async fn get_profile(
         match_count,
         wins,
         losses,
-        daily_count,
-        daily_wins,
     })
 }

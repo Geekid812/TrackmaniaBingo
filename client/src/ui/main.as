@@ -89,20 +89,11 @@ namespace UIMainWindow {
             UI::EndTabItem();
         }
 
-#if TMNEXT
-        if (UI::BeginTabItem(Icons::Star + " Daily")) {
-            UI::BeginChild("bingodaily");
-            UIDaily::DailyHome();
-            UI::EndChild();
+        if (UI::BeginTabItem(Icons::Star + " Events")) {
+            UI::NewLine();
+            UITools::CenterText("Coming soon!");
             UI::EndTabItem();
-        } else {
-            if (UIDaily::DailyLoad != LoadStatus::NotLoaded) {
-                if (@UIDaily::DailyMatch !is null) startnew(Network::UnsubscribeDailyChallenge);
-                UIDaily::DailyLoad = LoadStatus::NotLoaded;
-                @UIDaily::DailyMatch = null;
-            }
         }
-#endif
 
 
         UI::EndTabBar();
@@ -155,12 +146,7 @@ namespace UIMainWindow {
         if (@Room !is null) {
             UIRoomMenu::RoomInfo(Room.NetworkState());
         } else {
-            if (@UIDaily::DailyMatch !is null && Match.uid == UIDaily::DailyMatch.uid) {
-                UI::Text("Daily Challenge");
-            } else {
-                UI::NewLine();
-            }
-
+            UI::NewLine();
             UI::Text(string::Join(UIGameRoom::MatchConfigInfo(Match.config), "\t"));
         }
 
