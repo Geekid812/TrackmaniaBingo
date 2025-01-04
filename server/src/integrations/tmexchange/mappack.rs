@@ -48,6 +48,11 @@ impl MappackLoader {
             .await?;
 
         let maps: Vec<GameMap> = response
+            .get("results")
+            .ok_or(anyhow!(
+                "compatibility error when parsing JSON: {:?}",
+                response
+            ))?
             .as_array()
             .ok_or(anyhow!("invalid JSON received: {:?}", response))?
             .to_owned()

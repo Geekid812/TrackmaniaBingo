@@ -198,7 +198,7 @@ impl LiveMatch {
             if team
                 .members
                 .iter()
-                .filter(|p| p.profile.player.uid == player_id)
+                .filter(|p| p.profile.uid == player_id)
                 .next()
                 .is_some()
             {
@@ -221,11 +221,10 @@ impl LiveMatch {
         ctx: &ClientContext,
         mut requested_team: Option<TeamIdentifier>,
     ) -> Result<TeamIdentifier, anyhow::Error> {
-        let already_joined_team = self.get_player_team(ctx.profile.player.uid);
+        let already_joined_team = self.get_player_team(ctx.profile.uid);
 
         if let Some(team) = already_joined_team {
-            self.channel
-                .subscribe(ctx.profile.player.uid, ctx.writer.clone());
+            self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
             return Ok(team);
         } else {
             if !self.options.player_join {
@@ -253,7 +252,7 @@ impl LiveMatch {
             None => {
                 let id = self
                     .teams
-                    .create_random_team(ctx.profile.player.username.clone())
+                    .create_random_team(ctx.profile.name.clone())
                     .base
                     .id;
                 let team = self
@@ -276,8 +275,7 @@ impl LiveMatch {
             profile: ctx.profile.clone(),
             team: team.base.id,
         });
-        self.channel
-            .subscribe(ctx.profile.player.uid, ctx.writer.clone());
+        self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
         Ok(team.base.id)
     }
 
@@ -419,7 +417,7 @@ impl LiveMatch {
         for team in self.teams.get_teams() {
             for player in &team.members {
                 player_results.push(PlayerToMatch {
-                    player_uid: player.profile.player.uid,
+                    player_uid: player.profile.uid,
                     match_uid: self.uid.clone(),
                     outcome: if draw {
                         "D".to_owned()

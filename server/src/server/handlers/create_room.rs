@@ -27,7 +27,7 @@ impl Request for CreateRoom {
     fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             ctx.trace("already in a room, leaving previous game");
-            room.lock().player_remove(ctx.profile.player.uid);
+            room.lock().player_remove(ctx.profile.uid);
             // ctx.room;
         }
         let roomcode = directory::get_new_roomcode();
@@ -42,7 +42,7 @@ impl Request for CreateRoom {
         let mut room = new_room.lock();
         let room_ctx = Some(RoomContext::new(ctx.profile.clone(), &new_room));
         ctx.room = room_ctx;
-        room.add_player(&ctx, &ctx.profile, true, ctx.writer.clone());
+        room.add_player(&ctx, &ctx.profile, true);
         if room.config().public {
             directory::send_room_visibility(&room, true);
         }

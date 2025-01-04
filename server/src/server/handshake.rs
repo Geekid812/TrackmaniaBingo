@@ -4,6 +4,7 @@ use serde_json::from_str;
 use tracing::{info, warn};
 
 use super::client::{ClientCallbackImplementation, NetClient};
+use super::context::ClientContext;
 use super::version::Version;
 use crate::datatypes::{HandshakeFailureIntentCode, HandshakeRequest, PlayerProfile};
 use crate::{config, store};
@@ -97,19 +98,20 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
     handshake_success(
         client,
         HandshakeSuccess {
-            profile,
+            profile: profile.clone(),
             can_reconnect: false,
         },
     );
 
-    // TODO: handshake completed, stop listening and switch handlers
+    // handshake completed, stop listening and switch to the mainloop
+    client.set_context(Some(ClientContext::new(profile, client.messager())));
     client.set_callback_mode(ClientCallbackImplementation::Mainloop);
 }
 
 /// Send a rejection message with the provided reason message.
 fn handshake_rejection(client: &NetClient, reason: String, code: HandshakeFailureIntentCode) {
     warn!(cid = client.cid(), "rejected: {}", reason);
-    client
+    let _ = client
         .messager()
         .send(&HandshakeResponse::failure(reason, code));
 }
@@ -120,7 +122,7 @@ fn handshake_success(client: &NetClient, data: HandshakeSuccess) {
         cid = client.cid(),
         "authenticated: {} (uid {})", data.profile.name, data.profile.uid
     );
-    client.messager().send(&HandshakeResponse::success(data));
+    let _ = client.messager().send(&HandshakeResponse::success(data));
 }
 
 /// Get the client minimum version from the configuration.

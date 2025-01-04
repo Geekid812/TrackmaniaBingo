@@ -1,6 +1,5 @@
 use bytes::BytesMut;
 use futures::FutureExt;
-use std::io;
 use std::sync::atomic::{self, AtomicU64};
 use std::time::Duration;
 use tokio::net::TcpStream;
@@ -10,11 +9,11 @@ use tokio::time::{timeout_at, Instant};
 use tracing::{debug, error, warn};
 
 use super::handshake;
-use super::messager::{new_messager, NetMessager};
 use super::requests::BaseRequest;
 use crate::server::context::ClientContext;
 use crate::transport::client::tcpnative::NativeClientProtocol;
-use crate::transport::{TransportReader, TransportWriter};
+use crate::transport::messager::{new_messager, NetMessager};
+use crate::transport::{TransportReadQueue, TransportWriteQueue};
 
 /// Unique identifier for debugging, so that we don't use something identifiable like IP addresses.
 static CLIENT_ID: AtomicU64 = AtomicU64::new(0);
@@ -24,15 +23,16 @@ pub struct NetClient {
     cid: u64,
     protocol: NativeClientProtocol,
     messager: NetMessager,
-    receiver: TransportReader,
+    receiver: TransportReadQueue,
     timeout: Duration,
     callback_mode: ClientCallbackImplementation,
+    context: Option<ClientContext>,
 }
 
 impl NetClient {
     /// Create a new `NetClient`.
     pub fn new(stream: TcpStream, timeout: Duration) -> Self {
-        let (tx, rx): (TransportWriter, TransportReader) = unbounded_channel();
+        let (tx, rx): (TransportWriteQueue, TransportReadQueue) = unbounded_channel();
         Self {
             cid: CLIENT_ID.fetch_add(1, atomic::Ordering::Relaxed),
             protocol: NativeClientProtocol::new(stream),
@@ -40,6 +40,7 @@ impl NetClient {
             receiver: rx,
             timeout,
             callback_mode: ClientCallbackImplementation::None,
+            context: None,
         }
     }
 
@@ -58,11 +59,19 @@ impl NetClient {
         self.callback_mode = mode;
     }
 
+    /// Sets the inner `ClientContext`.
+    pub fn set_context(&mut self, context: Option<ClientContext>) {
+        self.context = context;
+    }
+
     /// Handler for all incoming messages.
     async fn handle_message(&mut self, bytes: BytesMut) {
         match self.callback_mode.clone() {
             ClientCallbackImplementation::Handshake => {
                 handshake::handshake_message_received(self, bytes).await
+            }
+            ClientCallbackImplementation::Mainloop => {
+                mainloop_message_received(self, bytes).await;
             }
             _ => debug!(cid = self.cid(), "message event was dropped"),
         }
@@ -135,27 +144,37 @@ pub enum ClientCallbackImplementation {
     None,
 }
 
-// -- old code
-fn handle_recv(ctx: &mut ClientContext, result: Result<String, io::Error>) -> bool {
-    let msg = match result {
-        Ok(msg) => msg,
-        Err(_) => return false,
+async fn mainloop_message_received(client: &mut NetClient, message: BytesMut) -> bool {
+    let cid = client.cid();
+    let Some(ctx) = &mut client.context else {
+        error!(cid = cid, "mainloop message received with no context");
+        return false;
     };
-    debug!("received: {}", msg);
+
+    let message = match String::from_utf8(message.to_vec()) {
+        Ok(str) => str,
+        Err(e) => {
+            error!(
+                cid = client.cid(),
+                "received a non-utf8 message in mainloop: {}", e
+            );
+            return false;
+        }
+    };
+    debug!(cid = cid, message = message);
 
     // Match a request
-    match serde_json::from_str::<BaseRequest>(&msg) {
+    match serde_json::from_str::<BaseRequest>(&message) {
         Ok(incoming) => {
             let response = incoming.request.handle(ctx);
             let outgoing = incoming.build_reply(response);
-            let res_text = serde_json::to_string(&outgoing).expect("response serialization failed");
-            debug!("response: {}", &res_text);
-            let sent = ctx.writer.send(res_text);
-            if sent.is_err() {
-                return false; // Explicit disconnect
+
+            // send a response. if it's an error, break the connection
+            if ctx.writer.send(&outgoing).is_err() {
+                return false;
             }
         }
-        Err(e) => warn!("Unknown message received: {e}"),
+        Err(e) => warn!(cid = cid, "Unknown message received: {e}"),
     };
     true
 }

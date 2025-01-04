@@ -26,7 +26,7 @@ impl Request for SubscribeDailyChallenge {
             Some(challenge) => {
                 let lock = challenge.lock();
                 // lock.channel()
-                //    .subscribe(ctx.profile.player.uid, ctx.writer.clone());
+                //    .subscribe(ctx.profile.uid, ctx.writer.clone());
                 let state = lock.get_state();
                 Box::new(DailyChallengeSync { state })
             }
@@ -46,7 +46,7 @@ impl Request for UnsubscribeDailyChallenge {
             // challenge
             //    .lock()
             //    .channel()
-            //    .unsubscribe(ctx.profile.player.uid);
+            //    .unsubscribe(ctx.profile.uid);
             return Box::new(generic::Ok);
         }
         Box::new(generic::Error {

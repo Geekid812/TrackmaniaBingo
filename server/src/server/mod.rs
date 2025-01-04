@@ -12,7 +12,6 @@ pub mod daily;
 pub mod handlers;
 pub mod handshake;
 pub mod mapload;
-mod messager;
 pub mod requests;
 pub mod tasks;
 mod version;

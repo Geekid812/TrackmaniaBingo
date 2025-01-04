@@ -8,8 +8,7 @@ use crate::{
         },
         room::PlayerUpdates,
     },
-    datatypes::{ChatMessage, MatchConfiguration, RoomConfiguration},
-    orm::composed::profile::PlayerProfile,
+    datatypes::{ChatMessage, MatchConfiguration, PlayerProfile, RoomConfiguration},
 };
 
 #[derive(Serialize, Clone, Debug)]

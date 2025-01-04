@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{core::gamecommon::PlayerData, orm::composed::profile::PlayerProfile};
+use crate::{core::gamecommon::PlayerData, datatypes::PlayerProfile};
 
 use super::team::TeamIdentifier;
 

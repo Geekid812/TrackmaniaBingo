@@ -6,7 +6,7 @@ use serde::Serialize;
 use tokio::{net::TcpStream, sync::mpsc::error::SendError};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
-use super::TransportWriter;
+use super::TransportWriteQueue;
 
 pub struct NativeClientProtocol {
     inner: Framed<TcpStream, LengthDelimitedCodec>,
@@ -29,7 +29,7 @@ impl NativeClientProtocol {
     }
 }
 
-pub fn write<S: Serialize>(tx: &TransportWriter, value: &S) -> Result<(), SendError<Vec<u8>>> {
+pub fn write<S: Serialize>(tx: &TransportWriteQueue, value: &S) -> Result<(), SendError<Vec<u8>>> {
     tx.send(
         serde_json::to_string(value)
             .expect("Serialize should not error")

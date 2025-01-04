@@ -23,7 +23,7 @@ impl Request for GetPublicRooms {
     fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
         PUB_ROOMS_CHANNEL
             .lock()
-            .subscribe(ctx.profile.player.uid, ctx.writer.clone());
+            .subscribe(ctx.profile.uid, ctx.writer.clone());
         let rooms = ROOMS
             .lock()
             .values()

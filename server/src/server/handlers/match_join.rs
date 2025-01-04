@@ -26,7 +26,7 @@ impl Request for JoinMatch {
     fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
             ctx.trace("already in a room, leaving previous game");
-            room.lock().player_remove(ctx.profile.player.uid);
+            room.lock().player_remove(ctx.profile.uid);
             // TODO: on player removed?
         }
 

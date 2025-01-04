@@ -22,7 +22,7 @@ impl Request for SubmitRun {
         if let Some(game) = ctx.game_match() {
             let claim = MapClaim {
                 player: PlayerRef {
-                    uid: ctx.profile.player.uid,
+                    uid: ctx.profile.uid,
                     team: ctx.game.as_ref().unwrap().team(),
                 },
                 time: self.time,

@@ -27,8 +27,7 @@ use super::{
     util::Color,
 };
 use crate::{
-    datatypes::{GamePlatform, MatchConfiguration, RoomConfiguration},
-    orm::composed::profile::PlayerProfile,
+    datatypes::{GamePlatform, MatchConfiguration, PlayerProfile, RoomConfiguration},
     server::{context::ClientContext, mapload},
     transport::{Channel, Tx},
 };
@@ -146,7 +145,7 @@ impl GameRoom {
     fn team_members(&self) -> HashMap<TeamIdentifier, Vec<i32>> {
         let mut map: HashMap<TeamIdentifier, Vec<i32>> = HashMap::new();
         self.members.iter().for_each(|p| {
-            map.entry(p.team).or_default().push(p.profile.player.uid);
+            map.entry(p.team).or_default().push(p.profile.uid);
         });
         self.teams.get_teams().iter().for_each(|t| {
             map.entry(t.id).or_default();
@@ -159,11 +158,11 @@ impl GameRoom {
         self.members
             .iter()
             .find(|p| p.operator)
-            .map(|p| p.profile.player.username.clone())
+            .map(|p| p.profile.name.clone())
     }
 
     pub fn has_player(&self, uid: i32) -> bool {
-        self.members.iter().any(|m| m.profile.player.uid == uid)
+        self.members.iter().any(|m| m.profile.uid == uid)
     }
 
     pub fn get_state(&self) -> RoomState {
@@ -180,22 +179,20 @@ impl GameRoom {
         ctx: &ClientContext,
         profile: &PlayerProfile,
         operator: bool,
-        writer: Arc<Tx>,
     ) -> TeamIdentifier {
         let team = self
             .get_least_populated_team()
             .expect("0 teams in self.teams")
             .id;
         self.members.push(PlayerData {
-            uid: profile.player.uid,
+            uid: profile.uid,
             profile: profile.clone(),
             team,
             operator,
             disconnected: false,
-            writer,
+            writer: ctx.writer.clone(),
         });
-        self.channel
-            .subscribe(profile.player.uid, ctx.writer.clone());
+        self.channel.subscribe(profile.uid, ctx.writer.clone());
         team
     }
 
@@ -227,11 +224,11 @@ impl GameRoom {
         if self.has_started() {
             return Err(JoinRoomError::HasStarted);
         }
-        if self.has_player(ctx.profile.player.uid) {
+        if self.has_player(ctx.profile.uid) {
             return Err(JoinRoomError::PlayerAlreadyJoined);
         }
 
-        let team = self.add_player(ctx, profile, false, ctx.writer.clone());
+        let team = self.add_player(ctx, profile, false);
         self.channel.broadcast(&RoomEvent::PlayerJoin {
             profile: profile.clone(),
             team,
@@ -269,7 +266,7 @@ impl GameRoom {
         }
         if let Some(data) = self.members.iter_mut().find(|m| m.uid == uid) {
             data.team = team;
-            let uid = data.profile.player.uid;
+            let uid = data.profile.uid;
             self.player_update(vec![(uid, team)]);
         }
         true
@@ -304,7 +301,7 @@ impl GameRoom {
                         updates: HashMap::from_iter(
                             updated_players
                                 .into_iter()
-                                .map(|p| (p.profile.player.uid, default)),
+                                .map(|p| (p.profile.uid, default)),
                         ),
                     }));
             }
@@ -340,7 +337,7 @@ impl GameRoom {
         for i in 0..self.members.len() {
             let team = self
                 .teams
-                .create_random_team(self.members[i].profile.player.username.clone())
+                .create_random_team(self.members[i].profile.name.clone())
                 .clone();
             self.members[i].team = team.id;
             self.team_created(team);

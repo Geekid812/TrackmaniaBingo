@@ -2,7 +2,7 @@ use std::{str::FromStr, sync::Arc};
 
 use once_cell::sync::Lazy;
 
-use crate::{config::CONFIG, orm::composed::profile::PlayerProfile, server, transport::Tx};
+use crate::{config::CONFIG, datatypes::PlayerProfile, server, transport::messager::NetMessager};
 
 pub type PlayerId = u32;
 
@@ -43,7 +43,7 @@ pub struct PlayerData {
     pub team: TeamIdentifier,
     pub operator: bool,
     pub disconnected: bool,
-    pub writer: Arc<Tx>,
+    pub writer: NetMessager,
 }
 
 impl From<&PlayerData> for PlayerRef {

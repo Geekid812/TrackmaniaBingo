@@ -4,7 +4,7 @@ use sqlx::Row;
 use crate::orm::{models::player::Player, Connection};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct PlayerProfile {
+struct PlayerProfile {
     #[serde(flatten)]
     pub player: Player,
     pub match_count: i32,
