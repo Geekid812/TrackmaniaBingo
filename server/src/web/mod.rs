@@ -14,7 +14,7 @@ pub async fn main() {
     let routes = index.or(auth::get_routes());
     warp::serve(routes)
         .run((
-            [127, 0, 0, 1],
+            if config::is_development() { [127, 0, 0, 1] } else { [0, 0, 0, 0] },
             config::get_integer("network.http_port").expect("key network.http_port not set") as u16,
         ))
         .await;

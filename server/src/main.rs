@@ -46,7 +46,7 @@ async fn main() {
     // TCP server startup
     let port = config::get_integer("network.tcp_port")
         .expect("configuration key network.tcp_port not specified") as u16;
-    let local_addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, port);
+    let local_addr = SocketAddrV4::new(if config::is_development() { Ipv4Addr::LOCALHOST } else { Ipv4Addr::new(0, 0, 0, 0) }, port);
 
     let mut server = NetServer::new();
     server.set_reuseaddr_opt(true);
