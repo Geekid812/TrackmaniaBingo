@@ -51,8 +51,8 @@ impl ClientContext {
         }
     }
 
-    pub fn trace<M: Into<String>>(&self, _message: M) {
-        unimplemented!()
+    pub fn trace<M: Into<String>>(&self, message: M) {
+        debug!("Trace message: {}", message.into());
     }
 }
 
