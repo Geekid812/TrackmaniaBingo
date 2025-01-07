@@ -36,6 +36,8 @@ async fn main() {
     // Database setup
     info!("opening main database store");
     store::initialize_primary_store("main.db").await;
+    info!("opening mapcache database");
+    orm::mapcache::start_database("mapcache.db").await;
 
     // Run mainloop for web server
     info!("starting Web API");

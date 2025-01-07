@@ -1,27 +1,23 @@
 use anyhow::anyhow;
 use std::{
     collections::HashMap,
-    iter::once,
-    ops::Index,
     sync::{Arc, Weak},
 };
 
 use crate::{
     config::CONFIG,
     datatypes::{CampaignMap, MatchConfiguration, PlayerRef, Poll, PollChoice},
-    orm::{
-        self,
-        models::matches::{Match, PlayerToMatch},
-    },
     server::{context::ClientContext, tasks::execute_delayed_task},
+    store::{
+        self,
+        matches::{Match, MatchOutcome, MatchResult},
+    },
     transport::Channel,
 };
 use chrono::{DateTime, Duration, Utc};
-use futures::executor::block_on;
 use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
-use sqlx::QueryBuilder;
 use tracing::{error, warn};
 
 use super::{
@@ -386,7 +382,7 @@ impl LiveMatch {
             room.lock().reset_match();
         }
 
-        self.save_match(draw);
+        self.save_match_end(draw);
         MATCHES.remove(self.uid.clone());
     }
 
@@ -398,52 +394,31 @@ impl LiveMatch {
         self.teams.get_teams().iter().map(|t| t.members.len()).sum()
     }
 
-    fn save_match(&mut self, draw: bool) {
+    fn save_match_end(&mut self, draw: bool) {
         let match_model = Match {
             uid: self.uid.clone(),
-            started_at: self.started.map(|t| t.naive_utc()).unwrap_or_default(),
-            ended_at: Utc::now().naive_utc(),
+            started_at: self.started.unwrap_or_default(),
+            ended_at: Utc::now(),
         };
         let mut player_results = Vec::new();
         for team in self.teams.get_teams() {
             for player in &team.members {
-                player_results.push(PlayerToMatch {
-                    player_uid: player.profile.uid,
-                    match_uid: self.uid.clone(),
-                    outcome: if draw {
-                        "D".to_owned()
+                player_results.push((
+                    player.profile.uid,
+                    if draw {
+                        MatchOutcome::Draw
                     } else if team.winner {
-                        "W".to_owned()
+                        MatchOutcome::Win
                     } else {
-                        "L".to_owned()
+                        MatchOutcome::Loss
                     },
-                });
+                ));
             }
         }
-        tokio::spawn(orm::execute(move |mut conn| {
-            let mut builder = QueryBuilder::new("INSERT INTO matches ");
-            builder.push_values(once(match_model), |mut builder, m| {
-                m.bind_values(&mut builder)
-            });
-            let query = builder.build();
-            if let Err(e) = block_on(query.execute(&mut *conn)) {
-                error!("execute error in matches: {}", e);
-            }
-
-            if player_results.is_empty() {
-                return;
-            }
-            let mut builder = QueryBuilder::new("INSERT INTO matches_players ");
-            let query = builder
-                .push_values(player_results, |mut b, result| {
-                    result.bind_values(&mut b);
-                })
-                .build()
-                .persistent(false);
-            if let Err(e) = block_on(query.execute(&mut *conn)) {
-                error!("execute error in matches_players: {}", e);
-            }
-        }));
+        tokio::spawn(store::matches::write_match_end(
+            match_model,
+            MatchResult(player_results),
+        ));
     }
 
     fn broadcast_submitted_run(&mut self, cell_id: usize, claim: MapClaim, position: usize) {

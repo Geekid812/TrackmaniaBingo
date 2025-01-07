@@ -12,6 +12,7 @@ static PRIMARY_STORE: OnceLock<SqlitePool> = OnceLock::new();
 
 mod operations;
 pub mod player;
+pub mod matches;
 
 use operations::*;
 

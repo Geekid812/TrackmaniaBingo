@@ -29,7 +29,7 @@ use super::{
 use crate::{
     datatypes::{GamePlatform, MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
     server::{context::ClientContext, mapload},
-    transport::{Channel, Tx},
+    transport::Channel,
 };
 
 pub struct GameRoom {
