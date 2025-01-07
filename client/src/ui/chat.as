@@ -5,7 +5,7 @@ namespace UIChat {
     const int CHAT_WINDOW_MARGIN = 8;
     const uint64 CHAT_FADE_TIME_MILLIS = 500;
     const uint64 CHAT_HOLD_TIME_MILLIS = 500;
-    const uint64 CHAT_MESSAGE_EXPIRE_SECONDS = 15;
+    const uint64 CHAT_MESSAGE_EXPIRE_SECONDS = 45;
     const float MIN_CHAT_OPACITY = 0;
     const float MAX_CHAT_OPACITY = 0.7;
     array<ChatMessage> MessageHistory;
