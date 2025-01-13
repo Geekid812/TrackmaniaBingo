@@ -5,6 +5,7 @@ use crate::datatypes::{PlayerProfile, PlayerRef};
 use super::{
     execute_with_arguments, get_store, query_with_arguments, StoreReadResult, StoreWriteResult,
 };
+use chrono::{DateTime, Utc};
 pub use models::*;
 use sqlx::Row;
 
@@ -40,5 +41,5 @@ pub async fn get_player_profile(uid: i32) -> StoreReadResult<PlayerProfile> {
     "SELECT username, account_id, created_at, last_played_at, country_code, title, games_played, games_won FROM player_summary WHERE uid = ?", 
     |query| query.bind(uid))
     .await
-    .map(|row| PlayerProfile { uid, name: row.get(0) , account_id: row.get(1), created_at: row.get(2), last_played_at: row.get(2), country_code: row.get(4), title: row.get(5), games_played: row.get(6), games_won: row.get(7), score: 1000 })
+    .map(|row| PlayerProfile { uid, name: row.get(0) , account_id: row.get(1), created_at: row.get(2), last_played_at: row.get::<Option<DateTime<Utc>>, usize>(3).unwrap_or_default(), country_code: row.get(4), title: row.get(5), games_played: row.get(6), games_won: row.get(7) })
 }

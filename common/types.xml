@@ -27,7 +27,6 @@
         <m name="title" type="string" optional="true" />
         <m name="games_played" type="uint" />
         <m name="games_won" type="uint" />
-        <m name="score" type="uint" />
     </struct>
 
     <struct name="RoomConfiguration">

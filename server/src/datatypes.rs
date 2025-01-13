@@ -36,7 +36,6 @@ pub struct PlayerProfile {
     pub title: Option<String>,
     pub games_played: u32,
     pub games_won: u32,
-    pub score: u32,
 }
 
 /* Room parameters set by the host. */

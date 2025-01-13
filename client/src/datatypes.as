@@ -36,7 +36,6 @@ class PlayerProfile {
     string title;
     uint gamesPlayed;
     uint gamesWon;
-    uint score;
     PlayerProfile() {}
 }
 namespace PlayerProfile {
@@ -51,7 +50,6 @@ namespace PlayerProfile {
         value["title"] = cls.title;
         value["games_played"] = cls.gamesPlayed;
         value["games_won"] = cls.gamesWon;
-        value["score"] = cls.score;
 
         return value;
     }
@@ -67,7 +65,6 @@ namespace PlayerProfile {
         if (value["title"].GetType() != Json::Type::Null) cls.title = value["title"];
         cls.gamesPlayed = value["games_played"];
         cls.gamesWon = value["games_won"];
-        cls.score = value["score"];
 
         return cls;
     }
