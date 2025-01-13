@@ -41,9 +41,11 @@ namespace UIChat {
         UI::SetNextWindowPos(CHAT_POSITION_OFFSET, Draw::GetHeight() - CHAT_POSITION_OFFSET - CHAT_INPUT_HEIGHT - CHAT_WINDOW_MARGIN, UI::Cond::Appearing, 0., 1.);
         Window::Create("##bingochat", open, 500, 200, UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoFocusOnAppearing | UI::WindowFlags::NoInputs | UI::WindowFlags::NoMove | UI::WindowFlags::NoResize);
         
-        // add a buffer zone to the chat window so that new messages appear at the bottom
-        for (uint i = 0; i < 10 - MessageHistory.Length; i++)
-            UI::NewLine();
+        if (MessageHistory.Length < 10) {
+            // add a buffer zone to the chat window so that new messages appear at the bottom
+            for (uint i = 0; i < 10 - MessageHistory.Length; i++)
+                UI::NewLine();
+        }
 
         for (uint i = 0; i < MessageHistory.Length; i++) {
             RenderChatMessage(MessageHistory[i]);
