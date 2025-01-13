@@ -4,11 +4,10 @@ namespace UIProfile {
     PlayerProfile@ openProfiles;
 
     void RenderProfile(PlayerProfile profile, bool showId = true) {
-#if TMNEXT
         CountryFlag(profile.countryCode, vec2(30, 20));
         UI::SameLine();
         vec2 playerPos = UI::GetCursorPos();
-        PlayerName(profile, true);
+        PlayerName(profile);
         if (profile.title != "") {
             NameTitle(profile.title);
         }
@@ -16,10 +15,11 @@ namespace UIProfile {
         MatchCount(profile.gamesPlayed);
         UI::SetCursorPos(playerPos);
         UI::NewLine();
-        if (showId) PlayerId(profile.uid);
-#elif TURBO
-        PlayerName(profile, true);
-#endif
+
+        if (showId) {
+            // Player UID is no longer shown on profile, skip
+            UI::NewLine();
+        }
     }
 
     void CountryFlag(const string&in countryCode, vec2 size) {
@@ -31,7 +31,7 @@ namespace UIProfile {
         }
     }
 
-    void PlayerName(PlayerProfile profile, bool bold) {
+    void PlayerName(PlayerProfile profile) {
         UI::Text(profile.name);
     }
 
@@ -64,10 +64,24 @@ namespace UIProfile {
         UI::Text(idText);
     }
 
+    void CreationDateDisplay(int64 timestamp) {
+        Time::Info creationDate = Time::Parse(timestamp);
+
+        string idText = "\\$888Joined " + MonthName(creationDate.Month) + " " + creationDate.Year;
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
+        Layout::MoveTo(padding);
+        UI::Text(idText);
+    }
+
     void NameTitle(const string&in title) {
         auto parts = title.Split(":");
         if (parts.Length < 2) return;
         UI::SameLine();
         UI::Text("\\$" + parts[0] + parts[1]);
+    }
+
+    string MonthName(int month) {
+        const array<string> months = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+        return months[month - 1];
     }
 }
