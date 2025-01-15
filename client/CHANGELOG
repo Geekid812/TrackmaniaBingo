@@ -2,7 +2,12 @@
 
 With this update, a new "Late Join" setting has been added to Bingo games. When this is enabled, new players can join even after a game has been started. New players can choose which team they want to join, and hop in the game instantly!
 
+Keybind settings have also been added. You can now rebind the following keys in the plugin settings:
+- Open Chat (default: Enter)
+- Toggle Map List (default: Tab)
+
 This update also fixes the following bugs:
 - Fixed a crash when too many chat messages were sent.
 - Fixed mappack loading from TMX by porting it to the new API. This may lead to longer load times for large mappacks because of pagination.
+- Partially fix loading of multiple maps at the same time.
 - Various UI fixes and tweaks.
