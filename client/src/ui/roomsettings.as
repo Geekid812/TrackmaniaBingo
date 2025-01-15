@@ -210,10 +210,12 @@ namespace UIRoomSettings {
         MatchConfig.overtime = UI::Checkbox("##bingoovertime", MatchConfig.overtime);
     }
 
-    void FFAToggle() {
-        UITools::AlignedLabel(Icons::Users + " Enable Free For All");
+    void LateJoinToggle() {
+        UITools::AlignedLabel(Icons::SignIn + " Allow Late Joins");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        MatchConfig.freeForAll = UI::Checkbox("##bingoffa", MatchConfig.freeForAll);
+        MatchConfig.lateJoin = UI::Checkbox("##bingolatejoin", MatchConfig.lateJoin);
+        UI::SameLine();
+        UITools::HelpTooltip("Players can still join after the game has started.");
     }
 
     void RerollsToggle() {
@@ -244,12 +246,7 @@ namespace UIRoomSettings {
         AccessToggle();
         PlayerLimitToggle();
 
-        UI::BeginDisabled(MatchConfig.freeForAll);
         RandomizeToggle();
-        UI::EndDisabled();
-        if (MatchConfig.freeForAll) {
-            RoomConfig.randomize = false;
-        }
 
         if (hasPlayerLimit(RoomConfig)) {
             PlayerLimitInput();
@@ -258,9 +255,6 @@ namespace UIRoomSettings {
         UI::NewLine();
         UITools::SectionHeader("Game Settings");
         MapModeSelector();
-        if (MatchConfig.selection == MapMode::Campaign) {
-            // FIXME: Does not exist anymore
-        }
         if (MatchConfig.selection == MapMode::Mappack) {
             MappackIdInput();
         }
@@ -275,6 +269,7 @@ namespace UIRoomSettings {
             OvertimeToggle();
         }
         RerollsToggle();
+        LateJoinToggle();
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0) TotalTimeIndicator();
     }
 

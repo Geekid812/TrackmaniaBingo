@@ -9,6 +9,7 @@ namespace UIDevActions {
 
         if (UI::BeginTabItem(Icons::Bug + " Actions")) {
             ClientTokenControl();
+            LastConnectedMatchControl();
 
             UIColor::Cyan();
 
@@ -57,8 +58,16 @@ namespace UIDevActions {
     void ClientTokenControl() {
         PersistantStorage::ClientToken = UI::InputText("Client Token", PersistantStorage::ClientToken);
         UI::SameLine();
-        if (UI::Button("Clear")) {
+        if (UI::Button("Clear##bingoclearclienttoken")) {
             PersistantStorage::ClientToken = "";
+        };
+    }
+
+    void LastConnectedMatchControl() {
+        PersistantStorage::LastConnectedMatchId = UI::InputText("Last Connected Match ID", PersistantStorage::LastConnectedMatchId);
+        UI::SameLine();
+        if (UI::Button("Clear##bingoclearlastmatch")) {
+            PersistantStorage::LastConnectedMatchId = "";
         };
     }
 

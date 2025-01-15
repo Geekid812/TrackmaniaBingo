@@ -374,7 +374,16 @@ namespace Network {
         NetworkHandlers::LoadRoomTeams(response["teams"]);
 
         UIRoomMenu::JoinCodeVisible = false;
-        UIRoomMenu::SwitchToContext();
+
+        if (response["match_uid"].GetType() != Json::Type::Null) {
+            // We're joining an active game
+            string currentMatchUid = response["match_uid"];
+            NetParams::MatchJoinUid = currentMatchUid;
+            UITeams::SwitchToJoinContext();
+        } else {
+            // We're joining a room without an active game
+            UIRoomMenu::SwitchToContext();
+        }
     }
 
 
@@ -394,6 +403,9 @@ namespace Network {
         LiveMatch@ joinedMatch = LiveMatch::Deserialize(response["state"]);
         
         Gamemaster::SetBingoActive(true);
+        UITeams::CloseContext();
+        UIChat::Clear();
+        PersistantStorage::LastConnectedMatchId = joinedMatch.uid;
         @Match = joinedMatch;
     }
 

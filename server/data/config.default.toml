@@ -13,5 +13,8 @@ timeout = 300               # delay in seconds until TCP connection is closed wh
 [client]
 required_version = "5.0"    # minimum version of the plugin client
 
+[behaviour]
+never_close = false         # disable closing inactive rooms (for debugging)
+
 [keys]
 openplanet = "KEY"      # secret key for Openplanet authentication

@@ -17,6 +17,7 @@ pub struct JoinRoom {
 pub struct JoinRoomResponse {
     pub config: RoomConfiguration,
     pub match_config: MatchConfiguration,
+    pub match_uid: Option<String>,
     pub teams: Vec<RoomTeam>,
 }
 
@@ -40,6 +41,7 @@ impl Request for JoinRoom {
             Box::new(JoinRoomResponse {
                 config: lock.config().clone(),
                 match_config: lock.matchconfig().clone(),
+                match_uid: lock.match_uid(),
                 teams: lock.teams_as_model(),
             })
         } else {

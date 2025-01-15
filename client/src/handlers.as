@@ -75,7 +75,7 @@ namespace NetworkHandlers {
                 if (isReclaim) {
                     UI::ShowNotification(Icons::Retweet + " Map Reclaimed", playerName + " has reclaimed \\$fd8" + mapName + "\\$z " + teamCredit + "\n" + result.Display() + " (" + deltaTime + ")", teamColor, 15000);
                 } else if (isImprove) {
-                    UI::ShowNotification(Icons::ClockO + " Time Improved", playerName + " has improved " + (Match.config.freeForAll ? "their" : (teamName + " Team's")) + " time on \\$fd8" + mapName + "\\$z\n" + result.Display() + " (" + deltaTime + ")", dimmedColor, 15000);
+                    UI::ShowNotification(Icons::ClockO + " Time Improved", playerName + " has improved " + (teamName + " Team's") + " time on \\$fd8" + mapName + "\\$z\n" + result.Display() + " (" + deltaTime + ")", dimmedColor, 15000);
                 } else { // Normal claim
                     UI::ShowNotification(Icons::Bookmark + " Map Claimed", playerName + " has claimed \\$fd8" + mapName + "\\$z " + teamCredit + "\n" + result.Display(), teamColor, 15000);
                 }
@@ -239,7 +239,7 @@ namespace NetworkHandlers {
     }
 
     void MatchSync(Json::Value@ data) {
-        warn("TODO: MatchSync");
+        warn("MatchSync unimplemented");
     }
 
     void AnnounceWinByCellCount(Json::Value@ data) {
@@ -272,7 +272,11 @@ namespace NetworkHandlers {
 
     void MatchPlayerJoin(Json::Value@ data) {
         if (!Gamemaster::IsBingoActive()) return;
-        Match.players.InsertLast(Player(PlayerProfile::Deserialize(data["profile"]), Match.GetTeamWithId(data["team"])));
+        Player player(PlayerProfile::Deserialize(data["profile"]), Match.GetTeamWithId(data["team"]));
+        Match.players.InsertLast(player);
+
+        vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(player.team.color, 0.1), 0.5);
+        UI::ShowNotification("", Icons::Plus + " " + player.profile.name + " joined the game.", teamColor, 10000);
     }
 
     void MapRerolled(Json::Value@ data) {

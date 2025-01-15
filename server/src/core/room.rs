@@ -27,6 +27,7 @@ use super::{
     util::Color,
 };
 use crate::{
+    config,
     datatypes::{GamePlatform, MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
     server::{context::ClientContext, mapload},
     transport::Channel,
@@ -112,6 +113,11 @@ impl GameRoom {
 
     pub fn teams(&self) -> &Vec<BaseTeam> {
         &self.teams.get_teams()
+    }
+
+    pub fn match_uid(&self) -> Option<String> {
+        let livegame = self.active_match.as_ref().and_then(|ptr| ptr.upgrade());
+        livegame.map(|game| game.lock().uid().clone())
     }
 
     pub fn get_player(&self, uid: i32) -> Option<&PlayerData> {
@@ -221,7 +227,7 @@ impl GameRoom {
         if self.at_size_capacity() {
             return Err(JoinRoomError::PlayerLimitReached);
         }
-        if self.has_started() {
+        if self.has_started() && !self.matchconfig().late_join {
             return Err(JoinRoomError::HasStarted);
         }
         if self.has_player(ctx.profile.uid) {
@@ -242,6 +248,7 @@ impl GameRoom {
                     delta: 1,
                 });
         }
+
         Ok(())
     }
 
@@ -411,6 +418,11 @@ impl GameRoom {
     }
 
     pub fn check_close(&mut self) {
+        // check if a setting disables this behaviour
+        if config::get_boolean("behaviour.never_close").unwrap_or(false) {
+            return;
+        }
+
         if !self.members.iter().any(|p| p.operator) {
             debug!("No room operator, closing.");
             self.close_room("The host has left the room.".to_owned());
@@ -442,11 +454,6 @@ impl GameRoom {
                 .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
                     updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
                 }));
-        }
-
-        if self.matchconfig.free_for_all {
-            self.create_ffa_teams();
-            self.broadcast_sync();
         }
 
         self.loaded_maps.shuffle(&mut rand::thread_rng());
@@ -482,9 +489,6 @@ impl GameRoom {
         let mut lock = match_arc.lock();
         lock.set_parent_room(self.ptr.clone());
         lock.set_channel(Channel::<GameEvent>::from(&self.channel));
-        if self.matchconfig.game == GamePlatform::Turbo {
-            lock.set_player_join(true);
-        }
 
         lock.setup_match_start(start_date);
         directory::MATCHES.insert(lock.uid().to_owned(), match_arc.clone());

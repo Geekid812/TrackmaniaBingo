@@ -112,4 +112,8 @@ namespace UIChat {
 
         return UI::InputBlocking::DoNothing;
     }
+
+    void Clear() {
+        UIChat::MessageHistory.Resize(0);
+    }
 }

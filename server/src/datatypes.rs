@@ -72,8 +72,10 @@ pub struct MatchConfiguration {
 	pub no_bingo_duration: Duration,
     #[derivative(Default(value = "true"))]
 	pub overtime: bool,
-    pub free_for_all: bool,
-    pub rerolls: bool,
+    #[derivative(Default(value = "true"))]
+	pub late_join: bool,
+    #[derivative(Default(value = "true"))]
+	pub rerolls: bool,
     pub competitve_patch: bool,
     pub mappack_id: Option<u32>,
     pub campaign_selection: Option<Vec<u32>>,

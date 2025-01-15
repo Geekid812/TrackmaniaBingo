@@ -25,9 +25,11 @@ pub struct JoinMatchOk {
 impl Request for JoinMatch {
     fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
         if let Some(room) = ctx.game_room() {
-            ctx.trace("already in a room, leaving previous game");
-            room.lock().player_remove(ctx.profile.uid);
-            // TODO: on player removed?
+            if !room.lock().match_uid().is_some_and(|uid| uid == self.uid) {
+                ctx.trace("already joined a different room, leaving previous game");
+                room.lock().player_remove(ctx.profile.uid);
+                // TODO: on player removed?
+            }
         }
 
         return if let Some(livematch) = MATCHES.find(self.uid.clone()) {

@@ -138,8 +138,8 @@ namespace UIMainWindow {
     void InGameHeader() {
         UI::PushStyleColor(UI::Col::ChildBg, vec4(.9, .2, .2, .1));
         UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
-        UI::BeginChild("###bingoingame", vec2(0, 72), true);
-        
+        UI::BeginChild("###bingoingame", vec2(0, 60), true);
+
         UI::Text("\\$f44IN GAME");
 
         UI::SameLine();
@@ -151,11 +151,10 @@ namespace UIMainWindow {
         }
 
         UI::SameLine();
-        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t\t\tLeave").x, 1.0);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, 80.0, 1.0);
         Layout::MoveTo(padding);
         UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
         UIGameRoom::LeaveButton();
-
 
         UI::EndChild();
         UI::PopStyleVar();

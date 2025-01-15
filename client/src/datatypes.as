@@ -109,8 +109,8 @@ class MatchConfiguration {
     int64 timeLimit;
     int64 noBingoDuration;
     bool overtime = true;
-    bool freeForAll;
-    bool rerolls;
+    bool lateJoin = true;
+    bool rerolls = true;
     bool competitvePatch;
     uint mappackId;
     array<uint> campaignSelection;
@@ -127,7 +127,7 @@ namespace MatchConfiguration {
         value["time_limit"] = cls.timeLimit;
         value["no_bingo_duration"] = cls.noBingoDuration;
         value["overtime"] = cls.overtime;
-        value["free_for_all"] = cls.freeForAll;
+        value["late_join"] = cls.lateJoin;
         value["rerolls"] = cls.rerolls;
         value["competitve_patch"] = cls.competitvePatch;
         value["mappack_id"] = cls.mappackId;
@@ -146,7 +146,7 @@ namespace MatchConfiguration {
         cls.timeLimit = value["time_limit"];
         cls.noBingoDuration = value["no_bingo_duration"];
         cls.overtime = value["overtime"];
-        cls.freeForAll = value["free_for_all"];
+        cls.lateJoin = value["late_join"];
         cls.rerolls = value["rerolls"];
         cls.competitvePatch = value["competitve_patch"];
         if (value["mappack_id"].GetType() != Json::Type::Null) cls.mappackId = value["mappack_id"];

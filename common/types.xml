@@ -46,8 +46,8 @@
         <m name="time_limit" type="duration" />
         <m name="no_bingo_duration" type="duration" />
         <m name="overtime" type="bool" default="true" />
-        <m name="free_for_all" type="bool" />
-        <m name="rerolls" type="bool" />
+        <m name="late_join" type="bool" default="true" />
+        <m name="rerolls" type="bool" default="true" />
         <m name="competitve_patch" type="bool" />
         <m name="mappack_id" type="uint" optional="true" />
         <m name="campaign_selection" type="list[uint]" optional="true" />

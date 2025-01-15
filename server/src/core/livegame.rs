@@ -51,7 +51,6 @@ pub struct LiveMatch {
 
 struct MatchOptions {
     start_countdown: Duration,
-    player_join: bool,
 }
 
 struct PollData {
@@ -109,13 +108,6 @@ impl LiveMatch {
             panic!("attempted to change match options after starting");
         }
         self.options.start_countdown = countdown;
-    }
-
-    pub fn set_player_join(&mut self, enabled: bool) {
-        if self.started.is_some() {
-            panic!("attempted to change match options after starting");
-        }
-        self.options.player_join = enabled;
     }
 
     pub fn setup_match_start(&mut self, start_date: DateTime<Utc>) {
@@ -223,16 +215,17 @@ impl LiveMatch {
             self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
             return Ok(team);
         } else {
-            if !self.options.player_join {
-                return Err(anyhow!("joining is disabled for this match"));
+            if !self.config.late_join {
+                return Err(anyhow!("late joining is disabled for this match"));
             }
 
-            if requested_team.is_none() && !self.config.free_for_all {
+            if requested_team.is_none() {
                 requested_team = self.get_least_populated_team().map(|t| t.base.id);
             }
         }
 
-        self.add_player(ctx, already_joined_team.or(requested_team))
+        let team = self.add_player(ctx, requested_team)?;
+        Ok(team)
     }
 
     fn add_player(
@@ -267,11 +260,11 @@ impl LiveMatch {
             operator: false,
             disconnected: false,
         });
+        self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
         self.channel.broadcast(&GameEvent::MatchPlayerJoin {
             profile: ctx.profile.clone(),
             team: team.base.id,
         });
-        self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
         Ok(team.base.id)
     }
 
@@ -735,7 +728,6 @@ impl Default for MatchOptions {
     fn default() -> Self {
         Self {
             start_countdown: CONFIG.game.start_countdown,
-            player_join: false,
         }
     }
 }

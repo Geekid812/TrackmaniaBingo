@@ -269,6 +269,6 @@ namespace Gamemaster {
         ClearMatchId();
         @Match = null;
         @Room = null;
-        UIChat::MessageHistory.Resize(0);
+        UIChat::Clear();
     }
 }
