@@ -67,7 +67,7 @@ async fn fetch_and_load<F: Future<Output = MaploadResult>>(
             }
         }
         Err(e) => {
-            error!("{}", e);
+            error!("maps loading error: {}", e);
         }
     }
 }

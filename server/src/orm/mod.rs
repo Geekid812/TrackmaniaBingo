@@ -1,6 +1,4 @@
-pub mod composed;
 pub mod mapcache;
-pub mod models;
 
 use once_cell::sync::OnceCell;
 use sqlx::{
