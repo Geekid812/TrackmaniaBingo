@@ -9,6 +9,7 @@ namespace Playground {
         }
 
         trace("[Playground::PlayMap] Loading map '" + filePath + "'...");
+        __internal::CurrentLoadingPath = filePath;
         __internal::PlayMapCoroutineData data(filePath, modeName);
         startnew(__internal::PlayMapCoroutine, data);
     }
@@ -54,9 +55,17 @@ namespace Playground {
 
             // Wait for the active module to be the main menu, and be ready. If getting back to the main menu fails, this will block until the user quits the map.
             while (app.Switcher.ModuleStack.Length == 0 || cast<CTrackManiaMenus>(app.Switcher.ModuleStack[0]) is null) {
+                if (__internal::CurrentLoadingPath != data.filePath) {
+                    warn("[Playground::PlayMapCoroutine] A new map has been requested, aborting previous load.");
+                    return;
+                }
                 yield();
             }
             while (!app.ManiaTitleControlScriptAPI.IsReady) {
+                if (__internal::CurrentLoadingPath != data.filePath) {
+                    warn("[Playground::PlayMapCoroutine] A new map has been requested, aborting previous load.");
+                    return;
+                }
                 yield();
             }
 

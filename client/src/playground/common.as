@@ -1,7 +1,7 @@
 
 namespace Playground {
     namespace __internal {
-        bool MapLoading = false;
+        string CurrentLoadingPath = "";
     }
     
     /* Get the objective time for a specific medal on a map. */
