@@ -212,7 +212,7 @@ namespace UIRoomSettings {
 
     void LateJoinToggle() {
         UITools::AlignedLabel(Icons::SignIn + " Allow Late Joins");
-        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
         MatchConfig.lateJoin = UI::Checkbox("##bingolatejoin", MatchConfig.lateJoin);
         UI::SameLine();
         UITools::HelpTooltip("Players can still join after the game has started.");
@@ -245,8 +245,8 @@ namespace UIRoomSettings {
         UI::SameLine();
         AccessToggle();
         PlayerLimitToggle();
-
         RandomizeToggle();
+        LateJoinToggle();
 
         if (hasPlayerLimit(RoomConfig)) {
             PlayerLimitInput();
@@ -269,7 +269,6 @@ namespace UIRoomSettings {
             OvertimeToggle();
         }
         RerollsToggle();
-        LateJoinToggle();
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0) TotalTimeIndicator();
     }
 
