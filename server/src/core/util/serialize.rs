@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Serialize, Serializer};
 
 pub fn serialize_time<S: Serializer>(

@@ -13,7 +13,6 @@ use std::{
 use toml::{map::Map, Value};
 use tracing::{debug, error, info, warn};
 
-use crate::datatypes::MatchConfiguration;
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     let toml_content = std::fs::read_to_string("config.toml");

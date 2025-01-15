@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{core::gamecommon::PlayerData, datatypes::PlayerProfile};
 
-use super::team::TeamIdentifier;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Player {

@@ -1,6 +1,6 @@
 use crate::{
     core::models::livegame::MapClaim,
-    datatypes::{CampaignMap, Medal},
+    datatypes::Medal,
     server::context::ClientContext,
 };
 use serde::Deserialize;

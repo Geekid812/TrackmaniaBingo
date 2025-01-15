@@ -1,5 +1,5 @@
 use crate::core::util::serialize::serialize_time;
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 

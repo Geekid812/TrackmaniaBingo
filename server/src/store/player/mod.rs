@@ -1,6 +1,6 @@
 mod models;
 
-use crate::datatypes::{PlayerProfile, PlayerRef};
+use crate::datatypes::PlayerProfile;
 
 use super::{
     execute_with_arguments, get_store, query_with_arguments, StoreReadResult, StoreWriteResult,
