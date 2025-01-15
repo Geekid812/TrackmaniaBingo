@@ -102,15 +102,15 @@ namespace UIChat {
         startnew(Network::SendChatMessage);
     }
 
-    UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
-        if (!ShouldDisplay()) return UI::InputBlocking::DoNothing;
+    bool OnKeyPress(bool down, VirtualKey key) {
+        if (!ShouldDisplay()) return false;
 
-        if (down && key == VirtualKey::Return) {
+        if (down && key == Settings::ChatBindingKey) {
             InputEnabled = !InputEnabled;
-            return UI::InputBlocking::Block;
+            return true;
         }
 
-        return UI::InputBlocking::DoNothing;
+        return false;
     }
 
     void Clear() {

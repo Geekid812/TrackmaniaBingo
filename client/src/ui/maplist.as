@@ -170,6 +170,18 @@ namespace UIMapList {
         UI::EndTooltip();
     }
 
+    bool OnKeyPress(bool down, VirtualKey key) {
+        if (!Gamemaster::IsBingoActive()) return false;
+
+        if (down && key == Settings::MaplistBindingKey) {
+            Visible = !Visible;
+            return true;
+        }
+
+        return false;
+    }
+
+
     vec3 StyleToColor(const string&in style) {
         if (style == "ice" || style == "bobsleigh") return vec3(.6, .9, 1.);
         if (style == "race" || style == "competitive") return vec3(1., .8, .2);

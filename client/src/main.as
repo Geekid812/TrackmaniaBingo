@@ -106,7 +106,8 @@ void RenderInterface() {
 }
 
 UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
-    return UIChat::OnKeyPress(down, key);
+    bool block = UIChat::OnKeyPress(down, key) || UIMapList::OnKeyPress(down, key);
+    return block ? UI::InputBlocking::Block : UI::InputBlocking::DoNothing;
 }
 
 void Update(float dt) {
