@@ -5,64 +5,19 @@ namespace Playground {
 
     class MapClaimStatus {
         int retries;
-        string mapUid;
+        int tileIndex;
         RunResult mapResult;
-    }
-
-    void LoadMap(int tmxId) {
-        startnew(LoadMapCoroutine, CoroutineData(tmxId));
-    }
-
-    class CoroutineData {
-        int id;
-
-        CoroutineData(int id) { this.id = id; }
-    }
-
-    // This code is mostly taken from Greep's RMC
-    void LoadMapCoroutine(ref@ Data) {
-        if (!Permissions::PlayLocalMap()) {
-            warn("Playground: aborting LoadMap, player does not have required permissions!");
-            return;
-        }
-
-        int tmxId = cast<CoroutineData>(Data).id;
-        auto app = cast<CTrackMania>(GetApp());
-        bool menuDisplayed = app.ManiaPlanetScriptAPI.ActiveContext_InGameMenuDisplayed;
-        if (menuDisplayed) {
-            // Close the in-game menu via ::Quit to avoid TM hanging / crashing. Also takes us back to the main menu.
-            app.Network.PlaygroundInterfaceScriptHandler.CloseInGameMenu(CGameScriptHandlerPlaygroundInterface::EInGameMenuResult::Quit);
-        } else {
-            // Go to main menu and wait until map loading is ready
-            app.BackToMainMenu();
-        }
-
-        // Wait for the active module to be the main menu, and be ready. If getting back to the main menu fails, this will block until the user quits the map.
-        while (app.Switcher.ModuleStack.Length == 0 || cast<CTrackManiaMenus>(app.Switcher.ModuleStack[0]) is null) {
-            yield();
-        }
-        while (!app.ManiaTitleControlScriptAPI.IsReady) {
-            yield();
-        }
-
-        app.ManiaTitleControlScriptAPI.PlayMap("https://trackmania.exchange/maps/download/" + tmxId, "", "");
-    }
-
-    CGameCtnChallenge@ GetCurrentMap() {
-        auto app = cast<CTrackMania>(GetApp());
-        return app.RootMap;
+        CampaignMap campaign;
     }
 
     // Once again, this is mostly from RMC
     // Only returns a defined value during the finish sequence of a run
-    RunResult GetRunResult() {
-        // This is GetCurrentMap(), but because App is used in the function,
-        // we redefine it here
+    RunResult@ GetRunResult() {
         auto app = cast<CTrackMania>(GetApp());
-        auto map = app.RootMap;
+        auto map = GetCurrentMap();
 
         auto playground = cast<CGamePlayground>(app.CurrentPlayground);
-        if (map is null || playground is null) return RunResult();
+        if (map is null || playground is null) return null;
 
         int authorTime = map.TMObjective_AuthorTime;
         int goldTime = map.TMObjective_GoldTime;
@@ -70,57 +25,117 @@ namespace Playground {
         int bronzeTime = map.TMObjective_BronzeTime;
         int time = -1;
 
-        auto playgroundScript = cast<CSmArenaRulesMode>(app.PlaygroundScript);
-        if (playgroundScript is null || playground.GameTerminals.Length == 0) return RunResult();
+        auto playgroundScript = cast<CGamePlaygroundScript>(app.PlaygroundScript);
+        if (playgroundScript is null || playground.GameTerminals.Length == 0) return null;
 
+#if TMNEXT
         CSmPlayer@ player = cast<CSmPlayer>(playground.GameTerminals[0].ControlledPlayer);
-        if (playground.GameTerminals[0].UISequence_Current != SGamePlaygroundUIConfig::EUISequence::Finish || player is null) return RunResult();
+        if (playground.GameTerminals[0].UISequence_Current != SGamePlaygroundUIConfig::EUISequence::Finish || player is null) return null;
 
         CSmScriptPlayer@ playerScriptAPI = cast<CSmScriptPlayer>(player.ScriptAPI);
-        auto ghost = playgroundScript.Ghost_RetrieveFromPlayer(playerScriptAPI);
-        if (ghost is null) return RunResult();
+        auto ghost = cast<CSmArenaRulesMode>(playgroundScript).Ghost_RetrieveFromPlayer(playerScriptAPI);
+        if (ghost is null) return null;
 
         if (ghost.Result.Time > 0 && ghost.Result.Time < 4294967295) time = ghost.Result.Time;
         playgroundScript.DataFileMgr.Ghost_Release(ghost.Id);
+#elif TURBO
+        CTrackManiaPlayer@ player = cast<CTrackManiaPlayer>(playground.GameTerminals[0].ControlledPlayer);
+        if (player.RaceState != CTrackManiaPlayer::ERaceState::Finished || player is null) return null;
+
+        time = player.CurRace.Time;
+#endif
 
         if (time != -1) {
             return RunResult(time, CalculateMedal(time, authorTime, goldTime, silverTime, bronzeTime));
         }
-        return RunResult();
+        return null;
+    }
+
+    // Update CurrentTileIndex according to the currently open map
+    void UpdateCurrentTileIndex() {
+        CGameCtnChallenge@ challenge = Playground::GetCurrentMap();
+
+        if (challenge is null) {
+            Gamemaster::SetCurrentTileIndex(-1);
+            return;
+        }
+
+        // Check if the tile doesn't need updating
+        GameTile@ oldTile = Gamemaster::GetCurrentTile();
+        if (oldTile !is null && oldTile.map !is null && oldTile.map.uid == challenge.EdChallengeId) return;
+
+        // find a map where EdChallengeId == map.uid, set it as the current index
+        for (uint i = 0; i < Gamemaster::GetTileCount(); i++) {
+            GameTile@ candidate = Gamemaster::GetTileFromIndex(i);
+            
+            if (candidate !is null && candidate.map !is null && candidate.map.uid == challenge.EdChallengeId) {
+                Gamemaster::SetCurrentTileIndex(i);
+                return;
+            }
+        }
+
+        // No candidates found, reset tile index
+        Gamemaster::SetCurrentTileIndex(-1);
     }
 
     // Watching task that claims cells when a run has ended
     void CheckRunFinished() {
-        if (@Match == null) return;
         if (mapClaimData.retries > 0) return; // Request in progress
-        RunResult result = GetRunResult();
-        if (result.time == -1) return;
 
-        auto mapNod = GetCurrentMap();
-        auto mapCell = Match.GetMapWithUid(mapNod.EdChallengeId);
-        if (@mapCell.map is null) return;
+        GameTile@ currentTile = Gamemaster::GetCurrentTile();
+        if (currentTile is null) return;
+        if (currentTile.map is null) return;
 
-        auto myRun = mapCell.GetLocalPlayerRun();
-        if (@myRun !is null && myRun.result.time <= result.time) return;
+        CGameCtnChallenge@ map = Playground::GetCurrentMap();
+        if (map is null) return;
 
-        int medalTime = GetMedalTime(mapNod, Match.config.targetMedal);
+        if (map.EdChallengeId != currentTile.map.uid) {
+            // uid mismatch, this is not the right map!
+            Gamemaster::FlagCurrentMapAsBroken();
+            return;
+        }
+
+        RunResult@ result = GetRunResult();
+        if (result is null) return;
+
+        MatchConfiguration config = Gamemaster::GetConfiguration();
+
+        MapClaim@ myRun = currentTile.GetLocalPlayerRun();
+        if (myRun !is null && myRun.result.time <= result.time) return;
+
+        int medalTime = Playground::GetMedalTime(map, config.targetMedal);
         if (medalTime != -1 && result.time > medalTime) return;
 
         // Map should be claimed
         mapClaimData.retries = 3;
-        mapClaimData.mapUid = mapCell.map.uid;
+        mapClaimData.tileIndex = Gamemaster::GetCurrentTileIndex();
         mapClaimData.mapResult = result;
-        trace("Claiming map '" + mapCell.map.uid + "' with time of " + result.time);
+
+        // TODO: this is for Turbo, not really needed here
+        auto campaign = CampaignMap();
+        if (currentTile.map.type == MapType::Campaign) {
+            campaign.campaignId = 0;
+            campaign.map = currentTile.map.id;
+        }
+        mapClaimData.campaign = campaign;
+
+        trace("[Playground::CheckRunFinished] Claiming map '" + map.MapName + "' with time of " + result.time);
         startnew(ClaimMedalCoroutine);
     }
 
-    RunResult@ GetCurrentTimeToBeat(bool basetime = false) {
-        if (@Match == null) return null;
-        CGameCtnChallenge@ map = GetCurrentMap();
-        if (@map == null) return null;
-        MapCell cell = Match.GetMapWithUid(map.EdChallengeId);
-        if (@cell.map is null) return null;
-        if (!basetime && cell.IsClaimed()) return cell.LeadingRun().result;
+    RunResult@ GetCurrentTimeToBeat(bool ignorePlayerClaims = false) {
+        if (!Gamemaster::IsBingoActive()) return null;
+
+        GameTile@ currentTile = Gamemaster::GetCurrentTile();
+        if (currentTile is null) return null;
+        if (currentTile.map is null) return null;
+
+        // Map is claimed, return the top run
+        if (!ignorePlayerClaims && currentTile.IsClaimed()) return currentTile.LeadingRun().result;
+
+        // Map is not claimed, get the target medal time
+        CGameCtnChallenge@ map = Playground::GetCurrentMap();
+        if (map is null) return null;
 
         return RunResult(GetMedalTime(map, Match.config.targetMedal), Match.config.targetMedal);
     }
@@ -134,17 +149,9 @@ namespace Playground {
             return medal;
     }
 
-    int GetMedalTime(CGameCtnChallenge@ map, Medal medal) {
-        if (medal == Medal::Author) return map.TMObjective_AuthorTime;
-        if (medal == Medal::Gold) return map.TMObjective_GoldTime;
-        if (medal == Medal::Silver) return map.TMObjective_SilverTime;
-        if (medal == Medal::Bronze) return map.TMObjective_BronzeTime;
-        return -1;
-    }
-
-    void DebugClaim(MapCell mapCell) {
+    void DebugClaim(uint tileIndex) {
         mapClaimData.retries = 3;
-        mapClaimData.mapUid = mapCell.map.uid;
+        mapClaimData.tileIndex = tileIndex;
         mapClaimData.mapResult = RunResult(3600000, Medal::None);
         startnew(ClaimMedalCoroutine);
     }
@@ -152,17 +159,17 @@ namespace Playground {
     void ClaimMedalCoroutine() {
         bool ok = false;
         while (mapClaimData.retries > 0) {
-            bool Success = Network::ClaimCell(mapClaimData.mapUid, mapClaimData.mapResult);
+            bool Success = Network::ClaimCell(mapClaimData.tileIndex, mapClaimData.campaign, mapClaimData.mapResult);
             mapClaimData.retries -= 1;
             if (Success) {
-                trace("Map successfully claimed.");
+                trace("[Playground::ClaimMedalCoroutine] Map successfully claimed.");
                 ok = true;
                 break;
             }
-            else trace("Map claim failed, retrying... (" + mapClaimData.retries + " attempts left)");
+            else trace("[Playground::ClaimMedalCoroutine] Map claim failed, retrying... (" + mapClaimData.retries + " attempts left)");
         }
         if (!ok) {
-            warn("Warning! Failed to claim a map after several retries.");
+            warn("[Playground::ClaimMedalCoroutine] Warning! Failed to claim a map after several retries.");
         }
         mapClaimData.retries = 0;
     }

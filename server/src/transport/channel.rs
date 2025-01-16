@@ -1,12 +1,12 @@
-use std::{collections::HashMap, marker::PhantomData, sync::Arc};
+use std::{collections::HashMap, marker::PhantomData};
 
 use serde::Serialize;
 
-use super::Tx;
+use super::messager::NetMessager;
 
 #[derive(Clone, Debug)]
 pub struct Channel<T: Serialize> {
-    peers: HashMap<i32, Arc<Tx>>,
+    peers: HashMap<i32, NetMessager>,
     _data: PhantomData<T>,
 }
 
@@ -27,7 +27,7 @@ impl<T: Serialize> Channel<T> {
         }
     }
 
-    pub fn subscribe(&mut self, address: i32, subscriber: Arc<Tx>) {
+    pub fn subscribe(&mut self, address: i32, subscriber: NetMessager) {
         self.peers.insert(address, subscriber);
     }
 
@@ -36,11 +36,11 @@ impl<T: Serialize> Channel<T> {
     }
 
     pub fn broadcast(&mut self, message: &T) {
-        let text: String = serde_json::to_string(message).expect("serialization error");
+        // send message to all peers and collect closed connections which produced an error
         let closed: Vec<i32> = self
             .peers
             .iter()
-            .filter(|(_, peer)| peer.send(text.clone()).is_err())
+            .filter(|(_, peer)| peer.send(message).is_err_and(|e| e.is_some()))
             .map(|(addr, _)| *addr)
             .collect();
 

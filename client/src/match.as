@@ -2,15 +2,18 @@
 class LiveMatch {
     string uid;
     MatchConfiguration config;
-    array<MapCell>@ gameMaps = {};
+    array<GameTile>@ tiles = {};
     array<Team>@ teams = {};
     array<Player>@ players = {};
     int64 startTime = 0;
     int64 overtimeStartTime = 0;
-    int64 endTime = 0;
-    MatchPhase phase = MatchPhase::Starting;
+    GamePhase phase = GamePhase::Starting;
     bool canReroll = false;
     EndState endState;
+
+    // Local state
+    int currentTileIndex = -1;
+    bool currentTileInvalid = false;
 
     Player@ GetSelf(){
         for (uint i = 0; i < players.Length; i++){
@@ -41,8 +44,8 @@ class LiveMatch {
 
     uint GetTeamCellCount(Team team) {
         uint sum = 0;
-        for (uint i = 0; i < gameMaps.Length; i++) {
-            if (gameMaps[i].IsClaimed() && gameMaps[i].LeadingRun().player.team == team) {
+        for (uint i = 0; i < tiles.Length; i++) {
+            if (tiles[i].IsClaimed() && tiles[i].LeadingRun().player.team == team) {
                 sum += 1;
             }
         }
@@ -60,68 +63,57 @@ class LiveMatch {
         return null;
     }
 
-    MapCell GetMapWithUid(string&in uid) {
-        for (uint i = 0; i < this.gameMaps.Length; i++) {
-            MapCell selectedMap = this.gameMaps[i];
-            if (selectedMap.map.uid == uid) return selectedMap;
-        }
-
-        return MapCell();
-    }
-
-    MapCell GetCurrentMap() {
+    GameTile@ GetCurrentTile() {
         CGameCtnChallenge@ currentMap = Playground::GetCurrentMap();
-        if (@currentMap == null) return MapCell();
-        return GetMapWithUid(currentMap.EdChallengeId);
+        if (currentMap is null) return null;
+
+        if (currentTileIndex >= 0 && currentTileIndex < int(tiles.Length)) return tiles[currentTileIndex];
+        return null;
     }
     
     int GetMapCellId(string&in uid) {
-        for (uint i = 0; i < this.gameMaps.Length; i++) {
-            MapCell selectedMap = this.gameMaps[i];
-            if (selectedMap.map.uid == uid) return i;
+        for (uint i = 0; i < this.tiles.Length; i++) {
+            GameTile@ tile = this.tiles[i];
+            if (tile !is null && tile.map !is null && tile.map.uid == uid) return i;
         }
 
         return -1;
     }
 
-    MapCell GetCell(int id) {
-        return this.gameMaps[id];
+    GameTile GetCell(int id) {
+        return this.tiles[id];
     }
 
-    MatchPhase GetPhase() {
-        return this.phase;
-    }
-
-    void SetPhase(MatchPhase phase) {
-        auto previous = this.phase;
-        this.phase = phase;
-
-        if (previous == MatchPhase::Starting) {
-            UIGameRoom::Visible = false;
-            UIMapList::Visible = true;
-        }
-
-        if (phase == MatchPhase::Overtime) {
-            overtimeStartTime = Time::Now;
-        }
+    void SetCurrentTileIndex(int index) {
+        this.currentTileIndex = index;
+        this.currentTileInvalid = false;
     }
 }
 
 
-class MapCell {
+class GameTile {
     GameMap@ map = null;
     array<MapClaim>@ attemptRanking = {};
     vec3 paintColor = vec3();
-    array<uint> rerollIds = {};
-    CachedImage@ thumbnail;
-    CachedImage@ mapImage;
+    Image@ thumbnail;
+    Image@ mapImage;
 
-    MapCell() { }
+    GameTile() { }
 
-    MapCell(GameMap map) {
+    GameTile(GameMap map) {
+        SetMap(map);
+    }
+
+    void SetMap(GameMap map) {
         @this.map = map;
-        @this.thumbnail = Images::CachedFromURL("https://trackmania.exchange/maps/screenshot_normal/" + map.tmxid);
-        @this.mapImage = Images::CachedFromURL("https://trackmania.exchange/maps/" + map.tmxid + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
+#if TURBO
+        auto url = Turbo::GetCampaignThumbnailUrl(map.uid);
+        @this.mapImage = Image(url);
+        @this.thumbnail = Image(url);
+#elif TMNEXT
+        @this.thumbnail = Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
+        @this.mapImage = Image("https://trackmania.exchange/maps/" + map.id + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
+#endif
     }
 
     bool IsClaimed() {
@@ -211,20 +203,10 @@ enum BingoDirection {
     Diagonal
 }
 
-enum MatchPhase {
+enum GamePhase {
     Starting,
     NoBingo,
     Running,
     Overtime,
     Ended
-}
-
-namespace Game {
-    // Game tick function
-    void Tick() {
-        if (@Match == null) return;
-        if (!Match.endState.HasEnded()) {
-            Playground::CheckRunFinished();
-        }
-    }
 }

@@ -1,0 +1,20 @@
+# Configuration file for the Trackmania Bingo game server.
+
+# Options should be modified in the `config.toml` file at the toplevel directory.
+# A new copy is created upon starting the server for the first time.
+
+environment = "dev"     # or "live"
+
+[network]
+tcp_port = 43333            # local port for TCP server
+http_port = 8080            # local port for HTTP server
+timeout = 300               # delay in seconds until TCP connection is closed when idle
+
+[client]
+required_version = "5.0"    # minimum version of the plugin client
+
+[behaviour]
+never_close = false         # disable closing inactive rooms (for debugging)
+
+[keys]
+openplanet = "KEY"      # secret key for Openplanet authentication

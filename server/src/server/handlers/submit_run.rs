@@ -1,5 +1,5 @@
 use crate::{
-    core::models::{livegame::MapClaim, player::PlayerRef},
+    core::models::livegame::MapClaim,
     datatypes::Medal,
     server::context::ClientContext,
 };
@@ -9,7 +9,7 @@ use super::{generic, Request, Response};
 
 #[derive(Deserialize, Debug)]
 pub struct SubmitRun {
-    map_uid: String,
+    tile_index: usize,
     time: u64,
     medal: Medal,
 }
@@ -20,22 +20,13 @@ impl Request for SubmitRun {
         ctx.game_sync();
         if let Some(game) = ctx.game_match() {
             let claim = MapClaim {
-                player: PlayerRef {
-                    uid: ctx.profile.player.uid,
-                    team: ctx.game.as_ref().unwrap().team(),
-                },
+                player: ctx.get_player_ref(),
+                team_id: ctx.game.as_ref().unwrap().team(),
                 time: self.time,
                 medal: self.medal,
             };
             let mut lock = game.lock();
-            let cell = lock.get_cell_from_map_uid(self.map_uid.clone());
-            if let Some(id) = cell {
-                lock.add_submitted_run(id, claim);
-            } else {
-                return Box::new(generic::Error {
-                    error: "invalid map uid".to_owned(),
-                });
-            }
+            lock.add_submitted_run(self.tile_index, claim);
         } else {
             return Box::new(generic::Error {
                 error: "not in a game".to_owned(),

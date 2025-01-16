@@ -1,15 +1,19 @@
 use serde::{Deserialize, Serialize};
 
-use crate::orm::mapcache::record::MapRecord;
+use crate::{datatypes::CampaignMap, orm::mapcache::record::MapRecord};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct GameMap {
-    #[serde(flatten)]
-    pub track: MapRecord, // TODO: maybe use this struct as in intermediary to allow other sources (with ::from())
+#[serde(tag = "type")]
+pub enum GameMap {
+    TMX(MapRecord),
+    Campaign(CampaignMap),
 }
 
-impl From<MapRecord> for GameMap {
-    fn from(value: MapRecord) -> Self {
-        Self { track: value }
+impl GameMap {
+    pub fn name(&self) -> String {
+        match self {
+            GameMap::TMX(map) => map.track_name.to_owned(),
+            GameMap::Campaign(map) => format!("#{}", map.map.to_string()),
+        }
     }
 }

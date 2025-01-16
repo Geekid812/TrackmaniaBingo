@@ -59,7 +59,7 @@ namespace UIRoomMenu {
         }
 
         float heightRemaining = UI::GetWindowSize().y - UI::GetCursorPos().y;
-        float offset = 145. * UI::GetScale();
+        float offset = 150. * UI::GetScale();
         UI::BeginChild("bingo_rooms", vec2(0, heightRemaining - offset), false);
 
         if (RoomsLoad == LoadStatus::Loading) {
@@ -93,25 +93,27 @@ namespace UIRoomMenu {
                 vec2 base = vec2(x, y);
 
                 bool inGame = room.startedTimestamp != 0;
+                bool tooLateToJoin = inGame && !room.matchConfig.lateJoin;
                 string buttonText = Icons::Play + "  Join";
-                if (inGame) buttonText = Icons::PlayCircleO + "  In Game";
+                if (tooLateToJoin) buttonText = Icons::PlayCircleO + "  In Game";
 
                 if (inGame) {
                     string timer;
                     if (uint64(Time::Stamp) >= room.startedTimestamp) timer = "\\$f80" + Time::Format((Time::Stamp - room.startedTimestamp) * 1000, false, true, true);
                     else timer = "\\$f80Game starting in " + (room.startedTimestamp - Time::Stamp) + "...";
-                    float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(timer).x, 0.75);
+                    float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(timer).x, 0.75);
                     UI::SetCursorPos(base + vec2(padding, 4.));
                     UI::Text(timer);
                 }
 
-                float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t" + buttonText).x, 1.0);
+                float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t\t" + buttonText).x, 1.0);
                 UI::SetCursorPos(base + vec2(padding, 0.));
-                UI::BeginDisabled(inGame);
+                UI::BeginDisabled(tooLateToJoin);
                 if (!inGame) UIColor::DarkGreen();
                 else UIColor::Orange();
 
-                if (UI::Button(buttonText)) {
+                if (UI::Button(buttonText + "##bingojoin" + room.joinCode)) {
+                    Gamemaster::SetBingoActive(false);
                     NetParams::JoinCode = room.joinCode;
                     startnew(Network::JoinRoom);
                 }
@@ -130,12 +132,10 @@ namespace UIRoomMenu {
 
     void RoomInfo(NetworkRoom room) {
         vec2 base = UI::GetCursorPos();
-        UI::PushFont(Font::Bold);
         UI::Text(room.name);
-        UI::PopFont();
 
         string righttext = Icons::Users + " " + room.playerCount + (room.config.size != 0 ? "/" + room.config.size : "") + "\t" + (room.hostName != "" ? ("\t" + Icons::User + " " + room.hostName) : "");
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x - base.x, Draw::MeasureString(righttext).x, 1.0);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x - base.x, Draw::MeasureString(righttext).x, 1.0);
         UI::SetCursorPos(base + vec2(padding, 0.));
         UI::Text(righttext);
         UI::Text(string::Join(UIGameRoom::MatchConfigInfo(room.matchConfig), "\t"));

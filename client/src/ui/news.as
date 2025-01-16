@@ -4,7 +4,6 @@ namespace UINews {
 
     void Render() {
         if (!Visible) return;
-        UI::PushFont(Font::Regular);
         UI::Begin(Icons::NewspaperO + " News Reader##bingonews", Visible);
         for (uint i = 0; i < Config::News.Length; i++) {
             NewsItem(Config::News[i]);
@@ -12,13 +11,10 @@ namespace UINews {
             UI::Dummy(vec2(0, 30));
         }
         UI::End();
-        UI::PopFont();
     }
 
     void NewsItem(Config::NewsItem item) {
-        UI::PushFont(Font::Subtitle);
         UI::Text(item.title);
-        UI::PopFont();
         UI::Separator();
         UI::TextWrapped(item.content);
         UI::Text("\\$aaa" + Icons::ClockO + " " + Timedelta(item.timestamp));
@@ -33,7 +29,8 @@ namespace UINews {
 
     void NewsCounter(int current, int max) {
         string text = current + "/" + max;
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, Font::Regular, 16.).x, 0.95);
+        UI::Font@ font = Font::Current();
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.95);
         UI::SetCursorPos(vec2(padding, UI::GetCursorPos().y));
         UI::Text("\\$888" + text);
     }

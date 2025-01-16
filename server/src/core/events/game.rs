@@ -7,11 +7,11 @@ use crate::{
         livegame::BingoLine,
         models::{
             livegame::{MapClaim, MatchPhase, MatchState},
+            map::GameMap,
             team::{BaseTeam, TeamIdentifier},
         },
     },
-    datatypes::PlayerRef,
-    orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
+    datatypes::{ChatMessage, PlayerProfile, PlayerRef, Poll},
 };
 
 #[serde_with::serde_as]
@@ -23,7 +23,7 @@ pub enum GameEvent {
         #[serde_as(as = "DurationMilliSeconds<i64>")]
         start_ms: Duration,
         can_reroll: bool,
-        maps: Vec<MapRecord>,
+        maps: Vec<GameMap>,
     },
     RunSubmitted {
         cell_id: usize,
@@ -61,7 +61,7 @@ pub enum GameEvent {
     },
     MapRerolled {
         cell_id: usize,
-        map: MapRecord,
+        map: GameMap,
         can_reroll: bool,
     },
     CellPinged {
@@ -70,5 +70,19 @@ pub enum GameEvent {
         team: TeamIdentifier,
         cell_id: usize,
         player: PlayerRef,
+    },
+    ChatMessage(ChatMessage),
+    PollStart {
+        #[serde(flatten)]
+        poll: Poll,
+        votes: Vec<i32>,
+    },
+    PollVotesUpdate {
+        id: u32,
+        votes: Vec<i32>,
+    },
+    PollResult {
+        id: u32,
+        selected: Option<u32>,
     },
 }

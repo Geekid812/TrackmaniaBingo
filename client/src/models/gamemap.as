@@ -1,5 +1,11 @@
+enum MapType {
+    TMX,
+    Campaign
+}
+
 class GameMap {
-    int tmxid;
+    MapType type = MapType::TMX;
+    int id;
     string uid;
     int userid;
     string authorLogin;
@@ -15,9 +21,26 @@ class GameMap {
 }
 
 namespace GameMap {
-    Json::Value Serialize(GameMap map) {
+    MapType GetMapType(const string&in typeName) {
+        if (typeName == "TMX") return MapType::TMX;
+        return MapType::Campaign;
+    }
+
+    GameMap Deserialize(Json::Value@ value) {
+        MapType type = GetMapType(value["type"]);
+#if TMNEXT
+        if (type == MapType::TMX) return DeserializeTMX(value);
+#elif TURBO
+        if (type == MapType::Campaign) return DeserializeCampaign(value);
+#endif
+        throw("GameMap: unknown map type '" + string(value["type"]) + "'.");
+        return GameMap();
+    }
+
+    Json::Value SerializeTMX(GameMap map) {
         auto value = Json::Object();
-        value["tmxid"] = map.tmxid;
+        value["type"] = tostring(map.type);
+        value["tmxid"] = map.id;
         value["uid"] = map.uid;
         value["userid"] = map.userid;
         value["author_login"] = map.authorLogin;
@@ -33,9 +56,10 @@ namespace GameMap {
         return value;
     }
 
-    GameMap Deserialize(Json::Value@ value) {
+    GameMap DeserializeTMX(Json::Value@ value) {
         auto map = GameMap();
-        map.tmxid = value["tmxid"];
+        map.type = MapType::TMX;
+        map.id = value["tmxid"];
         map.uid = value["uid"];
         map.userid = value["userid"];
         map.authorLogin = value["author_login"];
@@ -50,4 +74,19 @@ namespace GameMap {
         if (value["style"].GetType() != Json::Type::Null) map.style = value["style"];
         return map;
     }
+
+#if TURBO
+    GameMap DeserializeCampaign(Json::Value@ value) {
+        GameMap map = GameMap();
+        map.id = uint(value["map"]);
+        map.uid = Turbo::GetCampaignMapUid(map.id);
+        map.trackName = "#" + Text::Format("%03i", map.id);
+        map.type = MapType::Campaign;
+        
+        if (map.id % 5 == 0 && !(map.id > 160 && map.id % 10 == 0))
+            map.style = "MultiLap";
+    
+        return map;
+    }
+#endif
 }

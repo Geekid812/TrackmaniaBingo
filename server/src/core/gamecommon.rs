@@ -2,7 +2,9 @@ use std::{str::FromStr, sync::Arc};
 
 use once_cell::sync::Lazy;
 
-use crate::{config::CONFIG, orm::composed::profile::PlayerProfile, server};
+use crate::{config::CONFIG, datatypes::PlayerProfile, server, transport::messager::NetMessager};
+
+pub type PlayerId = u32;
 
 pub static TEAMS: Lazy<Vec<(String, Color)>> = Lazy::new(|| {
     CONFIG
@@ -13,12 +15,7 @@ pub static TEAMS: Lazy<Vec<(String, Color)>> = Lazy::new(|| {
         .collect()
 });
 
-use super::{
-    directory::Owned,
-    models::{player::PlayerRef, team::TeamIdentifier},
-    room::GameRoom,
-    util::Color,
-};
+use super::{directory::Owned, models::team::TeamIdentifier, room::GameRoom, util::Color};
 
 pub fn setup_room(room_arc: &Owned<GameRoom>) {
     let mut room = room_arc.lock();
@@ -41,13 +38,5 @@ pub struct PlayerData {
     pub team: TeamIdentifier,
     pub operator: bool,
     pub disconnected: bool,
-}
-
-impl From<&PlayerData> for PlayerRef {
-    fn from(value: &PlayerData) -> Self {
-        Self {
-            uid: value.uid,
-            team: value.team,
-        }
-    }
+    pub writer: NetMessager,
 }

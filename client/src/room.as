@@ -92,12 +92,19 @@ class Player {
 
     Player(PlayerProfile profile, Team team) {
         this.profile = profile;
-        this.name = profile.username;
+        this.name = profile.name;
         this.team = team;
     }
 
     bool IsSelf() {
         if (@Profile is null) return false;
         return profile.uid == Profile.uid;
+    }
+    
+    PlayerRef AsRef() {
+        PlayerRef playerRef();
+        playerRef.name = this.name;
+        playerRef.uid = this.profile.uid;
+        return playerRef;
     }
 }

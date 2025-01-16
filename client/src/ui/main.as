@@ -1,4 +1,3 @@
-const string BINGO_ISSUES_URL = "https://github.com/Geekid812/TrackmaniaBingo/issues";
 
 enum LoadStatus {
     NotLoaded,
@@ -21,28 +20,21 @@ namespace UIMainWindow {
 
     void Render() {
         if (!Visible) return;
-        UI::PushFont(Font::Regular);
 
         bool offline = Network::IsOfflineMode();
         string title = (offline ? Icons::PowerOff + " Offline Mode" : "") + "###bingomain";
         vec4 titleColor = offline ? vec4(.5, .1, 0, .95) : UI::GetStyleColor(UI::Col::WindowBg);
         UI::PushStyleColor(UI::Col::TitleBg, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleColor(UI::Col::TitleBgActive, titleColor);
-        UI::Begin(title, Visible);
+        Window::Create(title, Visible, 600, 800);
 
         RenderContent();
 
         UI::End();
         UI::PopStyleColor(2);
-        UI::PopFont();
     }
 
     void RenderContent() {
-        if (!Permissions::PlayLocalMap()) {
-            NoPermissions();
-            return;
-        }
-
         if (Network::IsOfflineMode()) {
             UI::PushStyleColor(UI::Col::ChildBg, vec4(.3, .3, 0., .9));
             UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
@@ -97,28 +89,15 @@ namespace UIMainWindow {
             UI::EndTabItem();
         }
 
-        if (UI::BeginTabItem(Icons::Star + " Daily")) {
-            UI::BeginChild("bingodaily");
-            UIDaily::DailyHome();
-            UI::EndChild();
+        if (UI::BeginTabItem(Icons::Star + " Events")) {
+            UI::NewLine();
+            UITools::CenterText("Coming soon!");
             UI::EndTabItem();
-        } else {
-            if (UIDaily::DailyLoad != LoadStatus::NotLoaded) {
-                if (@UIDaily::DailyMatch !is null) startnew(Network::UnsubscribeDailyChallenge);
-                UIDaily::DailyLoad = LoadStatus::NotLoaded;
-                @UIDaily::DailyMatch = null;
-            }
         }
 
 
         UI::EndTabBar();
         UIColor::Reset();
-    }
-
-    void NoPermissions() {
-        UI::TextWrapped("Unfortunately, you do not have permission to play this gamemode.");
-        UI::TextWrapped("Playing Bingo requires having at least \\$999Standard Access\\$z, which you do not seem to have. Sorry!");
-        UI::TextWrapped("If you believe this is a mistake, make sure to restart your game and check your internet connection.");
     }
 
     void CreateTab() {
@@ -159,33 +138,23 @@ namespace UIMainWindow {
     void InGameHeader() {
         UI::PushStyleColor(UI::Col::ChildBg, vec4(.9, .2, .2, .1));
         UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
-        UI::BeginChild("###bingoingame", vec2(0, 62), true);
-        
-        UI::PushFont(Font::Bold);
+        UI::BeginChild("###bingoingame", vec2(0, 60), true);
+
         UI::Text("\\$f44IN GAME");
-        UI::PopFont();
 
         UI::SameLine();
         if (@Room !is null) {
             UIRoomMenu::RoomInfo(Room.NetworkState());
         } else {
-            if (@UIDaily::DailyMatch !is null && Match.uid == UIDaily::DailyMatch.uid) {
-                UI::PushFont(Font::Bold);
-                UI::Text("Daily Challenge");
-                UI::PopFont();
-            } else {
-                UI::NewLine();
-            }
-
+            UI::NewLine();
             UI::Text(string::Join(UIGameRoom::MatchConfigInfo(Match.config), "\t"));
         }
 
         UI::SameLine();
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString("\t\t\tLeave").x, 1.0);
-        LayoutTools::MoveTo(padding);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, 80.0, 1.0);
+        Layout::MoveTo(padding);
         UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
         UIGameRoom::LeaveButton();
-
 
         UI::EndChild();
         UI::PopStyleVar();
@@ -201,7 +170,6 @@ namespace SettingsWindow {
     void Render() {
         if (!Visible) return;
         UI::Begin(Icons::Th + " Room Settings", Visible, UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
-        UI::PushFont(Font::Regular);
         UIRoomSettings::SettingsView();
         UI::NewLine();
 
@@ -212,7 +180,6 @@ namespace SettingsWindow {
         }
         UIColor::Reset();
         UI::NewLine();
-        UI::PopFont();
         UI::End();
     }
 }

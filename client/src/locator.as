@@ -1,13 +1,9 @@
 
 namespace BoardLocator {
-    int clickCell = -1;
-    uint64 lastClick;
-
-    const int DOUBLE_CLICK_MILLIS = 500;
-
     void Render() {
-        if (@Match is null) return;
-        if (Time::MillisecondsElapsed(@Match) < 0 && Board::Position != vec2(0, 0)) return;
+        if (!Gamemaster::IsBingoActive()) return;
+
+        vec2 defaultWindowPadding = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding);
         UI::SetNextWindowPos(int(79 * Board::Unit()), int(Board::Unit()), UI::Cond::FirstUseEver);
         UI::SetNextWindowSize(int(20 * Board::Unit()), int(20 * Board::Unit()), UI::Cond::FirstUseEver);
 
@@ -26,6 +22,13 @@ namespace BoardLocator {
                 vec2 pos = Board::CellPosition(i, j, sizes);
                 UI::SetCursorPos(pos - UI::GetWindowPos());
                 UI::Dummy(vec2(sizes.cell, sizes.cell));
+                
+                if (UI::IsItemHovered()) {
+                    UI::PushStyleVar(UI::StyleVar::WindowPadding, defaultWindowPadding);
+                    UIMapList::ShowTileTooltip(Gamemaster::GetTileOnGrid(i, j));
+                    UI::PopStyleVar();
+                }
+                
                 if (UI::IsItemClicked()) {
                     OnCellClicked(i, j);
                 }
@@ -38,21 +41,9 @@ namespace BoardLocator {
     }
 
     void OnCellClicked(int row, int col) {
-        if (@Match is null) return;
-        int cellId = row * Match.config.gridSize + col;
-        uint64 clickNow = Time::Now;
-
-        if (cellId == clickCell && (clickNow - lastClick <= DOUBLE_CLICK_MILLIS)) {
-            OnCellDoubleClicked(cellId);
-            clickCell = -1;
-        } else {
-            clickCell = cellId;
-        }
-        lastClick = clickNow;
-    }
-
-    void OnCellDoubleClicked(int cellId) {
-        NetParams::PingCellId = cellId;
-        startnew(Network::PingCell);
+        GameTile@ tile = Gamemaster::GetTileOnGrid(row, col);
+        
+        if (tile.map !is null)
+            Playground::PlayMap(tile.map);
     }
 }

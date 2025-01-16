@@ -4,8 +4,8 @@ namespace UIRoomSettings {
     const uint GRID_SIZE_MAX = 8;
     const int TIMELIMIT_MAX = 180;
     const int NOBINGO_MAX = 120;
-    const float CHECKBOXES_ALIGN_X = 180;
-    const float GAME_SETTINGS_ALIGN_X = 150;
+    const float CHECKBOXES_ALIGN_X = 200;
+    const float GAME_SETTINGS_ALIGN_X = 180;
 
     FeaturedMappack@ SelectedPack;
     int State;
@@ -14,14 +14,14 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::Pencil + "  Room Name");
         UI::SetNextItemWidth(220);
         RoomConfig.name = UI::InputText("##bingoroomname", RoomConfig.name);
-        if (RoomConfig.name == "" && LocalUsername != "") {
-            RoomConfig.name = LocalUsername + "'s Bingo Room";
+        if (RoomConfig.name == "") {
+            RoomConfig.name = User::GetLocalUsername() + "'s Bingo Room";
         }
     }
 
     void PlayerLimitToggle() {
         UITools::AlignedLabel(Icons::User + "  Enable Player Limit");
-        LayoutTools::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
         bool toggle = UI::Checkbox("##bingomaxplayers", hasPlayerLimit(RoomConfig));
         if (toggle != hasPlayerLimit(RoomConfig)) RoomConfig.size = toggle ? 4 : 0;
     }
@@ -34,7 +34,7 @@ namespace UIRoomSettings {
 
     void RandomizeToggle() {
         UITools::AlignedLabel(Icons::Random + "  Randomize Teams");
-        LayoutTools::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
         RoomConfig.randomize = UI::Checkbox("##bingorandomize", RoomConfig.randomize);
     }
 
@@ -57,15 +57,22 @@ namespace UIRoomSettings {
 
     void GridSizeSelector() {
         UITools::AlignedLabel(Icons::Th + "  Grid Size");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         auto result = UITools::MixedInputButton(MatchConfig.gridSize + "x" + MatchConfig.gridSize, "bingogridsize", 3, 8, 1, MatchConfig.gridSize, LoadState(0));
         MatchConfig.gridSize = result.value;
         StoreState(0, result.state);
     }
 
     void MapModeSelector() {
+        bool disabled = false;
+#if TURBO
+        MatchConfig.selection = MapMode::Campaign;
+        @SelectedPack = null;
+        disabled = true;
+#endif
+        UI::BeginDisabled(disabled);
         UITools::AlignedLabel(Icons::MapO + "  Map Selection");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
         if (UI::BeginCombo("##bingomaps", @SelectedPack != null ? SelectedPack.name : stringof(MatchConfig.selection))) {
 
@@ -95,11 +102,12 @@ namespace UIRoomSettings {
 
             UI::EndCombo();
         }
+        UI::EndDisabled();
     }
 
     void TimeLimitControl() {
         UITools::AlignedLabel(Icons::ClockO + "  Time Limit");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         string label = TimeFormat(MatchConfig.timeLimit);
         if (MatchConfig.timeLimit == 0) label = "\\$888Disabled";
         auto result = UITools::MixedInputButton(label, "bingotimelimit", 0, TIMELIMIT_MAX, 15, MatchConfig.timeLimit / 60000, LoadState(1));
@@ -109,7 +117,7 @@ namespace UIRoomSettings {
 
     void NoBingoTimeControl() {
         UITools::AlignedLabel(Icons::LifeRing + "  Grace Period");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         string label = TimeFormat(MatchConfig.noBingoDuration);
         if (MatchConfig.noBingoDuration == 0) label = "\\$888Disabled";
         auto result = UITools::MixedInputButton(label, "nobingotime", 0, NOBINGO_MAX, 5, MatchConfig.noBingoDuration / 60000, LoadState(2));
@@ -140,7 +148,7 @@ namespace UIRoomSettings {
 
     void MappackIdInput() {
         UITools::AlignedLabel(Icons::Exchange + "  TMX Mappack ID");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(132);
         MatchConfig.mappackId = UI::InputInt("##bingomappack", MatchConfig.mappackId, 0);
     }
@@ -150,7 +158,7 @@ namespace UIRoomSettings {
         MatchConfig.mapTag = Math::Max(MatchConfig.mapTag, 1);
 
         UITools::AlignedLabel(Icons::Tag + "  Selected Map Tag");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
         if (!MXTags::TagsLoaded()) {
             UI::BeginDisabled();
@@ -171,7 +179,7 @@ namespace UIRoomSettings {
 
     void TargetMedalSelector() {
         UITools::AlignedLabel(Icons::Kenney::ButtonCircle + "  Target Medal");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
         if (UI::BeginCombo("##bingomedal", stringof(MatchConfig.targetMedal))) {
             if (UI::Selectable(stringof(Medal::Author), MatchConfig.targetMedal == Medal::Author)) {
@@ -198,22 +206,32 @@ namespace UIRoomSettings {
 
     void OvertimeToggle() {
         UITools::AlignedLabel(Icons::PlusSquare + " Enable Overtime");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         MatchConfig.overtime = UI::Checkbox("##bingoovertime", MatchConfig.overtime);
     }
 
-    void FFAToggle() {
-        UITools::AlignedLabel(Icons::Users + " Enable Free For All");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        MatchConfig.freeForAll = UI::Checkbox("##bingoffa", MatchConfig.freeForAll);
+    void LateJoinToggle() {
+        UITools::AlignedLabel(Icons::SignIn + " Allow Late Joins");
+        Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
+        MatchConfig.lateJoin = UI::Checkbox("##bingolatejoin", MatchConfig.lateJoin);
+        UI::SameLine();
+        UITools::HelpTooltip("Players can still join after the game has started.");
     }
 
     void RerollsToggle() {
         UITools::AlignedLabel(Icons::Kenney::ReloadInverse + " Enable Map Rerolls");
-        LayoutTools::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         MatchConfig.rerolls = UI::Checkbox("##bingorerolls", MatchConfig.rerolls);
         UI::SameLine();
         UITools::HelpTooltip("Players can vote to reroll an unclaimed map if the majority of players agree.");
+    }
+
+    void CompetitvePatchToggle() {
+        UITools::AlignedLabel(Icons::Trophy + " Competitive Patch");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch);
+        UI::SameLine();
+        UITools::HelpTooltip("In game map replays will be disabled.");
     }
 
     void TotalTimeIndicator() {
@@ -227,13 +245,8 @@ namespace UIRoomSettings {
         UI::SameLine();
         AccessToggle();
         PlayerLimitToggle();
-
-        UI::BeginDisabled(MatchConfig.freeForAll);
         RandomizeToggle();
-        UI::EndDisabled();
-        if (MatchConfig.freeForAll) {
-            RoomConfig.randomize = false;
-        }
+        LateJoinToggle();
 
         if (hasPlayerLimit(RoomConfig)) {
             PlayerLimitInput();
@@ -255,7 +268,6 @@ namespace UIRoomSettings {
         if (MatchConfig.timeLimit != 0) {
             OvertimeToggle();
         }
-        // FFAToggle();
         RerollsToggle();
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0) TotalTimeIndicator();
     }

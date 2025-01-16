@@ -24,22 +24,17 @@ namespace MXTags {
 
     void LoadTags() {
         TagsRequested = true;
-        trace("MXTags: Loading tags...");
+        trace("[MXTags::LoadTags] Loading tags...");
         auto req = Net::HttpGet(MX_GETTAGS_URL);
         while (!req.Finished()) { yield(); }
-
-        int code = req.ResponseCode();
-        if (code != 200) {
-            warn("MXTags: nonzero return code: " + code);
-            return;
-        }
+        if (Extra::Net::RequestRaiseError("MXTags::LoadTags", req)) return;
 
         auto data = Json::Parse(req.String());
         Tags = {};
         for (uint i = 0; i < data.Length; i++) {
             Tags.InsertLast(Tag(data[i]["ID"], data[i]["Name"]));
         }
-        trace("MXTags: Loaded " + Tags.Length + " tags.");
+        trace("[MXTags::LoadTags] Loaded " + Tags.Length + " tags.");
     }
 
     Tag GetTag(int id) {

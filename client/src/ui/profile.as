@@ -7,35 +7,32 @@ namespace UIProfile {
         CountryFlag(profile.countryCode, vec2(30, 20));
         UI::SameLine();
         vec2 playerPos = UI::GetCursorPos();
-        PlayerName(profile, true);
+        PlayerName(profile);
         if (profile.title != "") {
             NameTitle(profile.title);
         }
 
-        MatchCount(profile.matchCount);
-        if (profile.dailyWins > 0) {
-            UI::SameLine();
-            DailyWins(profile.dailyWins);
-        }
+        MatchCount(profile.gamesPlayed);
         UI::SetCursorPos(playerPos);
-        // RatingDisplay(profile.score, profile.deviation);
         UI::NewLine();
-        if (showId) PlayerId(profile.uid);
+
+        if (showId) {
+            // Player UID is no longer shown on profile, skip
+            UI::NewLine();
+        }
     }
 
     void CountryFlag(const string&in countryCode, vec2 size) {
-        auto flagImage = Images::CachedFromURL(PLAYER_FLAG_URL + countryCode + ".jpg");
-        if (@flagImage.m_texture != null) {
-            UI::Image(flagImage.m_texture, size);
+        Image flagImage(PLAYER_FLAG_URL + countryCode + ".jpg");
+        if (@flagImage.Data != null) {
+            UI::Image(flagImage.Data, size);
         } else {
             UI::Dummy(size);
         }
     }
 
-    void PlayerName(PlayerProfile profile, bool bold) {
-        UI::PushFont(bold ? Font::Bold : Font::Regular);
-        UI::Text(profile.username);
-        UI::PopFont();
+    void PlayerName(PlayerProfile profile) {
+        UI::Text(profile.name);
     }
 
     void MatchCount(int matches) {
@@ -48,15 +45,6 @@ namespace UIProfile {
         + " /\\$f88 " + losses + " \\$888loss" + (losses == 1 ? "" : "es") + ")");
     }
 
-    void DailyMatchStats(int plays, int wins) {
-        UI::Text(plays + " daily challenge" + (plays == 1 ? "" : "s")
-        + " played \\$888(\\$8f8" + wins + " \\$888win" + (wins == 1 ? "" : "s") + ")");
-    }
-
-    void DailyWins(int wins) {
-        UI::Text("\\$ffa" + wins + " daily challenge win" + (wins == 1 ? "" : "s"));
-    }
-
     void RatingDisplay(int rating, int deviation) {
         string ratingText = "\\$ff8" + tostring(rating);
         if (deviation >= 150) {
@@ -64,15 +52,24 @@ namespace UIProfile {
         }
         ratingText += " \\$888±" + deviation;
         ratingText = "Score: " + ratingText;
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(ratingText, Font::Regular, 16.).x, 0.95);
-        LayoutTools::MoveTo(padding);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(ratingText, Font::Current(), 16.).x, 0.95);
+        Layout::MoveTo(padding);
         UI::Text(ratingText);
     }
 
     void PlayerId(int uid) {
         string idText = "\\$888Player ID: " + uid;
-        float padding = LayoutTools::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Regular, 16.).x, 0.95);
-        LayoutTools::MoveTo(padding);
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
+        Layout::MoveTo(padding);
+        UI::Text(idText);
+    }
+
+    void CreationDateDisplay(int64 timestamp) {
+        Time::Info creationDate = Time::Parse(timestamp);
+
+        string idText = "\\$888Joined " + MonthName(creationDate.Month) + " " + creationDate.Year;
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
+        Layout::MoveTo(padding);
         UI::Text(idText);
     }
 
@@ -81,5 +78,10 @@ namespace UIProfile {
         if (parts.Length < 2) return;
         UI::SameLine();
         UI::Text("\\$" + parts[0] + parts[1]);
+    }
+
+    string MonthName(int month) {
+        const array<string> months = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+        return months[month - 1];
     }
 }

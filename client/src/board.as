@@ -6,8 +6,8 @@ namespace Board {
     array<CellPing> Pings;
 
     const float STROKE_WIDTH = 8.;
-    const float CELL_HIGHLIGHT_PADDING = 2.5; // Multiplier for BorderSize, inside offset
-    const vec4 CELL_HIGHLIGHT_COLOR = vec4(1, 1, 0, 0.9);
+    const float CELL_HIGHLIGHT_PADDING = 3.5; // Multiplier for BorderSize, inside offset
+    const vec4 CELL_HIGHLIGHT_COLOR = vec4(1, 1, 1, 0.9);
     const vec4 BINGO_STROKE_COLOR = vec4(1, 0.6, 0, 0.9);
     const uint64 ANIMATION_START_TIME = 4000;
 
@@ -26,8 +26,27 @@ namespace Board {
         uint cellId;
     }
 
+    /**
+     * Determine which color the tile should be.
+     */
+    vec4 GetTileFillColor(GameTile@ tile) {
+        if (tile is null || tile.map is null) return vec4(0, 0, 0, .8);
+        
+        if (tile.paintColor != vec3())
+            return UIColor::GetAlphaColor(tile.paintColor, .8);
+
+        if (tile.IsClaimed()) {
+            Team@ tileOwnerTeam = Match.GetTeamWithId(tile.LeadingRun().teamId);
+
+            if (@tileOwnerTeam !is null)
+                return UIColor::GetAlphaColor(tileOwnerTeam.color, .8);
+        }
+        
+        return vec4(.3, .3, .3, .8);
+    }
+
     void Draw() {
-        if (@Match == null) return;
+        if (!Gamemaster::IsBingoActive()) return;
 
         uint cellsPerRow = Match.config.gridSize;
         BoardSizes sizes = CalculateBoardSizes(cellsPerRow);
@@ -60,32 +79,33 @@ namespace Board {
 
         // Cell Fill Color
         float colorAnimProgress = Animation::GetProgress(animationTime, 2000, 500);
-        for (uint i = 0; i < cellsPerRow; i++) {
-            for (uint j = 0; j < cellsPerRow; j++) {
-                auto map = Match.gameMaps[j * cellsPerRow + i];
+        for (uint x = 0; x < cellsPerRow; x++) {
+            
+            for (uint y = 0; y < cellsPerRow; y++) {
+                GameTile@ tile = Gamemaster::GetTileOnGrid(x, y);
+
+                vec2 cellPosition = CellPosition(x, y, sizes);
+                vec4 color = GetTileFillColor(tile);
+                color.w *= colorAnimProgress; // opacity modifier
+                
                 nvg::BeginPath();
-                vec2 cellPosition = CellPosition(i, j, sizes);
-                vec4 color;
-                if (map.paintColor != vec3())
-                    color = UIColor::GetAlphaColor(map.paintColor, .8);
-                else if (map.IsClaimed())
-                    color = UIColor::GetAlphaColor(map.LeadingRun().player.team.color, .8);
-                else
-                    color = vec4(.3, .3, .3, .8 * colorAnimProgress);
                 nvg::FillColor(color);
                 nvg::Rect(cellPosition.x, cellPosition.y, sizes.cell, sizes.cell);
                 nvg::Fill();
             }
+        
         }
 
         // Cell highlight
-        const float highlightWidth = sizes.border * CELL_HIGHLIGHT_PADDING;
-        const float highlightMarginOffset = sizes.border * (CELL_HIGHLIGHT_PADDING - 1.);
-        CGameCtnChallenge@ currentMap = Playground::GetCurrentMap();
-        int cellId = (@currentMap != null) ? Match.GetMapCellId(currentMap.EdChallengeId) : -1;
-        if (cellId != -1) {
-            int row = cellId / cellsPerRow;
-            int col = cellId % cellsPerRow;
+        float highlightBlinkValue = (Math::Sin(float(Time::Now) / 1000.) + 1) / 2;
+        float paddingValue = CELL_HIGHLIGHT_PADDING * (0.8 + 0.2 * highlightBlinkValue);
+        const float highlightWidth = sizes.border * paddingValue;
+        const float highlightMarginOffset = sizes.border * (paddingValue - 1.);
+        
+        int currentTileIndex = Gamemaster::GetCurrentTileIndex();
+        if (currentTileIndex != -1) {
+            int row = currentTileIndex / cellsPerRow;
+            int col = currentTileIndex % cellsPerRow;
             nvg::BeginPath();
             nvg::FillColor(CELL_HIGHLIGHT_COLOR);
             nvg::Rect(Position.x + sizes.step * col, Position.y + sizes.step * row, sizes.cell + sizes.border * 2, highlightWidth);

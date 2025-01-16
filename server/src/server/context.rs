@@ -9,20 +9,19 @@ use crate::{
         models::team::TeamIdentifier,
         room::GameRoom,
     },
-    datatypes::PlayerRef,
-    orm::composed::profile::PlayerProfile,
-    transport::Tx,
+    datatypes::{PlayerProfile, PlayerRef},
+    transport::messager::NetMessager,
 };
 
 pub struct ClientContext {
     pub room: Option<RoomContext>,
     pub game: Option<GameContext>,
     pub profile: PlayerProfile,
-    pub writer: Arc<Tx>,
+    pub writer: NetMessager,
 }
 
 impl ClientContext {
-    pub fn new(profile: PlayerProfile, writer: Arc<Tx>) -> Self {
+    pub fn new(profile: PlayerProfile, writer: NetMessager) -> Self {
         Self {
             room: None,
             game: None,
@@ -47,18 +46,13 @@ impl ClientContext {
 
     pub fn get_player_ref(&self) -> PlayerRef {
         PlayerRef {
-            uid: self.profile.player.uid as u32,
-            name: self.profile.player.username.clone(),
+            uid: self.profile.uid as u32,
+            name: self.profile.name.clone(),
         }
     }
 
     pub fn trace<M: Into<String>>(&self, message: M) {
-        if let Ok(text) = serde_json::to_string(&message.into()) {
-            drop(
-                self.writer
-                    .send(format!("{{\"event\":\"Trace\",\"value\":{}}}", text)),
-            );
-        }
+        debug!("Trace message: {}", message.into());
     }
 }
 
@@ -99,7 +93,7 @@ impl RoomContext {
         debug!("RoomContext cleanup");
         if let Some(room) = self.room() {
             let mut lock = room.lock();
-            lock.player_remove(self.profile.player.uid);
+            lock.player_remove(self.profile.uid);
             lock.check_close();
         }
     }
@@ -112,7 +106,7 @@ pub struct GameContext {
 
 impl GameContext {
     pub fn new(profile: PlayerProfile, game_match: &Owned<LiveMatch>) -> Self {
-        let uid = profile.player.uid;
+        let uid = profile.uid;
         Self {
             game_match: Arc::downgrade(game_match),
             team: game_match

@@ -32,9 +32,7 @@ namespace UIPlayers {
                 }
 
                 UI::BeginChild("bingoteamsep" + i, vec2(seperatorSize, UI::GetTextLineHeightWithSpacing() + 4));
-                UI::PushFont(Font::Bold);
                 UI::Text("\\$" + UIColor::GetHex(team.color) + team.name);
-                UI::PopFont();
 
                 UI::PushStyleColor(UI::Col::Separator, UIColor::GetAlphaColor(team.color, .8));
                 UI::Separator();
@@ -43,12 +41,17 @@ namespace UIPlayers {
 
                 if (UI::IsItemHovered()) {
                     UI::BeginTooltip();
-                    UI::Text("\\$" + UIColor::GetHex(team.color) + team.name + " Team" + (canSwitch && team != ownTeam ? "  \\$888(Click to join)" : ""));
+                    UI::Text("\\$" + UIColor::GetHex(team.color) + team.name + " Team" + (canSwitch && (ownTeam is null || team != ownTeam) ? "  \\$888(Click to join)" : ""));
                     UI::EndTooltip();
                 }
 
                 if (canSwitch && UI::IsItemClicked()) {
                     startnew(function(ref@ team) { Network::JoinTeam(cast<Team>(team)); }, team);
+
+                    if (UITeams::IsJoinContext) {
+                        NetParams::MatchJoinTeamId = team.id;
+                        startnew(Network::JoinMatch);
+                    }
                 }
             }
 
@@ -73,7 +76,8 @@ namespace UIPlayers {
                         continue;
                     }
                     else {
-                        PlayerLabel(player, rowIndex);
+                        if (!(UITeams::IsJoinContext && player.IsSelf()))
+                            PlayerLabel(player, rowIndex);
                     }
                 }
                 if (finishedTeams == teams.Length) break;

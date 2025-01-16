@@ -16,15 +16,18 @@
         <m name="name" type="string" />
     </struct>
 
-    <!-- <struct name="PlayerProfile">
-
+    <struct name="PlayerProfile">
+        <comment>A player's detailed profile.</comment>
+        <m name="uid" type="int" />
+        <m name="name" type="string" />
+        <m name="account_id" type="string" />
         <m name="created_at" type="datetime" />
+        <m name="last_played_at" type="datetime" />
         <m name="country_code" type="string" />
-        <m name="match_count" type="int" />
-        <m name="daily_count" type="int" />
-        <m name="daily_wins" type="int" />
         <m name="title" type="string" optional="true" />
-    </struct> -->
+        <m name="games_played" type="uint" />
+        <m name="games_won" type="uint" />
+    </struct>
 
     <struct name="RoomConfiguration">
         <comment>Room parameters set by the host.</comment>
@@ -36,23 +39,71 @@
 
     <struct name="MatchConfiguration">
         <comment>Match parameters set by the host.</comment>
+        <m name="game" type="GamePlatform" default="GamePlatform::Next" />
         <m name="grid_size" type="uint" default="5" />
         <m name="selection" type="MapMode" default="MapMode::RandomTMX" />
         <m name="target_medal" type="Medal" default="Medal::Author" />
         <m name="time_limit" type="duration" />
         <m name="no_bingo_duration" type="duration" />
-        <m name="overtime" type="bool" />
-        <m name="free_for_all" type="bool" />
-        <m name="rerolls" type="bool" />
+        <m name="overtime" type="bool" default="true" />
+        <m name="late_join" type="bool" default="true" />
+        <m name="rerolls" type="bool" default="true" />
+        <m name="competitve_patch" type="bool" />
         <m name="mappack_id" type="uint" optional="true" />
+        <m name="campaign_selection" type="list[uint]" optional="true" />
         <m name="map_tag" type="int" optional="true" default="1" />
     </struct>
+
+    <struct name="HandshakeRequest">
+        <comment>Request to open a connection by the client.</comment>
+        <m name="version" type="string" />
+        <m name="game" type="GamePlatform" />
+        <m name="token" type="string" />
+    </struct>
+
+    <struct name="CampaignMap">
+        <comment>A map identifier for an official campaign.</comment>
+        <m name="campaign_id" type="int" default="-1" />
+        <m name="map" type="int" default="-1" />
+    </struct>
+
+    <struct name="ChatMessage">
+        <comment>A message sent by a player in a text chat.</comment>
+        <m name="uid" type="uint" />
+        <m name="name" type="string" />
+        <m name="title" type="string" optional="true" />
+        <m name="timestamp" type="datetime" />
+        <m name="content" type="string" />
+        <m name="team_message" type="bool" />
+    </struct>
+
+    <struct name="PollChoice">
+        <comment>One of the available options in a poll.</comment>
+        <m name="text" type="string" />
+        <m name="color" type="rgbColor" />
+    </struct>
+
+    <struct name="Poll">
+        <comment>A set of choices to which players can answer.</comment>
+        <m name="id" type="uint" />
+        <m name="title" type="string" />
+        <m name="color" type="rgbColor" />
+        <m name="duration" type="duration" />
+        <m name="choices" type="list[PollChoice]" />
+    </struct>
+
+    <enum name="GamePlatform">
+        <comment>Supported game platforms in Bingo.</comment>
+        <v>Next</v>
+        <v>Turbo</v>
+    </enum>
 
     <enum name="MapMode">
         <comment>Available map selection modes.</comment>
         <v>RandomTMX</v>
         <v>Tags</v>
         <v>Mappack</v>
+        <v>Campaign</v>
     </enum>
 
     <enum name="Medal">
@@ -62,5 +113,12 @@
         <v>Silver</v>
         <v>Bronze</v>
         <v>None</v>
+    </enum>
+
+    <enum name="HandshakeFailureIntentCode">
+        <comment>When a connection to the server fails, give the client a hint of what it should do.</comment>
+        <v>ShowError</v>
+        <v>RequireUpdate</v>
+        <v>Reauthenticate</v>
     </enum>
 </datatypes>

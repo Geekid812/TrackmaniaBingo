@@ -1,5 +1,6 @@
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::convert::TryFrom;
+use std::fmt::Display;
 
 #[derive(Eq, PartialEq)]
 pub struct Version(pub i32, pub i32);
@@ -18,6 +19,12 @@ impl TryFrom<String> for Version {
             return Err(());
         }
         Ok(Self(major, minor))
+    }
+}
+
+impl Display for Version {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}.{}", self.0, self.1))
     }
 }
 

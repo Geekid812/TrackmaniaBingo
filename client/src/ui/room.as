@@ -20,18 +20,17 @@ namespace UIGameRoom {
             // Room window was closed, should disconnect the player.
             // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
             // So for now, the player will get yeeted out.
-            Network::LeaveRoom();
+            @Room = null;
+            Network::CloseConnection();
             CleanupUI();
             return;
         }
         if (windowOpen) {
-            UI::PushFont(Font::Regular);
-            bool gameIsStarting = @Match !is null && Match.GetPhase() == MatchPhase::Starting;
+            bool gameIsStarting = Gamemaster::IsBingoActive() && Gamemaster::GetPhase() == GamePhase::Starting;
             UI::BeginDisabled(gameIsStarting);
             RenderContent();
             UI::EndDisabled();
             if (gameIsStarting) Countdown();
-            UI::PopFont();
         }
         IncludePlayerCountInTitle = !windowOpen;
         GrabFocus = false;
@@ -54,9 +53,7 @@ namespace UIGameRoom {
     
         UI::SameLine();
         string roomCodeStatus = StatusLabel((RoomCodeHovered ? "\\$ff8" : "") + Icons::Kenney::Key, RoomCodeVisible ? Room.joinCode : "******");
-        UI::PushFont(Font::Monospace);
         UI::Text(roomCodeStatus);
-        UI::PopFont();
         if (UI::IsItemClicked()) RoomCodeVisible = !RoomCodeVisible;
         RoomCodeHovered = UI::IsItemHovered();
         if (RoomCodeHovered) {
@@ -80,10 +77,11 @@ namespace UIGameRoom {
         float windowWidth = UI::GetWindowSize().x;
         if (Room.localPlayerIsHost) {
             UI::SameLine();
-            float buttonPadding = LayoutTools::GetPadding(windowWidth, 150, 1.0);
+            string buttonText = Icons::Cog + " Change Settings";
+            float buttonPadding = Layout::GetPadding(windowWidth, Layout::ButtonWidth(buttonText) + 4, 1.0);
             UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
             UIColor::Gray();
-            if (UI::Button(Icons::Cog + " Change Settings")) {
+            if (UI::Button(buttonText)) {
                 SettingsWindow::Visible = !SettingsWindow::Visible;
             }
             UIColor::Reset();
@@ -93,7 +91,7 @@ namespace UIGameRoom {
 
         string[] roomInfo = MatchConfigInfo(Room.matchConfig);
         string combinedInfo = string::Join(roomInfo, " ");
-        float infoPadding = LayoutTools::GetPadding(windowWidth, Draw::MeasureString(combinedInfo).x, 0.5);
+        float infoPadding = Layout::GetPadding(windowWidth, Draw::MeasureString(combinedInfo).x, 0.5);
         UI::SetCursorPos(vec2(infoPadding, UI::GetCursorPos().y));
 
         for (uint i = 0; i < roomInfo.Length; i++) {
@@ -138,13 +136,14 @@ namespace UIGameRoom {
             UI::NewLine();
         }
         
-        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null) || Room.matchConfig.freeForAll, true, Room.CanCreateMoreTeams() && @Match is null, Room.CanDeleteTeams());
+        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null), true, Room.CanCreateMoreTeams() && !Gamemaster::IsBingoActive(), Room.CanDeleteTeams());
 
-        LeaveButton();
+        // Quit early if we disconnected from the room
+        if (LeaveButton()) return;
 
         if (Room.localPlayerIsHost) {
             UIColor::DarkGreen();
-            bool startDisabled = Room.players.Length < 2 && !Settings::DevMode;
+            bool startDisabled = Room.players.Length < 2 && !Settings::DevTools;
             UI::BeginDisabled(startDisabled);
             
             UI::SameLine();
@@ -157,12 +156,23 @@ namespace UIGameRoom {
         }
     }
 
-    void LeaveButton() {
+    bool LeaveButton() {
+        bool hasDisconnected = false;
+
         UIColor::DarkRed();
         if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-            startnew(Network::LeaveRoom);
+            @Room = null;
+            Gamemaster::Shutdown();
+            hasDisconnected = true;
+
+            // Reopen the connection if the main window is open
+            if (UIMainWindow::Visible) {
+                startnew(Network::Connect);
+            }
         }
+
         UIColor::Reset();
+        return hasDisconnected;
     }
 
     string[] MatchConfigInfo(MatchConfiguration config) {
@@ -181,9 +191,7 @@ namespace UIGameRoom {
     void StatusTooltip(const string&in key, const string&in value) {
         UI::BeginTooltip();
         if (key != "") {
-            UI::PushFont(Font::Bold);
             UI::Text(key + ":");
-            UI::PopFont();
             UI::SameLine();
         }
         UI::Text(value);
@@ -194,8 +202,8 @@ namespace UIGameRoom {
         vec2 windowSize = UI::GetWindowSize();
         int secondsRemaining = (Match.startTime - Time::Now) / 1000 + 1;
         string countdownText = "Game starting in " + secondsRemaining + "...";
-        vec2 textSize = Draw::MeasureString(countdownText, Font::Header, Font::Header.FontSize);
-        float padding = LayoutTools::GetPadding(windowSize.x, textSize.x, 1.0);
+        vec2 textSize = Draw::MeasureString(countdownText, Font::Current());
+        float padding = Layout::GetPadding(windowSize.x, textSize.x, 1.0);
         vec4 textColor = UI::GetStyleColor(UI::Col::Text);
         float margin = 16;
 
@@ -204,11 +212,9 @@ namespace UIGameRoom {
         textColor.w = (Math::Sin(alphaValue / 1000.) + 1) / 1.6;
 
         UI::SetCursorPos(vec2(padding - margin, windowSize.y - textSize.y - margin));
-        UI::PushFont(Font::Header);
         UI::PushStyleColor(UI::Col::Text, textColor);
         UI::Text(countdownText);
         UI::PopStyleColor();
-        UI::PopFont();
     }
 
     string PlayerCount() {

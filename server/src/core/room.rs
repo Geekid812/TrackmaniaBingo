@@ -18,7 +18,8 @@ use super::{
     livegame::LiveMatch,
     models::{
         self,
-        player::{Player, PlayerRef},
+        map::GameMap,
+        player::Player,
         room::{RoomState, RoomTeam},
         team::{BaseTeam, GameTeam, TeamIdentifier},
     },
@@ -26,8 +27,8 @@ use super::{
     util::Color,
 };
 use crate::{
-    datatypes::{MatchConfiguration, RoomConfiguration},
-    orm::{composed::profile::PlayerProfile, mapcache::record::MapRecord},
+    config,
+    datatypes::{GamePlatform, MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
     server::{context::ClientContext, mapload},
     transport::Channel,
 };
@@ -42,7 +43,7 @@ pub struct GameRoom {
     channel: Channel<RoomEvent>,
     created: DateTime<Utc>,
     load_marker: u32,
-    loaded_maps: Vec<MapRecord>,
+    loaded_maps: Vec<GameMap>,
     active_match: Option<Shared<LiveMatch>>,
 }
 
@@ -114,6 +115,11 @@ impl GameRoom {
         &self.teams.get_teams()
     }
 
+    pub fn match_uid(&self) -> Option<String> {
+        let livegame = self.active_match.as_ref().and_then(|ptr| ptr.upgrade());
+        livegame.map(|game| game.lock().uid().clone())
+    }
+
     pub fn get_player(&self, uid: i32) -> Option<&PlayerData> {
         self.members.iter().filter(|p| p.uid == uid).next()
     }
@@ -145,7 +151,7 @@ impl GameRoom {
     fn team_members(&self) -> HashMap<TeamIdentifier, Vec<i32>> {
         let mut map: HashMap<TeamIdentifier, Vec<i32>> = HashMap::new();
         self.members.iter().for_each(|p| {
-            map.entry(p.team).or_default().push(p.profile.player.uid);
+            map.entry(p.team).or_default().push(p.profile.uid);
         });
         self.teams.get_teams().iter().for_each(|t| {
             map.entry(t.id).or_default();
@@ -158,11 +164,11 @@ impl GameRoom {
         self.members
             .iter()
             .find(|p| p.operator)
-            .map(|p| p.profile.player.username.clone())
+            .map(|p| p.profile.name.clone())
     }
 
     pub fn has_player(&self, uid: i32) -> bool {
-        self.members.iter().any(|m| m.profile.player.uid == uid)
+        self.members.iter().any(|m| m.profile.uid == uid)
     }
 
     pub fn get_state(&self) -> RoomState {
@@ -185,14 +191,14 @@ impl GameRoom {
             .expect("0 teams in self.teams")
             .id;
         self.members.push(PlayerData {
-            uid: profile.player.uid,
+            uid: profile.uid,
             profile: profile.clone(),
             team,
             operator,
             disconnected: false,
+            writer: ctx.writer.clone(),
         });
-        self.channel
-            .subscribe(profile.player.uid, ctx.writer.clone());
+        self.channel.subscribe(profile.uid, ctx.writer.clone());
         team
     }
 
@@ -200,7 +206,7 @@ impl GameRoom {
         self.load_marker
     }
 
-    pub fn maps_load_callback(&mut self, maps: Vec<MapRecord>, userdata: u32) {
+    pub fn maps_load_callback(&mut self, maps: Vec<GameMap>, userdata: u32) {
         if userdata == self.load_marker {
             self.loaded_maps = maps;
         }
@@ -221,10 +227,10 @@ impl GameRoom {
         if self.at_size_capacity() {
             return Err(JoinRoomError::PlayerLimitReached);
         }
-        if self.has_started() {
+        if self.has_started() && !self.matchconfig().late_join {
             return Err(JoinRoomError::HasStarted);
         }
-        if self.has_player(ctx.profile.player.uid) {
+        if self.has_player(ctx.profile.uid) {
             return Err(JoinRoomError::PlayerAlreadyJoined);
         }
 
@@ -242,6 +248,7 @@ impl GameRoom {
                     delta: 1,
                 });
         }
+
         Ok(())
     }
 
@@ -266,7 +273,7 @@ impl GameRoom {
         }
         if let Some(data) = self.members.iter_mut().find(|m| m.uid == uid) {
             data.team = team;
-            let uid = data.profile.player.uid;
+            let uid = data.profile.uid;
             self.player_update(vec![(uid, team)]);
         }
         true
@@ -301,7 +308,7 @@ impl GameRoom {
                         updates: HashMap::from_iter(
                             updated_players
                                 .into_iter()
-                                .map(|p| (p.profile.player.uid, default)),
+                                .map(|p| (p.profile.uid, default)),
                         ),
                     }));
             }
@@ -337,7 +344,7 @@ impl GameRoom {
         for i in 0..self.members.len() {
             let team = self
                 .teams
-                .create_random_team(self.members[i].profile.player.username.clone())
+                .create_random_team(self.members[i].profile.name.clone())
                 .clone();
             self.members[i].team = team.id;
             self.team_created(team);
@@ -365,6 +372,7 @@ impl GameRoom {
         let mapconfig_changed = config.selection != self.matchconfig.selection
             || self.matchconfig.mappack_id != config.mappack_id
             || self.matchconfig.map_tag != config.map_tag
+            || self.matchconfig.campaign_selection != config.campaign_selection
             || self.matchconfig.grid_size < config.grid_size;
 
         self.matchconfig = config;
@@ -410,6 +418,11 @@ impl GameRoom {
     }
 
     pub fn check_close(&mut self) {
+        // check if a setting disables this behaviour
+        if config::get_boolean("behaviour.never_close").unwrap_or(false) {
+            return;
+        }
+
         if !self.members.iter().any(|p| p.operator) {
             debug!("No room operator, closing.");
             self.close_room("The host has left the room.".to_owned());
@@ -441,11 +454,6 @@ impl GameRoom {
                 .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
                     updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
                 }));
-        }
-
-        if self.matchconfig.free_for_all {
-            self.create_ffa_teams();
-            self.broadcast_sync();
         }
 
         self.loaded_maps.shuffle(&mut rand::thread_rng());
@@ -481,6 +489,7 @@ impl GameRoom {
         let mut lock = match_arc.lock();
         lock.set_parent_room(self.ptr.clone());
         lock.set_channel(Channel::<GameEvent>::from(&self.channel));
+
         lock.setup_match_start(start_date);
         directory::MATCHES.insert(lock.uid().to_owned(), match_arc.clone());
         drop(lock);

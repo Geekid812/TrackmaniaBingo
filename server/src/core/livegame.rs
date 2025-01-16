@@ -1,31 +1,29 @@
 use anyhow::anyhow;
 use std::{
-    iter::once,
+    collections::HashMap,
     sync::{Arc, Weak},
 };
 
 use crate::{
     config::CONFIG,
-    datatypes::MatchConfiguration,
-    orm::{
-        self,
-        mapcache::record::MapRecord,
-        models::matches::{Match, PlayerToMatch},
-    },
+    datatypes::{CampaignMap, MatchConfiguration, PlayerRef, Poll, PollChoice},
     server::{context::ClientContext, tasks::execute_delayed_task},
+    store::{
+        self,
+        matches::{Match, MatchOutcome, MatchResult},
+    },
     transport::Channel,
 };
 use chrono::{DateTime, Duration, Utc};
-use futures::executor::block_on;
 use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
-use sqlx::QueryBuilder;
-use tracing::error;
+use tracing::{error, warn};
 
 use super::{
     directory::{Owned, Shared, MATCHES},
     events::game::GameEvent,
+    gamecommon::PlayerId,
     models::{
         livegame::{GameCell, MapClaim, MatchPhase, MatchState},
         map::GameMap,
@@ -34,7 +32,7 @@ use super::{
     },
     room::GameRoom,
     teams::TeamsManager,
-    util::base64,
+    util::{base64, Color},
 };
 
 pub struct LiveMatch {
@@ -48,18 +46,28 @@ pub struct LiveMatch {
     started: Option<DateTime<Utc>>,
     phase: MatchPhase,
     channel: Channel<GameEvent>,
+    polls: HashMap<u32, Owned<PollData>>,
 }
 
 struct MatchOptions {
     start_countdown: Duration,
-    player_join: bool,
-    is_daily: bool,
+}
+
+struct PollData {
+    pub poll: Poll,
+    pub votes: Vec<Vec<PlayerId>>,
+    pub callback: PollResultCallback,
+}
+
+pub enum PollResultCallback {
+    None,
+    Reroll(usize),
 }
 
 impl LiveMatch {
     pub fn new(
         config: MatchConfiguration,
-        maps: Vec<MapRecord>,
+        maps: Vec<GameMap>,
         teams: TeamsManager<GameTeam>,
     ) -> Owned<Self> {
         let mut _self = Self {
@@ -72,7 +80,7 @@ impl LiveMatch {
             cells: maps
                 .into_iter()
                 .map(|map| GameCell {
-                    map: GameMap::from(map),
+                    map,
                     claims: Vec::new(),
                     reroll_ids: Vec::new(),
                 })
@@ -80,6 +88,7 @@ impl LiveMatch {
             started: None,
             phase: MatchPhase::Starting,
             channel: Channel::new(),
+            polls: HashMap::new(),
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
@@ -99,20 +108,6 @@ impl LiveMatch {
             panic!("attempted to change match options after starting");
         }
         self.options.start_countdown = countdown;
-    }
-
-    pub fn set_player_join(&mut self, enabled: bool) {
-        if self.started.is_some() {
-            panic!("attempted to change match options after starting");
-        }
-        self.options.player_join = enabled;
-    }
-
-    pub fn set_daily(&mut self, is_daily: bool) {
-        if self.started.is_some() {
-            panic!("attempted to change match options after starting");
-        }
-        self.options.is_daily = is_daily;
     }
 
     pub fn setup_match_start(&mut self, start_date: DateTime<Utc>) {
@@ -164,7 +159,7 @@ impl LiveMatch {
                 .cells
                 .iter()
                 .take(maps_in_grid)
-                .map(|c| c.map.track.clone())
+                .map(|c| c.map.clone())
                 .collect(),
             can_reroll: self.can_reroll(),
         });
@@ -191,7 +186,7 @@ impl LiveMatch {
             if team
                 .members
                 .iter()
-                .filter(|p| p.profile.player.uid == player_id)
+                .filter(|p| p.profile.uid == player_id)
                 .next()
                 .is_some()
             {
@@ -214,23 +209,23 @@ impl LiveMatch {
         ctx: &ClientContext,
         mut requested_team: Option<TeamIdentifier>,
     ) -> Result<TeamIdentifier, anyhow::Error> {
-        let already_joined_team = self.get_player_team(ctx.profile.player.uid);
+        let already_joined_team = self.get_player_team(ctx.profile.uid);
 
         if let Some(team) = already_joined_team {
-            self.channel
-                .subscribe(ctx.profile.player.uid, ctx.writer.clone());
+            self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
             return Ok(team);
         } else {
-            if !self.options.player_join {
-                return Err(anyhow!("joining is disabled for this match"));
+            if !self.config.late_join {
+                return Err(anyhow!("late joining is disabled for this match"));
             }
 
-            if requested_team.is_none() && !self.config.free_for_all {
+            if requested_team.is_none() {
                 requested_team = self.get_least_populated_team().map(|t| t.base.id);
             }
         }
 
-        self.add_player(ctx, already_joined_team.or(requested_team))
+        let team = self.add_player(ctx, requested_team)?;
+        Ok(team)
     }
 
     fn add_player(
@@ -246,7 +241,7 @@ impl LiveMatch {
             None => {
                 let id = self
                     .teams
-                    .create_random_team(ctx.profile.player.username.clone())
+                    .create_random_team(ctx.profile.name.clone())
                     .base
                     .id;
                 let team = self
@@ -265,12 +260,11 @@ impl LiveMatch {
             operator: false,
             disconnected: false,
         });
+        self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
         self.channel.broadcast(&GameEvent::MatchPlayerJoin {
             profile: ctx.profile.clone(),
             team: team.base.id,
         });
-        self.channel
-            .subscribe(ctx.profile.player.uid, ctx.writer.clone());
         Ok(team.base.id)
     }
 
@@ -296,7 +290,28 @@ impl LiveMatch {
         self.cells
             .iter()
             .enumerate()
-            .filter(|(_, c)| c.map.track.uid == uid)
+            .filter(|(_, c)| {
+                if let GameMap::TMX(record) = &c.map {
+                    return record.uid == uid;
+                } else {
+                    return false;
+                }
+            })
+            .map(|(i, _)| i)
+            .next()
+    }
+
+    pub fn get_cell_from_campaign(&self, campaign: &CampaignMap) -> Option<usize> {
+        self.cells
+            .iter()
+            .enumerate()
+            .filter(|(_, c)| {
+                if let GameMap::Campaign(campaign_other) = &c.map {
+                    return campaign == campaign_other;
+                } else {
+                    return false;
+                }
+            })
             .map(|(i, _)| i)
             .next()
     }
@@ -335,10 +350,8 @@ impl LiveMatch {
         ranking.insert(i, claim.clone());
         self.broadcast_submitted_run(id, claim, i + 1);
 
-        if !self.options.is_daily {
-            if self.do_bingo_checks() {
-                return;
-            }
+        if self.do_bingo_checks() {
+            return;
         }
         if self.phase == MatchPhase::Overtime {
             self.do_cell_winner_checks();
@@ -362,7 +375,7 @@ impl LiveMatch {
             room.lock().reset_match();
         }
 
-        self.save_match(draw);
+        self.save_match_end(draw);
         MATCHES.remove(self.uid.clone());
     }
 
@@ -374,59 +387,31 @@ impl LiveMatch {
         self.teams.get_teams().iter().map(|t| t.members.len()).sum()
     }
 
-    fn save_match(&mut self, draw: bool) {
-        let daily_timedate = if self.options.is_daily {
-            self.started
-                .map(|date| format!("{}", date.format("%Y-%m-%d")))
-        } else {
-            None
-        };
+    fn save_match_end(&mut self, draw: bool) {
         let match_model = Match {
             uid: self.uid.clone(),
-            started_at: self.started.map(|t| t.naive_utc()).unwrap_or_default(),
-            ended_at: Utc::now().naive_utc(),
-            daily_timedate,
+            started_at: self.started.unwrap_or_default(),
+            ended_at: Utc::now(),
         };
         let mut player_results = Vec::new();
         for team in self.teams.get_teams() {
             for player in &team.members {
-                player_results.push(PlayerToMatch {
-                    player_uid: player.profile.player.uid,
-                    match_uid: self.uid.clone(),
-                    outcome: if draw {
-                        "D".to_owned()
+                player_results.push((
+                    player.profile.uid,
+                    if draw {
+                        MatchOutcome::Draw
                     } else if team.winner {
-                        "W".to_owned()
+                        MatchOutcome::Win
                     } else {
-                        "L".to_owned()
+                        MatchOutcome::Loss
                     },
-                });
+                ));
             }
         }
-        tokio::spawn(orm::execute(move |mut conn| {
-            let mut builder = QueryBuilder::new("INSERT INTO matches ");
-            builder.push_values(once(match_model), |mut builder, m| {
-                m.bind_values(&mut builder)
-            });
-            let query = builder.build();
-            if let Err(e) = block_on(query.execute(&mut *conn)) {
-                error!("execute error in matches: {}", e);
-            }
-
-            if player_results.is_empty() {
-                return;
-            }
-            let mut builder = QueryBuilder::new("INSERT INTO matches_players ");
-            let query = builder
-                .push_values(player_results, |mut b, result| {
-                    result.bind_values(&mut b);
-                })
-                .build()
-                .persistent(false);
-            if let Err(e) = block_on(query.execute(&mut *conn)) {
-                error!("execute error in matches_players: {}", e);
-            }
-        }));
+        tokio::spawn(store::matches::write_match_end(
+            match_model,
+            MatchResult(player_results),
+        ));
     }
 
     fn broadcast_submitted_run(&mut self, cell_id: usize, claim: MapClaim, position: usize) {
@@ -440,7 +425,7 @@ impl LiveMatch {
     pub fn submit_reroll_vote(
         &mut self,
         cell_id: usize,
-        player_id: i32,
+        player: PlayerRef,
     ) -> Result<(), anyhow::Error> {
         if !self.config.rerolls {
             return Err(anyhow!("rerolls are disabled for this match"));
@@ -453,28 +438,36 @@ impl LiveMatch {
             ));
         }
 
-        let cell = &mut self.cells[cell_id];
-        let mut added = false;
-        if cell.reroll_ids.iter().any(|id| *id == player_id) {
-            cell.reroll_ids.retain(|id| *id != player_id);
-        } else {
-            cell.reroll_ids.push(player_id);
-            added = true;
+        let poll_id = 0x10000 | cell_id as u32;
+        let already_voting = self.polls.contains_key(&poll_id);
+        if already_voting {
+            return Err(anyhow!("there is already a reroll vote for this map"));
         }
 
-        let count = cell.reroll_ids.len();
-        let required = self.player_count() / 2 + 1; // TODO: make this customizable
-        self.channel.broadcast(&GameEvent::RerollVoteCast {
-            player_id,
-            cell_id,
-            added,
-            count,
-            required,
-        });
+        let cell = &self.cells[cell_id];
+        let poll = Poll {
+            id: poll_id,
+            title: format!(
+                "{} asks: Reroll \\$ff8{}\\$z?",
+                player.name,
+                cell.map.name()
+            ),
+            color: Color::new(128, 128, 128),
+            duration: Duration::seconds(60),
+            choices: vec![
+                PollChoice {
+                    text: "Yes".to_string(),
+                    color: Color::new(0, 100, 0),
+                },
+                PollChoice {
+                    text: "No".to_string(),
+                    color: Color::new(100, 0, 0),
+                },
+            ],
+        };
 
-        if added && count >= required {
-            self.reroll_map(cell_id)?;
-        }
+        let initial_votes = vec![vec![player.uid], Vec::new()];
+        self.start_poll(poll, initial_votes, PollResultCallback::Reroll(cell_id));
 
         Ok(())
     }
@@ -490,7 +483,7 @@ impl LiveMatch {
         self.cells.swap_remove(cell_id);
         self.channel.broadcast(&GameEvent::MapRerolled {
             cell_id,
-            map: self.cells[cell_id].map.track.clone(),
+            map: self.cells[cell_id].map.clone(),
             can_reroll: self.can_reroll(),
         });
         Ok(())
@@ -603,7 +596,7 @@ impl LiveMatch {
                 .clone()
                 .filter(|cell| {
                     cell.leading_claim().is_some()
-                        && cell.leading_claim().unwrap().player.team == team.base.id
+                        && cell.leading_claim().unwrap().team_id == team.base.id
                 })
                 .count();
             if score > max_score {
@@ -615,6 +608,92 @@ impl LiveMatch {
         }
 
         winner
+    }
+
+    pub fn start_poll(
+        &mut self,
+        poll: Poll,
+        initial_votes: Vec<Vec<PlayerId>>,
+        callback: PollResultCallback,
+    ) {
+        let poll_id = poll.id;
+        let delay = poll.duration.to_std().unwrap();
+        let votes_count = initial_votes.iter().map(|v| v.len() as i32).collect();
+
+        let event = GameEvent::PollStart {
+            poll: poll.clone(),
+            votes: votes_count,
+        };
+        let poll_data = Arc::new(Mutex::new(PollData {
+            poll,
+            votes: initial_votes,
+            callback,
+        }));
+        let poll_ref = Arc::downgrade(&poll_data);
+        self.polls.insert(poll_id, poll_data);
+
+        execute_delayed_task(
+            self.ptr.clone(),
+            move |_self| LiveMatch::poll_end(_self, poll_ref),
+            delay,
+        );
+        self.channel.broadcast(&event);
+    }
+
+    pub fn poll_cast_vote(&mut self, poll_id: u32, uid: u32, choice: usize) {
+        let Some(poll) = self.polls.get(&poll_id) else {
+            return;
+        };
+
+        let mut lock = poll.lock();
+        let votes = &mut lock.votes;
+
+        for i in 0..votes.len() {
+            if i == choice {
+                if !votes[i].contains(&uid) {
+                    votes[i].push(uid);
+                }
+            } else if let Some(idx) = votes[i].iter().position(|x| *x == uid) {
+                votes[i].remove(idx);
+            }
+        }
+
+        let event = GameEvent::PollVotesUpdate {
+            id: poll_id,
+            votes: votes.iter().map(|v| v.len() as i32).collect(),
+        };
+        self.channel.broadcast(&event);
+    }
+
+    fn poll_end(&mut self, poll_ref: Shared<PollData>) {
+        if let Some(lock) = poll_ref.upgrade() {
+            let poll = lock.lock();
+            let (selected_choice, _) = poll
+                .votes
+                .iter()
+                .enumerate()
+                .max_by_key(|(_i, v)| v.len())
+                .expect("expected at least one choice");
+
+            self.channel.broadcast(&GameEvent::PollResult {
+                id: poll.poll.id,
+                selected: Some(selected_choice as u32),
+            });
+
+            match poll.callback {
+                PollResultCallback::Reroll(cell_id)
+                    if poll.votes[0].len() > poll.votes[1].len() =>
+                {
+                    if let Err(e) = self.reroll_map(cell_id) {
+                        error!("{}", e);
+                    }
+                }
+                _ => (),
+            };
+            self.polls.remove(&poll.poll.id);
+        } else {
+            warn!("Poll cancelled by dropped reference.");
+        }
     }
 
     fn nobingo_phase_change(&mut self) {
@@ -629,17 +708,6 @@ impl LiveMatch {
         }
 
         if self.do_bingo_checks() {
-            return;
-        }
-
-        if self.options.is_daily {
-            let bingos = self.check_for_bingos();
-            if bingos.len() >= 1 {
-                self.announce_bingo_and_game_end(bingos);
-            } else {
-                self.channel.broadcast(&GameEvent::AnnounceDraw);
-                self.set_game_ended(true);
-            }
             return;
         }
 
@@ -660,8 +728,6 @@ impl Default for MatchOptions {
     fn default() -> Self {
         Self {
             start_countdown: CONFIG.game.start_countdown,
-            player_join: false,
-            is_daily: false,
         }
     }
 }
@@ -690,10 +756,10 @@ fn iter_check_unique_team<'a>(
         .expect("invalid grid_size")
         .leading_claim()
         .as_ref()
-        .map(|c| c.player.team);
+        .map(|c| c.team_id);
     iter.fold(first, |acc, x| {
         acc.and_then(|y| {
-            if x.leading_claim().as_ref().map(|c| c.player.team) == Some(y) {
+            if x.leading_claim().as_ref().map(|c| c.team_id) == Some(y) {
                 Some(y)
             } else {
                 None

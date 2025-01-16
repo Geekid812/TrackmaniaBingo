@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{core::gamecommon::PlayerData, orm::composed::profile::PlayerProfile};
+use crate::{core::gamecommon::PlayerData, datatypes::PlayerProfile};
 
-use super::team::TeamIdentifier;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Player {
@@ -20,10 +19,4 @@ impl From<&PlayerData> for Player {
             disconnected: value.disconnected,
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct PlayerRef {
-    pub uid: i32,
-    pub team: TeamIdentifier,
 }

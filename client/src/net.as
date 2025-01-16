@@ -37,7 +37,6 @@ namespace Network {
     }
 
     void Reset() {
-        ResetGameState();
         _protocol = Protocol();
         Internal::SuspendUI = false;
         Internal::ConnectionOpen = false;
@@ -47,11 +46,6 @@ namespace Network {
         Internal::Errors = {};
         Timings::LastPingSent = 0;
         Timings::LastPingReceived = 0;
-    }
-
-    void ResetGameState() {
-        @Room = null;
-        @Match = null;
     }
 
     void Connect() {
@@ -92,42 +86,22 @@ namespace Network {
     void OpenConnection() {
         int retries = 3;
         while (!IsConnected() && retries > 0) {
-            auto handshake = HandshakeData();
-            handshake.clientVersion = Meta::ExecutingPlugin().Version;
-            handshake.username = GetLocalLogin();
-            handshake.authToken = PersistantStorage::ClientToken;
-            int code = _protocol.Connect(Settings::BackendAddress, Settings::NetworkPort, handshake);
+            auto handshake = HandshakeRequest();
+            handshake.version = Meta::ExecutingPlugin().Version;
+            handshake.token = PersistantStorage::ClientToken;
+            handshake.game = CURRENT_GAME;
+
+            Settings::BackendConfiguration@ backend = Settings::GetBackendConfiguration();
+            int code = _protocol.Connect(backend.NetworkAddress, backend.TcpPort, handshake);
 
             // If the handshake code was not handled, this is the last retry.
-            if (code != -1 && !HandleHandshakeCode(HandshakeCode(code))) retries = 1;
+            if (code == -2) retries = 1;
 
             if (!IsConnected()) {
                 retries -= 1;
-                trace("Network: Failed to connect. " + retries + " retry attempts left.");
+                trace("[Network] Failed to connect. " + retries + " retry attempts left.");
             }
         }
-    }
-
-    bool HandleHandshakeCode(HandshakeCode code) {
-        if (code == HandshakeCode::Ok) {
-            return false;
-        }
-        if (code == HandshakeCode::CanReconnect) {
-            // The server indicates that reconnecting is possible
-            warn("Error code" + int(HandshakeCode::CanReconnect) + " is obsolete as of version 4.3. This should not have happened!");
-        } else if (code == HandshakeCode::IncompatibleVersion) {
-            // Update required
-            UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required to play Bingo. Please update the plugin to the latest version in the plugin manager.", vec4(.4, .4, 1., 1.), 10000);
-            trace("Network: Received update handshake code. We will not attempt to retry the connection.");
-            return false;
-        } else if (code == HandshakeCode::AuthRefused || code == HandshakeCode::AuthFailure) {
-            // Auth error (we should try and update our logins)
-            trace("Network: Received auth error handshake code (" + code + "). Attempting to refresh credentials...");
-            Login::Login();
-        } else {
-            // Plugin error (this should not happen)
-        }
-        return true;
     }
 
     void Loop() {
@@ -137,19 +111,19 @@ namespace Network {
         }
 
         if (!ShouldStayConnected()) {
-            trace("Network: Plugin not active, disconnecting from the server.");
+            trace("[Network] Plugin not active, disconnecting from the server.");
             CloseConnection();
             return;
         }
         
         string message = _protocol.Recv();
         while (message != "") {
-            trace("Network: Received message: " + message);
+            trace("[Network] Received message: " + message);
             Json::Value json;
             try {
                 json = Json::Parse(message);
             } catch {
-                trace("Network: Failed to parse received message. Got: " + message);
+                trace("[Network] Failed to parse received message. Got: " + message);
                 _protocol.Fail();
                 break;
             }
@@ -180,15 +154,15 @@ namespace Network {
     }
 
     void OnDisconnect() {
-        trace("Network: Disconnected! Attempting to reconnect...");
+        trace("[Network] Disconnected! Attempting to reconnect...");
         Reset();
         Connect();
         if (!IsConnected()) {
-            Reset();
+            Gamemaster::Shutdown();
             UI::ShowNotification(Icons::Exclamation + " Bingo: You have been disconnected!", "Use the plugin interface to reconnect.", vec4(.9, .1, .1, 1.), 10000);
             Internal::OfflineMode = true;
         } else {
-            trace("Network: Reconnected to server.");
+            trace("[Network] Reconnected to server.");
         }
     }
 
@@ -197,7 +171,7 @@ namespace Network {
         auto response = Post("Ping", Json::Object(), false);
         uint64 end = Time::Now - start;
         bool result = response !is null;
-        trace("TestConnection: " + tostring(result) + " in " + end + "ms");
+        trace("[Network::TestConnection] " + tostring(result) + " in " + end + "ms");
     }
 
     void Handle(Json::Value@ body) {
@@ -255,21 +229,26 @@ namespace Network {
             NetworkHandlers::MatchTeamCreated(body);
         } else if (event == "MatchPlayerJoin") {
             NetworkHandlers::MatchPlayerJoin(body);
-        } else if (event == "RerollVoteCast") {
-            NetworkHandlers::RerollVoteCast(body);
         } else if (event == "MapRerolled") {
             NetworkHandlers::MapRerolled(body);
         } else if (event == "CellPinged") {
             NetworkHandlers::CellPinged(body);
+        } else if (event == "ChatMessage") {
+            NetworkHandlers::ChatMessage(body);
+        } else if (event == "PollStart") {
+            NetworkHandlers::PollStart(body);
+        } else if (event == "PollVotesUpdate") {
+            NetworkHandlers::PollVotesUpdate(body);
+        } else if (event == "PollResult") {
+            NetworkHandlers::PollResult(body);
         } else {
-            warn("Network: Unknown event: " + string(body["event"]));
+            warn("[Network] Unknown event: " + string(body["event"]));
         }
     }
 
     void CloseConnection() {
         Reset();
-        UIMainWindow::Visible = false;
-        trace("Connection closed cleanly.");
+        trace("[Network::CloseConnection] Connection closed.");
     }
 
     int AddSequenceValue(Json::Value@ val) {
@@ -301,7 +280,7 @@ namespace Network {
         uint Sequence = AddSequenceValue(body);
         string Text = Json::Write(body);
         if (!_protocol.Send(Text)) {
-            warn("Network: Post preemptively failed!");
+            warn("[Network] Post preemptively failed!");
             if (Network::IsConnected()) OnDisconnect();
             return null;
         } // TODO: connection fault?
@@ -312,7 +291,7 @@ namespace Network {
 
         if (reply !is null && reply.HasKey("error")) {
             string err = string(reply["error"]);
-            trace("Request [" + type + "]: Error: " + err);
+            trace("[Network::Post] Request [" + type + "]: Error: " + err);
             UI::ShowNotification("", Icons::Times + " Error in " + type + ": " + err, vec4(.8, 0., 0., 1.), 10000);
             Internal::Errors[type] = err;
             return null;
@@ -328,13 +307,15 @@ namespace Network {
     }
 
     void CreateRoom() {
+        MatchConfig.game = CURRENT_GAME;
+
         auto body = Json::Object();
         body["config"] = RoomConfiguration::Serialize(RoomConfig);
         body["match_config"] = MatchConfiguration::Serialize(MatchConfig);
 
         Json::Value@ response = Post("CreateRoom", body, true);
         if (response is null) {
-            trace("Network: CreateRoom - No reply from server.");
+            trace("[Network] CreateRoom - No reply from server.");
             return;
         }
 
@@ -380,7 +361,7 @@ namespace Network {
 
         auto response = Post("JoinRoom", body, true);
         if (response is null) {
-            trace("Network: JoinRoom - No reply from server.");
+            trace("[Network] JoinRoom - No reply from server.");
             return;
         }
         
@@ -393,27 +374,45 @@ namespace Network {
         NetworkHandlers::LoadRoomTeams(response["teams"]);
 
         UIRoomMenu::JoinCodeVisible = false;
-        UIRoomMenu::SwitchToContext();
+
+        if (response["match_uid"].GetType() != Json::Type::Null) {
+            // We're joining an active game
+            string currentMatchUid = response["match_uid"];
+            NetParams::MatchJoinUid = currentMatchUid;
+            UITeams::SwitchToJoinContext();
+        } else {
+            // We're joining a room without an active game
+            UIRoomMenu::SwitchToContext();
+        }
     }
 
 
     void JoinMatch() {
         auto body = Json::Object();
         body["uid"] = NetParams::MatchJoinUid;
+        if (NetParams::MatchJoinTeamId != -1) {
+            body["team_id"] = NetParams::MatchJoinTeamId;
+        }
 
         auto response = Post("JoinMatch", body, true);
         if (response is null) {
-            trace("Network: JoinMatch - No reply from server.");
+            trace("[Network] JoinMatch - No reply from server.");
             return;
         }
         
-        @Match = LiveMatch::Deserialize(response["state"]);
+        LiveMatch@ joinedMatch = LiveMatch::Deserialize(response["state"]);
+        
+        Gamemaster::SetBingoActive(true);
+        UITeams::CloseContext();
+        UIChat::Clear();
+        PersistantStorage::LastConnectedMatchId = joinedMatch.uid;
+        @Match = joinedMatch;
     }
 
     void GetPublicRooms() {
         auto response = Post("GetPublicRooms", Json::Object(), false);
         if (response is null) {
-            trace("Network: GetPublicRooms - No reply from server.");
+            trace("[Network] GetPublicRooms - No reply from server.");
             UIRoomMenu::RoomsLoad = LoadStatus::Error;
             return;
         }
@@ -437,17 +436,10 @@ namespace Network {
 
         auto response = Post("EditConfig", body, true);
         if (response is null) {
-            trace("Network: EditConfig - No reply from server.");
+            trace("[Network] EditConfig - No reply from server.");
             return;
         }
         SettingsWindow::Visible = false;
-    }
-
-    void LeaveRoom() {
-        // TODO: this is rudimentary, it doesn't keep connection alive
-        trace("Network: LeaveRoom requested.");
-        PersistantStorage::LastConnectedMatchId = "";
-        CloseConnection();
     }
 
     void JoinTeam(Team team) {
@@ -465,22 +457,14 @@ namespace Network {
         Post("StartMatch", Json::Object(), true);
     }
 
-    bool ClaimCell(string&in uid, RunResult result) {
+    bool ClaimCell(int tileIndex, CampaignMap campaign, RunResult result) {
         auto body = Json::Object();
-        body["map_uid"] = uid;
+        body["tile_index"] = tileIndex;
         body["time"] = result.time;
         body["medal"] = result.medal;
+        if (campaign.campaignId != -1) body["campaign"] = CampaignMap::Serialize(campaign);
         auto Request = Network::Post("SubmitRun", body, false);
         return Request !is null;
-    }
-
-    void LoadDailyChallenge() {
-        auto response = Post("SubscribeDailyChallenge", Json::Object(), false);
-        NetworkHandlers::LoadDailyChallenge(response);   
-    }
-
-    void UnsubscribeDailyChallenge() {
-        Post("UnsubscribeDailyChallenge", Json::Object(), false);
     }
 
     void RerollCell() {
@@ -489,18 +473,12 @@ namespace Network {
         Network::Post("CastRerollVote", body, true);
     }
 
-    void GetDailyResults() {
+    void SendChatMessage() {
         auto body = Json::Object();
-        body["period"] = NetParams::DailyResultDate;
-        auto response = Network::Post("GetDailyResults", body, false);
-        if (@response is null) return;
-
-        auto dates = response["results"].GetKeys();
-        for (uint i = 0; i < dates.Length; i++) {
-            if (!UIDaily::DailyResults.Exists(dates[i])) UIDaily::DailyResults.Set(dates[i], DailyResult::Deserialize(response["results"][dates[i]]));
-        }
+        body["message"] = NetParams::ChatMessage;
+        Network::Post("SendChatMessage", body, false);
     }
-
+    
     void ReloadMaps() {
         Network::Post("ReloadMaps", Json::Object(), false);
     }
@@ -509,9 +487,9 @@ namespace Network {
         UI::ShowNotification(Icons::Globe + " Reconnecting to your Bingo match...");
         JoinMatch();
 
-        if (@Match is null || Match.uid != PersistantStorage::LastConnectedMatchId) {
-            trace("Network: Reconnection failure, forgetting previous game save.");
-            PersistantStorage::LastConnectedMatchId = "";
+        if (!Gamemaster::IsBingoActive() || Match.uid != PersistantStorage::LastConnectedMatchId) {
+            trace("[Network] Reconnection failure, forgetting previous game save.");
+            PersistantStorage::ResetConnectedMatch();
         }
     }
 
@@ -519,5 +497,12 @@ namespace Network {
         auto body = Json::Object();
         body["cell_id"] = NetParams::PingCellId;
         Network::Post("PingCell", body, false);
+    }
+
+    void SubmitPollVote() {
+        auto body = Json::Object();
+        body["poll_id"] = NetParams::PollId;
+        body["choice"] = NetParams::PollChoiceIndex;
+        Network::Post("SubmitPollVote", body, false);
     }
 }

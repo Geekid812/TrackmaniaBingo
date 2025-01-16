@@ -1,5 +1,6 @@
 use std::pin::Pin;
 
+use anyhow::anyhow;
 use futures::executor::block_on;
 use futures::Future;
 use once_cell::sync::Lazy;
@@ -7,15 +8,16 @@ use sqlx::FromRow;
 use tracing::error;
 
 use crate::config::CONFIG;
+use crate::core::models::map::GameMap;
 use crate::core::room::GameRoom;
-use crate::datatypes::{MapMode, MatchConfiguration};
+use crate::datatypes::{CampaignMap, GamePlatform, MapMode, MatchConfiguration};
 use crate::integrations::tmexchange::MappackLoader;
 use crate::{
     core::directory::Shared,
     orm::mapcache::{self, record::MapRecord},
 };
 
-type MaploadResult = Result<Vec<MapRecord>, anyhow::Error>;
+type MaploadResult = Result<Vec<GameMap>, anyhow::Error>;
 static MAPPACK_LOADER: Lazy<MappackLoader> = Lazy::new(|| MappackLoader::new());
 
 pub fn load_maps(room: Shared<GameRoom>, config: &MatchConfiguration, userdata: u32) {
@@ -44,6 +46,10 @@ fn get_load_future(
             config.map_tag.unwrap(),
         )),
         MapMode::Mappack => Box::pin(network_load_mappack(config.mappack_id.unwrap())),
+        MapMode::Campaign => Box::pin(create_campaign_maps(
+            config.game,
+            config.campaign_selection.clone().unwrap(),
+        )),
         #[allow(unreachable_patterns)]
         _ => unimplemented!(),
     }
@@ -61,12 +67,12 @@ async fn fetch_and_load<F: Future<Output = MaploadResult>>(
             }
         }
         Err(e) => {
-            error!("{}", e);
+            error!("maps loading error: {}", e);
         }
     }
 }
 
-async fn cache_load_mxrandom(count: u32) -> Result<Vec<MapRecord>, anyhow::Error> {
+async fn cache_load_mxrandom(count: u32) -> MaploadResult {
     mapcache::execute(move |mut conn| {
         let query =
             sqlx::query("SELECT * FROM maps WHERE author_time <= ? ORDER BY RANDOM() LIMIT ?")
@@ -74,7 +80,7 @@ async fn cache_load_mxrandom(count: u32) -> Result<Vec<MapRecord>, anyhow::Error
                 .bind(count as i32);
         block_on(query.fetch_all(&mut *conn)).map(|v| {
             v.iter()
-                .map(|r| MapRecord::from_row(r).expect("MapRecord from_row failed"))
+                .map(|r| GameMap::TMX(MapRecord::from_row(r).expect("MapRecord from_row failed")))
                 .collect()
         })
     })
@@ -82,7 +88,7 @@ async fn cache_load_mxrandom(count: u32) -> Result<Vec<MapRecord>, anyhow::Error
     .map_err(anyhow::Error::from)
 }
 
-async fn cache_load_tag(count: u32, tag: i32) -> Result<Vec<MapRecord>, anyhow::Error> {
+async fn cache_load_tag(count: u32, tag: i32) -> MaploadResult {
     mapcache::execute(move |mut conn| {
         let query =
             sqlx::query("SELECT * FROM maps WHERE author_time <= ? AND (tags = ? OR tags LIKE ? + ',%')  ORDER BY RANDOM() LIMIT ?")
@@ -92,7 +98,7 @@ async fn cache_load_tag(count: u32, tag: i32) -> Result<Vec<MapRecord>, anyhow::
                 .bind(count as i32);
         block_on(query.fetch_all(&mut *conn)).map(|v| {
             v.iter()
-            .map(|r| MapRecord::from_row(r).expect("MapRecord from_row failed"))
+            .map(|r| GameMap::TMX(MapRecord::from_row(r).expect("MapRecord from_row failed")))
             .collect()
         })
     })
@@ -100,8 +106,27 @@ async fn cache_load_tag(count: u32, tag: i32) -> Result<Vec<MapRecord>, anyhow::
     .map_err(anyhow::Error::from)
 }
 
-async fn network_load_mappack(mappack_id: u32) -> Result<Vec<MapRecord>, anyhow::Error> {
+async fn network_load_mappack(mappack_id: u32) -> MaploadResult {
     MAPPACK_LOADER
         .get_mappack_tracks(&mappack_id.to_string())
         .await
+}
+
+async fn create_campaign_maps(game: GamePlatform, selection: Vec<u32>) -> MaploadResult {
+    if game != GamePlatform::Turbo {
+        return Err(anyhow!(
+            "invalid game platform for campaign selection: {:#?}",
+            game
+        ));
+    }
+    let mut maps = Vec::new();
+    for i in 0..200 {
+        if selection[i / 30] & (1 << (i % 30)) == 0 {
+            maps.push(GameMap::Campaign(CampaignMap {
+                campaign_id: 0,
+                map: (i + 1) as i32,
+            }));
+        }
+    }
+    Ok(maps)
 }

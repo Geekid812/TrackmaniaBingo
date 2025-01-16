@@ -1,93 +1,132 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
-use futures::executor::block_on;
 use once_cell::sync::Lazy;
 use reqwest::StatusCode;
-use sqlx::QueryBuilder;
-use std::iter::once;
+use serde::Deserialize;
 use tracing::error;
 use warp::{http::Response, Filter};
-use warp::{Rejection, Reply};
+use warp::{post, Rejection, Reply};
 
 use crate::core::util::base64;
+use crate::integrations::openplanet::Authenticator;
 use crate::integrations::openplanet::ValidationError;
 use crate::integrations::tmio::CountryIdentifier;
-use crate::orm;
-use crate::orm::models::player::NewPlayer;
-use crate::{config::CONFIG, integrations::openplanet::Authenticator};
+use crate::store::player::NewPlayer;
+use crate::{config, store};
 
 static AUTHENTICATOR: Lazy<Option<Arc<Authenticator>>> = Lazy::new(|| {
-    if let Some(secret) = &CONFIG.secrets.openplanet_auth {
-        Some(Arc::new(Authenticator::new(secret.to_owned())))
-    } else {
-        None
+    if let Some(secret) = config::get_string("keys.openplanet") {
+        // check that it was replaced from the default value
+        if secret != "KEY" {
+            return Some(Arc::new(Authenticator::new(secret.to_owned())));
+        }
     }
+    None
 });
 
 static COUNTRY_IDENTIFIER: Lazy<Arc<CountryIdentifier>> =
     Lazy::new(|| Arc::new(CountryIdentifier::new()));
 
-pub fn auth_routes() -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
-    let login = warp::get()
+pub fn get_routes() -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    let login = post()
         .and(warp::path("login"))
-        .and(warp::query::<HashMap<String, String>>())
-        .map(|params: HashMap<String, String>| params.get("token").map(String::to_owned))
+        .and(warp::body::json())
         .then(login);
     warp::path("auth").and(login)
 }
 
-async fn login(token: Option<String>) -> impl warp::Reply {
-    match token {
-        Some(token) => {
-            let response = Response::builder();
+#[derive(Deserialize)]
+struct AuthenticationRequestBody {
+    authentication: AuthenticationMethod,
+    account_id: String,
+    display_name: String,
+    token: Option<String>,
+}
+
+#[derive(Deserialize)]
+enum AuthenticationMethod {
+    Openplanet,
+    None,
+}
+
+/// Handling logic for authenticating new players.
+async fn login(body: AuthenticationRequestBody) -> impl warp::Reply {
+    let player: NewPlayer = match body.authentication {
+        AuthenticationMethod::Openplanet => {
             if AUTHENTICATOR.is_none() {
-                unimplemented!()
+                return Response::builder().status(StatusCode::BAD_REQUEST).body(
+                    "AuthenticationMethod::Openplanet is not configured on this server".to_string(),
+                );
             }
+
+            let Some(token) = body.token else {
+                return Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body("parameter 'token' was not provided".to_string());
+            };
+
             match AUTHENTICATOR.as_ref().unwrap().validate(token).await {
                 Ok(identity) => {
-                    let token = base64::generate(32);
+                    let client_token = base64::generate(32);
                     let country_result = COUNTRY_IDENTIFIER
                         .get_country_code(&identity.account_id)
                         .await;
 
                     if let Err(e) = &country_result {
-                        error!("country code error: {}", e);
+                        error!("error fetching country code: {}", e);
                     }
                     let country_code = country_result.unwrap_or(None);
 
-                    let player = NewPlayer {
+                    NewPlayer {
                         account_id: identity.account_id,
                         username: identity.display_name,
-                        client_token: token.clone(),
+                        client_token,
                         country_code,
-                    };
-                    let result = orm::execute(move |mut conn| {
-                        let mut builder = QueryBuilder::new("INSERT INTO players(account_id, username, client_token, country_code) ");
-                        builder.push_values(once(player), |mut builder, p| {
-                            p.bind_values(&mut builder)
-                        });
-                        builder.push(" ON CONFLICT(account_id) DO UPDATE SET client_token=excluded.client_token, username=excluded.username, country_code=excluded.country_code");
-                        block_on(builder.build().execute(&mut *conn))
-                    })
-                    .await;
-                    if let Err(exec_error) = result {
-                        error!("execute error: {}", exec_error);
                     }
-                    response.body(token)
                 }
                 Err(ValidationError::BackendError(e)) => {
-                    response.status(StatusCode::UNAUTHORIZED).body(e)
+                    return Response::builder().status(StatusCode::UNAUTHORIZED).body(e);
                 }
                 Err(e) => {
                     error!("openplanet authentication error: {}", e);
-                    response
+                    return Response::builder()
                         .status(StatusCode::SERVICE_UNAVAILABLE)
-                        .body(e.to_string())
+                        .body(e.to_string());
                 }
             }
         }
-        None => Response::builder()
+        AuthenticationMethod::None => {
+            if !config::is_development() {
+                return Response::builder().status(StatusCode::FORBIDDEN).body(
+                    "AuthenticationMethod::None is not available when not in a development environment"
+                        .to_string(),
+                    );
+            }
+
+            let client_token = base64::generate(32);
+            let country_result = COUNTRY_IDENTIFIER.get_country_code(&body.account_id).await;
+
+            if let Err(e) = &country_result {
+                error!("error fetching country code: {}", e);
+            }
+            let country_code = country_result.unwrap_or(None);
+
+            NewPlayer {
+                account_id: body.account_id,
+                username: body.display_name,
+                client_token,
+                country_code,
+            }
+        }
+    };
+
+    let token = player.client_token.clone();
+    let response = Response::builder();
+    if store::player::create_or_update_player(player).await.is_ok() {
+        response.body(token)
+    } else {
+        response
             .status(StatusCode::BAD_REQUEST)
-            .body("query parameter 'token' is required".to_owned()),
+            .body("database error".to_string())
     }
 }
