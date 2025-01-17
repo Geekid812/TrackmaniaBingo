@@ -96,7 +96,7 @@ namespace DownloadManager {
         }
 
         void OnDownloadCancelled(const string&in url) {
-
+            warn("[DownloadManager::OnDownloadCancelled] Cancelled url: " + url);
         }
     }
 }
