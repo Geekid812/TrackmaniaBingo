@@ -79,6 +79,7 @@ class Protocol {
                 return -1;
             }
             @Profile = PlayerProfile::Deserialize(reply["profile"]);
+            PersistantStorage::LocalProfile = Json::Write(reply["profile"]);
         } catch {
             err("Protocol::Connect", "Could not connect to the server, received an invalid response.");
             error("Got this message: " + handshakeReply);
