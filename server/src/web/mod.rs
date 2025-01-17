@@ -3,15 +3,14 @@ use warp::{get, path, Filter};
 use crate::config;
 
 use self::routes::auth;
+use self::routes::dir;
 
-mod actions;
-mod roomlist;
 mod routes;
 
 pub async fn main() {
     let index = get().and(path::end()).map(|| "Index page: Hello!");
 
-    let routes = index.or(auth::get_routes());
+    let routes = index.or(auth::get_routes()).or(dir::get_routes());
     warp::serve(routes)
         .run((
             if config::is_development() {
