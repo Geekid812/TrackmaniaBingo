@@ -254,7 +254,7 @@ namespace Gamemaster {
      * Stop the current game and close the connection.
      */
     void Shutdown() {
-        // TODO: this is rudimentary, it doesn't keep connection alive
+        // this is rudimentary, it doesn't keep connection alive
         trace("[Gamemaster::Shutdown] Closing the game.");
         ResetAll();
         Network::CloseConnection();

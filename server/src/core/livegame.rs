@@ -321,7 +321,7 @@ impl LiveMatch {
             uid: self.uid.clone(),
             config: self.config.clone(),
             phase: self.phase,
-            teams: self.teams.get_teams().iter().map(GameTeam::clone).collect(), // TODO: broadcast members too
+            teams: self.teams.get_teams().iter().map(GameTeam::clone).collect(),
             cells: self
                 .cells
                 .iter()

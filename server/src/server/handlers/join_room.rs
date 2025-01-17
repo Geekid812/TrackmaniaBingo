@@ -27,7 +27,6 @@ impl Request for JoinRoom {
         if let Some(room) = ctx.game_room() {
             ctx.trace("already in a room, leaving previous game");
             room.lock().player_remove(ctx.profile.uid);
-            // TODO: on player removed?
         }
 
         return if let Some(room) = ROOMS.find(self.join_code.clone()) {
