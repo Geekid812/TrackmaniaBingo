@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Race against your friends to be the first team to complete a Bingo board!" />
+    <title>Trackmania Bingo</title>
+
+    <link rel="icon" type="image/png" href="/static/img/bingologo.png">
+    <link rel="stylesheet" href="static/vendor/picnic.min.css">
+    <link rel="stylesheet" href="static/vendor/fork-awesome.min.css">
+    <link rel="stylesheet" href="static/style.css">
+</head>
+
+<body>
+    <nav>
+        <a href="#" class="brand">
+            <span>Trackmania Bingo</span>
+        </a>
+
+        <div class="menu">
+            {% if g.user %}
+                <button class="pseudo">{{g.user.username}}</button>
+            {% else %}
+                <a href="/auth/login"><button class="login"><i class="fa">&#xeb02;</i> Login</button></a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="content">
+        <p>Hello World!</p>
+    </div>
+</body>
+
+</html>

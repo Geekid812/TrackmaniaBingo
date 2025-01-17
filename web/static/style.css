@@ -1,0 +1,39 @@
+@font-face {
+    font-family: "ManiaIcons";
+    font-display: swap;
+    src: url("fonts/ManiaIcons.woff2") format("woff2");
+}
+
+:root,
+body {
+    background-color: #dde;
+    display: flex;
+    justify-content: center;
+    background-color: #23232a;
+    color: white;
+    background-image: url('/static/img/index_background.png');
+}
+
+nav {
+    background: none;
+    box-shadow: none;
+}
+
+nav .logo {
+    padding: 2px;
+    border-radius: 2px;
+    height: 2.5em;
+}
+
+.content {
+    max-width: 60em;
+    margin: 3em 0;
+    padding: .5em 1em;
+    border-radius: 4px;
+    background: #445a;
+    height: fit-content;
+}
+
+.login {
+    background-color: #333;
+}
