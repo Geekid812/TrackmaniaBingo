@@ -106,14 +106,8 @@ class GameTile {
 
     void SetMap(GameMap map) {
         @this.map = map;
-#if TURBO
-        auto url = Turbo::GetCampaignThumbnailUrl(map.uid);
-        @this.mapImage = Image(url);
-        @this.thumbnail = Image(url);
-#elif TMNEXT
         @this.thumbnail = Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
         @this.mapImage = Image("https://trackmania.exchange/maps/" + map.id + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
-#endif
     }
 
     bool IsClaimed() {

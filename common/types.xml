@@ -95,7 +95,6 @@
     <enum name="GamePlatform">
         <comment>Supported game platforms in Bingo.</comment>
         <v>Next</v>
-        <v>Turbo</v>
     </enum>
 
     <enum name="MapMode">

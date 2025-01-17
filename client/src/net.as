@@ -283,7 +283,8 @@ namespace Network {
             warn("[Network] Post preemptively failed!");
             if (Network::IsConnected()) OnDisconnect();
             return null;
-        } // TODO: connection fault?
+        }
+        
         Internal::Errors.Delete(type);
         Internal::SuspendUI = blocking;
         Json::Value@ reply = ExpectReply(Sequence, timeout);

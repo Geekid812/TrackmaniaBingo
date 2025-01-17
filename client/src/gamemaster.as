@@ -222,7 +222,6 @@ namespace Gamemaster {
     void SetCurrentTileIndex(int tileIndex) {
         if (Match.currentTileIndex != tileIndex) {
             Match.currentTileIndex = tileIndex;
-            // TODO: update
         }
     }
 

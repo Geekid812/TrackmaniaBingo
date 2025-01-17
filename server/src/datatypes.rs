@@ -152,7 +152,6 @@ pub struct Poll {
 pub enum GamePlatform {
     #[default]
     Next,
-    Turbo,
 }
 
 /* Available map selection modes. */

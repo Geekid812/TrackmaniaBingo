@@ -312,7 +312,6 @@ namespace Poll {
 /* Supported game platforms in Bingo. */
 enum GamePlatform {
     Next,
-    Turbo,
 }
 
 /* Available map selection modes. */

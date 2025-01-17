@@ -7,11 +7,7 @@ const string DEVELOPER_MENUITEM_NAME = "\\$82a" + DEVELOPER_WINDOW_NAME;
 const string BINGO_REPO_URL = "https://github.com/Geekid812/TrackmaniaBingo";
 const string BINGO_ISSUES_URL = "https://github.com/Geekid812/TrackmaniaBingo/issues";
 
-#if TMNEXT
 const GamePlatform CURRENT_GAME = GamePlatform::Next;
-#elif TURBO
-const GamePlatform CURRENT_GAME = GamePlatform::Turbo;
-#endif
 
 void Main() {
     // Initialization

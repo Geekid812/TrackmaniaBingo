@@ -46,10 +46,6 @@ fn get_load_future(
             config.map_tag.unwrap(),
         )),
         MapMode::Mappack => Box::pin(network_load_mappack(config.mappack_id.unwrap())),
-        MapMode::Campaign => Box::pin(create_campaign_maps(
-            config.game,
-            config.campaign_selection.clone().unwrap(),
-        )),
         #[allow(unreachable_patterns)]
         _ => unimplemented!(),
     }
@@ -110,23 +106,4 @@ async fn network_load_mappack(mappack_id: u32) -> MaploadResult {
     MAPPACK_LOADER
         .get_mappack_tracks(&mappack_id.to_string())
         .await
-}
-
-async fn create_campaign_maps(game: GamePlatform, selection: Vec<u32>) -> MaploadResult {
-    if game != GamePlatform::Turbo {
-        return Err(anyhow!(
-            "invalid game platform for campaign selection: {:#?}",
-            game
-        ));
-    }
-    let mut maps = Vec::new();
-    for i in 0..200 {
-        if selection[i / 30] & (1 << (i % 30)) == 0 {
-            maps.push(GameMap::Campaign(CampaignMap {
-                campaign_id: 0,
-                map: (i + 1) as i32,
-            }));
-        }
-    }
-    Ok(maps)
 }

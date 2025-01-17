@@ -28,11 +28,8 @@ namespace GameMap {
 
     GameMap Deserialize(Json::Value@ value) {
         MapType type = GetMapType(value["type"]);
-#if TMNEXT
         if (type == MapType::TMX) return DeserializeTMX(value);
-#elif TURBO
-        if (type == MapType::Campaign) return DeserializeCampaign(value);
-#endif
+
         throw("GameMap: unknown map type '" + string(value["type"]) + "'.");
         return GameMap();
     }
@@ -74,19 +71,4 @@ namespace GameMap {
         if (value["style"].GetType() != Json::Type::Null) map.style = value["style"];
         return map;
     }
-
-#if TURBO
-    GameMap DeserializeCampaign(Json::Value@ value) {
-        GameMap map = GameMap();
-        map.id = uint(value["map"]);
-        map.uid = Turbo::GetCampaignMapUid(map.id);
-        map.trackName = "#" + Text::Format("%03i", map.id);
-        map.type = MapType::Campaign;
-        
-        if (map.id % 5 == 0 && !(map.id > 160 && map.id % 10 == 0))
-            map.style = "MultiLap";
-    
-        return map;
-    }
-#endif
 }

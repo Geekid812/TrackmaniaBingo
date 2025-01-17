@@ -15,9 +15,6 @@ namespace Login {
     }
 
     void Login() {
-#if TURBO
-        throw("Login() called on Turbo! This is invalid.");
-#else
         trace("[Login] Fetching a new authentication token...");
         string authToken;
         string authenticationMethod = "Openplanet";
@@ -68,14 +65,11 @@ namespace Login {
 
         PersistantStorage::ClientToken = req.String();
         trace("[Login] Success.");
-#endif
     }
 
-#if TMNEXT
     string FetchAuthToken() {
         Auth::PluginAuthTask@ task = Auth::GetToken();
         while (!task.Finished()) { yield(); }
         return task.Token();
     }
-#endif
 }

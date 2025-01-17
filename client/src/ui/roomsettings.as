@@ -65,11 +65,7 @@ namespace UIRoomSettings {
 
     void MapModeSelector() {
         bool disabled = false;
-#if TURBO
-        MatchConfig.selection = MapMode::Campaign;
-        @SelectedPack = null;
-        disabled = true;
-#endif
+
         UI::BeginDisabled(disabled);
         UITools::AlignedLabel(Icons::MapO + "  Map Selection");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
