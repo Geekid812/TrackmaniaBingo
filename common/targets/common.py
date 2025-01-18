@@ -5,17 +5,18 @@ from dataclasses import dataclass
 class TypeDef:
     angelscript: str
     rust: str
+    python: str
     serde_as: str = None
 
 
 types = {
-    "int": TypeDef("int", "i32"),
-    "uint": TypeDef("uint", "u32"),
-    "string": TypeDef("string", "String"),
-    "bool": TypeDef("bool", "bool"),
-    "rgbColor": TypeDef("vec3", "Color"),
-    "datetime": TypeDef("uint64", "DateTime<Utc>", serde_as="TimestampSeconds"),
-    "duration": TypeDef("int64", "Duration", serde_as="DurationMilliSeconds<i64>"),
+    "int": TypeDef("int", "i32", "int"),
+    "uint": TypeDef("uint", "u32", "int"),
+    "string": TypeDef("string", "String", "str"),
+    "bool": TypeDef("bool", "bool", "bool"),
+    "rgbColor": TypeDef("vec3", "Color", "color"),
+    "datetime": TypeDef("uint64", "DateTime<Utc>", "datetime", serde_as="TimestampSeconds"),
+    "duration": TypeDef("int64", "Duration", "timedelta", serde_as="DurationMilliSeconds<i64>"),
 }
 
 def parse_member(m: dict) -> (str, bool, bool, str):

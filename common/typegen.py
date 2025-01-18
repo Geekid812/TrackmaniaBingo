@@ -8,7 +8,7 @@ except ImportError:
     print("The package `xmlschema` was not found in the environment. Install it using pip to run this script.", file=sys.stderr)
     exit(1)
 
-from targets import angelscript, rust
+from targets import angelscript, rust, python
 
 # -- Load schema
 with open("schema/types.xsd", "r") as f:
@@ -26,5 +26,8 @@ rust.write_rust_bindings(xs, "../server/src/datatypes.rs")
 
 # -- Write Angelscript bindings
 angelscript.write_angelscript_bindings(xs, "../client/src/datatypes.as")
+
+# -- Write Python bindings
+python.write_python_bindings(xs, "../web/datatypes.py")
 
 print(f"Generated bindings for {len(xs['struct'])} types.")
