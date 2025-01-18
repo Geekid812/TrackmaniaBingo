@@ -73,11 +73,17 @@ class MatchConfiguration(BaseModel):
     campaign_selection: list[int] | None
     map_tag: int | None = 1
 
-# Request to open a connection by the client.
+# Request to open a connection by the client using an exisiting token.
 class HandshakeRequest(BaseModel):
     version: str
     game: GamePlatform
     token: str
+
+# Request to generate a client token with the provided credientials.
+class KeyExchangeRequest(BaseModel):
+    key: str
+    display_name: str
+    account_id: str
 
 # A map identifier for an official campaign.
 class CampaignMap(BaseModel):

@@ -15,6 +15,52 @@ class Protocol {
         msgSize = 0;
     }
 
+    private Json::Value@ SendHandshakeRequest(Json::Value@ message) {
+        if (!InnerSend(Json::Write(message))) {
+            trace("[Protocol::Connect] Failed sending handshake message.");
+            Fail();
+            return null;
+        }
+
+        string handshakeReply = BlockRecv(Settings::NetworkTimeout);
+        if (handshakeReply == "") {
+            trace("[Protocol::Connect] Handshake reply reception timed out after " + Settings::NetworkTimeout + "ms.");
+            Fail();
+            return null;
+        }
+
+        try {
+            return Json::Parse(handshakeReply);
+        } catch {
+            err("Protocol::Connect", "Received an invalid handshake response.");
+            error("Got this message: " + handshakeReply);
+            error("Error: " + getExceptionInfo());
+            Fail();
+            return null;
+        }
+    }
+
+    int HandleHandshakeFailure(Json::Value@ error) {
+        HandshakeFailureIntentCode code = HandshakeFailureIntentCode(int(error["intent_code"]));
+        string reason = string(error["reason"]);
+        switch (code) {
+            case HandshakeFailureIntentCode::ShowError:
+                err("Protocol::Connect", "Connection to server failed: " + reason);
+                return -2;
+            case HandshakeFailureIntentCode::RequireUpdate:
+                UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required: " + reason, vec4(.4, .4, 1., 1.), 15000);
+                print("[Protocol::Connect] New update required: " + reason);
+                return -2;
+            case HandshakeFailureIntentCode::Reauthenticate:
+                print("[Protocol::Connect] Reauthenticating: " + reason);
+                PersistantStorage::ClientToken = "";
+                return -1;
+            default:
+                err("Protocol::Connect", "Unhandled handshake failure code: " + code);
+                return -2;
+        }
+    }
+
     int Connect(const string&in host, uint16 port, HandshakeRequest handshake) {
         state = ConnectionState::Connecting;
         @socket = Net::Socket();
@@ -39,50 +85,45 @@ class Protocol {
         }
         trace("[Protocol::Connect] Connected to server after " + (Time::Now - initialDate) + "ms.");
 
-        // Opening Handshake
-        if (!InnerSend(Json::Write(HandshakeRequest::Serialize(handshake)))) {
-            trace("[Protocol::Connect] Failed sending opening handshake.");
-            Fail();
-            return -1;
-        }
-        trace("[Protocol::Connect] Opening handshake sent.");
+        // Exchange keys, if necessary
+        if (handshake.token == "") {
+            trace("[Protocol::Connect] Not logged in, exchanging authentication keys.");
+            KeyExchangeRequest request;
+            request.key = Login::GetExchangeToken();
+            request.accountId = User::GetAccountId();
+            request.displayName = User::GetLocalUsername();
 
-        string handshakeReply = BlockRecv(Settings::NetworkTimeout);
-        if (handshakeReply == "") {
-            trace("[Protocol::Connect] Handshake reply reception timed out after " + Settings::NetworkTimeout + "ms.");
-            Fail();
-            return -1;
+            trace("[Protocol::Connect] Sending off key exchange request.");
+            Json::Value@ reply = SendHandshakeRequest(KeyExchangeRequest::Serialize(request));
+            if (@reply is null) return -1;
+
+            if (reply.HasKey("success") && !bool(reply["success"])) {
+                return HandleHandshakeFailure(reply);
+            }
+
+            trace("[Protocol::Connect] Got new authentication token.");
+            PersistantStorage::ClientToken = reply["token"];
+            handshake.token = reply["token"];
         }
+
+        // Opening Handshake
+        trace("[Protocol::Connect] Sending opening handshake.");
+        Json::Value@ reply = SendHandshakeRequest(HandshakeRequest::Serialize(handshake));
+        if (@reply is null) return -1;
 
         // Handshake Check
         bool success = false;
         try {
-            Json::Value@ reply = Json::Parse(handshakeReply);
             success = reply["success"];
             if (!success) {
-                HandshakeFailureIntentCode code = HandshakeFailureIntentCode(int(reply["intent_code"]));
-                string reason = string(reply["reason"]);
-                switch (code) {
-                    case HandshakeFailureIntentCode::ShowError:
-                        err("Protocol::Connect", "Connection to server failed: " + reason);
-                        return -2;
-                    case HandshakeFailureIntentCode::RequireUpdate:
-                        UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required: " + reason, vec4(.4, .4, 1., 1.), 15000);
-                        print("[Protocol::Connect] New update required: " + reason);
-                        return -2;
-                    case HandshakeFailureIntentCode::Reauthenticate:
-                        print("[Protocol::Connect] Reauthenticating: " + reason);
-                        Login::Login();
-                        break;
-                }
                 Fail();
-                return -1;
+                return HandleHandshakeFailure(reply);
             }
             @Profile = PlayerProfile::Deserialize(reply["profile"]);
             PersistantStorage::LocalProfile = Json::Write(reply["profile"]);
         } catch {
             err("Protocol::Connect", "Could not connect to the server, received an invalid response.");
-            error("Got this message: " + handshakeReply);
+            error("Got this message: " + Json::Write(reply));
             error("Error: " + getExceptionInfo());
             Fail();
             return -2;

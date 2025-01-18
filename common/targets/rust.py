@@ -18,7 +18,6 @@ rust_struct = """\
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct %s {
     %s,
 }

@@ -35,6 +35,7 @@ impl CountryIdentifier {
     ) -> Result<Option<String>, reqwest::Error> {
         let url = Url::from_str(&(super::BASE.to_owned() + ROUTE_PLAYER + account_id))
             .expect("country code url can be constructed");
+        debug!("getting this tm.io profile: {}", url);
 
         let response: serde_json::Value = self
             .client

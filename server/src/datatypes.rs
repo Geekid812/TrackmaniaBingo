@@ -13,7 +13,6 @@ use crate::core::util::Color;
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct PlayerRef {
     pub uid: u32,
     pub name: String,
@@ -23,7 +22,6 @@ pub struct PlayerRef {
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct PlayerProfile {
     pub uid: i32,
     pub name: String,
@@ -42,7 +40,6 @@ pub struct PlayerProfile {
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct RoomConfiguration {
     pub name: String,
     pub public: bool,
@@ -54,7 +51,6 @@ pub struct RoomConfiguration {
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct MatchConfiguration {
     #[derivative(Default(value = "GamePlatform::Next"))]
 	pub game: GamePlatform,
@@ -83,22 +79,30 @@ pub struct MatchConfiguration {
 	pub map_tag: Option<i32>,
 }
 
-/* Request to open a connection by the client. */
+/* Request to open a connection by the client using an exisiting token. */
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct HandshakeRequest {
     pub version: String,
     pub game: GamePlatform,
     pub token: String,
 }
 
+/* Request to generate a client token with the provided credientials. */
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
+#[derivative(Default)]
+pub struct KeyExchangeRequest {
+    pub key: String,
+    pub display_name: String,
+    pub account_id: String,
+}
+
 /* A map identifier for an official campaign. */
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct CampaignMap {
     #[derivative(Default(value = "-1"))]
 	pub campaign_id: i32,
@@ -110,7 +114,6 @@ pub struct CampaignMap {
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct ChatMessage {
     pub uid: u32,
     pub name: String,
@@ -125,7 +128,6 @@ pub struct ChatMessage {
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct PollChoice {
     pub text: String,
     pub color: Color,
@@ -135,7 +137,6 @@ pub struct PollChoice {
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
 #[derivative(Default)]
-#[serde(default)]
 pub struct Poll {
     pub id: u32,
     pub title: String,

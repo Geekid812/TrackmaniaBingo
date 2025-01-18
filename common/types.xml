@@ -55,10 +55,17 @@
     </struct>
 
     <struct name="HandshakeRequest">
-        <comment>Request to open a connection by the client.</comment>
+        <comment>Request to open a connection by the client using an exisiting token.</comment>
         <m name="version" type="string" />
         <m name="game" type="GamePlatform" />
         <m name="token" type="string" />
+    </struct>
+
+    <struct name="KeyExchangeRequest">
+        <comment>Request to generate a client token with the provided credientials.</comment>
+        <m name="key" type="string" />
+        <m name="display_name" type="string" />
+        <m name="account_id" type="string" />
     </struct>
 
     <struct name="CampaignMap">

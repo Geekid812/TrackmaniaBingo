@@ -1,12 +1,13 @@
 use bytes::BytesMut;
 use serde::Serialize;
 use serde_json::from_str;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
+use super::auth::login;
 use super::client::{ClientCallbackImplementation, NetClient};
 use super::context::ClientContext;
 use super::version::Version;
-use crate::datatypes::{HandshakeFailureIntentCode, HandshakeRequest, PlayerProfile};
+use crate::datatypes::{HandshakeFailureIntentCode, HandshakeRequest, KeyExchangeRequest, PlayerProfile};
 use crate::{config, store};
 
 /// Message handler for an unauthenticated client. Main logic of the connection handshake.
@@ -24,6 +25,27 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
             return;
         }
     };
+
+    // if we requested to exchange keys, process the request
+    match from_str::<KeyExchangeRequest>(&message) {
+        Ok(req) => {
+            debug!("{:?}", req);
+            match login(req).await {
+                Ok(token) => {
+                    let _ = client.messager().send(&TokenHint { token });
+                },
+                Err(e) => {
+                    handshake_rejection(
+                        client,
+                        format!("failed to login: {}", e),
+                        HandshakeFailureIntentCode::ShowError,
+                    );
+                }
+            }
+            return;
+        },
+        _ => ()
+    }
 
     let handshake: HandshakeRequest = match from_str(&message) {
         Ok(req) => req,
@@ -131,6 +153,11 @@ fn get_required_version_config() -> Version {
         .expect("configuration key client.required_version not specified")
         .try_into()
         .expect("invalid value for client.required_version")
+}
+
+#[derive(Serialize)]
+struct TokenHint {
+    pub token: String
 }
 
 #[derive(Serialize)]

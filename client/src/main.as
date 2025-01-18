@@ -18,10 +18,6 @@ void Main() {
     PersistantStorage::LoadItems();
     Config::FetchConfig();
 
-    // If this is the first time, try to login to the game server
-    Login::EnsureLoggedIn();
-
-
     // Plugin was connected to a game when it was forcefully closed or game crashed
     if (PersistantStorage::LastConnectedMatchId != "") {
         trace("[Main] Plugin was previously connected, attempting to reconnect.");

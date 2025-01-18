@@ -159,7 +159,7 @@ namespace MatchConfiguration {
     }
 }
 
-/* Request to open a connection by the client. */
+/* Request to open a connection by the client using an exisiting token. */
 class HandshakeRequest {
     string version;
     GamePlatform game;
@@ -181,6 +181,33 @@ namespace HandshakeRequest {
         cls.version = value["version"];
         cls.game = GamePlatform(int(value["game"]));
         cls.token = value["token"];
+
+        return cls;
+    }
+}
+
+/* Request to generate a client token with the provided credientials. */
+class KeyExchangeRequest {
+    string key;
+    string displayName;
+    string accountId;
+    KeyExchangeRequest() {}
+}
+namespace KeyExchangeRequest {
+    Json::Value@ Serialize(KeyExchangeRequest cls) {
+        auto value = Json::Object();
+        value["key"] = cls.key;
+        value["display_name"] = cls.displayName;
+        value["account_id"] = cls.accountId;
+
+        return value;
+    }
+
+    KeyExchangeRequest Deserialize(Json::Value@ value) {
+        auto cls = KeyExchangeRequest();
+        cls.key = value["key"];
+        cls.displayName = value["display_name"];
+        cls.accountId = value["account_id"];
 
         return cls;
     }

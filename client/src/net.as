@@ -51,11 +51,6 @@ namespace Network {
     void Connect() {
         SetOfflineMode(false);
 
-        Login::EnsureLoggedIn();
-        if (!Login::IsLoggedIn()) {
-            SetOfflineMode(true);
-            return;
-        }
         Timings::LastPingSent = Time::Now;
         Timings::LastPingReceived = Time::Now;
         OpenConnection();
