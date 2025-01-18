@@ -3,10 +3,20 @@
 
 from datetime import datetime, timedelta
 from enum import Enum
+from typing_extensions import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PlainSerializer, BeforeValidator
+
+def timedelta_convert(v: int | object):
+    if isinstance(v, int):
+        return timedelta(milliseconds=v)
+    return v
 
 color = list[int]
+TimedeltaMilliseconds = Annotated[
+    timedelta,
+    BeforeValidator(timedelta_convert, json_schema_input_type=int)
+]
 
 # Supported game platforms in Bingo.
 class GamePlatform(Enum):
@@ -63,8 +73,8 @@ class MatchConfiguration(BaseModel):
     grid_size: int = 5
     selection: MapMode = MapMode.RANDOMTMX
     target_medal: Medal = Medal.AUTHOR
-    time_limit: timedelta
-    no_bingo_duration: timedelta
+    time_limit: TimedeltaMilliseconds
+    no_bingo_duration: TimedeltaMilliseconds
     overtime: bool = True
     late_join: bool = True
     rerolls: bool = True
@@ -109,5 +119,5 @@ class Poll(BaseModel):
     id: int
     title: str
     color: color
-    duration: timedelta
+    duration: TimedeltaMilliseconds
     choices: list[PollChoice]

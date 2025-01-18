@@ -6,10 +6,20 @@ python_header = """\
 
 from datetime import datetime, timedelta
 from enum import Enum
+from typing_extensions import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PlainSerializer, BeforeValidator
+
+def timedelta_convert(v: int | object):
+    if isinstance(v, int):
+        return timedelta(milliseconds=v)
+    return v
 
 color = list[int]
+TimedeltaMilliseconds = Annotated[
+    timedelta,
+    BeforeValidator(timedelta_convert, json_schema_input_type=int)
+]
 """
 
 python_class = """\

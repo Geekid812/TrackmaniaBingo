@@ -99,8 +99,11 @@ def logout():
 def load_user():
     username = session.get("displayName")
     account_id = session.get("accountId")
+    admin_account_id = current_app.config["ADMIN_ACCOUNT_ID"]
 
     if username is None:
         g.user = None
+        g.admin = False
     else:
         g.user = User(username, account_id)
+        g.admin = account_id == admin_account_id

@@ -28,7 +28,7 @@ use super::{
 };
 use crate::{
     config,
-    datatypes::{GamePlatform, MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
+    datatypes::{MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
     server::{context::ClientContext, mapload},
     transport::Channel,
 };

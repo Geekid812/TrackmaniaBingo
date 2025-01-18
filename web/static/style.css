@@ -27,7 +27,7 @@ nav .logo {
 
 .content {
     max-width: 60em;
-    margin: 3em 0;
+    margin: 4em 0;
     padding: .5em 1em;
     border-radius: 4px;
     background: #445a;
@@ -36,4 +36,30 @@ nav .logo {
 
 .login {
     background-color: #333;
+}
+
+.disabled {
+    color: #aaa;
+}
+
+nav .left {
+    margin-left: .6em;
+    float: left;
+}
+
+th {
+    background-color: #252534;
+}
+
+tbody p {
+    margin-block: 0;
+}
+
+a:not(.brand) {
+    color: white;
+
+    :hover {
+        color: #0074d9;
+        transition: all 100ms;
+    }
 }

@@ -16,7 +16,7 @@ types = {
     "bool": TypeDef("bool", "bool", "bool"),
     "rgbColor": TypeDef("vec3", "Color", "color"),
     "datetime": TypeDef("uint64", "DateTime<Utc>", "datetime", serde_as="TimestampSeconds"),
-    "duration": TypeDef("int64", "Duration", "timedelta", serde_as="DurationMilliSeconds<i64>"),
+    "duration": TypeDef("int64", "Duration", "TimedeltaMilliseconds", serde_as="DurationMilliSeconds<i64>"),
 }
 
 def parse_member(m: dict) -> (str, bool, bool, str):
