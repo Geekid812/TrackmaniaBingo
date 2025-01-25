@@ -2,13 +2,11 @@ use chrono::{DateTime, Utc};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use warp::filters::method::get;
-use warp::reply::{self, with_status, Response};
+use warp::reply::{with_status};
 use warp::Filter;
 use warp::{Rejection, Reply};
 
-use crate::core::directory::{MATCHES, ROOMS};
-use crate::core::livegame::LiveMatch;
-use crate::core::models::livegame::MatchState;
+use crate::core::directory::ROOMS;
 use crate::core::models::room::RoomState;
 use crate::core::room::GameRoom;
 

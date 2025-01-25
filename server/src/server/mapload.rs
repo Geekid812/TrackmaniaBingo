@@ -1,6 +1,5 @@
 use std::pin::Pin;
 
-use anyhow::anyhow;
 use futures::executor::block_on;
 use futures::Future;
 use once_cell::sync::Lazy;
@@ -10,7 +9,7 @@ use tracing::error;
 use crate::config::CONFIG;
 use crate::core::models::map::GameMap;
 use crate::core::room::GameRoom;
-use crate::datatypes::{CampaignMap, GamePlatform, MapMode, MatchConfiguration};
+use crate::datatypes::{MapMode, MatchConfiguration};
 use crate::integrations::tmexchange::MappackLoader;
 use crate::{
     core::directory::Shared,
