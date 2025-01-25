@@ -16,6 +16,7 @@ from flask import (
 )
 
 from .datatypes import RoomConfiguration, MatchConfiguration, PlayerProfile
+from .auth import admin_restricted
 
 bp = Blueprint("rooms", __name__, url_prefix="/rooms")
 
@@ -31,6 +32,7 @@ class RoomModel(BaseModel):
     join_code: str
     teams: list[RoomTeam]
     created_at: datetime
+    host_name: str | None
 
 def stringify_config(matchconfig: MatchConfiguration) -> str:
     return f"""\
@@ -63,9 +65,28 @@ def get_rooms() -> list[RoomModel]:
     req.raise_for_status()
     return [RoomModel(**d) for d in req.json()]
 
+def get_room(roomcode: int) -> RoomModel | None:
+    base_url = current_app.config["INTERNAL_API_URL"]
+    
+    req = requests.get(base_url + "/room/" + str(roomcode))
+    if req.status_code == 404:
+        return None
+
+    req.raise_for_status()
+    return RoomModel(**req.json())
+
 @bp.get("/")
+@admin_restricted
 def list_rooms():
     rooms = get_rooms()
     rooms.sort(key=lambda room: room.created_at)
     return render_template("rooms.html", rooms=rooms, stringify_config=stringify_config, player_team_map=player_team_map, len=len, now=datetime.now(timezone.utc), timedelta_verbify=timedelta_verbify, strftime=datetime.strftime)
 
+@bp.get("/<int:roomcode>")
+@admin_restricted
+def room_page(roomcode: int):
+    room = get_room(roomcode)
+    if not room:
+        return 404, f"Room with joincode {roomcode} not found."
+
+    return render_template("room.html", room=room, stringify_config=stringify_config, strftime=datetime.strftime, now=datetime.now(timezone.utc), timedelta_verbify=timedelta_verbify)

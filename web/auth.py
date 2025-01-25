@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import requests
+import functools
 from secrets import token_urlsafe
 from flask import (
     Blueprint,
@@ -107,3 +108,13 @@ def load_user():
     else:
         g.user = User(username, account_id)
         g.admin = account_id == admin_account_id
+
+def admin_restricted(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if not g.admin:
+            return redirect(url_for('auth.login'))
+
+        return view(**kwargs)
+
+    return wrapped_view

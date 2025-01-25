@@ -11,26 +11,12 @@ use crate::core::models::livegame::MatchState;
 use crate::core::models::room::RoomState;
 use crate::core::room::GameRoom;
 
+use super::room::NetworkRoomDetail;
+
 pub fn get_routes() -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     let rooms = get().and(warp::path("rooms")).then(get_rooms);
     let live_games = get().and(warp::path("matches")).then(get_livegames);
     warp::path("dir").and(rooms.or(live_games))
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct NetworkRoomDetail {
-    #[serde(flatten)]
-    state: RoomState,
-    created_at: DateTime<Utc>
-}
-
-impl From<&GameRoom> for NetworkRoomDetail {
-    fn from(value: &GameRoom) -> Self {
-        Self {
-            state: value.get_state(),
-            created_at: value.created().clone()
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
