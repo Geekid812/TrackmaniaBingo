@@ -76,6 +76,7 @@ class RoomConfiguration {
     bool public;
     bool randomize;
     uint size;
+    bool hostControl;
     RoomConfiguration() {}
 }
 namespace RoomConfiguration {
@@ -85,6 +86,7 @@ namespace RoomConfiguration {
         value["public"] = cls.public;
         value["randomize"] = cls.randomize;
         value["size"] = cls.size;
+        value["host_control"] = cls.hostControl;
 
         return value;
     }
@@ -95,6 +97,7 @@ namespace RoomConfiguration {
         cls.public = value["public"];
         cls.randomize = value["randomize"];
         cls.size = value["size"];
+        cls.hostControl = value["host_control"];
 
         return cls;
     }

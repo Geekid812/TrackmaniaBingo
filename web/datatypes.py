@@ -66,6 +66,7 @@ class RoomConfiguration(BaseModel):
     public: bool
     randomize: bool
     size: int
+    host_control: bool
 
 # Match parameters set by the host.
 class MatchConfiguration(BaseModel):

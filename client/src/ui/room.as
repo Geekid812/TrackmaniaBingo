@@ -6,6 +6,8 @@ namespace UIGameRoom {
     bool ClipboardHovered;
     bool ClipboardCopied;
     bool GrabFocus;
+    bool PlayerLabelHovered;
+    Player@ DraggedPlayer = null;
 
     void Render() {
         if (@Room == null) Visible = false;
@@ -15,7 +17,7 @@ namespace UIGameRoom {
         UI::PushStyleColor(UI::Col::TitleBgActive, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleVar(UI::StyleVar::WindowTitleAlign, vec2(0.5, 0.5));
         UI::SetNextWindowSize(600, 400, UI::Cond::FirstUseEver);
-        bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, (GrabFocus ? UI::WindowFlags::NoCollapse : 0));
+        bool windowOpen = UI::Begin(Room.config.name + (IncludePlayerCountInTitle ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount() : "") + "###bingoroom", Visible, (GrabFocus ? UI::WindowFlags::NoCollapse : 0) | (PlayerLabelHovered ? UI::WindowFlags::NoMove : 0));
         if (!Visible && @Match == null) {
             // Room window was closed, should disconnect the player.
             // Ideally show a confirmation dialog here, but the Dialogs framework might get reworked.
@@ -25,6 +27,8 @@ namespace UIGameRoom {
             CleanupUI();
             return;
         }
+
+        PlayerLabelHovered = false;
         if (windowOpen) {
             bool gameIsStarting = Gamemaster::IsBingoActive() && Gamemaster::GetPhase() == GamePhase::Starting;
             UI::BeginDisabled(gameIsStarting);
@@ -34,6 +38,20 @@ namespace UIGameRoom {
         }
         IncludePlayerCountInTitle = !windowOpen;
         GrabFocus = false;
+        if (!UI::IsMouseDown()) {
+            if (@DraggedPlayer !is null) {
+                Player@ playerOldState = Room.GetPlayer(DraggedPlayer.profile.uid);
+                if (@playerOldState !is null && playerOldState.team.id != DraggedPlayer.team.id) {
+                    // Player was dragged to a new team, request an update
+                    NetParams::TeamSelectId = DraggedPlayer.team.id;
+                    NetParams::PlayerSelectUid = DraggedPlayer.profile.uid;
+                    startnew(Network::ChangePlayerTeam);
+                    playerOldState.team = DraggedPlayer.team;
+                }
+            }
+
+            @DraggedPlayer = null;
+        }
 
         CleanupUI();
     }
@@ -132,11 +150,13 @@ namespace UIGameRoom {
             }
             
             UI::Text("\\$ff8Number of teams: \\$z" + Room.teams.Length);
+        } else if (Room.config.hostControl) {
+            UI::Text("\\$ff8" + Icons::Lock + " \\$zThe host controls the team setup.");
         } else {
             UI::NewLine();
         }
         
-        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null), true, Room.CanCreateMoreTeams() && !Gamemaster::IsBingoActive(), Room.CanDeleteTeams());
+        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null), !Room.config.hostControl, Room.CanCreateMoreTeams() && !Gamemaster::IsBingoActive(), Room.CanDeleteTeams(), Room.config.hostControl && Room.localPlayerIsHost, DraggedPlayer);
 
         // Quit early if we disconnected from the room
         if (LeaveButton()) return;

@@ -35,7 +35,7 @@ namespace UIRoomSettings {
     void RandomizeToggle() {
         UITools::AlignedLabel(Icons::Random + "  Randomize Teams");
         Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
-        RoomConfig.randomize = UI::Checkbox("##bingorandomize", RoomConfig.randomize);
+        RoomConfig.randomize = UI::Checkbox("##bingorandomize", RoomConfig.randomize) && !RoomConfig.hostControl;
     }
 
     void AccessToggle() {
@@ -214,6 +214,14 @@ namespace UIRoomSettings {
         UITools::HelpTooltip("Players can still join after the game has started.");
     }
 
+    void HostControlsSetupToggle() {
+        UITools::AlignedLabel(Icons::Lock + " Host Controls Setup");
+        Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
+        RoomConfig.hostControl = UI::Checkbox("##bingohostcontrols", RoomConfig.hostControl);
+        UI::SameLine();
+        UITools::HelpTooltip("The room host assigns players to their respective teams. Players cannot change their own team.");
+    }
+
     void RerollsToggle() {
         UITools::AlignedLabel(Icons::Kenney::ReloadInverse + " Enable Map Rerolls");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
@@ -241,8 +249,13 @@ namespace UIRoomSettings {
         UI::SameLine();
         AccessToggle();
         PlayerLimitToggle();
+
+        UI::BeginDisabled(RoomConfig.hostControl);
         RandomizeToggle();
+        UI::EndDisabled();
+        
         LateJoinToggle();
+        HostControlsSetupToggle();
 
         if (hasPlayerLimit(RoomConfig)) {
             PlayerLimitInput();

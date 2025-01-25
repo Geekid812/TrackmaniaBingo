@@ -45,6 +45,7 @@ pub struct RoomConfiguration {
     pub public: bool,
     pub randomize: bool,
     pub size: u32,
+    pub host_control: bool,
 }
 
 /* Match parameters set by the host. */

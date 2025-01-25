@@ -501,4 +501,11 @@ namespace Network {
         body["choice"] = NetParams::PollChoiceIndex;
         Network::Post("SubmitPollVote", body, false);
     }
+
+    void ChangePlayerTeam() {
+        auto body = Json::Object();
+        body["player_uid"] = NetParams::PlayerSelectUid;
+        body["team_id"] = NetParams::TeamSelectId;
+        Network::Post("ChangePlayerTeam", body, false);
+    }
 }
