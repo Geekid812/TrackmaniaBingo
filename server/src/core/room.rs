@@ -339,18 +339,6 @@ impl GameRoom {
             .broadcast(&RoomEvent::TeamCreated { base: team })
     }
 
-    fn create_ffa_teams(&mut self) {
-        self.teams = TeamsManager::new();
-        for i in 0..self.members.len() {
-            let team = self
-                .teams
-                .create_random_team(self.members[i].profile.name.clone())
-                .clone();
-            self.members[i].team = team.id;
-            self.team_created(team);
-        }
-    }
-
     pub fn set_config(&mut self, config: RoomConfiguration) {
         self.trigger_new_config(config);
         self.config_update();
