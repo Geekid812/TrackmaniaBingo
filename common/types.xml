@@ -3,9 +3,9 @@
     This file contains the type definitions for data structures shared between the game
     client and the server.
     
-    The `typegen.py` tool uses this file to generate Angelscript
-    and Rust bindings of these data types, which are exported to `client/src/datatypes.as`
-    and `server/src/datatypes.rs` respectively.
+    The `typegen.py` tool uses this file to generate Angelscript, Rust and
+    Python bindings of these data types, which are exported to `client/src/datatypes.as`,
+    `server/src/datatypes.rs` and `web/datatypes.py` respectively.
 -->
 <datatypes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="schema/types.xsd">
