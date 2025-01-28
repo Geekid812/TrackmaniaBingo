@@ -226,8 +226,6 @@ namespace Network {
             NetworkHandlers::MatchPlayerJoin(body);
         } else if (event == "MapRerolled") {
             NetworkHandlers::MapRerolled(body);
-        } else if (event == "CellPinged") {
-            NetworkHandlers::CellPinged(body);
         } else if (event == "ChatMessage") {
             NetworkHandlers::ChatMessage(body);
         } else if (event == "PollStart") {

@@ -64,13 +64,6 @@ pub enum GameEvent {
         map: GameMap,
         can_reroll: bool,
     },
-    CellPinged {
-        // Note: pings are leaked to all game teams,
-        // this will be resolved when team channels are implemented
-        team: TeamIdentifier,
-        cell_id: usize,
-        player: PlayerRef,
-    },
     ChatMessage(ChatMessage),
     PollStart {
         #[serde(flatten)]

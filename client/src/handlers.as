@@ -294,24 +294,6 @@ namespace NetworkHandlers {
         UI::ShowNotification(Icons::Kenney::ReloadInverse + " Map Rerolled", "The map \\$fd8" + oldName + " \\$zhas been rerolled.", vec4(0., .6, .6, 1.), 10000);
     }
 
-    void CellPinged(Json::Value@ data) {
-        if (!Gamemaster::IsBingoActive()) {
-            warn("Handlers: got CellPinged event but game is inactive.");
-            return;
-        }
-
-        Team team = Match.GetSelf().team;
-        // Not for our team, discard it
-        if (int(data["team"]) != team.id) return;
-
-        auto ping = Board::CellPing();
-        ping.time = Time::Now;
-        ping.cellId = uint(data["cell_id"]);
-        Board::Pings.InsertLast(ping);
-
-        UI::ShowNotification(Icons::Bell + " \\$" + UIColor::GetHex(team.color) + string(data["player"]["name"]) + " \\$zpinged a cell");
-    }
-
     void ChatMessage(Json::Value@ data) {
         auto message = ChatMessage::Deserialize(data);
         UIChat::MessageHistory.InsertLast(message);

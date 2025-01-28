@@ -12,7 +12,6 @@ mod get_public_rooms;
 mod join_room;
 mod match_join;
 mod ping;
-mod ping_cell;
 mod reload_maps;
 mod send_chat;
 mod start_match;
