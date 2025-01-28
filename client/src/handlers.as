@@ -49,6 +49,7 @@ namespace NetworkHandlers {
             auto jsonMap = mapList[i];
             Match.tiles.InsertLast(GameMap::Deserialize(jsonMap));
         }
+        Gamemaster::InitializeTiles();
     }
 
     void RunSubmitted(Json::Value@ data) {

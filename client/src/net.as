@@ -401,6 +401,7 @@ namespace Network {
         UIChat::Clear();
         PersistantStorage::LastConnectedMatchId = joinedMatch.uid;
         @Match = joinedMatch;
+        Gamemaster::InitializeTiles();
     }
 
     void GetPublicRooms() {
