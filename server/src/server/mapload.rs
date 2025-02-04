@@ -70,7 +70,7 @@ async fn fetch_and_load<F: Future<Output = MaploadResult>>(
 async fn cache_load_mxrandom(count: u32) -> MaploadResult {
     mapcache::execute(move |mut conn| {
         let query =
-            sqlx::query("SELECT * FROM maps WHERE author_time <= ? ORDER BY RANDOM() LIMIT ?")
+            sqlx::query("SELECT * FROM maps WHERE tmxid IN (SELECT tmxid FROM maps WHERE author_time <= ? ORDER BY RANDOM() LIMIT ?)")
                 .bind(CONFIG.game.mxrandom_max_author_time.num_milliseconds() as i32)
                 .bind(count as i32);
         block_on(query.fetch_all(&mut *conn)).map(|v| {
@@ -86,7 +86,7 @@ async fn cache_load_mxrandom(count: u32) -> MaploadResult {
 async fn cache_load_tag(count: u32, tag: i32) -> MaploadResult {
     mapcache::execute(move |mut conn| {
         let query =
-            sqlx::query("SELECT * FROM maps WHERE author_time <= ? AND (tags = ? OR tags LIKE ? + ',%')  ORDER BY RANDOM() LIMIT ?")
+            sqlx::query("SELECT * FROM maps WHERE tmxid IN (SELECT tmxid FROM maps WHERE author_time <= ? AND (tags = ? OR tags LIKE ? + ',%') ORDER BY RANDOM() LIMIT ?)")
                 .bind(CONFIG.game.mxrandom_max_author_time.num_milliseconds() as i32)
                 .bind(tag)
                 .bind(tag)
