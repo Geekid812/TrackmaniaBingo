@@ -29,7 +29,7 @@ namespace BoardLocator {
                     UI::PopStyleVar();
                 }
                 
-                if (UI::IsItemClicked()) {
+                if (UI::IsItemHovered() && UI::IsMouseDoubleClicked()) {
                     OnCellClicked(i, j);
                 }
             }
