@@ -13,9 +13,10 @@ namespace UIChat {
     bool InputFocused;
     uint64 LastMessageTimestamp;
     string ChatInput;
+    bool Visible = true;
 
     bool ShouldDisplay() {
-        return @Room !is null || @Match !is null;
+        return Visible && (@Room !is null || @Match !is null);
     }
 
     void RemoveExpiredMessages() {

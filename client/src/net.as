@@ -434,7 +434,7 @@ namespace Network {
             trace("[Network] EditConfig - No reply from server.");
             return;
         }
-        SettingsWindow::Visible = false;
+        UIEditSettings::Visible = false;
     }
 
     void JoinTeam(Team team) {

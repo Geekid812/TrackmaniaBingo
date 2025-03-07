@@ -72,7 +72,7 @@ void Render() {
     UIMapList::Render();
     UIPaintColor::Render();
     UITeams::Render();
-    SettingsWindow::Render();
+    UIEditSettings::Render();
     UIChat::Render();
 
     for (uint i = 0; i < Polls.Length; i++) {

@@ -3,6 +3,7 @@ namespace Board {
     // Controlled by BoardLocator
     float BoardSize;
     vec2 Position;
+    bool Visible = true;
 
     const float STROKE_WIDTH = 8.;
     const float CELL_HIGHLIGHT_PADDING = 3.5; // Multiplier for BorderSize, inside offset
@@ -49,6 +50,7 @@ namespace Board {
     }
 
     void Draw() {
+        if (!Visible) return;
         if (!Gamemaster::IsBingoActive()) return;
 
         uint cellsPerRow = Match.config.gridSize;

@@ -100,7 +100,7 @@ namespace UIGameRoom {
             UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
             UIColor::Gray();
             if (UI::Button(buttonText)) {
-                SettingsWindow::Visible = !SettingsWindow::Visible;
+                UIEditSettings::Visible = !UIEditSettings::Visible;
             }
             UIColor::Reset();
             UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 2));

@@ -7,6 +7,7 @@ namespace UIInfoBar {
 
     float SubwindowOffset = 0.;
     string MapLeaderboardUid;
+    bool Visible = true;
 
     // Small controls window below the infobar for exiting
     void PostgameControls() {
@@ -145,6 +146,7 @@ namespace UIInfoBar {
     }
 
     void Render() {
+        if (!Visible) return;
         if (!Gamemaster::IsBingoActive()) return;
         
         int64 stopwatchTime = GameTime::CurrentClock();

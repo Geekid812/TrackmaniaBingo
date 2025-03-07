@@ -50,6 +50,12 @@ namespace UIDevActions {
             UI::EndTabItem();
         }
 
+        if (UI::BeginTabItem(Icons::WindowMaximize + " UI Windows")) {
+            UIDevWindows::Render();
+
+            UI::EndTabItem();
+        }
+
         UI::EndTabBar();
 
         UI::End();
