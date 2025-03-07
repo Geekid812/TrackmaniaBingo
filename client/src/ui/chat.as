@@ -113,7 +113,8 @@ namespace UIChat {
         return false;
     }
 
-    void Clear() {
+    void ClearHistory() {
+        trace("[UIChat::ClearHistory] Chat history was deleted.");
         UIChat::MessageHistory.Resize(0);
     }
 }

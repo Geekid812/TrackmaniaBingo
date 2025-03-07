@@ -268,6 +268,15 @@ namespace Gamemaster {
         ClearMatchId();
         @Match = null;
         @Room = null;
-        UIChat::Clear();
+        UIChat::ClearHistory();
+        UIPoll::ClearAllPolls();
+    }
+
+    /**
+     * Call game end handlers.
+     */
+    void HandleGameEnd() {
+        UIPoll::ClearAllPolls();
+        PersistantStorage::ResetConnectedMatch();
     }
 }

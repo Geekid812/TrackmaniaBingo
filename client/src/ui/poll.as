@@ -104,4 +104,9 @@ namespace UIPoll {
         vec2 globalPosition = vec2(0., POLL_WINDOW_HEIGHT - TIMER_PROGRESS_HEIGHT) + UI::GetWindowPos();
         drawList.AddRectFilled(vec4(globalPosition.x, globalPosition.y, windowWidth * progressScale, TIMER_PROGRESS_HEIGHT), TIMER_PROGRESS_COLOR);
     }
+
+    void ClearAllPolls() {
+        trace("[UIPolls::ClearAllPolls] All polls were removed.");
+        Polls.Resize(0);
+    }
 }

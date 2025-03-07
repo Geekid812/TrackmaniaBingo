@@ -398,7 +398,7 @@ namespace Network {
         
         Gamemaster::SetBingoActive(true);
         UITeams::CloseContext();
-        UIChat::Clear();
+        UIChat::ClearHistory();
         PersistantStorage::LastConnectedMatchId = joinedMatch.uid;
         @Match = joinedMatch;
         Gamemaster::InitializeTiles();

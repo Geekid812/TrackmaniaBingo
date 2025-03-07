@@ -199,7 +199,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Gamemaster::SetPhase(GamePhase::Ended);
-        PersistantStorage::ResetConnectedMatch();
+        Gamemaster::HandleGameEnd();
     }
 
     void TeamCreated(Json::Value@ data) {
@@ -252,7 +252,7 @@ namespace NetworkHandlers {
         Match.endState.endTime = Time::Now;
         @Match.endState.team = team;
         Gamemaster::SetPhase(GamePhase::Ended);
-        PersistantStorage::ResetConnectedMatch();
+        Gamemaster::HandleGameEnd();
     }
 
     void AnnounceDraw() {
@@ -260,7 +260,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Gamemaster::SetPhase(GamePhase::Ended);
-        PersistantStorage::ResetConnectedMatch();
+        Gamemaster::HandleGameEnd();
     }
 
     void MatchTeamCreated(Json::Value@ data) {
