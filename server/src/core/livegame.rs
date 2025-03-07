@@ -375,8 +375,16 @@ impl LiveMatch {
             room.lock().reset_match();
         }
 
-        self.save_match_end(draw);
+        if self.should_match_be_saved() {
+            self.save_match_end(draw);
+        }
+
         MATCHES.remove(self.uid.clone());
+    }
+
+    fn should_match_be_saved(&self) -> bool {
+        // Save match results if there are at least 2 players
+        self.player_count() >= 2
     }
 
     fn cell_count(&self) -> usize {

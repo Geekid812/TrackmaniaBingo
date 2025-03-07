@@ -163,14 +163,17 @@ namespace UIGameRoom {
 
         if (Room.localPlayerIsHost) {
             UIColor::DarkGreen();
-            bool startDisabled = Room.players.Length < 2 && !Settings::DevTools;
-            UI::BeginDisabled(startDisabled);
+            bool isSolo = Room.players.Length < 2;
             
             UI::SameLine();
             if (UI::Button(Icons::PlayCircleO + " Start")) {
                 startnew(Network::StartMatch);
             }
-            UI::EndDisabled();
+
+            if (isSolo) {
+                UI::SetItemTooltip("\\$ff8Warning: \\$zA minimum of 2 players is recommended to start the game.\nMatch statistics will not be saved when playing solo.");
+            }
+
             UIColor::Reset();
             UITools::ErrorMessage("StartMatch");
         }
