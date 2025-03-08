@@ -83,6 +83,16 @@ class Team {
     }
 }
 
+namespace Team {
+    Team Deserialize(Json::Value@ value) {
+        return Team(
+            value["id"], 
+            value["name"],
+            vec3(value["color"][0] / 255., value["color"][1] / 255., value["color"][2] / 255.)
+        );
+    }
+}
+
 class Player {
     PlayerProfile profile;
     string name;

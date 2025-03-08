@@ -139,11 +139,7 @@ namespace NetworkHandlers {
         @Room.players = {};
         for (uint i = 0; i < teams.Length; i++) {
             Json::Value@ t = teams[i];
-            Team team = Team(
-                t["id"], 
-                t["name"],
-                vec3(t["color"][0] / 255., t["color"][1] / 255., t["color"][2] / 255.)
-            );
+            Team team = Team::Deserialize(t);
             Room.teams.InsertLast(team);
 
             for (uint j = 0; j < t["members"].Length; j++) {
