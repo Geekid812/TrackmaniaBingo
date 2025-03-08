@@ -45,12 +45,12 @@ class GameRoom {
     }
 
     bool CanCreateMoreTeams() {
-        return teams.Length < uint(Math::Min(maxTeams, hasPlayerLimit(config) ? config.size : maxTeams));
+        return teams.Length < uint(Math::Min(maxTeams, hasPlayerLimit(config) ? config.size : maxTeams)) && Room.localPlayerIsHost && !Gamemaster::IsBingoActive();
     }
 
     bool CanDeleteTeams() {
         // Must have at least 2 teams to play
-        return teams.Length > 2;
+        return teams.Length > 2 && Room.localPlayerIsHost;
     }
 
     NetworkRoom NetworkState() {
