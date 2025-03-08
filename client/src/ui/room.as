@@ -156,7 +156,7 @@ namespace UIGameRoom {
             UI::NewLine();
         }
         
-        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null), !Room.config.hostControl, Room.CanCreateMoreTeams(), Room.CanDeleteTeams(), Room.config.hostControl && Room.localPlayerIsHost, DraggedPlayer);
+        UIPlayers::PlayerTable(Room.teams, Room.players, Room.GetSelf().team, (Room.config.randomize && @Match == null), !Room.config.hostControl, Room.CanCreateMoreTeams(), Room.CanDeleteTeams(), Room.localPlayerIsHost, DraggedPlayer);
 
         // Quit early if we disconnected from the room
         if (LeaveButton()) return;
