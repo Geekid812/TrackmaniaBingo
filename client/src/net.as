@@ -303,9 +303,15 @@ namespace Network {
     void CreateRoom() {
         MatchConfig.game = CURRENT_GAME;
 
+        if (TeamPresets.Length < 2) {
+            PersistantStorage::TeamEditorStorage = PersistantStorage::GetDefaultTeams();
+            PersistantStorage::LoadTeamEditor();
+        }
+
         auto body = Json::Object();
         body["config"] = RoomConfiguration::Serialize(RoomConfig);
         body["match_config"] = MatchConfiguration::Serialize(MatchConfig);
+        body["teams"] = Json::Parse(PersistantStorage::TeamEditorStorage);
 
         Json::Value@ response = Post("CreateRoom", body, true);
         if (response is null) {
@@ -340,7 +346,9 @@ namespace Network {
     }
 
     void CreateTeam() {
-        Network::Post("CreateTeam", Json::Object());
+        auto body = Json::Object();
+        body["team"] = Team::Serialize(NetParams::TeamCreatePreset);
+        Network::Post("CreateTeam", body);
     }
 
     void DeleteTeam() {

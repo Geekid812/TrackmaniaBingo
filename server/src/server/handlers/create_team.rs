@@ -1,10 +1,12 @@
-use crate::{core::gamecommon, server::context::ClientContext};
+use crate::{core::models::team::BaseTeam, server::context::ClientContext};
 use serde::Deserialize;
 
 use super::{generic, Request, Response};
 
 #[derive(Deserialize, Debug)]
-pub struct CreateTeam;
+pub struct CreateTeam {
+    team: BaseTeam,
+}
 
 #[typetag::deserialize]
 impl Request for CreateTeam {
@@ -16,7 +18,12 @@ impl Request for CreateTeam {
                     error: "You are not a room operator.".to_owned(),
                 });
             }
-            lock.create_team_from_preset(&gamecommon::TEAMS);
+
+            if let Err(e) = lock.create_team(self.team.name.clone(), self.team.color) {
+                return Box::new(generic::Error {
+                    error: e.to_string(),
+                });
+            }
         } else {
             return Box::new(generic::Error {
                 error: "Player is not in a room.".to_owned(),

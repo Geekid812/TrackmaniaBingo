@@ -30,7 +30,7 @@ namespace UIPlayers {
                     UI::Text(Icons::MinusSquare);
                     if (UI::IsItemHovered()) {
                         UI::BeginTooltip();
-                        UI::TextDisabled("Delete " + team.name + " Team");
+                        UI::TextDisabled("Delete " + team.name);
                         UI::EndTooltip();
                     }
                     if (UI::IsItemClicked()) {
@@ -51,7 +51,7 @@ namespace UIPlayers {
 
                 if (UI::IsItemHovered()) {
                     UI::BeginTooltip();
-                    UI::Text("\\$" + UIColor::GetHex(team.color) + team.name + " Team" + (canSwitch && (ownTeam is null || team != ownTeam) ? "  \\$888(Click to join)" : ""));
+                    UI::Text("\\$" + UIColor::GetHex(team.color) + team.name + (canSwitch && (ownTeam is null || team != ownTeam) ? "  \\$888(Click to join)" : ""));
                     UI::EndTooltip();
                 }
 
@@ -67,9 +67,18 @@ namespace UIPlayers {
 
             if (canCreate) {
                 UI::TableNextColumn();
-                if (UI::Button(Icons::PlusSquare + " Create team")) {
-                    startnew(Network::CreateTeam);
+
+                bool teamPresetAvailable = UITeamEditor::HasAnyUninstantiatedTeam();
+                UI::BeginDisabled(!teamPresetAvailable);
+                UIColor::DarkGreen();
+                if (UI::Button(Icons::PlusSquare + " Create Team")) {
+                    UITeamEditor::InstantiateAnyNewTeam();
                 }
+                UIColor::Reset();
+                UI::EndDisabled();
+
+                if (!teamPresetAvailable)
+                    UI::SetItemTooltip("Not enough team presets are available to create a new team.\nCreate a new team in the Teams Editor.");
             }
 
             uint rowIndex = 0;
@@ -90,6 +99,16 @@ namespace UIPlayers {
                             PlayerLabel(player, rowIndex, canDragPlayers);
                     }
                 }
+
+                if (rowIndex == 0 && canCreate) {
+                    UI::TableNextColumn();
+                    UIColor::Gray();
+                    if (UI::Button(Icons::Bookmark + " Edit Teams")) {
+                        UITeamEditor::Visible = !UITeamEditor::Visible;
+                    }
+                    UIColor::Reset();
+                }
+
                 if (finishedTeams == teams.Length) break;
                 rowIndex += 1;
             }

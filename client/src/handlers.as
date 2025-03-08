@@ -67,7 +67,7 @@ namespace NetworkHandlers {
                 string playerName = claim.player.name;
                 string mapName = Text::StripFormatCodes(claimedMap.map.trackName);
                 string teamName = claimingTeam.name;
-                string teamCredit = "for " + teamName + " Team";
+                string teamCredit = "for " + teamName;
 
                 vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(claimingTeam.color, 0.1), 0.75);
                 vec4 dimmedColor = teamColor / 1.5;
@@ -76,7 +76,7 @@ namespace NetworkHandlers {
                 if (isReclaim) {
                     UI::ShowNotification(Icons::Retweet + " Map Reclaimed", playerName + " has reclaimed \\$fd8" + mapName + "\\$z " + teamCredit + "\n" + result.Display() + " (" + deltaTime + ")", teamColor, 15000);
                 } else if (isImprove) {
-                    UI::ShowNotification(Icons::ClockO + " Time Improved", playerName + " has improved " + (teamName + " Team's") + " time on \\$fd8" + mapName + "\\$z\n" + result.Display() + " (" + deltaTime + ")", dimmedColor, 15000);
+                    UI::ShowNotification(Icons::ClockO + " Time Improved", playerName + " has improved " + teamName + (teamName.EndsWith("s") ? "'" : "'s") + " time on \\$fd8" + mapName + "\\$z\n" + result.Display() + " (" + deltaTime + ")", dimmedColor, 15000);
                 } else { // Normal claim
                     UI::ShowNotification(Icons::Bookmark + " Map Claimed", playerName + " has claimed \\$fd8" + mapName + "\\$z " + teamCredit + "\n" + result.Display(), teamColor, 15000);
                 }

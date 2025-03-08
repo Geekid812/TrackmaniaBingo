@@ -1,17 +1,16 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::{directory, gamecommon::setup_room, models::team::BaseTeam, room::GameRoom},
-    datatypes::{MatchConfiguration, RoomConfiguration},
-    server::context::{ClientContext, RoomContext},
+    config, core::{directory, gamecommon::setup_room, models::team::BaseTeam, room::GameRoom}, datatypes::{MatchConfiguration, RoomConfiguration}, server::context::{ClientContext, RoomContext}
 };
 
-use super::{Request, Response};
+use super::{generic, Request, Response};
 
 #[derive(Deserialize, Debug)]
 pub struct CreateRoom {
     config: RoomConfiguration,
     match_config: MatchConfiguration,
+    teams: Vec<BaseTeam>,
 }
 
 #[derive(Serialize, Debug)]
@@ -25,6 +24,12 @@ pub struct CreateRoomResponse {
 #[typetag::deserialize]
 impl Request for CreateRoom {
     fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
+        if self.teams.len() < 2 {
+            return Box::new(generic::Error {
+                error: "Not enough teams to create a new room. Please configure at least 2 teams in the Teams Editor.".to_string()
+            });
+        }
+
         if let Some(room) = ctx.game_room() {
             ctx.trace("already in a room, leaving previous game");
             room.lock().player_remove(ctx.profile.uid);
@@ -37,7 +42,7 @@ impl Request for CreateRoom {
             roomcode.clone(),
         );
         directory::ROOMS.insert(roomcode, new_room.clone());
-        setup_room(&new_room);
+        setup_room(&new_room, &self.teams);
 
         let mut room = new_room.lock();
         let room_ctx = Some(RoomContext::new(ctx.profile.clone(), &new_room));
@@ -50,7 +55,7 @@ impl Request for CreateRoom {
         Box::new(CreateRoomResponse {
             name: room.name().to_owned(),
             join_code: room.join_code().to_owned(),
-            max_teams: crate::CONFIG.game.teams.len(),
+            max_teams: config::get_integer("behavior.max_teams").unwrap_or(6) as usize,
             teams: room.teams().into_iter().map(BaseTeam::to_owned).collect(),
         })
     }

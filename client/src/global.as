@@ -18,3 +18,6 @@ array<PollData@> Polls;
 
 // Local cache of TrackmaniaExchange maps (for development use)
 array<GameMap> MapCache;
+
+// Templated teams for the team editor
+array<Team@> TeamPresets;

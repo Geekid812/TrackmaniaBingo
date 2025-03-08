@@ -66,6 +66,7 @@ void Render() {
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIGameRoom::Render();
+    UITeamEditor::Render();
     BoardLocator::Render();
     Board::Draw();
     UIInfoBar::Render();

@@ -11,4 +11,5 @@ namespace NetParams {
     int PollChoiceIndex;
     int PlayerSelectUid;
     int TeamSelectId;
+    Team TeamCreatePreset;
 }
