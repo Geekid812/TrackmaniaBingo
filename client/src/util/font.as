@@ -75,7 +75,7 @@ namespace Font {
                 return null;
         }
 
-        UI::Font@ font = UI::LoadFont(fontName, size, -1, -1, true, true);
+        UI::Font@ font = UI::LoadFont(fontName, size, -1, -1, true, true, true);
 
         if (@font is null) {
             warn("Fonts: null font loaded!");
