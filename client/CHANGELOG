@@ -1,13 +1,17 @@
-## Update 5.1
+## Update 5.2
 
-With this update, a new "Late Join" setting has been added to Bingo games. When this is enabled, new players can join even after a game has been started. New players can choose which team they want to join, and hop in the game instantly!
+This update focuses on some lobby improvements, most notably the new Teams Editor: this new tool allows you to name and create custom teams for your Bingo lobbies instead of the default ones.
 
-Keybind settings have also been added. You can now rebind the following keys in the plugin settings:
-- Open Chat (default: Enter)
-- Toggle Map List (default: Tab)
+Additionally, the room host can now drag and drop players between teams to rearrange players how they like before the game starts. This should make it much easier to coordinate public games, or it may allow you to help that friend who doesn't understand how the UI works.
 
-This update also fixes the following bugs:
-- Fixed a crash when too many chat messages were sent.
-- Fixed mappack loading from TMX by porting it to the new API. This may lead to longer load times for large mappacks because of pagination.
-- Partially fix loading of multiple maps at the same time.
-- Various UI fixes and tweaks.
+For specific competitive scenarios, a new room option has also been added that disallows players to switch their own team, while only the room host can assign players to their teams.
+
+When new players join a game that has either the "Randomize Teams" or the new "Host Controls Setup" options enabled, they will no longer be able to choose their team and instead be assigned to the least populated team.
+
+Due to some demand, it is now also possible to start Bingo games with only 1 player. However, match statistics will not be saved in that case.
+
+Bug fixes in this update:
+- Fixed win conditions not being checked immediately when the grace period ends
+- Fixed alignment issues on map leaderboards
+- Removed team controls for players who are not the host in a lobby
+- Fixed no time limit "∞" not being displayed correctly
