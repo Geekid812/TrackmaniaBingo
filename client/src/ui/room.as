@@ -244,4 +244,10 @@ namespace UIGameRoom {
         if (@Room is null) return "";
         return Room.players.Length + (hasPlayerLimit(Room.config) ? "/" + Room.config.size : "");
     }
+
+    void SwitchToPlayContext() {
+        UIMainWindow::Visible = false;
+        UIGameRoom::Visible = false;
+        UIMapList::Visible = true;
+    }
 }

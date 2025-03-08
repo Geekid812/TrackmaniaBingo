@@ -155,8 +155,7 @@ namespace Gamemaster {
         Match.phase = phase;
 
         if (previous == GamePhase::Starting) {
-            UIGameRoom::Visible = false;
-            UIMapList::Visible = true;
+            UIGameRoom::SwitchToPlayContext();
         }
 
         if (phase == GamePhase::Overtime) {

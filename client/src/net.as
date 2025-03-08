@@ -373,7 +373,14 @@ namespace Network {
             // We're joining an active game
             string currentMatchUid = response["match_uid"];
             NetParams::MatchJoinUid = currentMatchUid;
-            UITeams::SwitchToJoinContext();
+
+            if (canPlayersChooseTheirOwnTeam(Room.config)) {
+                // We have to choose a team before joining
+                UITeams::SwitchToJoinContext();
+            } else {
+                // Cannot choose a team, immediately try to join the match
+                Network::JoinMatch();
+            }
         } else {
             // We're joining a room without an active game
             UIRoomMenu::SwitchToContext();
@@ -402,6 +409,7 @@ namespace Network {
         PersistantStorage::LastConnectedMatchId = joinedMatch.uid;
         @Match = joinedMatch;
         Gamemaster::InitializeTiles();
+        UIGameRoom::SwitchToPlayContext();
     }
 
     void GetPublicRooms() {
