@@ -28,7 +28,7 @@ use super::{
 };
 use crate::{
     config,
-    datatypes::{GamePlatform, MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
+    datatypes::{MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
     server::{context::ClientContext, mapload},
     transport::Channel,
 };
@@ -321,10 +321,29 @@ impl GameRoom {
             .teams
             .create_team_from_preset(teams)
             .map(BaseTeam::clone);
-        if let Some(team) = team.clone() {
-            self.team_created(team);
+        if let Some(new_team) = &team {
+            self.team_created(new_team);
         }
         team
+    }
+
+    pub fn create_team(&mut self, name: String, color: Color) -> Result<BaseTeam, anyhow::Error> {
+        let max_teams = config::get_integer("behaviour.max_teams").unwrap_or(6) as usize;
+        if self.teams.count() >= max_teams {
+            return Err(anyhow!("cannot create more than {} teams", max_teams));
+        }
+
+        if self.teams.exists_with_name(&name) {
+            return Err(anyhow!("a team named '{}' already exists", &name));
+        }
+
+        let team = self
+            .teams
+            .create_team(name, color)
+            .clone();
+
+        self.team_created(&team);
+        Ok(team)
     }
 
     pub fn get_least_populated_team(&self) -> Option<&BaseTeam> {
@@ -334,21 +353,9 @@ impl GameRoom {
             .min_by_key(|team| self.members.iter().filter(|m| m.team == team.id).count())
     }
 
-    fn team_created(&mut self, team: BaseTeam) {
+    fn team_created(&mut self, team: &BaseTeam) {
         self.channel
-            .broadcast(&RoomEvent::TeamCreated { base: team })
-    }
-
-    fn create_ffa_teams(&mut self) {
-        self.teams = TeamsManager::new();
-        for i in 0..self.members.len() {
-            let team = self
-                .teams
-                .create_random_team(self.members[i].profile.name.clone())
-                .clone();
-            self.members[i].team = team.id;
-            self.team_created(team);
-        }
+            .broadcast(&RoomEvent::TeamCreated { base: team.clone() })
     }
 
     pub fn set_config(&mut self, config: RoomConfiguration) {

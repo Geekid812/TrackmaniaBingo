@@ -46,6 +46,10 @@ impl<T: Team + From<BaseTeam>> TeamsManager<T> {
         self.inner_create_team(name, rgb)
     }
 
+    pub fn create_team(&mut self, name: String, color: Color) -> &T {
+        self.inner_create_team(name, color)
+    }
+
     fn inner_create_team(&mut self, name: String, color: Color) -> &T {
         let team = BaseTeam::new(self.teams_id, name, color);
         self.teams_id += 1;
@@ -110,5 +114,9 @@ impl<T: Team> TeamsManager<T> {
 
     pub fn exists_with_name(&self, name: &str) -> bool {
         self.teams.iter().any(|t| t.base().name == name)
+    }
+
+    pub fn count(&self) -> usize {
+        self.teams.len()
     }
 }

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{room.config.name}}</h1>
+
+{% if room.host_name %}
+<h4>Hosted by {{room.host_name}}</h4>
+{% endif %}
+
+<div class="flex six">
+    <div class="full">
+        <small class="disabled">{{stringify_config(room.matchconfig)|safe}}</small>
+        {% if room.config.public %}
+            <span class="label success"><i class="fa">&#xf09c;</i> Public</span>
+        {% else %}
+            <span class="label error"><i class="fa">&#xf023;</i> Private</span>
+        {% endif %}
+    </div>
+    <div class="half">
+        <h3>TODO</h3>
+    </div>
+    <div class="half">
+        <p><i class="fa">&#xf017;</i> {{strftime(room.created_at.astimezone(), "%x %X")}}</p>
+        <small class="disabled">{{timedelta_verbify(now - room.created_at)}}</small>
+    </div>
+</div>
+{% endblock %}

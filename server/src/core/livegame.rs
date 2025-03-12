@@ -18,7 +18,7 @@ use chrono::{DateTime, Duration, Utc};
 use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
-use tracing::{error, warn};
+use tracing::{debug, error, warn};
 
 use super::{
     directory::{Owned, Shared, MATCHES},
@@ -321,7 +321,7 @@ impl LiveMatch {
             uid: self.uid.clone(),
             config: self.config.clone(),
             phase: self.phase,
-            teams: self.teams.get_teams().iter().map(GameTeam::clone).collect(), // TODO: broadcast members too
+            teams: self.teams.get_teams().iter().map(GameTeam::clone).collect(),
             cells: self
                 .cells
                 .iter()
@@ -350,7 +350,7 @@ impl LiveMatch {
         ranking.insert(i, claim.clone());
         self.broadcast_submitted_run(id, claim, i + 1);
 
-        if self.do_bingo_checks() {
+        if self.try_do_bingo_checks() {
             return;
         }
         if self.phase == MatchPhase::Overtime {
@@ -375,8 +375,16 @@ impl LiveMatch {
             room.lock().reset_match();
         }
 
-        self.save_match_end(draw);
+        if self.should_match_be_saved() {
+            self.save_match_end(draw);
+        }
+
         MATCHES.remove(self.uid.clone());
+    }
+
+    fn should_match_be_saved(&self) -> bool {
+        // Save match results if there are at least 2 players
+        self.player_count() >= 2
     }
 
     fn cell_count(&self) -> usize {
@@ -489,14 +497,19 @@ impl LiveMatch {
         Ok(())
     }
 
-    fn do_bingo_checks(&mut self) -> bool {
+    fn try_do_bingo_checks(&mut self) -> bool {
         if self.phase != MatchPhase::NoBingo {
-            let bingos = self.check_for_bingos();
-            let len = bingos.len();
-            if len >= 1 && bingos.iter().all(|line| line.team == bingos[0].team) {
-                self.announce_bingo_and_game_end(bingos);
-                return true;
-            }
+            return self.run_bingo_checks();
+        }
+        false
+    }
+
+    fn run_bingo_checks(&mut self) -> bool {
+        let bingos = self.check_for_bingos();
+        let len = bingos.len();
+        if len >= 1 && bingos.iter().all(|line| line.team == bingos[0].team) {
+            self.announce_bingo_and_game_end(bingos);
+            return true;
         }
         false
     }
@@ -697,7 +710,7 @@ impl LiveMatch {
     }
 
     fn nobingo_phase_change(&mut self) {
-        if !self.do_bingo_checks() && self.phase != MatchPhase::Overtime {
+        if !self.run_bingo_checks() && self.phase != MatchPhase::Overtime {
             self.set_phase(MatchPhase::Running);
         }
     }
@@ -707,7 +720,7 @@ impl LiveMatch {
             return;
         }
 
-        if self.do_bingo_checks() {
+        if self.try_do_bingo_checks() {
             return;
         }
 

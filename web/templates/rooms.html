@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Game Rooms</h1>
+<table class="primary">
+    <thead>
+        <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Players</th>
+            <th>Timestamp</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for room in rooms %}
+            <tr>
+                <td>
+                    {% if room.config.public %}
+                    <span class="label success"><i class="fa">&#xf09c;</i> Public</span>
+                    {% else %}
+                    <span class="label error"><i class="fa">&#xf023;</i> Private</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="/rooms/{{room.join_code}}"><p>{{room.config.name}}</p></a>
+                    <small class="disabled">{{stringify_config(room.matchconfig)|safe}}</small>
+                </td>
+                <td>
+                    {% set players = player_team_map(room) %}
+                    <p><i class="fa">&#xf0c0;</i> {{len(players)}}</p>
+                    <small>
+                        {% for player in players %}
+                        <span style="color: #{{player[1]}}">{{player[0]}}<span>
+                        {% endfor %}
+                    </small>
+                </td>
+                <td>
+                    <p><i class="fa">&#xf017;</i> {{strftime(room.created_at.astimezone(), "%x %X")}}</p>
+                    <small class="disabled">{{timedelta_verbify(now - room.created_at)}}</small>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

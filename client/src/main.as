@@ -7,11 +7,7 @@ const string DEVELOPER_MENUITEM_NAME = "\\$82a" + DEVELOPER_WINDOW_NAME;
 const string BINGO_REPO_URL = "https://github.com/Geekid812/TrackmaniaBingo";
 const string BINGO_ISSUES_URL = "https://github.com/Geekid812/TrackmaniaBingo/issues";
 
-#if TMNEXT
 const GamePlatform CURRENT_GAME = GamePlatform::Next;
-#elif TURBO
-const GamePlatform CURRENT_GAME = GamePlatform::Turbo;
-#endif
 
 void Main() {
     // Initialization
@@ -21,10 +17,6 @@ void Main() {
     // Load configuration settings
     PersistantStorage::LoadItems();
     Config::FetchConfig();
-
-    // If this is the first time, try to login to the game server
-    Login::EnsureLoggedIn();
-
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
     if (PersistantStorage::LastConnectedMatchId != "") {
@@ -74,13 +66,14 @@ void Render() {
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIGameRoom::Render();
+    UITeamEditor::Render();
     BoardLocator::Render();
     Board::Draw();
     UIInfoBar::Render();
     UIMapList::Render();
     UIPaintColor::Render();
     UITeams::Render();
-    SettingsWindow::Render();
+    UIEditSettings::Render();
     UIChat::Render();
 
     for (uint i = 0; i < Polls.Length; i++) {

@@ -28,7 +28,6 @@ namespace Playground {
         auto playgroundScript = cast<CGamePlaygroundScript>(app.PlaygroundScript);
         if (playgroundScript is null || playground.GameTerminals.Length == 0) return null;
 
-#if TMNEXT
         CSmPlayer@ player = cast<CSmPlayer>(playground.GameTerminals[0].ControlledPlayer);
         if (playground.GameTerminals[0].UISequence_Current != SGamePlaygroundUIConfig::EUISequence::Finish || player is null) return null;
 
@@ -38,12 +37,6 @@ namespace Playground {
 
         if (ghost.Result.Time > 0 && ghost.Result.Time < 4294967295) time = ghost.Result.Time;
         playgroundScript.DataFileMgr.Ghost_Release(ghost.Id);
-#elif TURBO
-        CTrackManiaPlayer@ player = cast<CTrackManiaPlayer>(playground.GameTerminals[0].ControlledPlayer);
-        if (player.RaceState != CTrackManiaPlayer::ERaceState::Finished || player is null) return null;
-
-        time = player.CurRace.Time;
-#endif
 
         if (time != -1) {
             return RunResult(time, CalculateMedal(time, authorTime, goldTime, silverTime, bronzeTime));
@@ -110,14 +103,6 @@ namespace Playground {
         mapClaimData.retries = 3;
         mapClaimData.tileIndex = Gamemaster::GetCurrentTileIndex();
         mapClaimData.mapResult = result;
-
-        // TODO: this is for Turbo, not really needed here
-        auto campaign = CampaignMap();
-        if (currentTile.map.type == MapType::Campaign) {
-            campaign.campaignId = 0;
-            campaign.map = currentTile.map.id;
-        }
-        mapClaimData.campaign = campaign;
 
         trace("[Playground::CheckRunFinished] Claiming map '" + map.MapName + "' with time of " + result.time);
         startnew(ClaimMedalCoroutine);

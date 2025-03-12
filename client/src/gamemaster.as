@@ -155,8 +155,7 @@ namespace Gamemaster {
         Match.phase = phase;
 
         if (previous == GamePhase::Starting) {
-            UIGameRoom::Visible = false;
-            UIMapList::Visible = true;
+            UIGameRoom::SwitchToPlayContext();
         }
 
         if (phase == GamePhase::Overtime) {
@@ -222,7 +221,6 @@ namespace Gamemaster {
     void SetCurrentTileIndex(int tileIndex) {
         if (Match.currentTileIndex != tileIndex) {
             Match.currentTileIndex = tileIndex;
-            // TODO: update
         }
     }
 
@@ -255,7 +253,7 @@ namespace Gamemaster {
      * Stop the current game and close the connection.
      */
     void Shutdown() {
-        // TODO: this is rudimentary, it doesn't keep connection alive
+        // this is rudimentary, it doesn't keep connection alive
         trace("[Gamemaster::Shutdown] Closing the game.");
         ResetAll();
         Network::CloseConnection();
@@ -269,6 +267,15 @@ namespace Gamemaster {
         ClearMatchId();
         @Match = null;
         @Room = null;
-        UIChat::Clear();
+        UIChat::ClearHistory();
+        UIPoll::ClearAllPolls();
+    }
+
+    /**
+     * Call game end handlers.
+     */
+    void HandleGameEnd() {
+        UIPoll::ClearAllPolls();
+        PersistantStorage::ResetConnectedMatch();
     }
 }

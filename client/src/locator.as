@@ -1,6 +1,9 @@
 
 namespace BoardLocator {
+    bool Visible = true;
+
     void Render() {
+        if (!Visible) return;
         if (!Gamemaster::IsBingoActive()) return;
 
         vec2 defaultWindowPadding = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding);
@@ -29,7 +32,7 @@ namespace BoardLocator {
                     UI::PopStyleVar();
                 }
                 
-                if (UI::IsItemClicked()) {
+                if (UI::IsItemHovered() && UI::IsMouseDoubleClicked()) {
                     OnCellClicked(i, j);
                 }
             }

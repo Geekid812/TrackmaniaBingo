@@ -9,4 +9,7 @@ namespace NetParams {
     string ChatMessage;
     int PollId;
     int PollChoiceIndex;
+    int PlayerSelectUid;
+    int TeamSelectId;
+    Team TeamCreatePreset;
 }

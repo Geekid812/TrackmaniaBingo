@@ -17,7 +17,7 @@ pub async fn create_or_update_player(player: NewPlayer) -> StoreWriteResult {
     |query| {
         query.bind(player.account_id)
         .bind(player.username)
-        .bind(player.country_code)
+        .bind(player.country_code.unwrap_or("WOR".to_string()))
         .bind(player.client_token)
     }).await.map(|_| ())
 }

@@ -5,11 +5,10 @@ namespace Framework {
     void Download(
         const string&in url,
         __internal::DownloadCallbackSuccess@ successCallback = null,
-        __internal::DownloadCallbackFailure@ failureCallback = null,
-        uint64 timeoutMillis = 30000
+        __internal::DownloadCallbackFailure@ failureCallback = null
     ) {
         trace("[Framework::Download] Downloading '" + url + "'");
-        __internal::DownloadCoroutineData data(url, successCallback, failureCallback, Time::Now + timeoutMillis);
+        __internal::DownloadCoroutineData data(url, successCallback, failureCallback);
         startnew(__internal::DownloadCoroutine, data);
     }
 
@@ -22,14 +21,12 @@ namespace Framework {
             string url;
             DownloadCallbackSuccess@ successCallback;
             DownloadCallbackFailure@ failureCallback;
-            uint64 deadline;
 
             DownloadCoroutineData() {}
-            DownloadCoroutineData(const string&in url, DownloadCallbackSuccess@ successCallback, DownloadCallbackFailure@ failureCallback, uint64 deadline) {
+            DownloadCoroutineData(const string&in url, DownloadCallbackSuccess@ successCallback, DownloadCallbackFailure@ failureCallback) {
                 this.url = url;
                 @this.successCallback = successCallback;
                 @this.failureCallback = failureCallback;
-                this.deadline = deadline;
             }
         }
 
@@ -38,12 +35,6 @@ namespace Framework {
 
             Net::HttpRequest@ req = Net::HttpGet(data.url);
             while (!req.Finished()) {
-                if (Time::Now > data.deadline) {
-                    trace("[Framework::Download] Download of '" + data.url + "' timed out.");
-                    if (@data.failureCallback !is null) data.failureCallback(data.url);
-                    return;
-                }
-
                 yield();
             }
             if (Extra::Net::RequestRaiseError("Framework::Download", req)) {

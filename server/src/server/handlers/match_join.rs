@@ -28,7 +28,6 @@ impl Request for JoinMatch {
             if !room.lock().match_uid().is_some_and(|uid| uid == self.uid) {
                 ctx.trace("already joined a different room, leaving previous game");
                 room.lock().player_remove(ctx.profile.uid);
-                // TODO: on player removed?
             }
         }
 

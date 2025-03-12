@@ -13,11 +13,7 @@ namespace LiveMatch {
         for (uint i = 0; i < value["teams"].Length; i++) {
             Json::Value@ t = value["teams"][i];
             Json::Value@ base = t["base"];
-            Team team = Team(
-                base["id"], 
-                base["name"],
-                vec3(base["color"][0] / 255., base["color"][1] / 255., base["color"][2] / 255.)
-            );
+            Team team = Team::Deserialize(base);
             match.teams.InsertLast(team);
 
             for (uint j = 0; j < t["members"].Length; j++) {

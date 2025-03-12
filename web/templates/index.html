@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+<p>Hello world!</p>
+{% if g.user %}
+<p>Account ID: {{g.user.account_id}}</p>
+{% endif %}
+{% endblock %}

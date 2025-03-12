@@ -14,3 +14,7 @@ string stringof(MapMode mode) {
 bool hasPlayerLimit(RoomConfiguration config) {
     return config.size != 0;
 }
+
+bool canPlayersChooseTheirOwnTeam(RoomConfiguration@ roomConfig) {
+    return !roomConfig.hostControl && !roomConfig.randomize;
+}

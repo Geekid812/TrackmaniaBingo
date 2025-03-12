@@ -26,6 +26,14 @@ class GameRoom {
         return null;
     }
 
+    Team@ GetTeamWithName(const string&in name) {
+        for (uint i = 0; i < teams.Length; i++) {
+            if (teams[i].name == name) 
+                return teams[i];
+        }
+        return null;
+    }
+
     array<Player> GetTeamPlayers(Team team){
         array<Player> players = {};
         for (uint i = 0; i < players.Length; i++){
@@ -45,12 +53,12 @@ class GameRoom {
     }
 
     bool CanCreateMoreTeams() {
-        return teams.Length < uint(Math::Min(maxTeams, hasPlayerLimit(config) ? config.size : maxTeams));
+        return teams.Length < uint(Math::Min(maxTeams, hasPlayerLimit(config) ? config.size : maxTeams)) && Room.localPlayerIsHost && !Gamemaster::IsBingoActive();
     }
 
     bool CanDeleteTeams() {
         // Must have at least 2 teams to play
-        return teams.Length > 2;
+        return teams.Length > 2 && Room.localPlayerIsHost;
     }
 
     NetworkRoom NetworkState() {
@@ -80,6 +88,27 @@ class Team {
 
     bool opEquals(Team other) {
         return id == other.id;
+    }
+}
+
+namespace Team {
+    Team Deserialize(Json::Value@ value) {
+        return Team(
+            value["id"], 
+            value["name"],
+            vec3(value["color"][0] / 255., value["color"][1] / 255., value["color"][2] / 255.)
+        );
+    }
+
+    Json::Value@ Serialize(Team team) {
+        Json::Value@ value = Json::Object();
+        value["id"] = team.id;
+        value["name"] = team.name;
+        value["color"] = Json::Array();
+        value["color"].Add(int(team.color.x * 255.));
+        value["color"].Add(int(team.color.y * 255.));
+        value["color"].Add(int(team.color.z * 255.));
+        return value;
     }
 }
 

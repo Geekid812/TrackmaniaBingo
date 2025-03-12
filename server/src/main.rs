@@ -13,8 +13,6 @@ pub mod web;
 
 pub mod config;
 
-use config::CONFIG;
-
 use crate::server::NetServer;
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");

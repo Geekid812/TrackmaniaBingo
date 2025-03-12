@@ -243,7 +243,6 @@ pub struct MapsConfig {
 #[derive(Deserialize)]
 #[serde(default)]
 pub struct GameConfig {
-    pub teams: HashMap<String, String>,
     #[serde_as(as = "DurationSeconds<i64>")]
     pub mxrandom_max_author_time: Duration,
     #[serde_as(as = "DurationSeconds<i64>")]
@@ -303,18 +302,6 @@ impl Default for MapsConfig {
 impl Default for GameConfig {
     fn default() -> Self {
         GameConfig {
-            teams: HashMap::from_iter(
-                vec![
-                    ("Red", "F81315"),
-                    ("Green", "8BC34A"),
-                    ("Blue", "0095FF"),
-                    ("Cyan", "4DD0E1"),
-                    ("Pink", "E04980"),
-                    ("Yellow", "FFFF00"),
-                ]
-                .into_iter()
-                .map(|(s1, s2)| (s1.to_owned(), s2.to_owned())),
-            ),
             mxrandom_max_author_time: Duration::minutes(5),
             start_countdown: Duration::seconds(5)
         }

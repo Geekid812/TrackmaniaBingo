@@ -4,6 +4,7 @@ namespace UIProfile {
     PlayerProfile@ openProfiles;
 
     void RenderProfile(PlayerProfile profile, bool showId = true) {
+        Font::Set(Font::Style::Regular, Font::Size::Medium);
         CountryFlag(profile.countryCode, vec2(30, 20));
         UI::SameLine();
         vec2 playerPos = UI::GetCursorPos();
@@ -20,6 +21,7 @@ namespace UIProfile {
             // Player UID is no longer shown on profile, skip
             UI::NewLine();
         }
+        Font::Unset();
     }
 
     void CountryFlag(const string&in countryCode, vec2 size) {

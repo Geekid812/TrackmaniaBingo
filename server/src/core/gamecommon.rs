@@ -1,28 +1,22 @@
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
-use once_cell::sync::Lazy;
-
-use crate::{config::CONFIG, datatypes::PlayerProfile, server, transport::messager::NetMessager};
+use crate::{datatypes::PlayerProfile, server, transport::messager::NetMessager};
 
 pub type PlayerId = u32;
 
-pub static TEAMS: Lazy<Vec<(String, Color)>> = Lazy::new(|| {
-    CONFIG
-        .game
-        .teams
-        .iter()
-        .map(|(s, col)| (s.clone(), Color::from_str(col).expect("valid colors")))
-        .collect()
-});
+use super::{
+    directory::Owned,
+    models::team::{BaseTeam, TeamIdentifier},
+    room::GameRoom,
+};
 
-use super::{directory::Owned, models::team::TeamIdentifier, room::GameRoom, util::Color};
-
-pub fn setup_room(room_arc: &Owned<GameRoom>) {
+pub fn setup_room(room_arc: &Owned<GameRoom>, teams: &Vec<BaseTeam>) {
     let mut room = room_arc.lock();
+    let team_presets = teams.iter().map(|t| (t.name.clone(), t.color)).collect();
 
-    room.create_team_from_preset(&TEAMS)
+    room.create_team_from_preset(&team_presets)
         .expect("creating initial 1st team");
-    room.create_team_from_preset(&TEAMS)
+    room.create_team_from_preset(&team_presets)
         .expect("creating initial 2nd team");
 
     server::mapload::load_maps(

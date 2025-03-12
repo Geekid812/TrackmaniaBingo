@@ -49,6 +49,7 @@ namespace NetworkHandlers {
             auto jsonMap = mapList[i];
             Match.tiles.InsertLast(GameMap::Deserialize(jsonMap));
         }
+        Gamemaster::InitializeTiles();
     }
 
     void RunSubmitted(Json::Value@ data) {
@@ -66,7 +67,7 @@ namespace NetworkHandlers {
                 string playerName = claim.player.name;
                 string mapName = Text::StripFormatCodes(claimedMap.map.trackName);
                 string teamName = claimingTeam.name;
-                string teamCredit = "for " + teamName + " Team";
+                string teamCredit = "for " + teamName;
 
                 vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(claimingTeam.color, 0.1), 0.75);
                 vec4 dimmedColor = teamColor / 1.5;
@@ -75,7 +76,7 @@ namespace NetworkHandlers {
                 if (isReclaim) {
                     UI::ShowNotification(Icons::Retweet + " Map Reclaimed", playerName + " has reclaimed \\$fd8" + mapName + "\\$z " + teamCredit + "\n" + result.Display() + " (" + deltaTime + ")", teamColor, 15000);
                 } else if (isImprove) {
-                    UI::ShowNotification(Icons::ClockO + " Time Improved", playerName + " has improved " + (teamName + " Team's") + " time on \\$fd8" + mapName + "\\$z\n" + result.Display() + " (" + deltaTime + ")", dimmedColor, 15000);
+                    UI::ShowNotification(Icons::ClockO + " Time Improved", playerName + " has improved " + teamName + (teamName.EndsWith("s") ? "'" : "'s") + " time on \\$fd8" + mapName + "\\$z\n" + result.Display() + " (" + deltaTime + ")", dimmedColor, 15000);
                 } else { // Normal claim
                     UI::ShowNotification(Icons::Bookmark + " Map Claimed", playerName + " has claimed \\$fd8" + mapName + "\\$z " + teamCredit + "\n" + result.Display(), teamColor, 15000);
                 }
@@ -138,11 +139,7 @@ namespace NetworkHandlers {
         @Room.players = {};
         for (uint i = 0; i < teams.Length; i++) {
             Json::Value@ t = teams[i];
-            Team team = Team(
-                t["id"], 
-                t["name"],
-                vec3(t["color"][0] / 255., t["color"][1] / 255., t["color"][2] / 255.)
-            );
+            Team team = Team::Deserialize(t);
             Room.teams.InsertLast(team);
 
             for (uint j = 0; j < t["members"].Length; j++) {
@@ -198,7 +195,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Gamemaster::SetPhase(GamePhase::Ended);
-        PersistantStorage::ResetConnectedMatch();
+        Gamemaster::HandleGameEnd();
     }
 
     void TeamCreated(Json::Value@ data) {
@@ -251,7 +248,7 @@ namespace NetworkHandlers {
         Match.endState.endTime = Time::Now;
         @Match.endState.team = team;
         Gamemaster::SetPhase(GamePhase::Ended);
-        PersistantStorage::ResetConnectedMatch();
+        Gamemaster::HandleGameEnd();
     }
 
     void AnnounceDraw() {
@@ -259,7 +256,7 @@ namespace NetworkHandlers {
 
         Match.endState.endTime = Time::Now;
         Gamemaster::SetPhase(GamePhase::Ended);
-        PersistantStorage::ResetConnectedMatch();
+        Gamemaster::HandleGameEnd();
     }
 
     void MatchTeamCreated(Json::Value@ data) {
@@ -292,24 +289,6 @@ namespace NetworkHandlers {
         Match.canReroll = bool(data["can_reroll"]);
 
         UI::ShowNotification(Icons::Kenney::ReloadInverse + " Map Rerolled", "The map \\$fd8" + oldName + " \\$zhas been rerolled.", vec4(0., .6, .6, 1.), 10000);
-    }
-
-    void CellPinged(Json::Value@ data) {
-        if (!Gamemaster::IsBingoActive()) {
-            warn("Handlers: got CellPinged event but game is inactive.");
-            return;
-        }
-
-        Team team = Match.GetSelf().team;
-        // Not for our team, discard it
-        if (int(data["team"]) != team.id) return;
-
-        auto ping = Board::CellPing();
-        ping.time = Time::Now;
-        ping.cellId = uint(data["cell_id"]);
-        Board::Pings.InsertLast(ping);
-
-        UI::ShowNotification(Icons::Bell + " \\$" + UIColor::GetHex(team.color) + string(data["player"]["name"]) + " \\$zpinged a cell");
     }
 
     void ChatMessage(Json::Value@ data) {

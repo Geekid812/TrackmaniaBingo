@@ -51,11 +51,6 @@ namespace Network {
     void Connect() {
         SetOfflineMode(false);
 
-        Login::EnsureLoggedIn();
-        if (!Login::IsLoggedIn()) {
-            SetOfflineMode(true);
-            return;
-        }
         Timings::LastPingSent = Time::Now;
         Timings::LastPingReceived = Time::Now;
         OpenConnection();
@@ -231,8 +226,6 @@ namespace Network {
             NetworkHandlers::MatchPlayerJoin(body);
         } else if (event == "MapRerolled") {
             NetworkHandlers::MapRerolled(body);
-        } else if (event == "CellPinged") {
-            NetworkHandlers::CellPinged(body);
         } else if (event == "ChatMessage") {
             NetworkHandlers::ChatMessage(body);
         } else if (event == "PollStart") {
@@ -283,7 +276,8 @@ namespace Network {
             warn("[Network] Post preemptively failed!");
             if (Network::IsConnected()) OnDisconnect();
             return null;
-        } // TODO: connection fault?
+        }
+        
         Internal::Errors.Delete(type);
         Internal::SuspendUI = blocking;
         Json::Value@ reply = ExpectReply(Sequence, timeout);
@@ -309,9 +303,15 @@ namespace Network {
     void CreateRoom() {
         MatchConfig.game = CURRENT_GAME;
 
+        if (TeamPresets.Length < 2) {
+            PersistantStorage::TeamEditorStorage = PersistantStorage::GetDefaultTeams();
+            PersistantStorage::LoadTeamEditor();
+        }
+
         auto body = Json::Object();
         body["config"] = RoomConfiguration::Serialize(RoomConfig);
         body["match_config"] = MatchConfiguration::Serialize(MatchConfig);
+        body["teams"] = Json::Parse(PersistantStorage::TeamEditorStorage);
 
         Json::Value@ response = Post("CreateRoom", body, true);
         if (response is null) {
@@ -346,7 +346,9 @@ namespace Network {
     }
 
     void CreateTeam() {
-        Network::Post("CreateTeam", Json::Object());
+        auto body = Json::Object();
+        body["team"] = Team::Serialize(NetParams::TeamCreatePreset);
+        Network::Post("CreateTeam", body);
     }
 
     void DeleteTeam() {
@@ -379,7 +381,14 @@ namespace Network {
             // We're joining an active game
             string currentMatchUid = response["match_uid"];
             NetParams::MatchJoinUid = currentMatchUid;
-            UITeams::SwitchToJoinContext();
+
+            if (canPlayersChooseTheirOwnTeam(Room.config)) {
+                // We have to choose a team before joining
+                UITeams::SwitchToJoinContext();
+            } else {
+                // Cannot choose a team, immediately try to join the match
+                Network::JoinMatch();
+            }
         } else {
             // We're joining a room without an active game
             UIRoomMenu::SwitchToContext();
@@ -404,9 +413,11 @@ namespace Network {
         
         Gamemaster::SetBingoActive(true);
         UITeams::CloseContext();
-        UIChat::Clear();
+        UIChat::ClearHistory();
         PersistantStorage::LastConnectedMatchId = joinedMatch.uid;
         @Match = joinedMatch;
+        Gamemaster::InitializeTiles();
+        UIGameRoom::SwitchToPlayContext();
     }
 
     void GetPublicRooms() {
@@ -439,7 +450,7 @@ namespace Network {
             trace("[Network] EditConfig - No reply from server.");
             return;
         }
-        SettingsWindow::Visible = false;
+        UIEditSettings::Visible = false;
     }
 
     void JoinTeam(Team team) {
@@ -504,5 +515,12 @@ namespace Network {
         body["poll_id"] = NetParams::PollId;
         body["choice"] = NetParams::PollChoiceIndex;
         Network::Post("SubmitPollVote", body, false);
+    }
+
+    void ChangePlayerTeam() {
+        auto body = Json::Object();
+        body["player_uid"] = NetParams::PlayerSelectUid;
+        body["team_id"] = NetParams::TeamSelectId;
+        Network::Post("ChangePlayerTeam", body, false);
     }
 }

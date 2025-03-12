@@ -12,7 +12,6 @@ mod get_public_rooms;
 mod join_room;
 mod match_join;
 mod ping;
-mod ping_cell;
 mod reload_maps;
 mod send_chat;
 mod start_match;
@@ -20,6 +19,7 @@ mod submit_run;
 mod unsubscribe_roomlist;
 mod vote_reroll;
 mod poll_vote;
+mod change_player_team;
 
 #[typetag::deserialize(tag = "req")]
 pub trait Request: Debug {

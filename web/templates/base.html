@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% block head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Race against your friends to be the first team to complete a Bingo board!" />
+    <title>{% block title %}Trackmania Bingo{% endblock %}</title>
+
+    <link rel="icon" type="image/png" href="/static/img/bingologo.png">
+    <link rel="stylesheet" href="/static/vendor/picnic.min.css">
+    <link rel="stylesheet" href="/static/vendor/fork-awesome.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    {% endblock %}
+</head>
+
+<body>
+    <nav>
+        <a href="/" class="brand">
+            <span>Trackmania Bingo</span>
+        </a>
+        {% if g.admin %}
+        <div class="menu left">
+            <a href="{{url_for('rooms.list_rooms')}}"><button class="pseudo">Rooms</button></a>
+        </div>
+        {% endif %}
+
+        <div class="menu">
+            {% if g.user %}
+            <a href="/auth/logout"><button class="pseudo">{{g.user.username}}</button></a>
+            {% else %}
+            <a href="/auth/login"><button class="login"><i class="fa">&#xeb02;</i> Login</button></a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+
+</html>

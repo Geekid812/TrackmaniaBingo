@@ -7,6 +7,7 @@ namespace UIInfoBar {
 
     float SubwindowOffset = 0.;
     string MapLeaderboardUid;
+    bool Visible = true;
 
     // Small controls window below the infobar for exiting
     void PostgameControls() {
@@ -47,9 +48,6 @@ namespace UIInfoBar {
             Player@ claimingPlayer = claim.player;
             UI::Text(tostring(i + 1) + ".");
             UI::SameLine();
-            if (i == 0) {
-                UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 6));
-            }
 
             Font::Style textStyle = Font::Style::Regular;
             if (i == 0) textStyle = Font::Style::Bold;
@@ -58,9 +56,6 @@ namespace UIInfoBar {
             Layout::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
             UI::Text(claim.result.Display());
             UI::SameLine();
-            if (i == 0) {
-                UI::SetCursorPos(UI::GetCursorPos() + vec2(0, 6));
-            }
             UITools::PlayerTag(claimingPlayer);
 
             Font::Unset();
@@ -145,6 +140,7 @@ namespace UIInfoBar {
     }
 
     void Render() {
+        if (!Visible) return;
         if (!Gamemaster::IsBingoActive()) return;
         
         int64 stopwatchTime = GameTime::CurrentClock();

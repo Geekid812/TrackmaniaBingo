@@ -76,6 +76,7 @@ class RoomConfiguration {
     bool public;
     bool randomize;
     uint size;
+    bool hostControl;
     RoomConfiguration() {}
 }
 namespace RoomConfiguration {
@@ -85,6 +86,7 @@ namespace RoomConfiguration {
         value["public"] = cls.public;
         value["randomize"] = cls.randomize;
         value["size"] = cls.size;
+        value["host_control"] = cls.hostControl;
 
         return value;
     }
@@ -95,6 +97,7 @@ namespace RoomConfiguration {
         cls.public = value["public"];
         cls.randomize = value["randomize"];
         cls.size = value["size"];
+        cls.hostControl = value["host_control"];
 
         return cls;
     }
@@ -159,7 +162,7 @@ namespace MatchConfiguration {
     }
 }
 
-/* Request to open a connection by the client. */
+/* Request to open a connection by the client using an exisiting token. */
 class HandshakeRequest {
     string version;
     GamePlatform game;
@@ -181,6 +184,33 @@ namespace HandshakeRequest {
         cls.version = value["version"];
         cls.game = GamePlatform(int(value["game"]));
         cls.token = value["token"];
+
+        return cls;
+    }
+}
+
+/* Request to generate a client token with the provided credientials. */
+class KeyExchangeRequest {
+    string key;
+    string displayName;
+    string accountId;
+    KeyExchangeRequest() {}
+}
+namespace KeyExchangeRequest {
+    Json::Value@ Serialize(KeyExchangeRequest cls) {
+        auto value = Json::Object();
+        value["key"] = cls.key;
+        value["display_name"] = cls.displayName;
+        value["account_id"] = cls.accountId;
+
+        return value;
+    }
+
+    KeyExchangeRequest Deserialize(Json::Value@ value) {
+        auto cls = KeyExchangeRequest();
+        cls.key = value["key"];
+        cls.displayName = value["display_name"];
+        cls.accountId = value["account_id"];
 
         return cls;
     }
@@ -312,7 +342,6 @@ namespace Poll {
 /* Supported game platforms in Bingo. */
 enum GamePlatform {
     Next,
-    Turbo,
 }
 
 /* Available map selection modes. */

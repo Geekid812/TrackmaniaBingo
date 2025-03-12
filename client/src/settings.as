@@ -3,20 +3,16 @@ namespace Settings {
     class BackendConfiguration {
         string NetworkAddress;
         uint16 TcpPort;
-        uint16 HttpPort;
-        bool HttpSecure;
 
         BackendConfiguration() {}
-        BackendConfiguration(const string&in networkAddress, uint16 tcpPort, uint16 httpPort, bool httpSecure) {
+        BackendConfiguration(const string&in networkAddress, uint16 tcpPort) {
             this.NetworkAddress = networkAddress;
             this.TcpPort = tcpPort;
-            this.HttpPort = httpPort;
-            this.HttpSecure = httpSecure;
         }
     }
 
-    BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 43333, 8080, false);
-    BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 43333, 8085, false);
+    BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 43333);
+    BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 43333);
 
     enum BackendSelection {
         LocalDevelopment,
@@ -38,12 +34,6 @@ namespace Settings {
 
     [Setting name="TCP Port" category="Custom Backend"]
     uint16 CustomNetworkPort = 3085;
-
-    [Setting name="HTTP Port" category="Custom Backend"]
-    uint16 CustomHttpPort = 8085;
-
-    [Setting name="Use HTTPS" category="Custom Backend"]
-    bool CustomHttpSecure = false;
     
     [Setting name="Connection Timeout" category="Developer"]
     uint NetworkTimeout = 10000;
@@ -62,12 +52,7 @@ namespace Settings {
             case BackendSelection::LocalDevelopment:
                 return LOCALHOST_BACKEND;
             default:
-                return BackendConfiguration(CustomBackendAddress, CustomNetworkPort, CustomHttpPort, CustomHttpSecure);
+                return BackendConfiguration(CustomBackendAddress, CustomNetworkPort);
         }
-    }
-
-    // Gets the HTTP scheme for the backend configuration.
-    string HttpScheme(BackendConfiguration@ backend) {
-        return backend.HttpSecure ? "https://" : "http://";
     }
 }

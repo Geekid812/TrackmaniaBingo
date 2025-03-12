@@ -164,7 +164,7 @@ namespace UIMainWindow {
     }
 }
 
-namespace SettingsWindow {
+namespace UIEditSettings {
     bool Visible;
 
     void Render() {

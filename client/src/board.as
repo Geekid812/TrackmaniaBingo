@@ -3,13 +3,17 @@ namespace Board {
     // Controlled by BoardLocator
     float BoardSize;
     vec2 Position;
-    array<CellPing> Pings;
+    bool Visible = true;
 
     const float STROKE_WIDTH = 8.;
     const float CELL_HIGHLIGHT_PADDING = 3.5; // Multiplier for BorderSize, inside offset
     const vec4 CELL_HIGHLIGHT_COLOR = vec4(1, 1, 1, 0.9);
     const vec4 BINGO_STROKE_COLOR = vec4(1, 0.6, 0, 0.9);
     const uint64 ANIMATION_START_TIME = 4000;
+
+    const float TILE_SHADING_LIGHT_PERIOD = 1.5 / (2. * Math::PI);
+    const float TILE_SHADING_STEP = 0.3;
+    const float TILE_SHADING_VARIENCE = 0.08f;
 
     const uint64 PING_DURATION = 2500;
     const uint64 PING_PERIOD = 1250;
@@ -46,6 +50,7 @@ namespace Board {
     }
 
     void Draw() {
+        if (!Visible) return;
         if (!Gamemaster::IsBingoActive()) return;
 
         uint cellsPerRow = Match.config.gridSize;
@@ -79,7 +84,10 @@ namespace Board {
 
         // Cell Fill Color
         float colorAnimProgress = Animation::GetProgress(animationTime, 2000, 500);
+        float lightShadingTime = -float(Time::Now - Match.startTime) / 1000.;
         for (uint x = 0; x < cellsPerRow; x++) {
+            float tileLightShading = Math::Sin((lightShadingTime + x * TILE_SHADING_STEP) / TILE_SHADING_LIGHT_PERIOD);
+            float lightness = 1. + TILE_SHADING_VARIENCE * tileLightShading * 0.5;
             
             for (uint y = 0; y < cellsPerRow; y++) {
                 GameTile@ tile = Gamemaster::GetTileOnGrid(x, y);
@@ -87,6 +95,7 @@ namespace Board {
                 vec2 cellPosition = CellPosition(x, y, sizes);
                 vec4 color = GetTileFillColor(tile);
                 color.w *= colorAnimProgress; // opacity modifier
+                color *= lightness;
                 
                 nvg::BeginPath();
                 nvg::FillColor(color);
@@ -119,32 +128,6 @@ namespace Board {
             nvg::BeginPath();
             nvg::Rect(Position.x + sizes.step * (col + 1) - highlightMarginOffset, Position.y + sizes.step * row, highlightWidth, sizes.cell + sizes.border * 2);
             nvg::Fill();
-        }
-
-        // Cell ping
-        for (uint i = 0; i < Pings.Length; i++) {
-            auto ping = Pings[i];
-            uint64 pingAnimationTime = Time::Now - ping.time;
-            if (pingAnimationTime > PING_DURATION) {
-                Pings.RemoveAt(i);
-                continue;
-            }
-
-            int row = ping.cellId / cellsPerRow;
-            int col = ping.cellId % cellsPerRow;
-            vec2 pos = CellPosition(row, col, sizes);
-
-            pingAnimationTime %= PING_PERIOD;
-            for (uint n = 0; n < 2; n++) {
-                float pingAnimProgress = Animation::GetProgress(pingAnimationTime - n * 200, 0, 1000, Animation::Easing::SineOut);
-                float pingScale = pingAnimProgress * PING_SCALE;
-                float posOffset = sizes.cell / 2 - sizes.cell * pingScale / 2;
-
-                nvg::BeginPath();
-                nvg::FillColor(vec4(1., 1., 1., (1. - pingAnimProgress)));
-                nvg::Rect(pos.x + posOffset, pos.y + posOffset, sizes.cell * pingScale, sizes.cell * pingScale);
-                nvg::Fill();
-            }
         }
 
         // Winning stroke
