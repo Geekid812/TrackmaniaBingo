@@ -26,8 +26,10 @@ impl<T: Team + From<BaseTeam>> TeamsManager<T> {
 
         let mut rng = rand::thread_rng();
         let mut idx = rng.gen_range(0..teams.len());
-        while self.exists_with_name(&teams[idx].0) {
+        let mut retries = 100;
+        while self.exists_with_name(&teams[idx].0) && retries > 0 {
             idx = rng.gen_range(0..teams.len());
+            retries -= 1;
         }
 
         let color = teams[idx].1;
