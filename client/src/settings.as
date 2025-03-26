@@ -12,7 +12,7 @@ namespace Settings {
     }
 
     BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 43333);
-    BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 43333);
+    BackendConfiguration LIVE_BACKEND = BackendConfiguration("vmi1095534.contaboserver.net", 43333);
 
     enum BackendSelection {
         LocalDevelopment,
