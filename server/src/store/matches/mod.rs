@@ -1,7 +1,7 @@
 mod models;
 
 use super::{
-    execute_with_arguments, get_store, query_with_arguments, StoreReadResult, StoreWriteResult,
+    execute_with_arguments, get_store, query_with_arguments, StoreResult,
 };
 pub use models::*;
 use sqlx::Row;
@@ -10,7 +10,7 @@ use sqlx::Row;
 const MAX_RECORDS_PER_INSERT: usize = 100;
 
 /// Create or update a match record.
-pub async fn save_match_record(record: &Match) -> StoreWriteResult {
+pub async fn save_match_record(record: &Match) -> StoreResult {
     execute_with_arguments(
     get_store(),
     "INSERT INTO matches(uid, started_at, ended_at) VALUES (?, ?, ?) ON CONFLICT(uid) DO UPDATE SET started_at=excluded.started_at, ended_at=excluded.ended_at",
@@ -22,7 +22,7 @@ pub async fn save_match_record(record: &Match) -> StoreWriteResult {
 }
 
 /// Find a match record from a match UID.
-pub async fn get_match_record(uid: &str) -> StoreReadResult<Match> {
+pub async fn get_match_record(uid: &str) -> StoreResult<Match> {
     query_with_arguments(
         get_store(),
         "SELECT uid, started_at, ended_at FROM matches WHERE uid = ?",
@@ -37,7 +37,7 @@ pub async fn get_match_record(uid: &str) -> StoreReadResult<Match> {
 }
 
 /// Create players' match outcome entries after a match has ended.
-pub async fn create_match_result(match_uid: &str, result: MatchResult) -> StoreWriteResult {
+pub async fn create_match_result(match_uid: &str, result: MatchResult) -> StoreResult {
     let chunks = result.0.chunks(MAX_RECORDS_PER_INSERT);
     for chunk in chunks {
         let query_arguments = &", (?, ?, ?)".repeat(chunk.len())[2..];
@@ -51,7 +51,7 @@ pub async fn create_match_result(match_uid: &str, result: MatchResult) -> StoreW
 }
 
 /// Create an entry for a Bingo live match that has just ended.
-pub async fn write_match_end(record: Match, result: MatchResult) -> StoreWriteResult {
+pub async fn write_match_end(record: Match, result: MatchResult) -> StoreResult {
     save_match_record(&record).await?;
     create_match_result(&record.uid, result).await?;
     Ok(())
