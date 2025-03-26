@@ -1,12 +1,13 @@
 
 class MapClaim {
-    Player@ player;
+    Player @player;
     int teamId;
     RunResult result;
 }
 
 namespace MapClaim {
-    Json::Value@ Serialize(MapClaim mapClaim) {
+
+    Json::Value @Serialize(MapClaim mapClaim) {
         auto value = Json::Object();
         value["player"] = mapClaim.player.AsRef();
         value["team_id"] = mapClaim.teamId;
@@ -16,7 +17,7 @@ namespace MapClaim {
         return value;
     }
 
-    MapClaim Deserialize(Json::Value@ value, LiveMatch@ match = null) {
+    MapClaim Deserialize(Json::Value @value, LiveMatch @match = null) {
         auto mapClaim = MapClaim();
         if (@match is null) {
             if (!Gamemaster::IsBingoActive()) {
@@ -27,7 +28,7 @@ namespace MapClaim {
             @match = @Match;
         }
 
-        Player@ claimingPlayer = match.GetPlayer(int(value["player"]["uid"]));
+        Player @claimingPlayer = match.GetPlayer(int(value["player"]["uid"]));
         @mapClaim.player = claimingPlayer;
         mapClaim.teamId = int(value["team_id"]);
         mapClaim.result = RunResult(uint64(value["time"]), Medal(int(value["medal"])));

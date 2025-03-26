@@ -3,16 +3,15 @@ namespace UIHome {
     array<string> Subtitles = {};
     uint SubtitleIndex = 0;
 
-    void RandomizeSubtitle() {
-        SubtitleIndex = Math::Rand(0, Subtitles.Length);
-    }
+    void RandomizeSubtitle() { SubtitleIndex = Math::Rand(0, Subtitles.Length); }
 
     void Render() {
         UI::SetWindowSize(vec2(550, 700), UI::Cond::FirstUseEver);
         Title();
         Subtitle();
         UI::Dummy(vec2(0, 20));
-        if (Config::News.Length > 0) UINews::NewsItem(Config::News[0]);
+        if (Config::News.Length > 0)
+            UINews::NewsItem(Config::News[0]);
 
         LinksFooter();
     }
@@ -21,11 +20,11 @@ namespace UIHome {
         Font::Set(Font::Style::Bold, Font::Size::XXLarge);
 
         string title = "\\$ff5Trackmania Bingo \\$888" + Meta::ExecutingPlugin().Version;
-        float titleSize = Draw::MeasureString(title, Font::Current()).x; 
+        float titleSize = Draw::MeasureString(title, Font::Current()).x;
         float titlePadding = Layout::GetPadding(UI::GetWindowSize().x, titleSize, 0.5);
         UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
         UI::Text(title);
-    
+
         Font::Unset();
     }
 
@@ -33,11 +32,11 @@ namespace UIHome {
         Font::Set(Font::Style::Regular, Font::Size::Large);
 
         string subtitle = "\\$666" + Subtitles[SubtitleIndex];
-        float titleSize = Draw::MeasureString(subtitle, Font::Current()).x; 
+        float titleSize = Draw::MeasureString(subtitle, Font::Current()).x;
         float titlePadding = Layout::GetPadding(UI::GetWindowSize().x, titleSize, 0.5);
         UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
         UI::Text(subtitle);
-    
+
         Font::Unset();
     }
 
@@ -84,7 +83,9 @@ namespace UIHome {
         string unformattedText = "Discord - GitHub - Contact";
         Layout::AlignText(unformattedText, 0.5);
 
-        UI::Markdown("[Discord](https://discord.gg/pJbeqptsEa) - [GitHub](https://github.com/Geekid812/TrackmaniaBingo) - [Contact](mailto:geekid812@gmail.com)");
+        UI::Markdown("[Discord](https://discord.gg/pJbeqptsEa) - "
+                     "[GitHub](https://github.com/Geekid812/TrackmaniaBingo) - "
+                     "[Contact](mailto:geekid812@gmail.com)");
         UITools::CenterTextDisabled(Icons::Code + " Made by Geekid");
     }
 }

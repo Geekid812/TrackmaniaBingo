@@ -5,8 +5,9 @@ namespace UITeams {
 
     void Render() {
         Visible = Visible && (IsJoinContext || @Match !is null);
-        if (!Visible) return;
-        
+        if (!Visible)
+            return;
+
         if (IsJoinContext)
             RenderInJoin();
         else
@@ -16,7 +17,7 @@ namespace UITeams {
     void RenderInJoin() {
         UI::PushStyleVar(UI::StyleVar::WindowMinSize, vec2(400., 200.));
         UI::Begin(Icons::Th + " Team Selection", Visible);
-        
+
         JoinTeamsNotice();
         UI::BeginDisabled(Network::IsUISuspended());
         UIPlayers::PlayerTable(Room.teams, Room.players, null, false, true);
@@ -29,7 +30,7 @@ namespace UITeams {
     void RenderInMatch() {
         UI::PushStyleVar(UI::StyleVar::WindowMinSize, vec2(400., 200.));
         UI::Begin(Icons::Th + " Teams", Visible);
-        
+
         UIPlayers::PlayerTable(Match.teams, Match.players);
 
         UI::End();

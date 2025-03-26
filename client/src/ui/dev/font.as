@@ -13,9 +13,10 @@ namespace UIDevFonts {
 
             for (int i = 0; i < maxSize; i++) {
                 Font::Size size = Font::Size(i);
-                
+
                 // Check if the current size is named, otherwise skip
-                if (tostring(size) == tostring(i)) continue;
+                if (tostring(size) == tostring(i))
+                    continue;
 
                 for (int j = 0; j < numStyles; j++) {
                     UI::TableNextColumn();
@@ -35,9 +36,15 @@ namespace UIDevFonts {
             }
             UI::EndTable();
 
-            if (FontCacheOpenState[0]) Font::InspectFontCache(Font::FontCache_Regular, FontCacheOpenState[0], "Font Cache: Regular");
-            if (FontCacheOpenState[1]) Font::InspectFontCache(Font::FontCache_Bold, FontCacheOpenState[1], "Font Cache: Bold");
-            if (FontCacheOpenState[2]) Font::InspectFontCache(Font::FontCache_Mono, FontCacheOpenState[2], "Font Cache: Mono");
+            if (FontCacheOpenState[0])
+                Font::InspectFontCache(
+                    Font::FontCache_Regular, FontCacheOpenState[0], "Font Cache: Regular");
+            if (FontCacheOpenState[1])
+                Font::InspectFontCache(
+                    Font::FontCache_Bold, FontCacheOpenState[1], "Font Cache: Bold");
+            if (FontCacheOpenState[2])
+                Font::InspectFontCache(
+                    Font::FontCache_Mono, FontCacheOpenState[2], "Font Cache: Mono");
         }
     }
 }

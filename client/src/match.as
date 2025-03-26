@@ -2,9 +2,9 @@
 class LiveMatch {
     string uid;
     MatchConfiguration config;
-    array<GameTile>@ tiles = {};
-    array<Team>@ teams = {};
-    array<Player>@ players = {};
+    array<GameTile> @tiles = {};
+    array<Team> @teams = {};
+    array<Player> @players = {};
     int64 startTime = 0;
     int64 overtimeStartTime = 0;
     GamePhase phase = GamePhase::Starting;
@@ -15,8 +15,8 @@ class LiveMatch {
     int currentTileIndex = -1;
     bool currentTileInvalid = false;
 
-    Player@ GetSelf(){
-        for (uint i = 0; i < players.Length; i++){
+    Player @GetSelf() {
+        for (uint i = 0; i < players.Length; i++) {
             auto player = players[i];
             if (player.IsSelf())
                 return player;
@@ -24,17 +24,17 @@ class LiveMatch {
         return null;
     }
 
-    Team@ GetTeamWithId(int id) {
+    Team @GetTeamWithId(int id) {
         for (uint i = 0; i < teams.Length; i++) {
-            if (teams[i].id == id) 
+            if (teams[i].id == id)
                 return teams[i];
         }
         return null;
     }
 
-    array<Player> GetTeamPlayers(Team team){
+    array<Player> GetTeamPlayers(Team team) {
         array<Player> players = {};
-        for (uint i = 0; i < players.Length; i++){
+        for (uint i = 0; i < players.Length; i++) {
             auto player = players[i];
             if (player.team == team)
                 players.InsertLast(player);
@@ -53,36 +53,38 @@ class LiveMatch {
         return sum;
     }
 
-    Player@ GetPlayer(int uid) {
-        for (uint i = 0; i < players.Length; i++){
+    Player @GetPlayer(int uid) {
+        for (uint i = 0; i < players.Length; i++) {
             auto player = players[i];
-            if (player.profile.uid == uid) return player;
+            if (player.profile.uid == uid)
+                return player;
         }
 
         warn("Match: GetPlayer(" + uid + ") returned null.");
         return null;
     }
 
-    GameTile@ GetCurrentTile() {
-        CGameCtnChallenge@ currentMap = Playground::GetCurrentMap();
-        if (currentMap is null) return null;
+    GameTile @GetCurrentTile() {
+        CGameCtnChallenge @currentMap = Playground::GetCurrentMap();
+        if (currentMap is null)
+            return null;
 
-        if (currentTileIndex >= 0 && currentTileIndex < int(tiles.Length)) return tiles[currentTileIndex];
+        if (currentTileIndex >= 0 && currentTileIndex < int(tiles.Length))
+            return tiles[currentTileIndex];
         return null;
     }
-    
-    int GetMapCellId(string&in uid) {
+
+    int GetMapCellId(string& in uid) {
         for (uint i = 0; i < this.tiles.Length; i++) {
-            GameTile@ tile = this.tiles[i];
-            if (tile !is null && tile.map !is null && tile.map.uid == uid) return i;
+            GameTile @tile = this.tiles[i];
+            if (tile !is null && tile.map !is null && tile.map.uid == uid)
+                return i;
         }
 
         return -1;
     }
 
-    GameTile GetCell(int id) {
-        return this.tiles[id];
-    }
+    GameTile GetCell(int id) { return this.tiles[id]; }
 
     void SetCurrentTileIndex(int index) {
         this.currentTileIndex = index;
@@ -90,38 +92,38 @@ class LiveMatch {
     }
 }
 
-
 class GameTile {
-    GameMap@ map = null;
-    array<MapClaim>@ attemptRanking = {};
+
+    GameMap @map = null;
+    array<MapClaim> @attemptRanking = {};
     vec3 paintColor = vec3();
-    Image@ thumbnail;
-    Image@ mapImage;
+    Image @thumbnail;
+    Image @mapImage;
 
-    GameTile() { }
+    GameTile() {}
 
-    GameTile(GameMap map) {
-        SetMap(map);
-    }
+    GameTile(GameMap map) { SetMap(map); }
 
     void SetMap(GameMap map) {
-        @this.map = map;
-        @this.thumbnail = Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
-        @this.mapImage = Image("https://trackmania.exchange/maps/" + map.id + "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
+        @ this.map = map;
+        @ this.thumbnail = Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
+        @ this.mapImage =
+            Image("https://trackmania.exchange/maps/" + map.id +
+                  "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
     }
 
-    bool IsClaimed() {
-        return attemptRanking.Length != 0;
-    }
+    bool IsClaimed() { return attemptRanking.Length != 0; }
 
     MapClaim LeadingRun() {
-        if (attemptRanking.Length == 0) throw("Program error: attempted to get leading run on unclaimed map");
+        if (attemptRanking.Length == 0)
+            throw("Program error: attempted to get leading run on unclaimed map");
         return attemptRanking[0];
     }
 
-    MapClaim@ GetLocalPlayerRun() {
+    MapClaim @GetLocalPlayerRun() {
         for (uint i = 0; i < attemptRanking.Length; i++) {
-            if (attemptRanking[i].player.IsSelf()) return attemptRanking[i]; 
+            if (attemptRanking[i].player.IsSelf())
+                return attemptRanking[i];
         }
 
         return null;
@@ -153,18 +155,17 @@ class BingoLine {
 class EndState {
     uint64 endTime;
     BingoDirection bingoDirection;
-    array<BingoLine>@ bingoLines = {};
-    Team@ team;
+    array<BingoLine> @bingoLines = {};
+    Team @team;
 
-    bool HasEnded() {
-        return this.endTime != 0;
-    }
+    bool HasEnded() { return this.endTime != 0; }
 
     uint WinnerTeamsCount() {
-        array<int>@ uniqueTeams = {};
+        array<int> @uniqueTeams = {};
         for (uint i = 0; i < bingoLines.Length; i++) {
             int team_id = bingoLines[i].team.id;
-            if (uniqueTeams.Find(team_id) == -1) uniqueTeams.InsertLast(team_id);
+            if (uniqueTeams.Find(team_id) == -1)
+                uniqueTeams.InsertLast(team_id);
         }
 
         return uniqueTeams.Length;
@@ -175,19 +176,18 @@ class RunResult {
     int time = -1;
     Medal medal = Medal::None;
 
-    RunResult() { }
+    RunResult() {}
+
     RunResult(int time, Medal medal) {
         this.time = time;
         this.medal = medal;
     }
 
-    string Display(const string&in color = "$z") {
+    string Display(const string& in color = "$z") {
         return symbolOf(this.medal) + "\\" + color + " " + Time::Format(this.time);
     }
 
-    string DisplayTime() {
-        return Time::Format(this.time);
-    }
+    string DisplayTime() { return Time::Format(this.time); }
 }
 
 enum BingoDirection {

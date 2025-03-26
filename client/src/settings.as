@@ -5,13 +5,15 @@ namespace Settings {
         uint16 TcpPort;
 
         BackendConfiguration() {}
-        BackendConfiguration(const string&in networkAddress, uint16 tcpPort) {
+
+        BackendConfiguration(const string& in networkAddress, uint16 tcpPort) {
             this.NetworkAddress = networkAddress;
             this.TcpPort = tcpPort;
         }
     }
 
     BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 43333);
+
     BackendConfiguration LIVE_BACKEND = BackendConfiguration("vmi1095534.contaboserver.net", 43333);
 
     enum BackendSelection {
@@ -20,6 +22,7 @@ namespace Settings {
         Custom
     }
 
+        // clang-format off
     [Setting name="Chat" category="Bindings"]
     VirtualKey ChatBindingKey = VirtualKey::Return;
 
@@ -43,16 +46,17 @@ namespace Settings {
 
     [Setting name="Enable Developer Tools" category="Developer"]
     bool DevTools = false;
+    // clang-format on
 
     // Gets the active backend configuration.
-    BackendConfiguration@ GetBackendConfiguration() {
+    BackendConfiguration @GetBackendConfiguration() {
         switch (Backend) {
-            case BackendSelection::Live:
-                return LIVE_BACKEND;
-            case BackendSelection::LocalDevelopment:
-                return LOCALHOST_BACKEND;
-            default:
-                return BackendConfiguration(CustomBackendAddress, CustomNetworkPort);
+        case BackendSelection::Live:
+            return LIVE_BACKEND;
+        case BackendSelection::LocalDevelopment:
+            return LOCALHOST_BACKEND;
+        default:
+            return BackendConfiguration(CustomBackendAddress, CustomNetworkPort);
         }
     }
 }

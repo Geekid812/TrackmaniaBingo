@@ -8,17 +8,20 @@ namespace MXTags {
 
         Tag() {}
 
-        Tag(int id, const string&in name) {
+        Tag(int id, const string& in name) {
             this.id = id;
             this.name = name;
         }
     }
 
-    array<Tag@> Tags = {};
+    array<Tag @>
+        Tags = {};
+
     bool TagsRequested;
 
     bool TagsLoaded() {
-        if (!TagsRequested) startnew(LoadTags);
+        if (!TagsRequested)
+            startnew(LoadTags);
         return Tags.Length > 0;
     }
 
@@ -26,8 +29,11 @@ namespace MXTags {
         TagsRequested = true;
         trace("[MXTags::LoadTags] Loading tags...");
         auto req = Net::HttpGet(MX_GETTAGS_URL);
-        while (!req.Finished()) { yield(); }
-        if (Extra::Net::RequestRaiseError("MXTags::LoadTags", req)) return;
+        while (!req.Finished()) {
+            yield();
+        }
+        if (Extra::Net::RequestRaiseError("MXTags::LoadTags", req))
+            return;
 
         auto data = Json::Parse(req.String());
         Tags = {};
@@ -40,9 +46,10 @@ namespace MXTags {
     Tag GetTag(int id) {
         for (uint i = 0; i < Tags.Length; i++) {
             auto tag = Tags[i];
-            if (tag.id == id) return tag;
+            if (tag.id == id)
+                return tag;
         }
-        
+
         throw("GetTag() returned null. Tags are maybe not initialized. (Requested tag " + id + ")");
         return Tag();
     }

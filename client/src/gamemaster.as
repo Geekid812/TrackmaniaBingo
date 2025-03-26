@@ -3,46 +3,44 @@ namespace Gamemaster {
     namespace __internal {
         bool GameActive = false;
     }
-    
+
     /**
      * Return `true` if the Bingo game is currently active.
      */
-    bool IsBingoActive() {
-        return __internal::GameActive;
-    }
+    bool IsBingoActive() { return __internal::GameActive; }
 
     /**
      * Activate/deactivate the Bingo game.
      */
     void SetBingoActive(bool active) {
         __internal::GameActive = active;
-        if (active && Match is null) @Match = LiveMatch();
+        if (active && Match is null)
+            @Match = LiveMatch();
     }
 
     /**
      * Return whether the game logic should be running.
-     * Currently, it implies that Bingo is active and that the current phase is not 'Starting' or 'Ended'.
+     * Currently, it implies that Bingo is active and that the current phase is not 'Starting' or
+     * 'Ended'.
      */
     bool IsBingoPlaying() {
-        if (!IsBingoActive()) return false;
+        if (!IsBingoActive())
+            return false;
 
         GamePhase phase = GetPhase();
         return phase != GamePhase::Starting && phase != GamePhase::Ended;
     }
 
-
     /**
      * Return the match UID.
      */
-    string GetMatchId() {
-        return Match.uid;
-    }
+    string GetMatchId() { return Match.uid; }
 
     /**
      * Set the match UID.
      * If the match UID is set, the plugin will try to reconnect to that match.
      */
-    void SetMatchId(const string&in uid) {
+    void SetMatchId(const string& in uid) {
         Match.uid = uid;
 
         PersistantStorage::LastConnectedMatchId = uid;
@@ -54,16 +52,15 @@ namespace Gamemaster {
      * This also has the effect of disabling reconnection.
      */
     void ClearMatchId() {
-        if (Match !is null) Match.uid = "";
+        if (Match !is null)
+            Match.uid = "";
         PersistantStorage::ResetConnectedMatch();
     }
 
     /**
      * Get the game configuration.
      */
-    MatchConfiguration@ GetConfiguration() {
-        return Match.config;
-    }
+    MatchConfiguration @GetConfiguration() { return Match.config; }
 
     /**
      * Apply changes to the match configuration.
@@ -74,18 +71,14 @@ namespace Gamemaster {
     }
 
     /**
-     * Return the GameTime when the match will transitition to the play phase. 
+     * Return the GameTime when the match will transitition to the play phase.
      */
-    int64 GetStartTime() {
-        return Match.startTime;
-    }
+    int64 GetStartTime() { return Match.startTime; }
 
     /**
      * Set the game to transition to the play phase at the specified GameTime.
      */
-    void SetStartTime(int64 gameTime) {
-        Match.startTime = gameTime;
-    }
+    void SetStartTime(int64 gameTime) { Match.startTime = gameTime; }
 
     /**
      * Ensure the size of the interal Tiles array is at least the grid's total cell count.
@@ -113,7 +106,7 @@ namespace Gamemaster {
     uint GetTileCountForTeam(Team team) {
         uint count = 0;
         for (uint i = 0; i < GetTileCount(); i++) {
-            GameTile@ tile = Match.tiles[i];
+            GameTile @tile = Match.tiles[i];
 
             if (tile !is null && tile.IsClaimed() && tile.LeadingRun().player.team.id == team.id)
                 count += 1;
@@ -125,7 +118,7 @@ namespace Gamemaster {
     /**
      * Get the tile located at the given coordinates on the Bingo grid.
      */
-    GameTile@ GetTileOnGrid(uint x, uint y) {        
+    GameTile @GetTileOnGrid(uint x, uint y) {
         uint gridSize = Match.config.gridSize;
         uint index = y * gridSize + x;
 
@@ -135,17 +128,16 @@ namespace Gamemaster {
     /**
      * Get the tile with the given index on the Bingo grid.
      */
-    GameTile@ GetTileFromIndex(uint index) {
-        if (index >= GetTileCount()) return null;
+    GameTile @GetTileFromIndex(uint index) {
+        if (index >= GetTileCount())
+            return null;
         return Match.tiles[index];
     }
 
     /**
      * Get the active play phase.
      */
-    GamePhase GetPhase() {
-        return Match.phase;
-    }
+    GamePhase GetPhase() { return Match.phase; }
 
     /**
      * Set the active play phase.
@@ -166,8 +158,8 @@ namespace Gamemaster {
     /**
      * Get the local player's Bingo team.
      */
-    Team@ GetOwnTeam() {
-        Player@ self = Match.GetSelf();
+    Team @GetOwnTeam() {
+        Player @self = Match.GetSelf();
 
         if (self is null) {
             return null;
@@ -180,39 +172,31 @@ namespace Gamemaster {
      * Get the local player's team color.
      */
     vec3 GetOwnTeamColor() {
-        Team@ team = GetOwnTeam();
+        Team @team = GetOwnTeam();
 
-        return team is null ? vec3(.5, .5, .5): team.color;
+        return team is null ? vec3(.5, .5, .5) : team.color;
     }
 
     /**
      * Get the tile which the local player is currently playing.
      */
-    GameTile@ GetCurrentTile() {
-        return Match.GetCurrentTile();
-    }
+    GameTile @GetCurrentTile() { return Match.GetCurrentTile(); }
 
     /**
      * Return whether the current map has been internally flagged as 'broken'.
      */
-    bool IsCurrentMapBroken() {
-        return Match.currentTileInvalid;
-    }
+    bool IsCurrentMapBroken() { return Match.currentTileInvalid; }
 
     /**
      * Flag the current map as 'broken', meaning something isn't right or we couldn't load it.
      */
-    void FlagCurrentMapAsBroken() {
-        Match.currentTileInvalid = true;
-    }
+    void FlagCurrentMapAsBroken() { Match.currentTileInvalid = true; }
 
     /**
      * Get the current tile's index on the Bingo board. It identifies the map we're playing.
      * Can be an invalid index if we're not in a map.
      */
-    int GetCurrentTileIndex() {
-        return Match.currentTileIndex;
-    }
+    int GetCurrentTileIndex() { return Match.currentTileIndex; }
 
     /**
      * Sets the index of the tile we are playing on the Bingo board.
@@ -227,26 +211,23 @@ namespace Gamemaster {
     /**
      * Get the objective time to beat on the current map.
      */
-    RunResult@ GetObjectiveTimeToBeat() {
-        return Playground::GetCurrentTimeToBeat();
-    }
+    RunResult @GetObjectiveTimeToBeat() { return Playground::GetCurrentTimeToBeat(); }
 
     /**
      * Get the baseline time to reach to register a claim on the current map.
      */
-    RunResult@ GetBaselineTimeToBeat() {
-        return Playground::GetCurrentTimeToBeat(true);
-    }
+    RunResult @GetBaselineTimeToBeat() { return Playground::GetCurrentTimeToBeat(true); }
 
     /**
      * Set the GameMap corresponding to the specified tile index.
      */
     void TileSetMap(uint tileIndex, GameMap map) {
-        GameTile@ tile = Match.tiles[tileIndex];
+        GameTile @tile = Match.tiles[tileIndex];
         tile.SetMap(map);
 
         // The map is changed, we are no longer on that tile
-        if (int(tileIndex) == Match.currentTileIndex) Match.SetCurrentTileIndex(-1);
+        if (int(tileIndex) == Match.currentTileIndex)
+            Match.SetCurrentTileIndex(-1);
     }
 
     /**

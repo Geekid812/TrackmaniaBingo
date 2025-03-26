@@ -3,14 +3,14 @@ class GameRoom {
     RoomConfiguration config;
     MatchConfiguration matchConfig;
     string joinCode;
-    array<Team>@ teams = {};
-    array<Player>@ players = {};
+    array<Team> @teams = {};
+    array<Player> @players = {};
     int maxTeams = 999; // Gets overriden by server
     bool localPlayerIsHost;
-    LiveMatch@ activeMatch;
+    LiveMatch @activeMatch;
 
-    Player@ GetSelf(){
-        for (uint i = 0; i < players.Length; i++){
+    Player @GetSelf() {
+        for (uint i = 0; i < players.Length; i++) {
             auto player = players[i];
             if (player.IsSelf())
                 return player;
@@ -18,25 +18,25 @@ class GameRoom {
         return null;
     }
 
-    Team@ GetTeamWithId(int id) {
+    Team @GetTeamWithId(int id) {
         for (uint i = 0; i < teams.Length; i++) {
-            if (teams[i].id == id) 
+            if (teams[i].id == id)
                 return teams[i];
         }
         return null;
     }
 
-    Team@ GetTeamWithName(const string&in name) {
+    Team @GetTeamWithName(const string& in name) {
         for (uint i = 0; i < teams.Length; i++) {
-            if (teams[i].name == name) 
+            if (teams[i].name == name)
                 return teams[i];
         }
         return null;
     }
 
-    array<Player> GetTeamPlayers(Team team){
+    array<Player> GetTeamPlayers(Team team) {
         array<Player> players = {};
-        for (uint i = 0; i < players.Length; i++){
+        for (uint i = 0; i < players.Length; i++) {
             auto player = players[i];
             if (player.team == team)
                 players.InsertLast(player);
@@ -44,16 +44,19 @@ class GameRoom {
         return players;
     }
 
-    Player@ GetPlayer(int uid) {
-        for (uint i = 0; i < players.Length; i++){
+    Player @GetPlayer(int uid) {
+        for (uint i = 0; i < players.Length; i++) {
             auto player = players[i];
-            if (player.profile.uid == uid) return player;
+            if (player.profile.uid == uid)
+                return player;
         }
         return null;
     }
 
     bool CanCreateMoreTeams() {
-        return teams.Length < uint(Math::Min(maxTeams, hasPlayerLimit(config) ? config.size : maxTeams)) && Room.localPlayerIsHost && !Gamemaster::IsBingoActive();
+        return teams.Length <
+                   uint(Math::Min(maxTeams, hasPlayerLimit(config) ? config.size : maxTeams)) &&
+               Room.localPlayerIsHost && !Gamemaster::IsBingoActive();
     }
 
     bool CanDeleteTeams() {
@@ -74,34 +77,32 @@ class GameRoom {
 }
 
 class Team {
+
     string name;
     int id;
     vec3 color;
 
-    Team() { }
+    Team() {}
 
-    Team(int id, string&in name, vec3 color) {
+    Team(int id, string& in name, vec3 color) {
         this.name = name;
         this.id = id;
         this.color = color;
     }
 
-    bool opEquals(Team other) {
-        return id == other.id;
-    }
+    bool opEquals(Team other) { return id == other.id; }
 }
 
 namespace Team {
-    Team Deserialize(Json::Value@ value) {
+    Team Deserialize(Json::Value @value) {
         return Team(
-            value["id"], 
+            value["id"],
             value["name"],
-            vec3(value["color"][0] / 255., value["color"][1] / 255., value["color"][2] / 255.)
-        );
+            vec3(value["color"][0] / 255., value["color"][1] / 255., value["color"][2] / 255.));
     }
 
-    Json::Value@ Serialize(Team team) {
-        Json::Value@ value = Json::Object();
+    Json::Value @Serialize(Team team) {
+        Json::Value @value = Json::Object();
         value["id"] = team.id;
         value["name"] = team.name;
         value["color"] = Json::Array();
@@ -117,7 +118,7 @@ class Player {
     string name;
     Team team;
 
-    Player() { }
+    Player() {}
 
     Player(PlayerProfile profile, Team team) {
         this.profile = profile;
@@ -126,10 +127,11 @@ class Player {
     }
 
     bool IsSelf() {
-        if (@Profile is null) return false;
+        if (@Profile is null)
+            return false;
         return profile.uid == Profile.uid;
     }
-    
+
     PlayerRef AsRef() {
         PlayerRef playerRef();
         playerRef.name = this.name;

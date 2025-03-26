@@ -2,7 +2,8 @@ namespace UIDevActions {
     bool Visible;
 
     void Render() {
-        if (!Visible) return;
+        if (!Visible)
+            return;
         UI::Begin(DEVELOPER_WINDOW_NAME, Visible);
 
         UI::BeginTabBar("bingodev_tabs");
@@ -29,7 +30,7 @@ namespace UIDevActions {
 
         if (UI::BeginTabItem(Icons::Font + " Fonts")) {
             UIDevFonts::RenderFontMatrix();
-            
+
             UI::EndTabItem();
         }
 
@@ -62,7 +63,8 @@ namespace UIDevActions {
     }
 
     void ClientTokenControl() {
-        PersistantStorage::ClientToken = UI::InputText("Client Token", PersistantStorage::ClientToken);
+        PersistantStorage::ClientToken =
+            UI::InputText("Client Token", PersistantStorage::ClientToken);
         UI::SameLine();
         if (UI::Button("Clear##bingoclearclienttoken")) {
             PersistantStorage::ClientToken = "";
@@ -70,7 +72,8 @@ namespace UIDevActions {
     }
 
     void LastConnectedMatchControl() {
-        PersistantStorage::LastConnectedMatchId = UI::InputText("Last Connected Match ID", PersistantStorage::LastConnectedMatchId);
+        PersistantStorage::LastConnectedMatchId =
+            UI::InputText("Last Connected Match ID", PersistantStorage::LastConnectedMatchId);
         UI::SameLine();
         if (UI::Button("Clear##bingoclearlastmatch")) {
             PersistantStorage::LastConnectedMatchId = "";
@@ -93,7 +96,8 @@ namespace UIDevActions {
 
             // Prefill tiles with maps from local cache
             for (uint i = 0; i < Gamemaster::GetTileCount(); i++) {
-                if (i >= MapCache.Length) break;
+                if (i >= MapCache.Length)
+                    break;
 
                 Gamemaster::TileSetMap(i, MapCache[i]);
             }

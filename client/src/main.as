@@ -61,8 +61,10 @@ void RenderMenu() {
 }
 
 void Render() {
-    if (!UI::IsGameUIVisible()) return;
-    if (!Font::Initialized) return;
+    if (!UI::IsGameUIVisible())
+        return;
+    if (!Font::Initialized)
+        return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIGameRoom::Render();
@@ -88,7 +90,8 @@ void Render() {
 }
 
 void RenderInterface() {
-    if (!Font::Initialized) return;
+    if (!Font::Initialized)
+        return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIMainWindow::Render();

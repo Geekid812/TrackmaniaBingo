@@ -1,6 +1,6 @@
 
 namespace LiveMatch {
-    LiveMatch Deserialize(Json::Value@ value) {
+    LiveMatch Deserialize(Json::Value @value) {
         auto match = LiveMatch();
         match.uid = value["uid"];
         match.config = MatchConfiguration::Deserialize(value["config"]);
@@ -11,8 +11,8 @@ namespace LiveMatch {
         @match.teams = {};
         @match.players = {};
         for (uint i = 0; i < value["teams"].Length; i++) {
-            Json::Value@ t = value["teams"][i];
-            Json::Value@ base = t["base"];
+            Json::Value @t = value["teams"][i];
+            Json::Value @base = t["base"];
             Team team = Team::Deserialize(base);
             match.teams.InsertLast(team);
 
@@ -28,7 +28,8 @@ namespace LiveMatch {
             GameMap map = GameMap::Deserialize(cell_json["map"]);
             GameTile cell = GameTile(map);
             for (uint j = 0; j < cell_json["claims"].Length; j++) {
-                cell.attemptRanking.InsertLast(MapClaim::Deserialize(cell_json["claims"][j], match));
+                cell.attemptRanking.InsertLast(
+                    MapClaim::Deserialize(cell_json["claims"][j], match));
             }
             match.tiles.InsertLast(cell);
         }

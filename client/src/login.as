@@ -10,7 +10,9 @@ namespace Login {
             if (authToken != "") {
                 trace("[Login] Received new authentication token.");
             } else {
-                err("Login", "Failed to authenticate with the Openplanet servers. Please check for connection issues.");
+                err("Login",
+                    "Failed to authenticate with the Openplanet servers. Please check for "
+                    "connection issues.");
             }
         } catch {
             print("[Login] Openplanet authentication unavailable: " + getExceptionInfo());
@@ -22,8 +24,10 @@ namespace Login {
     }
 
     string FetchAuthToken() {
-        Auth::PluginAuthTask@ task = Auth::GetToken();
-        while (!task.Finished()) { yield(); }
+        Auth::PluginAuthTask @task = Auth::GetToken();
+        while (!task.Finished()) {
+            yield();
+        }
         return task.Token();
     }
 }

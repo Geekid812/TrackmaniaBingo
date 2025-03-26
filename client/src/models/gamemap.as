@@ -21,14 +21,17 @@ class GameMap {
 }
 
 namespace GameMap {
-    MapType GetMapType(const string&in typeName) {
-        if (typeName == "TMX") return MapType::TMX;
+
+    MapType GetMapType(const string& in typeName) {
+        if (typeName == "TMX")
+            return MapType::TMX;
         return MapType::Campaign;
     }
 
-    GameMap Deserialize(Json::Value@ value) {
+    GameMap Deserialize(Json::Value @value) {
         MapType type = GetMapType(value["type"]);
-        if (type == MapType::TMX) return DeserializeTMX(value);
+        if (type == MapType::TMX)
+            return DeserializeTMX(value);
 
         throw("GameMap: unknown map type '" + string(value["type"]) + "'.");
         return GameMap();
@@ -53,7 +56,7 @@ namespace GameMap {
         return value;
     }
 
-    GameMap DeserializeTMX(Json::Value@ value) {
+    GameMap DeserializeTMX(Json::Value @value) {
         auto map = GameMap();
         map.type = MapType::TMX;
         map.id = value["tmxid"];
@@ -67,8 +70,10 @@ namespace GameMap {
         map.authorTime = value["author_time"];
         map.uploadedTimestamp = value["uploaded_at"];
         map.updatedTimestamp = value["updated_at"];
-        if (value["tags"].GetType() != Json::Type::Null) map.tags = value["tags"];
-        if (value["style"].GetType() != Json::Type::Null) map.style = value["style"];
+        if (value["tags"].GetType() != Json::Type::Null)
+            map.tags = value["tags"];
+        if (value["style"].GetType() != Json::Type::Null)
+            map.style = value["style"];
         return map;
     }
 }

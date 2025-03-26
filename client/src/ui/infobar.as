@@ -45,12 +45,13 @@ namespace UIInfoBar {
 
         for (uint i = 0; i < map.attemptRanking.Length; i++) {
             MapClaim claim = map.attemptRanking[i];
-            Player@ claimingPlayer = claim.player;
+            Player @claimingPlayer = claim.player;
             UI::Text(tostring(i + 1) + ".");
             UI::SameLine();
 
             Font::Style textStyle = Font::Style::Regular;
-            if (i == 0) textStyle = Font::Style::Bold;
+            if (i == 0)
+                textStyle = Font::Style::Bold;
             Font::Set(textStyle, Font::Size::Medium);
 
             Layout::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
@@ -67,7 +68,7 @@ namespace UIInfoBar {
 
         if (!Match.endState.HasEnded()) {
             UI::Separator();
-            
+
             float width = UI::GetWindowSize().x;
             float padding = Layout::GetPadding(width, 72., 0.5);
             Layout::MoveTo(padding);
@@ -92,12 +93,15 @@ namespace UIInfoBar {
             }
             string claimingText = leadingClaim.result.Display() + " by";
 
-            float claimTextWidth = Math::Max(Draw::MeasureString(claimingText + " " + leadingClaim.player.name).x, UI::GetWindowSize().x);
-            Layout::MoveTo(Layout::GetPadding(claimTextWidth, Draw::MeasureString(displayText).x, 0.5));
+            float claimTextWidth =
+                Math::Max(Draw::MeasureString(claimingText + " " + leadingClaim.player.name).x,
+                          UI::GetWindowSize().x);
+            Layout::MoveTo(
+                Layout::GetPadding(claimTextWidth, Draw::MeasureString(displayText).x, 0.5));
             UI::Text(displayText);
             UI::Text(claimingText);
 
-            Player@ topPlayer = leadingClaim.player;
+            Player @topPlayer = leadingClaim.player;
             UI::SameLine();
             UI::SetCursorPos(UI::GetCursorPos() - vec2(6., 0.));
             UITools::PlayerTag(topPlayer);
@@ -111,7 +115,7 @@ namespace UIInfoBar {
             }
             UIColor::Reset();
         } else {
-            RunResult@ baseTimeToBeat = Playground::GetCurrentTimeToBeat();
+            RunResult @baseTimeToBeat = Playground::GetCurrentTimeToBeat();
             if (@baseTimeToBeat !is null && baseTimeToBeat.time != -1) {
                 displayText += baseTimeToBeat.Display();
                 UI::Text(displayText);
@@ -123,10 +127,12 @@ namespace UIInfoBar {
         SubwindowEnd(geometry);
     }
 
-    vec4 SubwindowBegin(const string&in name) {
+    vec4 SubwindowBegin(const string& in name) {
         vec2 parentPos = UI::GetWindowPos();
         vec2 parentSize = UI::GetWindowSize();
-        UI::Begin(name, UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoMove);
+        UI::Begin(name,
+                  UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize |
+                      UI::WindowFlags::NoMove);
         return vec4(parentPos, parentSize);
     }
 
@@ -134,23 +140,29 @@ namespace UIInfoBar {
         vec2 parentPos = geometry.xy + vec2(0, SubwindowOffset);
         vec2 parentSize = geometry.zw;
         vec2 thisSize = UI::GetWindowSize();
-        UI::SetWindowPos(vec2(parentPos.x + (parentSize.x - thisSize.x) / 2., parentPos.y + parentSize.y + BOARD_MARGIN / 2.));
+        UI::SetWindowPos(vec2(parentPos.x + (parentSize.x - thisSize.x) / 2.,
+                              parentPos.y + parentSize.y + BOARD_MARGIN / 2.));
         UI::End();
         SubwindowOffset += thisSize.y + BOARD_MARGIN / 2.;
     }
 
     void Render() {
-        if (!Visible) return;
-        if (!Gamemaster::IsBingoActive()) return;
-        
+        if (!Visible)
+            return;
+        if (!Gamemaster::IsBingoActive())
+            return;
+
         int64 stopwatchTime = GameTime::CurrentClock();
         string stopwatchPrefix = GameTime::CurrentClockColorPrefix();
         GamePhase phase = Gamemaster::GetPhase();
 
         // If we are in the countdown at game start, don't show up yet
-        if (phase == GamePhase::Starting) return;
+        if (phase == GamePhase::Starting)
+            return;
 
-        UI::Begin("Board Information", UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
+        UI::Begin("Board Information",
+                  UI::WindowFlags::NoTitleBar | UI::WindowFlags::AlwaysAutoResize |
+                      UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoMove);
 
         // Phase indicator
         string phaseText;
@@ -164,7 +176,7 @@ namespace UIInfoBar {
             phaseText = "Overtime";
             color = vec3(.6, .15, .15);
         } else if (phase == GamePhase::Ended) {
-            Team@ winningTeam = Match.endState.team;
+            Team @winningTeam = Match.endState.team;
 
             if (winningTeam !is null) {
                 phaseText = winningTeam.name + " wins!";
@@ -180,7 +192,8 @@ namespace UIInfoBar {
             float sideMargins = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding).x * 2.;
             float size = UI::GetWindowSize().x - sideMargins;
             float padding = Layout::GetPadding(UI::GetWindowSize().x, size, 0.5);
-            vec4 buttonColor = UIColor::GetAlphaColor(color, animate ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8);
+            vec4 buttonColor = UIColor::GetAlphaColor(
+                color, animate ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8);
             UI::PushStyleColor(UI::Col::Button, buttonColor);
             UI::PushStyleColor(UI::Col::ButtonHovered, buttonColor);
             UI::PushStyleColor(UI::Col::ButtonActive, buttonColor);
@@ -191,15 +204,15 @@ namespace UIInfoBar {
 
         Font::Set(Font::Style::Bold, Font::Size::Huge);
         string stopwatchText = stopwatchPrefix + Time::Format(stopwatchTime, false, true, true);
-        
+
         Layout::AlignText(stopwatchText, 0.5);
         UI::Text(stopwatchText);
         Font::Unset();
-        
+
         GameControls();
-        
-        GameTile@ tile = Gamemaster::GetCurrentTile();
-        CGameCtnChallenge@ gameMap = Playground::GetCurrentMap();
+
+        GameTile @tile = Gamemaster::GetCurrentTile();
+        CGameCtnChallenge @gameMap = Playground::GetCurrentMap();
         if (tile !is null) {
             if (gameMap.EdChallengeId == MapLeaderboardUid || Match.endState.HasEnded()) {
                 MapLeaderboard(tile);
@@ -216,12 +229,14 @@ namespace UIInfoBar {
 
         SubwindowOffset = 0.;
         vec2 windowSize = UI::GetWindowSize();
-        UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - windowSize.x) / 2, int(Board::Position.y) + int(Board::BoardSize) + BOARD_MARGIN), UI::Cond::Always);
+        UI::SetWindowPos(vec2(int(Board::Position.x) + (int(Board::BoardSize) - windowSize.x) / 2,
+                              int(Board::Position.y) + int(Board::BoardSize) + BOARD_MARGIN),
+                         UI::Cond::Always);
         UI::End();
     }
 
     void GameControls() {
-        Player@ self = Match.GetSelf();
+        Player @self = Match.GetSelf();
         Team team;
         if (@self is null) {
             team = Team(0, "", vec3(.5, .5, .5));
