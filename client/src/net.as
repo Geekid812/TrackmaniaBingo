@@ -387,6 +387,7 @@ namespace Network {
                 UITeams::SwitchToJoinContext();
             } else {
                 // Cannot choose a team, immediately try to join the match
+                NetParams::MatchJoinTeamId = -1;
                 Network::JoinMatch();
             }
         } else {
