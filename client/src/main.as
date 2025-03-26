@@ -20,7 +20,7 @@ void Main() {
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
     if (PersistantStorage::LastConnectedMatchId != "") {
-        trace("[Main] Plugin was previously connected, attempting to reconnect.");
+        print("[Main] Plugin was previously connected, attempting to reconnect.");
         Network::Connect();
 
         if (Network::IsConnected()) {
@@ -32,7 +32,7 @@ void Main() {
 
     // We are interested in roomlist notifications, so we should connect
     if (PersistantStorage::SubscribeToRoomUpdates) {
-        trace("[Main] Player is subscribed to roomlist updates, connecting to the servers.");
+        print("[Main] Player is subscribed to roomlist updates, connecting to the servers.");
         Network::Connect();
         UIRoomMenu::RoomsLoad = LoadStatus::Loading;
         startnew(Network::GetPublicRooms);
@@ -50,7 +50,7 @@ void RenderMenu() {
         UIHome::RandomizeSubtitle();
         // Connect to server when opening plugin window the first time
         if (UIMainWindow::Visible && Network::GetState() == ConnectionState::Closed) {
-            trace("[Main] Plugin window opened, connecting to the servers.");
+            print("[Main] Plugin window opened, connecting to the servers.");
             startnew(Network::Connect);
         }
     }
@@ -106,7 +106,7 @@ UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
 void Update(float dt) {
     if (Gamemaster::IsBingoActive())
         GameUpdates::TickUpdates();
-    
+
     if (Gamemaster::IsBingoPlaying())
         GameUpdates::TickGameplay();
 }

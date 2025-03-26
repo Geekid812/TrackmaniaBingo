@@ -130,7 +130,7 @@ class Protocol {
         }
 
 
-        trace("[Protocol::Connect] Handshake completed. Connection has been established!");
+        print("[Protocol::Connect] Handshake completed!");
         state = ConnectionState::Connected;
         return 0;
     }
