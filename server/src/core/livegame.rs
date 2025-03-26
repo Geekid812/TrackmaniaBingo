@@ -18,7 +18,7 @@ use chrono::{DateTime, Duration, Utc};
 use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
-use tracing::{debug, error, warn};
+use tracing::{error, warn};
 
 use super::{
     directory::{Owned, Shared, MATCHES},

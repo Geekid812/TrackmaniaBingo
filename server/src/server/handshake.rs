@@ -85,8 +85,8 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
     // Match token to a valid user in memory
     let player_record = get_player_from_token(&handshake.token);
 
-    let player = match player_record {
-        Some(player) => player,
+    let player_uid = match player_record {
+        Some(uid) => uid,
         None => {
             handshake_rejection(
                 client,
@@ -98,7 +98,7 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
     };
 
     // Load that player's profile
-    let profile = match store::player::get_player_profile(player.uid).await {
+    let profile = match store::player::get_player_profile(player_uid).await {
         Ok(profile) => profile,
         Err(e) => {
             handshake_rejection(

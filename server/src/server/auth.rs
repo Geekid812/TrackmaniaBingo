@@ -14,7 +14,6 @@ use crate::store::player::NewPlayer;
 use crate::{config, store};
 
 use super::token::set_player_token;
-use super::token::PlayerIdentifier;
 
 static AUTHENTICATOR: Lazy<Option<Arc<Authenticator>>> = Lazy::new(|| {
     if let Some(secret) = config::get_string("keys.openplanet") {
@@ -43,7 +42,9 @@ pub async fn login(request: KeyExchangeRequest) -> Result<String, anyhow::Error>
                 return Err(anyhow!("must provide an Openplanet authentication key when production mode is activated")
                     );
             }
-            let country_result = COUNTRY_IDENTIFIER.get_country_code(&request.account_id).await;
+            let country_result = COUNTRY_IDENTIFIER
+                .get_country_code(&request.account_id)
+                .await;
 
             if let Err(e) = &country_result {
                 error!("error fetching country code: {}", e);
@@ -55,7 +56,7 @@ pub async fn login(request: KeyExchangeRequest) -> Result<String, anyhow::Error>
                 username: request.display_name,
                 country_code,
             }
-        },
+        }
         key => {
             if AUTHENTICATOR.is_none() {
                 return Err(anyhow!(
@@ -92,13 +93,12 @@ pub async fn login(request: KeyExchangeRequest) -> Result<String, anyhow::Error>
     };
 
     let client_token = base64::generate(32);
-    let display_name = player.username.clone();
-    
+
     match store::player::create_or_update_player(player).await {
         Ok(uid) => {
-            set_player_token(PlayerIdentifier { display_name, uid }, client_token.clone());
+            set_player_token(uid, client_token.clone());
             Ok(client_token)
         }
-        Err(e) => Err(anyhow!("database error: {}", e))
+        Err(e) => Err(anyhow!("database error: {}", e)),
     }
 }

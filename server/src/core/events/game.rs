@@ -11,7 +11,7 @@ use crate::{
             team::{BaseTeam, TeamIdentifier},
         },
     },
-    datatypes::{ChatMessage, PlayerProfile, PlayerRef, Poll},
+    datatypes::{ChatMessage, PlayerProfile, Poll},
 };
 
 #[serde_with::serde_as]
