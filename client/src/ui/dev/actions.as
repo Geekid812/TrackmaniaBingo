@@ -18,6 +18,8 @@ namespace UIDevActions {
             UI::SameLine();
             DummyGameLauncher();
 
+            FakePlayersControl();
+
             UIColor::Reset();
             UIColor::Dark();
 
@@ -112,6 +114,47 @@ namespace UIDevActions {
     void TextureResourceCache() {
         if (UI::Button(Icons::Bug + " Texture Cache")) {
             LocalStorage::DebugEnumerateTextureStorage();
+        }
+    }
+
+    void FakePlayersControl() {
+        if (UI::Button(Icons::UserCircle + " Add Fake Player")) {
+            AddFakePlayer();
+        }
+
+        UI::SameLine();
+        if (UI::Button(Icons::TrashO + " Clear Fake Players")) {
+            ClearAllFakePlayers();
+        }
+    }
+
+    void AddFakePlayer() {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[UIDevActions::AddFakePlayer] Cannot add a player, Bingo is not active!");
+            return;
+        }
+
+        Team randomTeam = Match.teams[Math::Rand(0, Match.teams.Length)];
+        PlayerProfile fakeProfile();
+        fakeProfile.uid = -1;
+        fakeProfile.name = "Player " + Math::Rand(100, 1000);
+        fakeProfile.countryCode = "WOR";
+        Match.players.InsertLast(Player(fakeProfile, randomTeam));
+    }
+
+    void ClearAllFakePlayers() {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[UIDevActions::ClearAllFakePlayers] Cannot add a player, Bingo is not active!");
+            return;
+        }
+
+        uint i = 0;
+        while (i < Match.players.Length) {
+            if (Match.players[i].profile.uid == -1) {
+                Match.players.RemoveAt(i);
+            } else {
+                i++;
+            }
         }
     }
 }
