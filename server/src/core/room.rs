@@ -265,6 +265,8 @@ impl GameRoom {
                     delta: -1,
                 });
         }
+
+        self.check_close();
     }
 
     pub fn change_team(&mut self, uid: i32, team: TeamIdentifier) -> bool {
