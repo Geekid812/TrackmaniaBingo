@@ -93,6 +93,21 @@ namespace UIPlayers {
                 UIColor::Reset();
                 UI::EndDisabled();
 
+                UI::SameLine();
+                UIColor::Gray();
+                if (UI::Button(Icons::Pencil)) {
+                    UITeamEditor::Visible = !UITeamEditor::Visible;
+                }
+                UI::SetItemTooltip("Edit Teams");
+
+                UI::SameLine();
+                if (UI::Button(Icons::Random)) {
+                    startnew(Network::ShuffleTeams);
+                }
+                UI::SetItemTooltip("Shuffle Teams");
+
+                UIColor::Reset();
+
                 if (!teamPresetAvailable)
                     UI::SetItemTooltip("Not enough team presets are available to create a new "
                                        "team.\nCreate a new team in the Teams Editor.");
@@ -114,15 +129,6 @@ namespace UIPlayers {
                         if (!(UITeams::IsJoinContext && player.IsSelf()))
                             PlayerLabel(player, rowIndex, canDragPlayers);
                     }
-                }
-
-                if (rowIndex == 0 && canCreate) {
-                    UI::TableNextColumn();
-                    UIColor::Gray();
-                    if (UI::Button(Icons::Bookmark + " Edit Teams")) {
-                        UITeamEditor::Visible = !UITeamEditor::Visible;
-                    }
-                    UIColor::Reset();
                 }
 
                 if (finishedTeams == teams.Length)

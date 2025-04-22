@@ -290,6 +290,14 @@ impl GameRoom {
             let selected = unproccessed.remove(rng.sample(dist));
             selected.team = teams.next().unwrap().id;
         }
+        self.broadcast_all_player_teams();
+    }
+
+    fn broadcast_all_player_teams(&mut self) {
+        self.channel
+            .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
+                updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
+            }));
     }
 
     pub fn remove_team(&mut self, id: TeamIdentifier) {
@@ -339,10 +347,7 @@ impl GameRoom {
             return Err(anyhow!("a team named '{}' already exists", &name));
         }
 
-        let team = self
-            .teams
-            .create_team(name, color)
-            .clone();
+        let team = self.teams.create_team(name, color).clone();
 
         self.team_created(&team);
         Ok(team)
@@ -459,10 +464,6 @@ impl GameRoom {
     fn prepare_start_match(&mut self) {
         if self.config.randomize {
             self.sort_teams();
-            self.channel
-                .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
-                    updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
-                }));
         }
 
         self.loaded_maps.shuffle(&mut rand::thread_rng());

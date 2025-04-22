@@ -20,6 +20,7 @@ mod unsubscribe_roomlist;
 mod vote_reroll;
 mod poll_vote;
 mod change_player_team;
+mod shuffle_teams;
 
 #[typetag::deserialize(tag = "req")]
 pub trait Request: Debug {

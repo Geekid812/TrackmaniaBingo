@@ -486,6 +486,10 @@ namespace Network {
         Network::Post("CastRerollVote", body, true);
     }
 
+    void ShuffleTeams() {
+        Network::Post("ShuffleTeams", Json::Object(), true);
+    }
+
     void SendChatMessage() {
         auto body = Json::Object();
         body["message"] = NetParams::ChatMessage;
