@@ -10,6 +10,8 @@ const string BINGO_ISSUES_URL = "https://github.com/Geekid812/TrackmaniaBingo/is
 const GamePlatform CURRENT_GAME = GamePlatform::Next;
 
 void Main() {
+    _testSerial();
+
     // Initialization
     Font::Init();
     UIHome::InitSubtitles();
