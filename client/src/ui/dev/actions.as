@@ -55,7 +55,11 @@ namespace UIDevActions {
 
         if (UI::BeginTabItem(Icons::WindowMaximize + " UI Windows")) {
             UIDevWindows::Render();
+            UI::EndTabItem();
+        }
 
+        if (UI::BeginTabItem(Icons::AlignJustify + " Interface")) {
+            UIDevInterface::Render();
             UI::EndTabItem();
         }
 

@@ -6,8 +6,8 @@ namespace Board {
     bool Visible = true;
 
     const float STROKE_WIDTH = 8.;
-    const float CELL_HIGHLIGHT_PADDING = 3.5; // Multiplier for BorderSize, inside offset
-    const vec4 CELL_HIGHLIGHT_COLOR = vec4(1, 1, 1, 0.9);
+    const float CELL_HIGHLIGHT_PADDING = 2.5; // Multiplier for BorderSize, inside offset
+    const vec3 CELL_HIGHLIGHT_COLOR = vec3(.9, .9, .9);
     const vec4 BINGO_STROKE_COLOR = vec4(1, 0.6, 0, 0.9);
     const uint64 ANIMATION_START_TIME = 4000;
 
@@ -18,6 +18,10 @@ namespace Board {
     const uint64 PING_DURATION = 2500;
     const uint64 PING_PERIOD = 1250;
     const float PING_SCALE = 1.5;
+
+    vec4 TileColorUnclaimed = vec4(.2, .2, .2, .8);
+    vec4 BoardBorderColor = vec4(.65, .65, .65, 1.);
+    float BoardTilesAlpha = .85f;
 
     class BoardSizes {
         float border;
@@ -38,19 +42,19 @@ namespace Board {
     vec4
     GetTileFillColor(GameTile @tile) {
         if (tile is null || tile.map is null)
-            return vec4(0, 0, 0, .8);
+            return vec4(0, 0, 0, BoardTilesAlpha);
 
         if (tile.paintColor != vec3())
-            return UIColor::GetAlphaColor(tile.paintColor, .8);
+            return UIColor::GetAlphaColor(tile.paintColor, BoardTilesAlpha);
 
         if (tile.IsClaimed()) {
             Team @tileOwnerTeam = Match.GetTeamWithId(tile.LeadingRun().teamId);
 
             if (@tileOwnerTeam !is null)
-                return UIColor::GetAlphaColor(tileOwnerTeam.color, .8);
+                return UIColor::GetAlphaColor(tileOwnerTeam.color, BoardTilesAlpha);
         }
 
-        return vec4(.3, .3, .3, .8);
+        return TileColorUnclaimed;
     }
 
     void Draw() {
@@ -72,7 +76,7 @@ namespace Board {
             Animation::GetProgress(animationTime, 0, 1500, Animation::Easing::SineOut);
         if (columnsAnimProgress <= 0.)
             return;
-        nvg::FillColor(vec4(.9, .9, .9, 1.));
+        nvg::FillColor(BoardBorderColor);
         for (uint i = 0; i <= cellsPerRow; i++) {
             float animProgress =
                 Animation::GetProgress(columnsAnimProgress, i * timePerBorder, timePerBorder);
@@ -114,7 +118,9 @@ namespace Board {
                 vec2 cellPosition = CellPosition(x, y, sizes);
                 vec4 color = GetTileFillColor(tile);
                 color.w *= colorAnimProgress; // opacity modifier
-                color *= lightness;
+                color.x *= lightness;
+                color.y *= lightness;
+                color.z *= lightness;
 
                 nvg::BeginPath();
                 nvg::FillColor(color);
@@ -124,8 +130,9 @@ namespace Board {
         }
 
         // Cell highlight
-        float highlightBlinkValue = (Math::Sin(float(Time::Now) / 1000.) + 1) / 2;
-        float paddingValue = CELL_HIGHLIGHT_PADDING * (0.8 + 0.2 * highlightBlinkValue);
+        float highlightBlinkValue = (Math::Sin(float(Time::Now) / 500.) + 1) / 2;
+        vec4 highlightColor = vec4(CELL_HIGHLIGHT_COLOR * (0.9 + 0.2 * highlightBlinkValue), .9);
+        float paddingValue = CELL_HIGHLIGHT_PADDING * (1); // Currently not animated
         const float highlightWidth = sizes.border * paddingValue;
         const float highlightMarginOffset = sizes.border * (paddingValue - 1.);
 
@@ -134,7 +141,7 @@ namespace Board {
             int row = currentTileIndex / cellsPerRow;
             int col = currentTileIndex % cellsPerRow;
             nvg::BeginPath();
-            nvg::FillColor(CELL_HIGHLIGHT_COLOR);
+            nvg::FillColor(highlightColor);
             nvg::Rect(Position.x + sizes.step * col,
                       Position.y + sizes.step * row,
                       sizes.cell + sizes.border * 2,
