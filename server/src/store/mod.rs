@@ -4,9 +4,9 @@ use sqlx::{sqlite::SqlitePoolOptions, Row, SqlitePool};
 use tracing::{error, info};
 
 static DATABASE_VERSIONS: [&'static str; 3] = [
-    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/db/versions/v1.sql")),
-    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/db/versions/v2.sql")),
-    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/db/versions/v3.sql")),
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v1.sql")),
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v2.sql")),
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v3.sql")),
 ];
 
 static PRIMARY_STORE: OnceLock<SqlitePool> = OnceLock::new();

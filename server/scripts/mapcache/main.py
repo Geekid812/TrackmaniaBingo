@@ -9,7 +9,7 @@ from datetime import datetime
 from time import sleep
 from pathlib import Path
 
-USER_AGENT = f"mapcache (part of TrackmaniaBingo by Geekid#1871) / Python {platform.python_version()}"
+USER_AGENT = f"mapcache script (part of TrackmaniaBingo by @geekid) / Python {platform.python_version()}"
 
 parser = argparse.ArgumentParser(
     prog = 'mapcache',
