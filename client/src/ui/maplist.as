@@ -155,7 +155,11 @@ namespace UIMapList {
     }
 
     void ShowTileTooltip(GameTile tile) {
-        string mapName = tile.map !is null ? Text::OpenplanetFormatCodes(tile.map.trackName) : "";
+        if (tile.map is null) {
+            return;
+        }
+
+        string mapName = Text::OpenplanetFormatCodes(tile.map.trackName);
 
         UI::BeginTooltip();
         UI::Text(mapName);
