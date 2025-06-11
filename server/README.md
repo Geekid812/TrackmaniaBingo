@@ -29,7 +29,7 @@ To run the server locally:
    ```
 
 The server will use `config.toml` in the project root and store its databases in the `db/` directory.
-By default, the web API will be available on port 8080 and the TCP server on port 5000 (configurable in `config.toml`).
+By default, the web API will be available on port 8080 and the TCP server on port 5500 (configurable in `config.toml`).
 
 ### Using Docker
 
@@ -54,7 +54,7 @@ podman run --rm -v tm_bingo_db:/data -v ./db:/from:Z busybox cp -a /from/. /data
 docker run \
   -v tm_bingo_db:/app/db \
   -p 8080:8080 \
-  -p 5000:5000 \
+  -p 5500:5500 \
   --name bingohost \
   bingohost
 ```

@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y libssl-dev ca-certificates \
 COPY --from=builder /app/target/release/bingohost /app/bingohost
 
 # Expose web API and TCP server ports
-EXPOSE 8080 5000
+EXPOSE 8080 5500
 
 # Start the server
 CMD ["/app/bingohost"]
