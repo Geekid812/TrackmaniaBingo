@@ -29,6 +29,9 @@ namespace Settings {
     [Setting name="Toggle Map List" category="Bindings"]
     VirtualKey MaplistBindingKey = VirtualKey::Tab;
 
+    [Setting name="Enable Unsupported Configuration Warnings" category="Behaviour"]
+    bool UnstableConfigWarnings = true;
+
     [Setting name="Selected Backend" category="Developer"]
     BackendSelection Backend = BackendSelection::Live;
 
