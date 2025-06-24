@@ -15,6 +15,10 @@ namespace Board {
     const float TILE_SHADING_STEP = 0.3;
     const float TILE_SHADING_VARIENCE = 0.08f;
 
+    // Coordinates font size (proportional to the cell size, arbitrary unit)
+    const float COORDINATES_FONT_SIZE = 3.;
+    const vec4 COORDINATES_FONT_COLOR = vec4(.9, .9, .9, .9);
+
     const uint64 PING_DURATION = 2500;
     const uint64 PING_PERIOD = 1250;
     const float PING_SCALE = 1.5;
@@ -65,6 +69,7 @@ namespace Board {
 
         uint cellsPerRow = Match.config.gridSize;
         BoardSizes sizes = CalculateBoardSizes(cellsPerRow);
+        bool isBoardHovered = UI::GetMousePos().x >= Position.x && UI::GetMousePos().y >= Position.y && UI::GetMousePos().x < Position.x + BoardSize && UI::GetMousePos().y < Position.y + BoardSize;
         nvg::BeginPath();
 
         int64 animationTime = Time::Now - Match.startTime + ANIMATION_START_TIME;
@@ -127,6 +132,11 @@ namespace Board {
                 nvg::Rect(cellPosition.x, cellPosition.y, sizes.cell, sizes.cell);
                 nvg::Fill();
             }
+        }
+
+        // Row/Column Coordinates
+        if (isBoardHovered && colorAnimProgress >= 1.) {
+            DrawCoordinates(cellsPerRow, sizes);
         }
 
         // Cell highlight
@@ -197,6 +207,30 @@ namespace Board {
             }
 
             nvg::ClosePath();
+        }
+    }
+
+    void DrawCoordinates(uint cellsPerRow, BoardSizes sizes) {
+        float fontSize = COORDINATES_FONT_SIZE * sizes.cell * 0.1;
+        float nudgeUnit = sizes.border; // small unit of measurement to make adjustments to the position of text (nothing aligns properly by default)
+
+        nvg::FillColor(COORDINATES_FONT_COLOR);
+        nvg::FontSize(fontSize);
+        for (uint i = 0; i < cellsPerRow; i++) {
+            vec2 cellPosLetter = CellPosition(0, i, sizes);
+            cellPosLetter.y += fontSize;
+            cellPosLetter.x += nudgeUnit;
+
+            vec2 cellPosNumber = CellPosition(i, cellsPerRow, sizes);
+            cellPosNumber.y -= sizes.border + nudgeUnit;
+            cellPosNumber.x += sizes.cell;
+
+            string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            nvg::TextAlign(nvg::Align::Left);
+            nvg::Text(cellPosLetter, letters.SubStr(i % 26, 1));
+
+            nvg::TextAlign(nvg::Align::Right);
+            nvg::Text(cellPosNumber, tostring(i + 1));
         }
     }
 
