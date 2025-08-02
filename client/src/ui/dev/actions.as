@@ -21,12 +21,11 @@ namespace UIDevActions {
             FakePlayersControl();
 
             UIColor::Reset();
+
             UIColor::Dark();
-
             TextureResourceCache();
-
             UIColor::Reset();
-
+            
             UI::EndTabItem();
         }
 
