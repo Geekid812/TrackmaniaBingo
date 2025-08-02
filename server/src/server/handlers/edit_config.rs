@@ -1,11 +1,13 @@
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::{
     datatypes::{MatchConfiguration, RoomConfiguration},
-    server::context::ClientContext,
+    server::{
+        context::ClientContext,
+        handlers::{error, ok},
+    },
 };
-
-use super::{generic, Request, Response};
 
 #[derive(Deserialize, Debug)]
 pub struct EditConfig {
@@ -13,23 +15,16 @@ pub struct EditConfig {
     match_config: MatchConfiguration,
 }
 
-#[typetag::deserialize]
-impl Request for EditConfig {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
-        if let Some(room) = ctx.game_room() {
-            let mut lock = room.lock();
-            if !lock.get_player(ctx.profile.uid).unwrap().operator {
-                return Box::new(generic::Error {
-                    error: "You are not a room operator.".to_owned(),
-                });
-            }
-
-            lock.set_configs(self.config.clone(), self.match_config.clone());
-            Box::new(generic::Ok)
-        } else {
-            Box::new(generic::Error {
-                error: "Player is not in a room.".to_owned(),
-            })
+pub fn handle(ctx: &mut ClientContext, args: EditConfig) -> Value {
+    if let Some(room) = ctx.game_room() {
+        let mut lock = room.lock();
+        if !lock.get_player(ctx.profile.uid).unwrap().operator {
+            return error("You are not a room operator.");
         }
+
+        lock.set_configs(args.config, args.match_config);
+        ok()
+    } else {
+        error("Player is not in a room.")
     }
 }

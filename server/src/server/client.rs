@@ -1,5 +1,6 @@
 use bytes::BytesMut;
 use futures::FutureExt;
+use serde_json::json;
 use std::sync::atomic::{self, AtomicU64};
 use std::time::Duration;
 use tokio::net::TcpStream;
@@ -11,6 +12,7 @@ use tracing::{debug, error, warn};
 use super::handshake;
 use super::requests::BaseRequest;
 use crate::server::context::ClientContext;
+use crate::server::handlers::handle_request;
 use crate::transport::client::tcpnative::NativeClientProtocol;
 use crate::transport::messager::{new_messager, NetMessager};
 use crate::transport::{TransportReadQueue, TransportWriteQueue};
@@ -166,11 +168,16 @@ async fn mainloop_message_received(client: &mut NetClient, message: BytesMut) ->
     // Match a request
     match serde_json::from_str::<BaseRequest>(&message) {
         Ok(incoming) => {
-            let response = incoming.request.handle(ctx);
-            let outgoing = incoming.build_reply(response);
+            let response = match handle_request(ctx, &incoming.request, incoming.fields.clone()) {
+                Ok(value) => incoming.build_response(None, value),
+                Err(e) => {
+                    warn!(cid = cid, "{}", e);
+                    incoming.build_response(Some(format!("{}", e)), json!({}))
+                },
+            };
 
             // send a response. if it's an error, break the connection
-            if ctx.writer.send(&outgoing).is_err() {
+            if ctx.writer.send(&response).is_err() {
                 return false;
             }
         }

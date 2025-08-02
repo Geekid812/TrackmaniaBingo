@@ -1,15 +1,11 @@
 use serde::Deserialize;
+use serde_json::Value;
 
-use crate::server::context::ClientContext;
-
-use super::{generic, Request, Response};
+use crate::server::{context::ClientContext, handlers::ok};
 
 #[derive(Deserialize, Debug)]
-pub struct Ping;
+pub struct Ping {}
 
-#[typetag::deserialize]
-impl Request for Ping {
-    fn handle(&self, _ctx: &mut ClientContext) -> Box<dyn Response> {
-        Box::new(generic::Ok)
-    }
+pub fn handle(_ctx: &mut ClientContext, _args: Ping) -> Value {
+    ok()
 }
