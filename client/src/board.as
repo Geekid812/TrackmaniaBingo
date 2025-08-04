@@ -24,7 +24,7 @@ namespace Board {
     const float PING_SCALE = 1.5;
 
     vec4 TileColorUnclaimed = vec4(.2, .2, .2, .8);
-    vec4 BoardBorderColor = vec4(.65, .65, .65, 1.);
+    vec4 BoardBorderColor = vec4(.7, .7, .7, 1.);
     float BoardTilesAlpha = .85f;
 
     class BoardSizes {
