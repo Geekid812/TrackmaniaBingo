@@ -4,6 +4,8 @@ namespace UIInfoBar {
     const int BOARD_MARGIN = 8;
     // Alignment offset of map leaderboard rankings
     const float MAP_LEADERBOARD_SIDE_MARGIN = 35.;
+    // Size in pixels of the powerup thumbnail
+    const float POWERUP_FRAME_SIZE = 24.;
 
     float SubwindowOffset = 0.;
     string MapLeaderboardUid;
@@ -206,9 +208,17 @@ namespace UIInfoBar {
         Font::Set(Font::Style::Bold, Font::Size::Huge);
         string stopwatchText = stopwatchPrefix + Time::Format(stopwatchTime, false, true, true);
 
-        Layout::AlignText(stopwatchText, 0.5);
-        UI::Text(stopwatchText);
-        Font::Unset();
+        if (Match.config.mode == Gamemode::Frenzy) {
+            UI::Text(stopwatchText);
+            Font::Unset();
+
+            UI::SameLine();
+            FrenzyItemSelectSlot();
+        } else {
+            Layout::AlignText(stopwatchText, 0.5);
+            UI::Text(stopwatchText);
+            Font::Unset();
+        }
 
         GameControls();
 
@@ -234,6 +244,38 @@ namespace UIInfoBar {
                               int(Board::Position.y) + int(Board::BoardSize) + BOARD_MARGIN),
                          UI::Cond::Always);
         UI::End();
+    }
+
+    void FrenzyItemSelectSlot() {
+        UI::PushStyleColor(UI::Col::Border, vec4(.5, .5, .5, .9));
+        UI::PushStyleVar(UI::StyleVar::FramePadding, vec2());
+        UI::BeginChild("Bingo Item Select Slot", vec2(), UI::ChildFlags::Borders | UI::ChildFlags::AutoResizeX | UI::ChildFlags::AutoResizeY);
+
+        Player@ localPlayer = (Gamemaster::IsBingoActive() ? Match.GetSelf() : null);
+        Powerup myPowerup = (@localPlayer !is null ? localPlayer.holdingPowerup : Powerup::Empty);
+
+        if (myPowerup != Powerup::Empty) {
+            
+        } else {
+            UI::Dummy(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE);
+        }
+
+        if (UI::BeginItemTooltip()) {
+            UI::Text("\\$ff5Item Slot");
+
+            switch (myPowerup) {
+                case Powerup::Empty:
+                    // FIXME
+                default:
+                    UI::TextDisabled("You don't have any item to use right now.");
+                    break;
+            }
+            UI::EndTooltip();
+        }
+
+        UI::EndChild();
+        UI::PopStyleVar();
+        UI::PopStyleColor();
     }
 
     void GameControls() {

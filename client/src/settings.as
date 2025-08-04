@@ -29,6 +29,9 @@ namespace Settings {
     [Setting name="Toggle Map List" category="Bindings"]
     VirtualKey MaplistBindingKey = VirtualKey::Tab;
 
+    [Setting name="Show cell coordinates in tooltips" category="Behaviour"]
+    bool ShowCellCoordinates = true;
+
     [Setting name="Enable Unsupported Configuration Warnings" category="Behaviour"]
     bool UnstableConfigWarnings = true;
 

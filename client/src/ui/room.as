@@ -7,6 +7,7 @@ namespace UIGameRoom {
     bool ClipboardCopied;
     bool GrabFocus;
     bool PlayerLabelHovered;
+    bool ChatPromptVisible = true;
     Player @DraggedPlayer = null;
 
     void Render() {
@@ -138,12 +139,14 @@ namespace UIGameRoom {
 
             if (UI::IsItemHovered()) {
                 if (i == 0) {
+                    StatusTooltip("Gamemode", tostring(Room.matchConfig.mode));
+                } else if (i == 1) {
                     StatusTooltip("Grid Size",
                                   tostring(Room.matchConfig.gridSize) + "x" +
                                       tostring(Room.matchConfig.gridSize));
-                } else if (i == 1) {
-                    StatusTooltip("Map Selection", stringof(Room.matchConfig.selection));
                 } else if (i == 2) {
+                    StatusTooltip("Map Selection", stringof(Room.matchConfig.selection));
+                } else if (i == 3) {
                     StatusTooltip("Target Medal", stringof(Room.matchConfig.targetMedal));
                 } else {
                     StatusTooltip("Time Limit",
@@ -157,6 +160,7 @@ namespace UIGameRoom {
         }
         UI::NewLine();
 
+        UI::BeginChild("Bingo Room View", vec2(0, -24));
         if (Room.config.randomize) {
             if (Room.localPlayerIsHost) {
                 UI::BeginDisabled(!Room.CanDeleteTeams());
@@ -193,8 +197,10 @@ namespace UIGameRoom {
                                DraggedPlayer);
 
         // Quit early if we disconnected from the room
-        if (LeaveButton())
+        if (LeaveButton()) {
+            UI::EndChild();
             return;
+        }
 
         if (Room.localPlayerIsHost) {
             UIColor::DarkGreen();
@@ -213,6 +219,16 @@ namespace UIGameRoom {
 
             UIColor::Reset();
             UITools::ErrorMessage("StartMatch");
+        }
+        UI::EndChild();
+        
+        if (ChatPromptVisible) ChatPrompt();
+    }
+
+    void ChatPrompt() {
+        UI::TextDisabled("Press " + tostring(Settings::ChatBindingKey) + " to open text chat");
+        if (UI::IsItemClicked()) {
+            ChatPromptVisible = false;
         }
     }
 
@@ -236,7 +252,8 @@ namespace UIGameRoom {
     }
 
     string[] MatchConfigInfo(MatchConfiguration config) {
-        return {StatusLabel(Icons::Th, tostring(config.gridSize) + "x" + tostring(config.gridSize)),
+        return {StatusLabel(Icons::PencilSquareO, tostring(config.mode)),
+                StatusLabel(Icons::Th, tostring(config.gridSize) + "x" + tostring(config.gridSize)),
                 StatusLabel(Icons::Map,
                             config.selection != MapMode::Tags || !MXTags::TagsLoaded()
                                 ? tostring(config.selection)

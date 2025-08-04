@@ -117,6 +117,7 @@ class Player {
     PlayerProfile profile;
     string name;
     Team team;
+    Powerup holdingPowerup = Powerup::Empty;
 
     Player() {}
 

@@ -41,6 +41,7 @@
     <struct name="MatchConfiguration">
         <comment>Match parameters set by the host.</comment>
         <m name="game" type="GamePlatform" default="GamePlatform::Next" />
+        <m name="mode" type="Gamemode" default="Gamemode::Standard" />
         <m name="grid_size" type="uint" default="5" />
         <m name="selection" type="MapMode" default="MapMode::RandomTMX" />
         <m name="target_medal" type="Medal" default="Medal::Author" />
@@ -122,10 +123,21 @@
         <v>None</v>
     </enum>
 
+    <enum name="Gamemode">
+        <comment>A selection of game rules.</comment>
+        <v>Standard</v>
+        <v>Frenzy</v>
+    </enum>
+
     <enum name="HandshakeFailureIntentCode">
         <comment>When a connection to the server fails, give the client a hint of what it should do.</comment>
         <v>ShowError</v>
         <v>RequireUpdate</v>
         <v>Reauthenticate</v>
+    </enum>
+
+    <enum name="Powerup">
+        <comment>A powerup from the Frenzy gamemode.</comment>
+        <v>Empty</v>
     </enum>
 </datatypes>

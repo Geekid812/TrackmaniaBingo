@@ -134,10 +134,17 @@ namespace UIChat {
 
         if (down && key == Settings::ChatBindingKey) {
             InputEnabled = !InputEnabled;
+
+            DisableChatHints();
+
             return true;
         }
 
         return false;
+    }
+
+    void DisableChatHints() {
+        if (UIGameRoom::Visible) UIGameRoom::ChatPromptVisible = false;
     }
 
     void ClearHistory() {

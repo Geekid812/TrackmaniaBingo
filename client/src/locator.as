@@ -31,7 +31,7 @@ namespace BoardLocator {
 
                 if (UI::IsItemHovered()) {
                     UI::PushStyleVar(UI::StyleVar::WindowPadding, defaultWindowPadding);
-                    UIMapList::ShowTileTooltip(Gamemaster::GetTileOnGrid(i, j));
+                    UIMapList::ShowTileTooltip(Gamemaster::GetTileOnGrid(i, j), i, j);
                     UI::PopStyleVar();
                 }
 

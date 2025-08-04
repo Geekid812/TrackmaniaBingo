@@ -273,6 +273,23 @@ namespace UIRoomSettings {
         UI::NewLine();
     }
 
+    void GamemodeSelect() {
+        UITools::AlignedLabel(Icons::PencilSquareO + " Gamemode");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+
+        if (UI::ButtonColored("Standard", .6, .6, (MatchConfig.mode == Gamemode::Standard ? .6 : .1))) {
+            MatchConfig.mode = Gamemode::Standard;
+        }
+        UI::SetItemTooltip("The classic gamemode for Bingo.\nGet a row, column, or diagonal on the board with your team to win.");
+
+        UI::SameLine();
+        Layout::EndLabelAlign();
+        if (UI::ButtonColored("Frenzy", .15, .6, (MatchConfig.mode == Gamemode::Frenzy ? .6 : .1))) {
+            MatchConfig.mode = Gamemode::Frenzy;
+        }
+        UI::SetItemTooltip("Powerups will appear randomly on the board.\nUse their different powers efficiently to claim victory!");
+    }
+
     void SettingsView() {
         UITools::SectionHeader("Room Settings");
         RoomNameInput();
@@ -293,6 +310,7 @@ namespace UIRoomSettings {
 
         UI::NewLine();
         UITools::SectionHeader("Game Settings");
+        GamemodeSelect();
         MapModeSelector();
         if (MatchConfig.selection == MapMode::Mappack) {
             MappackIdInput();

@@ -111,7 +111,7 @@ namespace UIMapList {
             UI::EndGroup();
             bool mapHovered = UI::IsItemHovered();
             if (mapHovered && cell.map !is null) {
-                ShowTileTooltip(cell);
+                ShowTileTooltip(cell, (i % gridSize), (i / gridSize));
             }
             if (interactable && UI::IsItemClicked()) {
                 if (UIPaintColor::Visible)
@@ -154,15 +154,16 @@ namespace UIMapList {
         return interacted;
     }
 
-    void ShowTileTooltip(GameTile tile) {
+    void ShowTileTooltip(GameTile tile, uint x = -1, uint y = -1) {
         if (tile.map is null) {
             return;
         }
 
         string mapName = Text::OpenplanetFormatCodes(tile.map.trackName);
+        string cellCoordinates = (Settings::ShowCellCoordinates ? "\\$888[ \\$ff8" + GetTextCoordinates(x, y) + " \\$888] \\$z" : "");
 
         UI::BeginTooltip();
-        UI::Text(mapName);
+        UI::Text(cellCoordinates + mapName);
 
         if (tile.map.username != "")
             UI::TextDisabled("By " + tile.map.username);
@@ -212,6 +213,13 @@ namespace UIMapList {
         }
 
         return false;
+    }
+
+    string GetTextCoordinates(uint x, uint y) {
+        if (x == -1 || y == -1) return "";
+
+        string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        return letters.SubStr(y % 26, 1) + tostring(x + 1);
     }
 
     vec3 StyleToColor(const string& in style) {

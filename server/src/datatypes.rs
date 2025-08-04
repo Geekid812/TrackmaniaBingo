@@ -55,6 +55,8 @@ pub struct RoomConfiguration {
 pub struct MatchConfiguration {
     #[derivative(Default(value = "GamePlatform::Next"))]
 	pub game: GamePlatform,
+    #[derivative(Default(value = "Gamemode::Standard"))]
+	pub mode: Gamemode,
     #[derivative(Default(value = "5"))]
 	pub grid_size: u32,
     #[derivative(Default(value = "MapMode::RandomTMX"))]
@@ -179,6 +181,15 @@ pub enum Medal {
     None,
 }
 
+/* A selection of game rules. */
+#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
+#[repr(u8)]
+pub enum Gamemode {
+    #[default]
+    Standard,
+    Frenzy,
+}
+
 /* When a connection to the server fails, give the client a hint of what it should do. */
 #[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
 #[repr(u8)]
@@ -187,4 +198,12 @@ pub enum HandshakeFailureIntentCode {
     ShowError,
     RequireUpdate,
     Reauthenticate,
+}
+
+/* A powerup from the Frenzy gamemode. */
+#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
+#[repr(u8)]
+pub enum Powerup {
+    #[default]
+    Empty,
 }
