@@ -19,6 +19,10 @@ namespace Board {
     const float COORDINATES_FONT_SIZE = 3.;
     const vec4 COORDINATES_FONT_COLOR = vec4(.9, .9, .9, .9);
 
+    const vec3 POWERUP_COLOR = vec3(0., .9, .9);
+    const vec3 SPECIALPOWER_COLOR = vec3(1., .8, 0.);
+    const float POWERUP_SYMBOL_FONT_SIZE = 5.;
+
     const uint64 PING_DURATION = 2500;
     const uint64 PING_PERIOD = 1250;
     const float PING_SCALE = 1.5;
@@ -73,6 +77,7 @@ namespace Board {
         nvg::BeginPath();
 
         int64 animationTime = Time::Now - Match.startTime + ANIMATION_START_TIME;
+        array<CellHighlightDrawData@> cellHightlights;
 
         // Borders
         float timePerBorder = 1. / (cellsPerRow + 1);
@@ -131,6 +136,12 @@ namespace Board {
                 nvg::FillColor(color);
                 nvg::Rect(cellPosition.x, cellPosition.y, sizes.cell, sizes.cell);
                 nvg::Fill();
+
+                // If this cell has a special state, queue it for drawing later
+                if (tile.specialState != TileItemState::Empty) {
+                    cellHightlights.InsertLast(CellHighlightDrawData(y, x, true, (tile.specialState == TileItemState::HasSpecialPowerup ? SPECIALPOWER_COLOR : POWERUP_COLOR)));
+                    DrawPowerupCellMark(tile.specialState, cellPosition, sizes);
+                }
             }
         }
 
@@ -139,39 +150,46 @@ namespace Board {
             DrawCoordinates(cellsPerRow, sizes);
         }
 
-        // Cell highlight
-        float highlightBlinkValue = (Math::Sin(float(Time::Now) / 500.) + 1) / 2;
-        vec4 highlightColor = vec4(CELL_HIGHLIGHT_COLOR * (0.9 + 0.2 * highlightBlinkValue), .9);
-        float paddingValue = CELL_HIGHLIGHT_PADDING * (1); // Currently not animated
-        const float highlightWidth = sizes.border * paddingValue;
-        const float highlightMarginOffset = sizes.border * (paddingValue - 1.);
-
+        // Define cell highlight for current player location
         int currentTileIndex = Gamemaster::GetCurrentTileIndex();
         if (currentTileIndex != -1) {
             int row = currentTileIndex / cellsPerRow;
             int col = currentTileIndex % cellsPerRow;
+            cellHightlights.InsertLast(CellHighlightDrawData(row, col));        
+        }
+
+        // Cell highlight
+        float highlightBlinkValue = (Math::Sin(float(Time::Now) / 1000.) + 1) / 2;
+
+        for (uint i = 0; i < cellHightlights.Length; i++) {
+            CellHighlightDrawData@ currentHl = cellHightlights[i];
+            vec4 highlightColor = vec4(currentHl.color * (0.9 + 0.2 * highlightBlinkValue), .9);
+            float paddingValue = CELL_HIGHLIGHT_PADDING * (currentHl.animated ? Math::Clamp(highlightBlinkValue, 0.4, 0.8) : 1); // Currently not animated
+            const float highlightWidth = sizes.border * paddingValue;
+            const float highlightMarginOffset = sizes.border * (paddingValue - 1.);
+
             nvg::BeginPath();
             nvg::FillColor(highlightColor);
-            nvg::Rect(Position.x + sizes.step * col,
-                      Position.y + sizes.step * row,
+            nvg::Rect(Position.x + sizes.step * currentHl.col,
+                      Position.y + sizes.step * currentHl.row,
                       sizes.cell + sizes.border * 2,
                       highlightWidth);
             nvg::Fill();
             nvg::BeginPath();
-            nvg::Rect(Position.x + sizes.step * col,
-                      Position.y + sizes.step * (row + 1) - highlightMarginOffset,
+            nvg::Rect(Position.x + sizes.step * currentHl.col,
+                      Position.y + sizes.step * (currentHl.row + 1) - highlightMarginOffset,
                       sizes.cell + sizes.border * 2,
                       highlightWidth);
             nvg::Fill();
             nvg::BeginPath();
-            nvg::Rect(Position.x + sizes.step * col,
-                      Position.y + sizes.step * row,
+            nvg::Rect(Position.x + sizes.step * currentHl.col,
+                      Position.y + sizes.step * currentHl.row,
                       highlightWidth,
                       sizes.cell + sizes.border * 2);
             nvg::Fill();
             nvg::BeginPath();
-            nvg::Rect(Position.x + sizes.step * (col + 1) - highlightMarginOffset,
-                      Position.y + sizes.step * row,
+            nvg::Rect(Position.x + sizes.step * (currentHl.col + 1) - highlightMarginOffset,
+                      Position.y + sizes.step * currentHl.row,
                       highlightWidth,
                       sizes.cell + sizes.border * 2);
             nvg::Fill();
@@ -208,6 +226,25 @@ namespace Board {
 
             nvg::ClosePath();
         }
+    }
+
+    void DrawPowerupCellMark(TileItemState state, vec2 cellPosition, BoardSizes sizes) {
+        float fontSize = POWERUP_SYMBOL_FONT_SIZE * sizes.cell * 0.1;
+        string markSymbol = state == TileItemState::HasSpecialPowerup ? Icons::Magic : Icons::Star;
+        vec3 fontColor = state == TileItemState::HasSpecialPowerup ? SPECIALPOWER_COLOR : POWERUP_COLOR;
+
+        nvg::BeginPath();
+        nvg::FillColor(vec4(0., 0., 0., .3));
+        nvg::RoundedRect(cellPosition.x + sizes.border * 5,
+                    cellPosition.y + sizes.border * 5,
+                    sizes.cell * 0.66,
+                    sizes.cell * 0.66, sizes.cell);
+        nvg::Fill();
+
+        nvg::FillColor(vec4(fontColor, .5));
+        nvg::FontSize(fontSize);
+        nvg::TextAlign(nvg::Align::Center);
+        nvg::Text(cellPosition + vec2(sizes.step / 2, sizes.step / 1.5), markSymbol);
     }
 
     void DrawCoordinates(uint cellsPerRow, BoardSizes sizes) {
@@ -249,4 +286,18 @@ namespace Board {
 
     // A unit of drawing is 1/100th of the screen's width.
     float Unit() { return float(Draw::GetWidth() / 100.); }
+
+    class CellHighlightDrawData {
+        int row;
+        int col;
+        bool animated;
+        vec3 color;
+
+        CellHighlightDrawData(int row, int col, bool animated = false, vec3 color = CELL_HIGHLIGHT_COLOR) {
+            this.row = row;
+            this.col = col;
+            this.animated = animated;
+            this.color = color;
+        }
+    }
 }

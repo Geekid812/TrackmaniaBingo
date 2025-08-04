@@ -120,7 +120,7 @@ namespace UIMapList {
                     NetParams::RerollCellId = i;
                     startnew(Network::RerollCell);
                     RerollMenuOpen = false;
-                } else {
+                } else if (cell.map !is null) {
                     Visible = false;
                     Playground::PlayMap(cell.map);
                     Gamemaster::SetCurrentTileIndex(i);
@@ -189,6 +189,16 @@ namespace UIMapList {
                 UI::Text("\\$066Click to start a vote to reroll this map.");
             }
         }
+
+        switch (tile.specialState) {
+            case TileItemState::HasPowerup:
+                UI::Text("\\$8ffA powerup can be obtained on this map!");
+                break;
+            case TileItemState::HasSpecialPowerup:
+                UI::Text("\\$fb0A SPECIAL powerup can be obtained on this map!");
+                break;
+        }
+
         UI::EndTooltip();
     }
 

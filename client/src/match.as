@@ -99,6 +99,7 @@ class GameTile {
     vec3 paintColor = vec3();
     Image @thumbnail;
     Image @mapImage;
+    TileItemState specialState = TileItemState::Empty;
 
     GameTile() {}
 
@@ -203,4 +204,10 @@ enum GamePhase {
     Running,
     Overtime,
     Ended
+}
+
+enum TileItemState {
+    Empty,
+    HasPowerup,
+    HasSpecialPowerup
 }

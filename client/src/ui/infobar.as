@@ -85,7 +85,8 @@ namespace UIInfoBar {
         vec4 geometry = SubwindowBegin("Bingo Map Info");
 
         string displayText = "\\$ff8Time to beat: ";
-        Team myTeam = Match.GetSelf().team;
+        Player@ localPlayer = Match.GetSelf();
+        Team myTeam = (@localPlayer != null ? localPlayer.team: Team(-1, "", vec3()));
         if (cell.IsClaimed()) {
             MapClaim leadingClaim = cell.LeadingRun();
             if (leadingClaim.teamId == myTeam.id) {
