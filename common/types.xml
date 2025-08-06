@@ -139,5 +139,10 @@
     <enum name="Powerup">
         <comment>A powerup from the Frenzy gamemode.</comment>
         <v>Empty</v>
+        <v>RowShift</v>
+        <v>ColumnShift</v>
+        <v>Rally</v>
+        <v>Jail</v>
+        <v>RainbowTile</v>
     </enum>
 </datatypes>

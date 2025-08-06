@@ -5,6 +5,14 @@ namespace Board {
     vec2 Position;
     bool Visible = true;
 
+    // Controlled by Powerups
+    int ShiftRowColIndex;
+    bool ShiftIsRow; // true = row; false = column
+    bool ShiftIsForwards; // true = forward; false = backward
+    int64 ShiftStartTimestamp;
+
+    const uint64 SHIFTING_ANIMATION_TIME = 1000;
+
     const float STROKE_WIDTH = 8.;
     const float CELL_HIGHLIGHT_PADDING = 2.5; // Multiplier for BorderSize, inside offset
     const vec3 CELL_HIGHLIGHT_COLOR = vec3(.9, .9, .9);
@@ -79,6 +87,10 @@ namespace Board {
         int64 animationTime = Time::Now - Match.startTime + ANIMATION_START_TIME;
         array<CellHighlightDrawData@> cellHightlights;
 
+        bool playingShiftAnimation = (Time::Now - ShiftStartTimestamp) <= SHIFTING_ANIMATION_TIME;
+        float shiftDirection = ShiftIsForwards ? 1. : -1.;
+        float animationShiftOffset = sizes.step * -shiftDirection + Animation::GetProgress(Time::Now - ShiftStartTimestamp, 0, SHIFTING_ANIMATION_TIME, Animation::Easing::CubicInOut) * sizes.step * shiftDirection;
+
         // Borders
         float timePerBorder = 1. / (cellsPerRow + 1);
         // Columns
@@ -88,14 +100,52 @@ namespace Board {
             return;
         nvg::FillColor(BoardBorderColor);
         for (uint i = 0; i <= cellsPerRow; i++) {
-            float animProgress =
-                Animation::GetProgress(columnsAnimProgress, i * timePerBorder, timePerBorder);
-            nvg::BeginPath();
-            nvg::Rect(Position.x + float(i) * sizes.step,
-                      Position.y,
-                      sizes.border,
-                      BoardSize * animProgress);
-            nvg::Fill();
+            // When animating a shifting row, we seperate the entire column in three arms.
+            // The lower and upper arms are not animated while the middle arm is moving.
+            // Right now it is not possible to have multiple animated rows/columns simultaneously.
+            float upperArmLength = 0.;
+            float lowerArmLength = 0.;
+            float middleArmLength = 0.;
+
+            if (playingShiftAnimation && ShiftIsRow) {
+                // Shifting column
+                upperArmLength = sizes.step * float(ShiftRowColIndex);
+                middleArmLength = sizes.step;
+                lowerArmLength = BoardSize - upperArmLength - middleArmLength;
+            } else {
+                // Normal column
+                float animProgress =
+                    Animation::GetProgress(columnsAnimProgress, i * timePerBorder, timePerBorder);
+                upperArmLength = BoardSize * animProgress;
+            }
+
+            float colX = Position.x + float(i) * sizes.step;
+            if (upperArmLength > 0.) {
+                nvg::BeginPath();
+                nvg::Rect(colX,
+                        Position.y,
+                        sizes.border,
+                        upperArmLength);
+                nvg::Fill();
+            }
+
+            if (middleArmLength > 0.) {
+                nvg::BeginPath();
+                nvg::Rect(colX + animationShiftOffset,
+                        Position.y + upperArmLength,
+                        sizes.border,
+                        middleArmLength);
+                nvg::Fill();
+            }
+
+            if (lowerArmLength > 0.) {
+                nvg::BeginPath();
+                nvg::Rect(colX,
+                        Position.y + upperArmLength + middleArmLength,
+                        sizes.border,
+                        lowerArmLength);
+                nvg::Fill();
+            }
         }
 
         // Rows
@@ -104,14 +154,49 @@ namespace Board {
         if (rowsAnimProgress <= 0.)
             return;
         for (uint i = 0; i <= cellsPerRow; i++) {
-            float animProgress =
-                Animation::GetProgress(rowsAnimProgress, i * timePerBorder, timePerBorder);
-            nvg::BeginPath();
-            nvg::Rect(Position.x,
-                      Position.y + float(i) * sizes.step,
-                      BoardSize * animProgress,
-                      sizes.border);
-            nvg::Fill();
+            float leftArmLength = 0.;
+            float rightArmLength = 0.;
+            float middleArmLength = 0.;
+
+            if (playingShiftAnimation && !ShiftIsRow) {
+                // Shifting row
+                leftArmLength = sizes.step * float(ShiftRowColIndex);
+                middleArmLength = sizes.step;
+                rightArmLength = BoardSize - leftArmLength - middleArmLength;
+            } else {
+                // Normal row
+                float animProgress =
+                    Animation::GetProgress(rowsAnimProgress, i * timePerBorder, timePerBorder);
+                leftArmLength = BoardSize * animProgress;
+            }
+
+            float rowY = Position.y + float(i) * sizes.step;
+            if (leftArmLength > 0.) {
+                nvg::BeginPath();
+                nvg::Rect(Position.x,
+                        rowY,
+                        leftArmLength,
+                        sizes.border);
+                nvg::Fill();
+            }
+
+            if (middleArmLength > 0.) {
+                nvg::BeginPath();
+                nvg::Rect(Position.x + leftArmLength,
+                        rowY + animationShiftOffset,
+                        middleArmLength,
+                        sizes.border);
+                nvg::Fill();
+            }
+
+            if (rightArmLength > 0.) {
+                nvg::BeginPath();
+                nvg::Rect(Position.x + leftArmLength + middleArmLength,
+                        rowY,
+                        rightArmLength,
+                        sizes.border);
+                nvg::Fill();
+            }
         }
 
         // Cell Fill Color
@@ -127,6 +212,8 @@ namespace Board {
 
                 vec2 cellPosition = CellPosition(x, y, sizes);
                 vec4 color = GetTileFillColor(tile);
+                cellPosition.x += (playingShiftAnimation && ShiftIsRow && y == ShiftRowColIndex ? animationShiftOffset : 0.);
+                cellPosition.y += (playingShiftAnimation && !ShiftIsRow && x == ShiftRowColIndex ? animationShiftOffset : 0);
                 color.w *= colorAnimProgress; // opacity modifier
                 color.x *= lightness;
                 color.y *= lightness;

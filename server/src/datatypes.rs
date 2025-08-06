@@ -206,4 +206,9 @@ pub enum HandshakeFailureIntentCode {
 pub enum Powerup {
     #[default]
     Empty,
+    RowShift,
+    ColumnShift,
+    Rally,
+    Jail,
+    RainbowTile,
 }

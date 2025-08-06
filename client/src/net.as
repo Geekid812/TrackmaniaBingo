@@ -236,6 +236,8 @@ namespace Network {
             NetworkHandlers::PollVotesUpdate(body);
         } else if (event == "PollResult") {
             NetworkHandlers::PollResult(body);
+        } else if (event == "PowerupActivated") {
+            NetworkHandlers::PowerupActivated(body);
         } else {
             warn("[Network] Unknown event: " + string(body["event"]));
         }

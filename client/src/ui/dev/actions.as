@@ -62,6 +62,11 @@ namespace UIDevActions {
             UI::EndTabItem();
         }
 
+        if (UI::BeginTabItem(Icons::Star + " Powerups")) {
+            UIDevPowerups::Render();
+            UI::EndTabItem();
+        }
+
         UI::EndTabBar();
 
         UI::End();

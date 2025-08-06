@@ -380,4 +380,9 @@ enum HandshakeFailureIntentCode {
 /* A powerup from the Frenzy gamemode. */
 enum Powerup {
     Empty,
+    RowShift,
+    ColumnShift,
+    Rally,
+    Jail,
+    RainbowTile,
 }

@@ -51,6 +51,11 @@ class HandshakeFailureIntentCode(Enum):
 # A powerup from the Frenzy gamemode.
 class Powerup(Enum):
     EMPTY = 0
+    ROWSHIFT = 1
+    COLUMNSHIFT = 2
+    RALLY = 3
+    JAIL = 4
+    RAINBOWTILE = 5
 
 # A simple reference to a registered player.
 class PlayerRef(BaseModel):

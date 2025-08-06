@@ -364,4 +364,17 @@ namespace NetworkHandlers {
         pollData.resultIndex = int(data["selected"]);
         pollData.expireTime = Time::Now + Poll::POLL_EXPIRE_MILLIS;
     }
+
+    void PowerupActivated(Json::Value @data) {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[NetworkHandlers::PowerupActivated] Bingo is not active, ignoring this event.");
+            return;
+        }
+        Powerup usedPowerup = Powerup(int(data["powerup"]));
+        PlayerRef powerupUser = PlayerRef::Deserialize(data["player"]);
+        GameTile targetTile = Match.GetCell(int(data["tile_id"]));
+        
+        // TODO: notify played that a powerup got activated
+        Powerups::TriggerPowerup(usedPowerup, powerupUser, targetTile, data);
+    }
 }
