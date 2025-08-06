@@ -21,21 +21,24 @@ namespace Playground {
     }
 
     /* Set the visibility of the records leaderbaord manialink module. */
-    void SetMapLeaderboardVisible(bool visible) {
+    bool SetMapLeaderboardVisible(bool visible) {
         auto network = GetApp().Network;
         if (network is null)
-            return;
+            return false;
         auto appPlayground = network.ClientManiaAppPlayground;
         if (appPlayground is null)
-            return;
+            return false;
         auto uiLayers = appPlayground.UILayers;
         for (uint i = 0; i < uiLayers.Length; i++) {
             auto module = uiLayers[i];
             if (module !is null &&
                 module.ManialinkPage.SubStr(0, 100).Contains("UIModule_Race_Record")) {
                 module.IsVisible = visible;
+                return true;
             }
         }
+
+        return false;
     }
 
     namespace __internal {

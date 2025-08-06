@@ -264,7 +264,7 @@ namespace UIRoomSettings {
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch);
         UI::SameLine();
-        UITools::HelpTooltip("In game map replays will be disabled.");
+        UITools::HelpTooltip("Viewing records and leaderboards will be disabled.");
     }
 
     void TotalTimeIndicator() {
@@ -332,6 +332,7 @@ namespace UIRoomSettings {
             OvertimeToggle();
         }
         RerollsToggle();
+        CompetitvePatchToggle();
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0)
             TotalTimeIndicator();
     

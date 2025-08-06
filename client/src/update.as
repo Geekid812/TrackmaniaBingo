@@ -1,6 +1,7 @@
 
 namespace GameUpdates {
     int64 LastSummonTimestamp;
+    bool MapIsCompetitivePatched;
 
     // Run checks and display a warning when using an unsupported config.
     void CheckUnstableConfigurations() {
@@ -19,14 +20,16 @@ namespace GameUpdates {
         Playground::CheckRunFinished();
         if (Gamemaster::IsInJail())
             SummonToJail();
-        if (Match.config.competitvePatch)
-            Playground::SetMapLeaderboardVisible(false);
     }
 
     // Active tick function. Runs when a game is active, even if it is paused or not running.
     void TickUpdates() {
         Playground::UpdateCurrentTileIndex();
         Poll::CleanupExpiredPolls();
+        if (Match.config.competitvePatch && !MapIsCompetitivePatched) {
+            // Records will only be visible once the game ends
+            MapIsCompetitivePatched = Playground::SetMapLeaderboardVisible(Match.endState.HasEnded());
+        }
     }
 
     void SummonToJail() {

@@ -206,6 +206,8 @@ namespace Gamemaster {
         if (Match.currentTileIndex != tileIndex) {
             Match.currentTileIndex = tileIndex;
         }
+
+        GameUpdates::MapIsCompetitivePatched = false;
     }
 
     /**
@@ -255,6 +257,7 @@ namespace Gamemaster {
         ClearMatchId();
         @Match = null;
         @Room = null;
+        Playground::SetMapLeaderboardVisible(true);
         UIChat::ClearHistory();
         UIPoll::ClearAllPolls();
     }
