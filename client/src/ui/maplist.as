@@ -154,7 +154,7 @@ namespace UIMapList {
         return interacted;
     }
 
-    void ShowTileTooltip(GameTile tile, uint x = -1, uint y = -1) {
+    void ShowTileTooltip(GameTile tile, int x = -1, int y = -1) {
         if (tile.map is null) {
             return;
         }
@@ -215,7 +215,7 @@ namespace UIMapList {
         return false;
     }
 
-    string GetTextCoordinates(uint x, uint y) {
+    string GetTextCoordinates(int x, int y) {
         if (x == -1 || y == -1) return "";
 
         string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
