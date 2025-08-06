@@ -95,11 +95,12 @@ namespace UIMainWindow {
             UI::EndTabItem();
         }
 
+        /*
         if (UI::BeginTabItem(Icons::Star + " Events")) {
             UI::NewLine();
             UITools::CenterText("Coming soon!");
             UI::EndTabItem();
-        }
+        }*/
 
         UI::EndTabBar();
         UIColor::Reset();
