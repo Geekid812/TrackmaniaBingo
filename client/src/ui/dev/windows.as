@@ -18,6 +18,7 @@ namespace UIDevWindows {
         UINews::Visible = UI::Checkbox("UINews", UINews::Visible);
         UIDevActions::Visible = UI::Checkbox("UIDevActions", UIDevActions::Visible);
         BoardLocator::Visible = UI::Checkbox("BoardLocator", BoardLocator::Visible);
+        UIItemSettings::Visible = UI::Checkbox("UIItemSettings", UIItemSettings::Visible);
 
         UI::Columns(1);
     }

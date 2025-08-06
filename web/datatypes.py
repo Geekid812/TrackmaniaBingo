@@ -98,6 +98,15 @@ class MatchConfiguration(BaseModel):
     mappack_id: int | None
     campaign_selection: list[int] | None
     map_tag: int | None = 1
+    items: FrenzyItemSettings
+
+# Item drawing probabilities for configuring the Frenzy gamemode.
+class FrenzyItemSettings(BaseModel):
+    row_shift: int = 3
+    column_shift: int = 3
+    rally: int = 3
+    jail: int = 3
+    rainbow: int = 3
 
 # Request to open a connection by the client using an exisiting token.
 class HandshakeRequest(BaseModel):

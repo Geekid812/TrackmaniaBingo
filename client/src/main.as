@@ -84,6 +84,7 @@ void Render() {
     UIPaintColor::Render();
     UITeams::Render();
     UIEditSettings::Render();
+    UIItemSettings::Render();
     UIChat::Render();
 
     for (uint i = 0; i < Polls.Length; i++) {

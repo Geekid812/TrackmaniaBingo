@@ -119,6 +119,7 @@ class MatchConfiguration {
     uint mappackId;
     array<uint> campaignSelection;
     int mapTag = 1;
+    FrenzyItemSettings items;
     MatchConfiguration() {}
 }
 namespace MatchConfiguration {
@@ -138,6 +139,7 @@ namespace MatchConfiguration {
         value["mappack_id"] = cls.mappackId;
         value["campaign_selection"] = cls.campaignSelection;
         value["map_tag"] = cls.mapTag;
+        value["items"] = FrenzyItemSettings::Serialize(cls.items);
 
         return value;
     }
@@ -160,6 +162,40 @@ namespace MatchConfiguration {
             cls.campaignSelection.InsertLast(value["campaign_selection"][i]);
         }
         if (value["map_tag"].GetType() != Json::Type::Null) cls.mapTag = value["map_tag"];
+        cls.items = FrenzyItemSettings::Deserialize(value["items"]);
+
+        return cls;
+    }
+}
+
+/* Item drawing probabilities for configuring the Frenzy gamemode. */
+class FrenzyItemSettings {
+    uint rowShift = 3;
+    uint columnShift = 3;
+    uint rally = 3;
+    uint jail = 3;
+    uint rainbow = 3;
+    FrenzyItemSettings() {}
+}
+namespace FrenzyItemSettings {
+    Json::Value@ Serialize(FrenzyItemSettings cls) {
+        auto value = Json::Object();
+        value["row_shift"] = cls.rowShift;
+        value["column_shift"] = cls.columnShift;
+        value["rally"] = cls.rally;
+        value["jail"] = cls.jail;
+        value["rainbow"] = cls.rainbow;
+
+        return value;
+    }
+
+    FrenzyItemSettings Deserialize(Json::Value@ value) {
+        auto cls = FrenzyItemSettings();
+        cls.rowShift = value["row_shift"];
+        cls.columnShift = value["column_shift"];
+        cls.rally = value["rally"];
+        cls.jail = value["jail"];
+        cls.rainbow = value["rainbow"];
 
         return cls;
     }

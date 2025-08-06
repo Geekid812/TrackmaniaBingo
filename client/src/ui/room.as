@@ -311,6 +311,7 @@ namespace UIGameRoom {
         UIGameRoom::Visible = false;
         UIMapList::Visible = true;
         UIEditSettings::Visible = false;
+        UIItemSettings::Visible = false;
         UITeamEditor::Visible = false;
     }
 }

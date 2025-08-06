@@ -19,6 +19,7 @@ namespace UIRoomMenu {
         UIGameRoom::Visible = true;
         UIGameRoom::GrabFocus = true;
         UIMainWindow::Visible = false;
+        UIItemSettings::Visible = false;
     }
 
     void RoomCodeInput() {

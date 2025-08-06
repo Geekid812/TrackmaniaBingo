@@ -290,6 +290,12 @@ namespace UIRoomSettings {
         UI::SetItemTooltip("Powerups will appear randomly on the board.\nUse their different powers efficiently to claim victory!");
     }
 
+    void EditItemSettings() {
+        if (UI::Button(Icons::Cog + " Edit Item Settings")) {
+            UIItemSettings::Visible = !UIItemSettings::Visible;
+        }
+    }
+
     void SettingsView() {
         UITools::SectionHeader("Room Settings");
         RoomNameInput();
@@ -328,6 +334,9 @@ namespace UIRoomSettings {
         RerollsToggle();
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0)
             TotalTimeIndicator();
+    
+        if (MatchConfig.mode == Gamemode::Frenzy)
+            EditItemSettings();
     }
 
     void SaveConfiguredSettings() {

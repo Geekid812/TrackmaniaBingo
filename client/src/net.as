@@ -458,6 +458,7 @@ namespace Network {
             return;
         }
         UIEditSettings::Visible = false;
+        UIItemSettings::Visible = false;
     }
 
     void JoinTeam(Team team) {

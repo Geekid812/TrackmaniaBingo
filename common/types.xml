@@ -54,6 +54,16 @@
         <m name="mappack_id" type="uint" optional="true" />
         <m name="campaign_selection" type="list[uint]" optional="true" />
         <m name="map_tag" type="int" optional="true" default="1" />
+        <m name="items" type="FrenzyItemSettings" />
+    </struct>
+
+    <struct name="FrenzyItemSettings">
+        <comment>Item drawing probabilities for configuring the Frenzy gamemode.</comment>
+        <m name="row_shift" type="uint" default="3" />
+        <m name="column_shift" type="uint" default="3" />
+        <m name="rally" type="uint" default="3" />
+        <m name="jail" type="uint" default="3" />
+        <m name="rainbow" type="uint" default="3" />
     </struct>
 
     <struct name="HandshakeRequest">

@@ -76,7 +76,7 @@ namespace Powerups {
         Match.tiles[tileIndex].statePlayerTarget = targetPlayer;
         Match.tiles[tileIndex].stateTimeDeadline = Time::Now + duration;
 
-        if (targetPlayer.uid == Profile.uid) {
+        if (int(targetPlayer.uid) == Profile.uid) {
             @Jail = Match.tiles[tileIndex];
         }
     }

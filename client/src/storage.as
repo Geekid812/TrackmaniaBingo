@@ -18,6 +18,8 @@ namespace PersistantStorage {
 
     [Setting hidden] string TeamEditorStorage = GetDefaultTeams();
 
+    [Setting hidden] bool HasDismissedItemSpoiler = false;
+
     string GetDefaultTeams() {
         Json::Value @teams = Json::Array();
 

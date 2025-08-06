@@ -80,6 +80,24 @@ pub struct MatchConfiguration {
     pub campaign_selection: Option<Vec<u32>>,
     #[derivative(Default(value = "Some(1)"))]
 	pub map_tag: Option<i32>,
+    pub items: FrenzyItemSettings,
+}
+
+/* Item drawing probabilities for configuring the Frenzy gamemode. */
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
+#[derivative(Default)]
+pub struct FrenzyItemSettings {
+    #[derivative(Default(value = "3"))]
+	pub row_shift: u32,
+    #[derivative(Default(value = "3"))]
+	pub column_shift: u32,
+    #[derivative(Default(value = "3"))]
+	pub rally: u32,
+    #[derivative(Default(value = "3"))]
+	pub jail: u32,
+    #[derivative(Default(value = "3"))]
+	pub rainbow: u32,
 }
 
 /* Request to open a connection by the client using an exisiting token. */
