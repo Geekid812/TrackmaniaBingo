@@ -59,6 +59,12 @@ namespace UIItemSettings {
         UI::Separator();
         UI::NewLine();
         UI::TextWrapped("These settings only change the probabilties of drawing a specific item after collecting a powerup. They do not affect the spawn rate of items.\n\nCommon items are 3x more likely to be pulled than Rare.\nFrequent items are 3x more likely to be pulled than Common.");
+    
+        UIColor::Lime();
+        if (UI::Button(Icons::CheckCircle + " Confirm")) {
+            UIItemSettings::Visible = !UIItemSettings::Visible;
+        }
+        UIColor::Reset();
     }
 
     uint ItemSetting(const string&in itemLabel, uint value) {
