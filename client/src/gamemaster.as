@@ -268,5 +268,16 @@ namespace Gamemaster {
     void HandleGameEnd() {
         UIPoll::ClearAllPolls();
         PersistantStorage::ResetConnectedMatch();
+
+        // Remove all special tile states
+        for (uint i = 0; i < GetTileCount(); i++) {
+            if (Match.tiles[i] !is null) {
+                Match.tiles[i].specialState = TileItemState::Empty;
+            }
+        }
+        // Disable jail
+        @Jail = null;
+        // Restore map leaderboards for competitive patch
+        Playground::SetMapLeaderboardVisible(true);
     }
 }
