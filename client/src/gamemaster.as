@@ -231,6 +231,13 @@ namespace Gamemaster {
     }
 
     /**
+     * Return whether the local player is in jail.
+     */
+    bool IsInJail() {
+        return @Jail !is null;
+    }
+
+    /**
      * Stop the current game and close the connection.
      */
     void Shutdown() {

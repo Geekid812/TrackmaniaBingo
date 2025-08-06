@@ -192,17 +192,21 @@ namespace UIInfoBar {
         }
 
         if (phaseText != "" && !UI::IsWindowAppearing()) {
-            float sideMargins = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding).x * 2.;
-            float size = UI::GetWindowSize().x - sideMargins;
-            float padding = Layout::GetPadding(UI::GetWindowSize().x, size, 0.5);
-            vec4 buttonColor = UIColor::GetAlphaColor(
-                color, animate ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8);
-            UI::PushStyleColor(UI::Col::Button, buttonColor);
-            UI::PushStyleColor(UI::Col::ButtonHovered, buttonColor);
-            UI::PushStyleColor(UI::Col::ButtonActive, buttonColor);
-            Layout::MoveTo(padding);
-            UI::Button(phaseText, vec2(size, 0.));
-            UI::PopStyleColor(3);
+            NoticeFrame(phaseText, color, animate);
+        }
+
+        for (uint i = 0; i < Gamemaster::GetTileCount(); i++) {
+            if (Match.tiles[i] is null) continue;
+            switch (Match.tiles[i].specialState) {
+                case TileItemState::Rally:
+                    NoticeFrame("Rally - " + Time::Format(Match.tiles[i].stateTimeDeadline - Time::Now, false), Board::RALLY_COLOR, true);
+                    break;
+                case TileItemState::Jail:
+                    if (int(Match.tiles[i].statePlayerTarget.uid) == Profile.uid) {
+                        NoticeFrame("Jailed - " + Time::Format(Match.tiles[i].stateTimeDeadline - Time::Now, false), vec3(.6, .2, .2), true);
+                    }
+                    break;
+            }
         }
 
         Font::Set(Font::Style::Bold, Font::Size::Huge);
@@ -244,6 +248,20 @@ namespace UIInfoBar {
                               int(Board::Position.y) + int(Board::BoardSize) + BOARD_MARGIN),
                          UI::Cond::Always);
         UI::End();
+    }
+
+    void NoticeFrame(const string&in text, vec3 color, bool animated) {
+        float sideMargins = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding).x * 2.;
+        float size = UI::GetWindowSize().x - sideMargins;
+        float padding = Layout::GetPadding(UI::GetWindowSize().x, size, 0.5);
+        vec4 buttonColor = UIColor::GetAlphaColor(
+            color, animated ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8);
+        UI::PushStyleColor(UI::Col::Button, buttonColor);
+        UI::PushStyleColor(UI::Col::ButtonHovered, buttonColor);
+        UI::PushStyleColor(UI::Col::ButtonActive, buttonColor);
+        Layout::MoveTo(padding);
+        UI::Button(text, vec2(size, 0.));
+        UI::PopStyleColor(3);
     }
 
     void FrenzyItemSelectSlot() {

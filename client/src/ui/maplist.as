@@ -134,6 +134,8 @@ namespace UIMapList {
             if (!RerollMenuOpen) {
                 if (cell.paintColor != vec3())
                     drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.paintColor, 0.1));
+                if (cell.specialState == TileItemState::Rainbow)
+                    drawList.AddRectFilledMultiColor(rect, TeamColorIndex(0), TeamColorIndex(1), TeamColorIndex(2), TeamColorIndex(3));
                 if (cell.IsClaimed())
                     drawList.AddRectFilled(
                         rect, UIColor::GetAlphaColor(cell.LeadingRun().player.team.color, 0.1));
@@ -154,6 +156,10 @@ namespace UIMapList {
         return interacted;
     }
 
+    vec4 TeamColorIndex(uint idx) {
+        return UIColor::GetAlphaColor(Match.teams[idx % Match.teams.Length].color, 0.15);
+    }
+
     void ShowTileTooltip(GameTile tile, int x = -1, int y = -1) {
         if (tile.map is null) {
             return;
@@ -163,6 +169,11 @@ namespace UIMapList {
         string cellCoordinates = (Settings::ShowCellCoordinates ? "\\$888[ \\$ff8" + GetTextCoordinates(x, y) + " \\$888] \\$z" : "");
 
         UI::BeginTooltip();
+
+        if (tile.specialState == TileItemState::Rainbow) {
+            UI::Text("\\$F55R\\$E65a\\$D85i\\$BA5n\\$AB6b\\$9D6o\\$9D6w \\$7BAT\\$6BBi\\$5ADl\\$49Fe");
+        }
+
         UI::Text(cellCoordinates + mapName);
 
         if (tile.map.username != "")
@@ -198,6 +209,15 @@ namespace UIMapList {
             case TileItemState::HasSpecialPowerup:
                 UI::Text("\\$fb0A SPECIAL powerup can be obtained on this map!");
                 break;
+            case TileItemState::Rally:
+                UI::Text("\\$fcaA rally is currently taking place on this map!");
+                break;
+            case TileItemState::Jail: {
+                Player@ jailedPlayer = Match.GetPlayer(tile.statePlayerTarget.uid);
+                vec3 teamColor = jailedPlayer !is null ? jailedPlayer.team.color : vec3(.5, .5, .5);
+                UI::Text("\\$" + UIColor::GetHex(teamColor) + tile.statePlayerTarget.name + " \\$f88is in jail here.\n(\\$ff8" + Time::Format(tile.stateTimeDeadline - Time::Now, false) + " \\$f88remaining)");
+                break;
+            }
         }
 
         UI::EndTooltip();

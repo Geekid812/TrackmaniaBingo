@@ -6,12 +6,13 @@ namespace Board {
     bool Visible = true;
 
     // Controlled by Powerups
-    int ShiftRowColIndex;
+    uint ShiftRowColIndex;
     bool ShiftIsRow; // true = row; false = column
     bool ShiftIsForwards; // true = forward; false = backward
     int64 ShiftStartTimestamp;
 
     const uint64 SHIFTING_ANIMATION_TIME = 1000;
+    const uint64 RAINBOW_COLOR_TICK_DURATION = 3000;
 
     const float STROKE_WIDTH = 8.;
     const float CELL_HIGHLIGHT_PADDING = 2.5; // Multiplier for BorderSize, inside offset
@@ -28,7 +29,9 @@ namespace Board {
     const vec4 COORDINATES_FONT_COLOR = vec4(.9, .9, .9, .9);
 
     const vec3 POWERUP_COLOR = vec3(0., .9, .9);
+    const vec3 RALLY_COLOR = vec3(.9, .6, .3);
     const vec3 SPECIALPOWER_COLOR = vec3(1., .8, 0.);
+    const vec4 JAIL_BARS_COLOR = vec4(.3, .3, .3, .9);
     const float POWERUP_SYMBOL_FONT_SIZE = 5.;
 
     const uint64 PING_DURATION = 2500;
@@ -62,6 +65,15 @@ namespace Board {
 
         if (tile.paintColor != vec3())
             return UIColor::GetAlphaColor(tile.paintColor, BoardTilesAlpha);
+
+        if (tile.specialState == TileItemState::Rainbow) {
+            float rainbowColorTick = float(Time::Now - Match.startTime) / RAINBOW_COLOR_TICK_DURATION;
+            vec3 primaryColor = Match.teams[int(rainbowColorTick) % Match.teams.Length].color;
+            vec3 secondaryColor = Match.teams[(int(rainbowColorTick) + 1) % Match.teams.Length].color;
+            float transitionProgress = rainbowColorTick - int(rainbowColorTick);
+
+            return UIColor::GetAlphaColor(primaryColor * (1 - transitionProgress) + secondaryColor * transitionProgress, BoardTilesAlpha);
+        }
 
         if (tile.IsClaimed()) {
             Team @tileOwnerTeam = Match.GetTeamWithId(tile.LeadingRun().teamId);
@@ -224,10 +236,26 @@ namespace Board {
                 nvg::Rect(cellPosition.x, cellPosition.y, sizes.cell, sizes.cell);
                 nvg::Fill();
 
-                // If this cell has a special state, queue it for drawing later
-                if (tile.specialState != TileItemState::Empty) {
-                    cellHightlights.InsertLast(CellHighlightDrawData(y, x, true, (tile.specialState == TileItemState::HasSpecialPowerup ? SPECIALPOWER_COLOR : POWERUP_COLOR)));
+                // If this cell has a special powerup or rally state, queue it for drawing marks and highlights later
+                if (tile.specialState == TileItemState::HasPowerup || tile.specialState == TileItemState::HasSpecialPowerup || tile.specialState == TileItemState::Rally) {
+                    cellHightlights.InsertLast(CellHighlightDrawData(y, x, true, (tile.specialState == TileItemState::HasSpecialPowerup ? SPECIALPOWER_COLOR : (tile.specialState == TileItemState::HasPowerup ? POWERUP_COLOR : RALLY_COLOR))));
                     DrawPowerupCellMark(tile.specialState, cellPosition, sizes);
+                }
+
+                // Draw jail bars
+                if (tile.specialState == TileItemState::Jail) {
+                    nvg::BeginPath();
+                    nvg::FillColor(JAIL_BARS_COLOR);
+                    nvg::Rect(cellPosition.x + sizes.cell * 1 / 7, cellPosition.y, sizes.cell / 7, sizes.cell);
+                    nvg::Fill();
+
+                    nvg::BeginPath();
+                    nvg::Rect(cellPosition.x + sizes.cell * 3 / 7, cellPosition.y, sizes.cell / 7, sizes.cell);
+                    nvg::Fill();
+
+                    nvg::BeginPath();
+                    nvg::Rect(cellPosition.x + sizes.cell * 5 / 7, cellPosition.y, sizes.cell / 7, sizes.cell);
+                    nvg::Fill();
                 }
             }
         }
@@ -317,8 +345,21 @@ namespace Board {
 
     void DrawPowerupCellMark(TileItemState state, vec2 cellPosition, BoardSizes sizes) {
         float fontSize = POWERUP_SYMBOL_FONT_SIZE * sizes.cell * 0.1;
-        string markSymbol = state == TileItemState::HasSpecialPowerup ? Icons::Magic : Icons::Star;
-        vec3 fontColor = state == TileItemState::HasSpecialPowerup ? SPECIALPOWER_COLOR : POWERUP_COLOR;
+        string markSymbol;
+        vec3 fontColor;
+
+        switch (state) {
+            case TileItemState::HasSpecialPowerup:
+                markSymbol = Icons::Magic;
+                fontColor = SPECIALPOWER_COLOR;
+                break;
+            case TileItemState::HasPowerup:
+                markSymbol = Icons::Star;
+                fontColor = POWERUP_COLOR;
+            case TileItemState::Rally:
+                markSymbol = Icons::Flag;
+                fontColor = RALLY_COLOR;
+        }
 
         nvg::BeginPath();
         nvg::FillColor(vec4(0., 0., 0., .3));

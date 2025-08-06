@@ -14,7 +14,7 @@ namespace Powerups {
         }
     }
 
-    void PowerupEffectBoardShift(bool isRow, int rowColIndex, bool fowards) {
+    void PowerupEffectBoardShift(bool isRow, uint rowColIndex, bool fowards) {
         if (!Gamemaster::IsBingoActive()) {
             warn("[Powerups::PowerupEffectBoardShift] Bingo is not active, ignoring this call.");
             return;
@@ -45,5 +45,39 @@ namespace Powerups {
         Board::ShiftIsRow = isRow;
         Board::ShiftIsForwards = fowards;
         Board::ShiftStartTimestamp = Time::Now;
+    }
+
+    void PowerupEffectRainbowTile(uint tileIndex) {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[Powerups::PowerupEffectRainbowTile] Bingo is not active, ignoring this call.");
+            return;
+        }
+
+        Match.tiles[tileIndex].specialState = TileItemState::Rainbow;
+    }
+
+    void PowerupEffectRally(uint tileIndex, uint64 duration) {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[Powerups::PowerupEffectRally] Bingo is not active, ignoring this call.");
+            return;
+        }
+
+        Match.tiles[tileIndex].specialState = TileItemState::Rally;
+        Match.tiles[tileIndex].stateTimeDeadline = Time::Now + duration;
+    }
+
+    void PowerupEffectJail(uint tileIndex, PlayerRef targetPlayer, uint64 duration) {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[Powerups::PowerupEffectJail] Bingo is not active, ignoring this call.");
+            return;
+        }
+
+        Match.tiles[tileIndex].specialState = TileItemState::Jail;
+        Match.tiles[tileIndex].statePlayerTarget = targetPlayer;
+        Match.tiles[tileIndex].stateTimeDeadline = Time::Now + duration;
+
+        if (targetPlayer.uid == Profile.uid) {
+            @Jail = Match.tiles[tileIndex];
+        }
     }
 }

@@ -93,13 +93,14 @@ class LiveMatch {
 }
 
 class GameTile {
-
     GameMap @map = null;
     array<MapClaim> @attemptRanking = {};
     vec3 paintColor = vec3();
     Image @thumbnail;
     Image @mapImage;
     TileItemState specialState = TileItemState::Empty;
+    PlayerRef statePlayerTarget = PlayerRef();
+    int64 stateTimeDeadline = 0;
 
     GameTile() {}
 
@@ -209,5 +210,8 @@ enum GamePhase {
 enum TileItemState {
     Empty,
     HasPowerup,
-    HasSpecialPowerup
+    HasSpecialPowerup,
+    Rainbow,
+    Rally,
+    Jail
 }

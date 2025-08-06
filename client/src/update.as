@@ -1,5 +1,6 @@
 
 namespace GameUpdates {
+    int64 LastSummonTimestamp;
 
     // Run checks and display a warning when using an unsupported config.
     void CheckUnstableConfigurations() {
@@ -16,6 +17,8 @@ namespace GameUpdates {
     // Game tick function. Runs the core logic for one update cycle.
     void TickGameplay() {
         Playground::CheckRunFinished();
+        if (Gamemaster::IsInJail())
+            SummonToJail();
         if (Match.config.competitvePatch)
             Playground::SetMapLeaderboardVisible(false);
     }
@@ -24,6 +27,16 @@ namespace GameUpdates {
     void TickUpdates() {
         Playground::UpdateCurrentTileIndex();
         Poll::CleanupExpiredPolls();
+    }
+
+    void SummonToJail() {
+        auto map = Playground::GetCurrentMap();
+        if (@map !is null && map.EdChallengeId != Jail.map.uid && Time::Now - LastSummonTimestamp > 5000) {
+            print("[GameUpdates::SummonToJail] Player is not in their jail, summoning them now.");
+            UI::ShowNotification("", Icons::ExclamationCircle + " You are in jail. You must go to the map where you were emprisoned! To break out of jail, you must beat the current record on this map within the time limit.", vec4(.6, .2, .2, .9), 20000);
+            LastSummonTimestamp = Time::Now;
+            Playground::PlayMap(Jail.map);
+        }
     }
 
 }

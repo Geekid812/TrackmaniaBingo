@@ -21,3 +21,6 @@ array<GameMap> MapCache;
 
 // Templated teams for the team editor
 array<Team @> TeamPresets;
+
+// Jail tile for the local player
+GameTile@ Jail;
