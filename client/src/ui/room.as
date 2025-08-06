@@ -110,22 +110,22 @@ namespace UIGameRoom {
         }
 
         float windowWidth = UI::GetWindowSize().x;
-        if (Room.localPlayerIsHost) {
-            // Change settings button
-            UI::SameLine();
 
-            string buttonText = Icons::Cog + " Change Settings";
-            float buttonPadding =
-                Layout::GetPadding(windowWidth, Layout::ButtonWidth(buttonText) + 8, 1.0);
-            UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
-            UIColor::Gray();
-            if (UI::Button(buttonText)) {
-                UIEditSettings::Visible = !UIEditSettings::Visible;
-            }
-            UIColor::Reset();
+        // Change / view settings button
+        UI::SameLine();
 
-            UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 2));
+        string buttonText = Icons::Cog + (Room.localPlayerIsHost ? " Change Settings" : " View Settings");
+        float buttonPadding =
+            Layout::GetPadding(windowWidth, Layout::ButtonWidth(buttonText) + 8, 1.0);
+        UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
+        UIColor::Gray();
+        if (UI::Button(buttonText)) {
+            UIEditSettings::Visible = !UIEditSettings::Visible;
         }
+        UIColor::Reset();
+
+        UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 2));
+
         UI::Separator();
 
         string[] roomInfo = MatchConfigInfo(Room.matchConfig);
