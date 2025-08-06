@@ -16,7 +16,7 @@ namespace Board {
     const float TILE_SHADING_VARIENCE = 0.08f;
 
     // Coordinates font size (proportional to the cell size, arbitrary unit)
-    const float COORDINATES_FONT_SIZE = 3.;
+    const float COORDINATES_FONT_SIZE = 2.5;
     const vec4 COORDINATES_FONT_COLOR = vec4(.9, .9, .9, .9);
 
     const vec3 POWERUP_COLOR = vec3(0., .9, .9);
@@ -258,8 +258,8 @@ namespace Board {
             cellPosLetter.y += fontSize;
             cellPosLetter.x += nudgeUnit;
 
-            vec2 cellPosNumber = CellPosition(i, cellsPerRow, sizes);
-            cellPosNumber.y -= sizes.border + nudgeUnit;
+            vec2 cellPosNumber = CellPosition(i, 0, sizes);
+            cellPosNumber.y += fontSize;
             cellPosNumber.x += sizes.cell;
 
             string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
