@@ -527,6 +527,7 @@ impl LiveMatch {
         }
 
         self.cells.swap_remove(cell_id);
+        self.cells[cell_id].cell_id = cell_id;
         self.channel.broadcast(&GameEvent::MapRerolled {
             cell_id,
             map: self.cells[cell_id].map.clone(),
