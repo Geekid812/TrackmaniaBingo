@@ -99,6 +99,7 @@ class MatchConfiguration(BaseModel):
     campaign_selection: list[int] | None
     map_tag: int | None = 1
     items: FrenzyItemSettings
+    items_expire: int = 600
 
 # Item drawing probabilities for configuring the Frenzy gamemode.
 class FrenzyItemSettings(BaseModel):

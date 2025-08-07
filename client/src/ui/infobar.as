@@ -273,7 +273,7 @@ namespace UIInfoBar {
         Powerup myPowerup = (@localPlayer !is null ? localPlayer.holdingPowerup : Powerup::Empty);
 
         if (myPowerup != Powerup::Empty) {
-            
+            UI::Dummy(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE);            
         } else {
             UI::Dummy(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE);
         }
@@ -282,12 +282,30 @@ namespace UIInfoBar {
             UI::Text("\\$ff5Item Slot");
 
             switch (myPowerup) {
-                case Powerup::Empty:
-                    // FIXME
+                case Powerup::RowShift:
+                    UI::Text("Row Shift\nShift all tiles on a row of the Bingo board one step in any direction!");
+                    break;
+                case Powerup::ColumnShift:
+                    UI::Text("Column Shift\nShift all tiles on a column of the Bingo board one step in any direction!");
+                    break;
+                case Powerup::Rally:
+                    UI::Text("Rally\nStart a rally on a map of your choice.\nWhichever team has the record there after 10 minutes will claim all adjacent tiles!");
+                    break;
+                case Powerup::Jail:
+                    UI::Text("Jail\nSend a player you choose to any map of the Bingo board.\nThey will remain emprisoned there for 15 minutes until they can claim a new record!");
+                    break;
+                case Powerup::RainbowTile:
+                    UI::Text("Rainbow Tile\nTransform any unclaimed map into a rainbow tile,\nwhich counts as if all teams had claimed it!");
+                    break;
                 default:
                     UI::TextDisabled("You don't have any item to use right now.");
                     break;
             }
+
+            if (myPowerup != Powerup::Empty) {
+                UI::Text("\\$ff8Expires in " + Time::Format(localPlayer.powerupExpireTimestamp - Time::Now, false));
+            }
+
             UI::EndTooltip();
         }
 

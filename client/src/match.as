@@ -84,7 +84,7 @@ class LiveMatch {
         return -1;
     }
 
-    GameTile GetCell(int id) { return this.tiles[id]; }
+    GameTile@ GetCell(int id) { return this.tiles[id]; }
 
     void SetCurrentTileIndex(int index) {
         this.currentTileIndex = index;
@@ -143,6 +143,12 @@ class GameTile {
             i -= 1;
         }
         attemptRanking.InsertAt(i, claim);
+        
+        if (i == 0) { // new record
+            if (specialState == TileItemState::HasPowerup || specialState == TileItemState::HasSpecialPowerup) {
+                specialState = TileItemState::Empty;
+            }
+        }
     }
 }
 

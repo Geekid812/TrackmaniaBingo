@@ -25,7 +25,7 @@ namespace GameUpdates {
     // Active tick function. Runs when a game is active, even if it is paused or not running.
     void TickUpdates() {
         Playground::UpdateCurrentTileIndex();
-        Poll::CleanupExpiredPolls();
+        Poll::CleanupExpiredToasts();
         if (Match.config.competitvePatch && !MapIsCompetitivePatched) {
             // Records will only be visible once the game ends
             MapIsCompetitivePatched = Playground::SetMapLeaderboardVisible(Match.endState.HasEnded());

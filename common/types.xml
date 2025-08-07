@@ -55,6 +55,7 @@
         <m name="campaign_selection" type="list[uint]" optional="true" />
         <m name="map_tag" type="int" optional="true" default="1" />
         <m name="items" type="FrenzyItemSettings" />
+        <m name="items_expire" type="uint" default="600" />
     </struct>
 
     <struct name="FrenzyItemSettings">

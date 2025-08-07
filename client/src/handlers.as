@@ -365,6 +365,21 @@ namespace NetworkHandlers {
         pollData.expireTime = Time::Now + Poll::POLL_EXPIRE_MILLIS;
     }
 
+    void PowerupSpawn(Json::Value @data) {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[NetworkHandlers::PowerupSpawn] Bingo is not active, ignoring this event.");
+            return;
+        }
+
+        uint tileId = uint(data["cell_id"]);
+        TileItemState newState = bool(data["is_special"]) ? TileItemState::HasSpecialPowerup : TileItemState::HasPowerup;
+
+        GameTile @tile = Match.GetCell(tileId);
+        tile.specialState = newState;
+
+        UIPoll::NotifyToast("\\$" + UIColor::GetHex(Board::POWERUP_COLOR) + Icons::Star + " \\$zA powerup has appeared on " + UIMapList::GetTileTitle(tile, tileId % Match.config.gridSize, tileId / Match.config.gridSize) + "\\$z!", 10000);
+    }
+
     void PowerupActivated(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
             warn("[NetworkHandlers::PowerupActivated] Bingo is not active, ignoring this event.");
@@ -374,7 +389,18 @@ namespace NetworkHandlers {
         PlayerRef powerupUser = PlayerRef::Deserialize(data["player"]);
         GameTile targetTile = Match.GetCell(int(data["tile_id"]));
         
-        // TODO: notify played that a powerup got activated
+        // TODO: notify player that a powerup got activated
         Powerups::TriggerPowerup(usedPowerup, powerupUser, targetTile, data);
+    }
+
+    void ItemSlotEquip(Json::Value @data) {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[NetworkHandlers::ItemSlotEquip] Bingo is not active, ignoring this event.");
+            return;
+        }
+
+        Player@ equipUser = Match.GetPlayer(int(data["uid"]));
+        equipUser.holdingPowerup = Powerup(int(data["powerup"]));
+        equipUser.powerupExpireTimestamp = Time::Now + Match.config.itemsExpire * 1000;
     }
 }

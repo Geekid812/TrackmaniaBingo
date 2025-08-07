@@ -356,9 +356,11 @@ namespace Board {
             case TileItemState::HasPowerup:
                 markSymbol = Icons::Star;
                 fontColor = POWERUP_COLOR;
+                break;
             case TileItemState::Rally:
                 markSymbol = Icons::Flag;
                 fontColor = RALLY_COLOR;
+                break;
         }
 
         nvg::BeginPath();

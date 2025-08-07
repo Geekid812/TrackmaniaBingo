@@ -1,7 +1,7 @@
 
 namespace Config {
     string StatusMessage;
-    bool CanPlay;
+    bool CanPlay = true;
     NewsItem[] News;
     FeaturedMappack[] FeaturedMappacks;
     uint64 LastUpdate;

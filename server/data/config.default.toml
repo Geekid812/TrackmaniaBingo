@@ -16,6 +16,8 @@ required_version = "5.0"    # minimum version of the plugin client
 [behaviour]
 never_close = false         # disable closing inactive rooms (for debugging)
 max_teams = 6               # maximum number of teams in a game room
+powerup_tick_rate = 3       # powerup spawn ticks per minute
+powerup_spawn = 0.1         # probability of an item spawning in one tick
 
 [keys]
 openplanet = "KEY"      # secret key for Openplanet authentication

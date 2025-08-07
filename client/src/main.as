@@ -90,6 +90,9 @@ void Render() {
     for (uint i = 0; i < Polls.Length; i++) {
         UIPoll::RenderPoll(Polls[i], i);
     }
+    for (uint i = 0; i < Notifications.Length; i++) {
+        UIPoll::RenderNotify(Notifications[i], Polls.Length + i);
+    }
 
     if (Settings::DevTools) {
         UIDownloads::Render();

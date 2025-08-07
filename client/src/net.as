@@ -236,8 +236,12 @@ namespace Network {
             NetworkHandlers::PollVotesUpdate(body);
         } else if (event == "PollResult") {
             NetworkHandlers::PollResult(body);
+        } else if (event == "PowerupSpawn") {
+            NetworkHandlers::PowerupSpawn(body);
         } else if (event == "PowerupActivated") {
             NetworkHandlers::PowerupActivated(body);
+        } else if (event == "ItemSlotEquip") {
+            NetworkHandlers::ItemSlotEquip(body);
         } else {
             warn("[Network] Unknown event: " + string(body["event"]));
         }

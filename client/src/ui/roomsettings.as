@@ -296,6 +296,34 @@ namespace UIRoomSettings {
         }
     }
 
+    void ItemExpiryEdit() {
+        UITools::AlignedLabel(Icons::HourglassEnd + " Items Expire");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+
+        UI::SetNextItemWidth(250);
+        if (UI::BeginCombo("##bingoitemexpire",
+                           MatchConfig.itemsExpire == 0 ? "Never"
+                                                 : "After " + (MatchConfig.itemsExpire) / 60 + " minutes")) {
+
+            if (UI::Selectable("After 2 minutes",
+                               MatchConfig.itemsExpire == 120)) {
+                MatchConfig.itemsExpire = 120;
+            }
+
+            if (UI::Selectable("After 10 minutes", MatchConfig.itemsExpire == 600)) {
+                MatchConfig.itemsExpire = 600;
+            }
+
+            if (UI::Selectable("Never", MatchConfig.itemsExpire == 0)) {
+                MatchConfig.itemsExpire = 0;
+            }
+
+            UI::EndCombo();
+        }
+        UI::SameLine();
+        UITools::HelpTooltip("After being collected, a powerup must be used within a certain time frame or it will disappear.");
+    }
+
     void SettingsView() {
         UITools::SectionHeader("Room Settings");
         RoomNameInput();
@@ -333,11 +361,16 @@ namespace UIRoomSettings {
         }
         RerollsToggle();
         CompetitvePatchToggle();
+        if (MatchConfig.mode == Gamemode::Frenzy) {
+            ItemExpiryEdit();
+        }
+
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0)
             TotalTimeIndicator();
     
-        if (MatchConfig.mode == Gamemode::Frenzy)
+        if (MatchConfig.mode == Gamemode::Frenzy) {
             EditItemSettings();
+        }
     }
 
     void SaveConfiguredSettings() {

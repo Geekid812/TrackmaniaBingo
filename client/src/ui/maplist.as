@@ -160,13 +160,18 @@ namespace UIMapList {
         return UIColor::GetAlphaColor(Match.teams[idx % Match.teams.Length].color, 0.15);
     }
 
+    string GetTileTitle(GameTile tile, int x = -1, int y = -1) {
+        string mapName = Text::OpenplanetFormatCodes(tile.map.trackName);
+        string cellCoordinates = (Settings::ShowCellCoordinates ? "\\$888[ \\$ff8" + GetTextCoordinates(x, y) + " \\$888] \\$z" : "");
+        
+        return cellCoordinates + mapName;
+    }
+
     void ShowTileTooltip(GameTile tile, int x = -1, int y = -1) {
         if (tile.map is null) {
             return;
         }
 
-        string mapName = Text::OpenplanetFormatCodes(tile.map.trackName);
-        string cellCoordinates = (Settings::ShowCellCoordinates ? "\\$888[ \\$ff8" + GetTextCoordinates(x, y) + " \\$888] \\$z" : "");
 
         UI::BeginTooltip();
 
@@ -174,7 +179,8 @@ namespace UIMapList {
             UI::Text("\\$F55R\\$E65a\\$D85i\\$BA5n\\$AB6b\\$9D6o\\$9D6w \\$7BAT\\$6BBi\\$5ADl\\$49Fe");
         }
 
-        UI::Text(cellCoordinates + mapName);
+        string mapTitle = GetTileTitle(tile, x, y);
+        UI::Text(mapTitle);
 
         if (tile.map.username != "")
             UI::TextDisabled("By " + tile.map.username);

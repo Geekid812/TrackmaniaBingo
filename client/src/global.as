@@ -16,6 +16,9 @@ MatchConfiguration MatchConfig;
 // Globally active polls
 array<PollData @> Polls;
 
+// Active notification toasts
+array<NotifyData @> Notifications;
+
 // Local cache of TrackmaniaExchange maps (for development use)
 array<GameMap> MapCache;
 

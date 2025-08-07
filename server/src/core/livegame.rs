@@ -1,13 +1,21 @@
 use anyhow::anyhow;
+use rand::{distributions::Standard, seq::IteratorRandom, thread_rng, Rng};
 use std::{
     collections::HashMap,
     sync::{Arc, Weak},
 };
 
 use crate::{
-    config::CONFIG,
-    datatypes::{CampaignMap, MatchConfiguration, PlayerRef, Poll, PollChoice},
-    server::{context::ClientContext, tasks::execute_delayed_task},
+    config::{self, CONFIG},
+    core::models::livegame::TileItemState,
+    datatypes::{
+        CampaignMap, FrenzyItemSettings, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice,
+        Powerup,
+    },
+    server::{
+        context::ClientContext,
+        tasks::{execute_delayed_task, execute_repeating_task},
+    },
     store::{
         self,
         matches::{Match, MatchOutcome, MatchResult},
@@ -79,10 +87,13 @@ impl LiveMatch {
             teams,
             cells: maps
                 .into_iter()
-                .map(|map| GameCell {
+                .enumerate()
+                .map(|(cell_id, map)| GameCell {
+                    cell_id,
                     map,
                     claims: Vec::new(),
                     reroll_ids: Vec::new(),
+                    state: TileItemState::Empty,
                 })
                 .collect(),
             started: None,
@@ -112,11 +123,16 @@ impl LiveMatch {
 
     pub fn setup_match_start(&mut self, start_date: DateTime<Utc>) {
         self.started = Some(start_date);
-        self.setup_phase_timers();
+        self.setup_timers();
+
+        if self.config.mode == Gamemode::Frenzy {
+            self.setup_powerups();
+        }
+
         self.broadcast_start();
     }
 
-    fn setup_phase_timers(&mut self) {
+    fn setup_timers(&mut self) {
         let mut first_phase = MatchPhase::Running;
         let countdown_duration = self.options.start_countdown;
         let nobingo_duration = self.config.no_bingo_duration;
@@ -143,6 +159,21 @@ impl LiveMatch {
             move |game| game.set_phase(first_phase),
             countdown_duration.to_std().unwrap(),
         );
+    }
+
+    fn setup_powerups(&mut self) {
+        let tick_duration = std::time::Duration::from_secs(60)
+            / config::get_integer("behaviour.powerup_tick_rate").unwrap_or(0) as u32;
+
+        if !tick_duration.is_zero() {
+            execute_repeating_task(
+                self.ptr.clone(),
+                move |game| game.tick_powerups_spawn(),
+                tick_duration,
+            );
+        } else {
+            warn!("tick duration is zero, powerups will not be generated.");
+        }
     }
 
     fn set_phase(&mut self, phase: MatchPhase) {
@@ -335,12 +366,13 @@ impl LiveMatch {
 
     pub fn add_submitted_run(&mut self, id: usize, claim: MapClaim) {
         let ranking = &mut self.cells[id].claims;
+        let running_player = claim.player.clone();
 
         // Bubble up in the ranking until we find a time that was not beaten
         let mut i = ranking.len();
         while i > 0 {
             let current = &ranking[i - 1];
-            if current.player == claim.player {
+            if current.player == running_player {
                 ranking.remove(i - 1);
             } else if claim.time >= current.time {
                 break;
@@ -353,8 +385,14 @@ impl LiveMatch {
         if self.try_do_bingo_checks() {
             return;
         }
-        if self.phase == MatchPhase::Overtime {
-            self.do_cell_winner_checks();
+        if self.phase == MatchPhase::Overtime && self.do_cell_winner_checks() {
+            return;
+        }
+
+        let is_new_record = i == 0;
+        if is_new_record && self.cells[id].state == TileItemState::HasPowerup {
+            self.cells[id].state = TileItemState::Empty;
+            self.give_powerup(running_player);
         }
     }
 
@@ -734,6 +772,56 @@ impl LiveMatch {
             self.channel.broadcast(&GameEvent::AnnounceDraw);
             self.set_game_ended(true);
         }
+    }
+
+    fn tick_powerups_spawn(&mut self) {
+        let mut rng = thread_rng();
+        let num_cells = self.cell_count();
+        let powerup_spawn_threshold = config::get_float("behaviour.powerup_spawn").unwrap_or(0.);
+        let powerup_spawn_sample = rng.sample::<f64, Standard>(Standard);
+
+        if powerup_spawn_sample < powerup_spawn_threshold {
+            // a powerup will spawn, choose a tile
+            let candidates = self
+                .cells
+                .iter_mut()
+                .take(num_cells)
+                .filter(|tile| tile.state == TileItemState::Empty);
+            if let Some(chosen_tile) = candidates.choose(&mut rng) {
+                chosen_tile.state = TileItemState::HasPowerup;
+                self.channel.broadcast(&GameEvent::PowerupSpawn {
+                    cell_id: chosen_tile.cell_id,
+                    is_special: false,
+                });
+            }
+        }
+    }
+
+    fn give_powerup(&mut self, player: PlayerRef) {
+        if let Some(powerup) = self.draft_powerup() {
+            self.channel.broadcast(&GameEvent::ItemSlotEquip {
+                uid: player.uid,
+                powerup,
+            });
+        }
+    }
+
+    fn draft_powerup(&mut self) -> Option<Powerup> {
+        let item_settings = &self.config().items;
+        let mut rng = thread_rng();
+        let drafting_probabilities = vec![
+            (Powerup::RowShift, item_settings.row_shift),
+            (Powerup::ColumnShift, item_settings.column_shift),
+            (Powerup::Rally, item_settings.rally),
+            (Powerup::Jail, item_settings.jail),
+            (Powerup::RainbowTile, item_settings.rainbow),
+        ];
+
+        let mut drafting_pool = vec![];
+        for (powerup, occurences) in drafting_probabilities {
+            drafting_pool.extend_from_slice(&[powerup].repeat(occurences as usize));
+        }
+        drafting_pool.into_iter().choose(&mut rng)
     }
 }
 

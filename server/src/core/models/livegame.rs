@@ -29,9 +29,11 @@ pub struct MatchState {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GameCell {
+    pub cell_id: usize,
     pub map: GameMap,
     pub claims: Vec<MapClaim>,
     pub reroll_ids: Vec<i32>,
+    pub state: TileItemState,
 }
 
 impl GameCell {
@@ -56,4 +58,15 @@ pub enum MatchPhase {
     Running,
     Overtime,
     Ended,
+}
+
+#[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]
+#[repr(u8)]
+pub enum TileItemState {
+    Empty,
+    HasPowerup,
+    HasSpecialPowerup,
+    Rainbow,
+    Rally,
+    Jail
 }

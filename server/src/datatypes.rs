@@ -81,6 +81,8 @@ pub struct MatchConfiguration {
     #[derivative(Default(value = "Some(1)"))]
 	pub map_tag: Option<i32>,
     pub items: FrenzyItemSettings,
+    #[derivative(Default(value = "600"))]
+	pub items_expire: u32,
 }
 
 /* Item drawing probabilities for configuring the Frenzy gamemode. */

@@ -120,6 +120,7 @@ class MatchConfiguration {
     array<uint> campaignSelection;
     int mapTag = 1;
     FrenzyItemSettings items;
+    uint itemsExpire = 600;
     MatchConfiguration() {}
 }
 namespace MatchConfiguration {
@@ -140,6 +141,7 @@ namespace MatchConfiguration {
         value["campaign_selection"] = cls.campaignSelection;
         value["map_tag"] = cls.mapTag;
         value["items"] = FrenzyItemSettings::Serialize(cls.items);
+        value["items_expire"] = cls.itemsExpire;
 
         return value;
     }
@@ -163,6 +165,7 @@ namespace MatchConfiguration {
         }
         if (value["map_tag"].GetType() != Json::Type::Null) cls.mapTag = value["map_tag"];
         cls.items = FrenzyItemSettings::Deserialize(value["items"]);
+        cls.itemsExpire = value["items_expire"];
 
         return cls;
     }

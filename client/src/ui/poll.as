@@ -17,6 +17,18 @@ class PollData {
     bool IsOpen() { return this.resultIndex == -1; }
 }
 
+class NotifyData {
+    string title;
+    uint64 startTime;
+    uint64 expireTime;
+
+    NotifyData(const string&in title, uint64 startTime, uint64 expireTime) {
+        this.title = title;
+        this.startTime = startTime;
+        this.expireTime = expireTime;
+    }
+}
+
 namespace Poll {
 
     const uint64 POLL_EXPIRE_MILLIS = 5000;
@@ -30,11 +42,19 @@ namespace Poll {
         return null;
     }
 
-    void CleanupExpiredPolls() {
+    void CleanupExpiredToasts() {
         uint i = 0;
         while (i < Polls.Length) {
             if (Polls[i].expireTime != 0 && Polls[i].expireTime <= Time::Now)
                 Polls.RemoveAt(i);
+            else
+                i++;
+        }
+
+        i = 0;
+        while (i < Notifications.Length) {
+            if (Notifications[i].expireTime != 0 && Notifications[i].expireTime <= Time::Now)
+                Notifications.RemoveAt(i);
             else
                 i++;
         }
@@ -48,10 +68,10 @@ namespace UIPoll {
     const int TIMER_PROGRESS_HEIGHT = 8;
     const vec4 TIMER_PROGRESS_COLOR = vec4(.5, .5, .5, .5);
 
-    void RenderPoll(PollData @data, uint pollStackIndex) {
+    void RenderPoll(PollData @data, uint stackIndex) {
         bool open = true;
         int targetWindowY =
-            POLL_WINDOW_MARGIN + (POLL_WINDOW_HEIGHT + POLL_WINDOW_MARGIN) * pollStackIndex;
+            POLL_WINDOW_MARGIN + (POLL_WINDOW_HEIGHT + POLL_WINDOW_MARGIN) * stackIndex;
         int currentY =
             int(Animation::GetProgress(
                     Time::Now, data.startTime, ANIMATION_IN_MILLIS, Animation::Easing::CubicOut) *
@@ -73,6 +93,30 @@ namespace UIPoll {
             PresentWinnerChoice(data);
 
         DrawDeadlineProgress(data);
+        UI::End();
+    }
+
+    void RenderNotify(NotifyData@ data, uint stackIndex) {
+        bool open = true;
+        int targetWindowY =
+            POLL_WINDOW_MARGIN + (POLL_WINDOW_HEIGHT + POLL_WINDOW_MARGIN) * stackIndex;
+        int currentY =
+            int(Animation::GetProgress(
+                    Time::Now, data.startTime, ANIMATION_IN_MILLIS, Animation::Easing::CubicOut) *
+                targetWindowY);
+
+        UI::SetNextWindowPos(Draw::GetWidth() / 2, currentY, UI::Cond::Always, 0.5, 0.);
+        Window::Create("##bingonotify" + stackIndex,
+                       open,
+                       500,
+                       POLL_WINDOW_HEIGHT,
+                       UI::WindowFlags::NoMove | UI::WindowFlags::AlwaysAutoResize |
+                           UI::WindowFlags::NoTitleBar);
+
+        UI::Dummy(vec2(500, 0));
+        Layout::EndLabelAlign();
+        UITools::CenterText(data.title);
+
         UI::End();
     }
 
@@ -119,8 +163,14 @@ namespace UIPoll {
                                TIMER_PROGRESS_COLOR);
     }
 
-    void ClearAllPolls() {
-        trace("[UIPolls::ClearAllPolls] All polls were removed.");
+    void NotifyToast(const string&in title, uint64 duration = Poll::POLL_EXPIRE_MILLIS) {
+        NotifyData notifyData(title, Time::Now, Time::Now + duration);
+        Notifications.InsertLast(notifyData);
+    }
+
+    void ClearAllPollsAndNotifications() {
+        trace("[UIPolls::ClearAllPollsAndNotifications] All toasts were removed.");
         Polls.Resize(0);
+        Notifications.Resize(0);
     }
 }

@@ -144,7 +144,7 @@ namespace UITools {
         UI::Font @font = Font::Current();
         Layout::MoveTo(Layout::GetPadding(
             UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
-        UI::TextWrapped(text);
+        UI::Text(text);
     }
 
     void CenterTextDisabled(const string& in text) {

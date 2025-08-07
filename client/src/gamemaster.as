@@ -259,14 +259,14 @@ namespace Gamemaster {
         @Room = null;
         Playground::SetMapLeaderboardVisible(true);
         UIChat::ClearHistory();
-        UIPoll::ClearAllPolls();
+        UIPoll::ClearAllPollsAndNotifications();
     }
 
     /**
      * Call game end handlers.
      */
     void HandleGameEnd() {
-        UIPoll::ClearAllPolls();
+        UIPoll::ClearAllPollsAndNotifications();
         PersistantStorage::ResetConnectedMatch();
 
         // Remove all special tile states

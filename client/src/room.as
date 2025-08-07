@@ -118,6 +118,7 @@ class Player {
     string name;
     Team team;
     Powerup holdingPowerup = Powerup::Empty;
+    int64 powerupExpireTimestamp;
 
     Player() {}
 
