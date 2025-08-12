@@ -14,6 +14,7 @@ void Main() {
     Font::Init();
     UIHome::InitSubtitles();
     GameUpdates::CheckUnstableConfigurations();
+    Modefiles::EnsureAllModefilesCreated();
 
     // Load configuration settings
     PersistantStorage::LoadItems();
