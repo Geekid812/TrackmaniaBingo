@@ -824,6 +824,50 @@ impl LiveMatch {
         }
         drafting_pool.into_iter().choose(&mut rng)
     }
+
+    fn fix_cell_ids(&mut self) {
+        self.cells.iter_mut().enumerate().for_each(|(i, tile)| tile.cell_id = i);
+    }
+
+    fn powerup_effect_board_shift(&mut self, is_row: bool, row_col_index: usize, forwards: bool) {
+        let grid_size = self.config().grid_size as usize;
+        let mut replace_maps = vec![];
+
+        for i in 0..grid_size {
+            let tile_index = if is_row {
+                grid_size * row_col_index
+            } else {
+                grid_size * i + row_col_index - i
+            };
+            replace_maps.push(self.cells.remove(tile_index));
+        }
+
+        if forwards {
+            let last = replace_maps.pop().unwrap();
+            replace_maps.insert(0, last);
+        } else {
+            let first = replace_maps.remove(0);
+            replace_maps.push(first);
+        }
+
+        for i in 0..grid_size {
+            let tile_index = if is_row {
+                grid_size * row_col_index + i
+            } else {
+                grid_size * i + row_col_index
+            };
+            self.cells.insert(tile_index, replace_maps.remove(0));
+        }
+        self.fix_cell_ids();
+    }
+
+    fn powerup_effect_rainbow_tile(&mut self, board_index: usize) {
+        self.cells[board_index].state = TileItemState::Rainbow;
+    }
+
+    fn powerup_effect_rally(&mut self, board_index: usize) {
+        self.cells[board_index].state = TileItemState::Rally;
+    }
 }
 
 impl Default for MatchOptions {
