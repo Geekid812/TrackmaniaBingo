@@ -109,12 +109,12 @@ namespace Network {
 
         string message = _protocol.Recv();
         while (message != "") {
-            trace("[Network] Received message: " + message);
+            trace("[Network] <- " + message);
             Json::Value json;
             try {
                 json = Json::Parse(message);
             } catch {
-                trace("[Network] Failed to parse received message. Got: " + message);
+                warn("[Network] Failed to parse received message. Got: " + message);
                 _protocol.Fail();
                 break;
             }
@@ -281,6 +281,7 @@ namespace Network {
         body["req"] = type;
         uint Sequence = AddSequenceValue(body);
         string Text = Json::Write(body);
+        trace("[Network] -> " + Text);
         if (!_protocol.Send(Text)) {
             warn("[Network] Post preemptively failed!");
             if (Network::IsConnected())

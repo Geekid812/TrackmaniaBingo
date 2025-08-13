@@ -163,7 +163,6 @@ async fn mainloop_message_received(client: &mut NetClient, message: BytesMut) ->
             return false;
         }
     };
-    debug!(cid = cid, message = message);
 
     // Match a request
     match serde_json::from_str::<BaseRequest>(&message) {
