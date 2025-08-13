@@ -5,7 +5,7 @@ use crate::core::events::game::GameEvent;
 use crate::core::{teams::Team, util::Color};
 use crate::transport::Channel;
 
-use super::player::Player;
+use super::player::IngamePlayer;
 use super::room::RoomTeam;
 
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Debug, Hash, Deserialize)]
@@ -41,14 +41,18 @@ impl Team for BaseTeam {
     }
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct GameTeam {
     pub base: BaseTeam,
-    pub members: Vec<Player>,
-    #[serde(skip)]
+    pub members: Vec<IngamePlayer>,
     pub channel: Channel<GameEvent>,
-    #[serde(skip)]
     pub winner: bool,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct NetworkGameTeam {
+    pub base: BaseTeam,
+    pub members: Vec<IngamePlayer>,
 }
 
 impl From<BaseTeam> for GameTeam {
@@ -65,12 +69,24 @@ impl From<BaseTeam> for GameTeam {
 impl From<RoomTeam> for GameTeam {
     fn from(value: RoomTeam) -> Self {
         let mut channel = Channel::new();
-        value.members.iter().for_each(|player| channel.subscribe(player.profile.uid, player.writer.clone()));
+        value
+            .members
+            .iter()
+            .for_each(|player| channel.subscribe(player.profile.uid, player.writer.clone()));
         Self {
             base: value.base,
-            members: value.members,
+            members: value.members.into_iter().map(IngamePlayer::from).collect(),
             channel,
             winner: false,
+        }
+    }
+}
+
+impl From<&GameTeam> for NetworkGameTeam {
+    fn from(value: &GameTeam) -> Self {
+        Self {
+            base: value.base.clone(),
+            members: value.members.clone(),
         }
     }
 }

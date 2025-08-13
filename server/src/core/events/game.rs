@@ -89,5 +89,7 @@ pub enum GameEvent {
     PowerupActivated {
         powerup: Powerup,
         player: PlayerRef,
+        board_index: usize,
+        forwards: bool,
     },
 }

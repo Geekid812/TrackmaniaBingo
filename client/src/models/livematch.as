@@ -17,8 +17,11 @@ namespace LiveMatch {
             match.teams.InsertLast(team);
 
             for (uint j = 0; j < t["members"].Length; j++) {
-                auto player = t["members"][j];
-                match.players.InsertLast(Player(PlayerProfile::Deserialize(player), team));
+                auto playerJson = t["members"][j];
+                Player player(PlayerProfile::Deserialize(playerJson), team);
+                player.holdingPowerup = Powerup(int(playerJson["holding_powerup"]));
+
+                match.players.InsertLast(player);
             }
         }
 

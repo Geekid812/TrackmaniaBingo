@@ -3,18 +3,21 @@ use serde::{Deserialize, Serialize};
 use serde_with::TimestampSeconds;
 
 use crate::{
-    core::room,
+    core::{
+        gamecommon::PlayerData,
+        room::{self, NetworkTeam},
+    },
     datatypes::{MatchConfiguration, RoomConfiguration},
 };
 
-use super::{player::Player, team::BaseTeam};
+use super::team::BaseTeam;
 
 #[derive(Serialize, Clone, Debug)]
 pub struct RoomState {
     pub config: RoomConfiguration,
     pub matchconfig: MatchConfiguration,
     pub join_code: String,
-    pub teams: Vec<RoomTeam>,
+    pub teams: Vec<NetworkTeam>,
 }
 
 #[serde_with::serde_as]
@@ -49,7 +52,6 @@ impl From<&room::GameRoom> for NetworkRoom {
 
 #[derive(Serialize, Clone, Debug)]
 pub struct RoomTeam {
-    #[serde(flatten)]
     pub base: BaseTeam,
-    pub members: Vec<Player>,
+    pub members: Vec<PlayerData>,
 }

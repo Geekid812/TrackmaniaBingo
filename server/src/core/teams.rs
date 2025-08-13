@@ -76,6 +76,10 @@ impl<T: Team> TeamsManager<T> {
         &self.teams
     }
 
+    pub fn get_teams_mut(&mut self) -> &mut Vec<T> {
+        &mut self.teams
+    }
+
     pub fn teams_id(&self) -> usize {
         self.teams_id
     }

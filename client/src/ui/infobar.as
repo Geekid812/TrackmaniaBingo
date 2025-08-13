@@ -270,7 +270,6 @@ namespace UIInfoBar {
 
         Player@ localPlayer = (Gamemaster::IsBingoActive() ? Match.GetSelf() : null);
         Powerup myPowerup = (@localPlayer !is null ? localPlayer.holdingPowerup : Powerup::Empty);
-        myPowerup = Powerup::ColumnShift;
 
         if (myPowerup != Powerup::Empty) {
             UI::Dummy(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE);            
@@ -315,8 +314,8 @@ namespace UIInfoBar {
         UI::EndChild();
         UI::PopStyleColor();
         
-        if (UI::IsItemClicked()) {
-            UIItemSelect::Powerup = myPowerup;
+        UIItemSelect::Powerup = myPowerup;
+        if (myPowerup != Powerup::Empty && UI::IsItemClicked()) {
             UIItemSelect::Visible = !UIItemSelect::Visible;
         }
     }

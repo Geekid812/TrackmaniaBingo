@@ -5,13 +5,13 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::serde_as;
 use serde_with::TimestampSeconds;
 
+use crate::core::models::team::NetworkGameTeam;
 use crate::datatypes::MatchConfiguration;
 use crate::datatypes::Medal;
 use crate::datatypes::PlayerRef;
 
 use super::map::GameMap;
 
-use super::team::GameTeam;
 use super::team::TeamIdentifier;
 
 #[serde_with::serde_as]
@@ -20,14 +20,14 @@ pub struct MatchState {
     pub uid: String,
     pub config: MatchConfiguration,
     pub phase: MatchPhase,
-    pub teams: Vec<GameTeam>,
+    pub teams: Vec<NetworkGameTeam>,
     pub cells: Vec<GameCell>,
     pub can_reroll: bool,
     #[serde_as(as = "TimestampSeconds")]
     pub started: DateTime<Utc>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct GameCell {
     pub cell_id: usize,
     pub map: GameMap,
@@ -42,6 +42,7 @@ impl GameCell {
     }
 }
 
+#[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MapClaim {
     pub player: PlayerRef,
@@ -49,6 +50,8 @@ pub struct MapClaim {
     pub time: u64,
     pub medal: Medal,
     pub splits: Vec<u64>,
+    #[serde_as(as = "TimestampSeconds")]
+    pub timestamp: DateTime<Utc>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]

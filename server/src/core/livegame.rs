@@ -7,11 +7,8 @@ use std::{
 
 use crate::{
     config::{self, CONFIG},
-    core::models::livegame::TileItemState,
-    datatypes::{
-        CampaignMap, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice,
-        Powerup,
-    },
+    core::models::{livegame::TileItemState, team::NetworkGameTeam},
+    datatypes::{CampaignMap, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice, Powerup},
     server::{
         context::ClientContext,
         tasks::{execute_delayed_task, execute_repeating_task},
@@ -35,7 +32,7 @@ use super::{
     models::{
         livegame::{GameCell, MapClaim, MatchPhase, MatchState},
         map::GameMap,
-        player::Player,
+        player::IngamePlayer,
         team::{GameTeam, TeamIdentifier},
     },
     room::GameRoom,
@@ -244,7 +241,11 @@ impl LiveMatch {
 
         if let Some(team) = already_joined_team {
             self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
-            self.teams.get_mut(team).unwrap().channel.subscribe(ctx.profile.uid, ctx.writer.clone());
+            self.teams
+                .get_mut(team)
+                .unwrap()
+                .channel
+                .subscribe(ctx.profile.uid, ctx.writer.clone());
             return Ok(team);
         } else {
             if !self.config.late_join {
@@ -287,11 +288,12 @@ impl LiveMatch {
             }
         };
 
-        team.members.push(Player {
+        team.members.push(IngamePlayer {
             profile: ctx.profile.clone(),
             operator: false,
             disconnected: false,
-            writer: ctx.writer.clone()
+            holding_powerup: Powerup::Empty,
+            writer: ctx.writer.clone(),
         });
         team.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
         self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
@@ -355,7 +357,12 @@ impl LiveMatch {
             uid: self.uid.clone(),
             config: self.config.clone(),
             phase: self.phase,
-            teams: self.teams.get_teams().iter().map(GameTeam::clone).collect(),
+            teams: self
+                .teams
+                .get_teams()
+                .iter()
+                .map(NetworkGameTeam::from)
+                .collect(),
             cells: self
                 .cells
                 .iter()
@@ -395,7 +402,7 @@ impl LiveMatch {
         let is_new_record = i == 0;
         if is_new_record && self.cells[id].state == TileItemState::HasPowerup {
             self.cells[id].state = TileItemState::Empty;
-            self.give_powerup(running_player);
+            self.give_new_powerup(running_player);
         }
     }
 
@@ -536,6 +543,59 @@ impl LiveMatch {
             map: self.cells[cell_id].map.clone(),
             can_reroll: self.can_reroll(),
         });
+        Ok(())
+    }
+
+    pub fn get_player_mut(&mut self, uid: i32) -> Option<&mut IngamePlayer> {
+        let mut players = self
+            .teams
+            .get_teams_mut()
+            .iter_mut()
+            .map(|t| &mut t.members)
+            .flatten();
+        players.find(|p| p.profile.uid == uid)
+    }
+
+    pub fn activate_powerup(
+        &mut self,
+        uid: i32,
+        powerup: Powerup,
+        board_index: usize,
+        forwards: bool,
+    ) -> Result<(), String> {
+        let Some(player) = self.get_player_mut(uid) else {
+            return Err(format!("player with uid '{}' not found", uid));
+        };
+
+        if !config::get_boolean("behaviour.skip_checks").unwrap_or(false) {
+            if player.holding_powerup != powerup {
+                return Err(format!(
+                    "not holding powerup {:?}, your held powerup is {:?}",
+                    powerup, player.holding_powerup
+                ));
+            }
+        }
+
+        let player_ref = player.as_player_ref();
+        self.give_powerup(player_ref.clone(), Powerup::Empty);
+        match powerup {
+            Powerup::RowShift | Powerup::ColumnShift => {
+                self.powerup_effect_board_shift(powerup == Powerup::RowShift, board_index, forwards)
+            }
+            Powerup::RainbowTile => self.powerup_effect_rainbow_tile(board_index),
+            Powerup::Rally => self.powerup_effect_rally(board_index),
+            _ => {
+                return Err("this powerup can't be activated".to_string());
+            }
+        };
+
+        self.channel.broadcast(&GameEvent::PowerupActivated {
+            powerup,
+            player: player_ref,
+            board_index,
+            forwards,
+        });
+        self.try_do_bingo_checks();
         Ok(())
     }
 
@@ -783,14 +843,18 @@ impl LiveMatch {
         let num_cells = self.cell_count();
         let powerup_spawn_threshold = config::get_float("behaviour.powerup_spawn").unwrap_or(0.);
         let powerup_spawn_sample = rng.sample::<f64, Standard>(Standard);
+        let inactivity_threshold =
+            Duration::seconds(config::get_integer("behaviour.claim_inactivity_secs").unwrap_or(0));
+        let now = Utc::now();
 
         if powerup_spawn_sample < powerup_spawn_threshold {
             // a powerup will spawn, choose a tile
-            let candidates = self
-                .cells
-                .iter_mut()
-                .take(num_cells)
-                .filter(|tile| tile.state == TileItemState::Empty);
+            let candidates = self.cells.iter_mut().take(num_cells).filter(|tile| {
+                tile.state == TileItemState::Empty
+                    && !tile
+                        .leading_claim()
+                        .is_some_and(|claim| now - claim.timestamp < inactivity_threshold)
+            });
             if let Some(chosen_tile) = candidates.choose(&mut rng) {
                 chosen_tile.state = TileItemState::HasPowerup;
                 self.channel.broadcast(&GameEvent::PowerupSpawn {
@@ -801,13 +865,21 @@ impl LiveMatch {
         }
     }
 
-    fn give_powerup(&mut self, player: PlayerRef) {
+    fn give_new_powerup(&mut self, player: PlayerRef) {
         if let Some(powerup) = self.draft_powerup() {
-            self.channel.broadcast(&GameEvent::ItemSlotEquip {
-                uid: player.uid,
-                powerup,
-            });
+            self.give_powerup(player, powerup);
         }
+    }
+
+    fn give_powerup(&mut self, player: PlayerRef, powerup: Powerup) {
+        if let Some(player) = self.get_player_mut(player.uid as i32) {
+            player.holding_powerup = powerup;
+        }
+
+        self.channel.broadcast(&GameEvent::ItemSlotEquip {
+            uid: player.uid,
+            powerup,
+        });
     }
 
     fn draft_powerup(&mut self) -> Option<Powerup> {
@@ -829,7 +901,10 @@ impl LiveMatch {
     }
 
     fn fix_cell_ids(&mut self) {
-        self.cells.iter_mut().enumerate().for_each(|(i, tile)| tile.cell_id = i);
+        self.cells
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, tile)| tile.cell_id = i);
     }
 
     fn powerup_effect_board_shift(&mut self, is_row: bool, row_col_index: usize, forwards: bool) {

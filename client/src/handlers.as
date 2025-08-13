@@ -392,10 +392,11 @@ namespace NetworkHandlers {
         }
         Powerup usedPowerup = Powerup(int(data["powerup"]));
         PlayerRef powerupUser = PlayerRef::Deserialize(data["player"]);
-        GameTile targetTile = Match.GetCell(int(data["tile_id"]));
+        int boardIndex = int(data["board_index"]);
+        bool forwards = bool(data["forwards"]);
         
         // TODO: notify player that a powerup got activated
-        Powerups::TriggerPowerup(usedPowerup, powerupUser, targetTile, data);
+        Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex,forwards);
     }
 
     void ItemSlotEquip(Json::Value @data) {

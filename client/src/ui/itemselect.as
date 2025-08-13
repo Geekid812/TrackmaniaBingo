@@ -1,15 +1,17 @@
 
 namespace UIItemSelect {
     bool Visible;
+    bool HookingMapClick;
     Powerup Powerup;
 
     void Render() {
         if (!Visible) return;
-        if (!Gamemaster::IsBingoActive()) {
+        if (!Gamemaster::IsBingoActive() || Powerup == Powerup::Empty) {
             Visible = false;
             return;
         }
         UI::Begin(Icons::StarO + " Item: " + itemName(Powerup), Visible, UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
+        NetParams::Powerup = Powerup;
 
         UI::BeginDisabled(Network::IsUISuspended());
         switch (Powerup) {
@@ -18,6 +20,10 @@ namespace UIItemSelect {
                 break;
             case Powerup::ColumnShift:
                 RenderColumnShift();
+                break;
+            case Powerup::Rally:
+            case Powerup::RainbowTile:
+                RenderSelectTile();
                 break;
         }
         UI::EndDisabled();
@@ -96,5 +102,19 @@ namespace UIItemSelect {
             UI::SameLine();
         }
         UI::PopStyleVar();
+    }
+
+    void RenderSelectTile() {
+        UI::SeparatorText("Select the tile for " + itemName(Powerup));
+        float uiScale = PersistantStorage::MapListUiScale - 0.1;
+
+        HookingMapClick = true;
+        UIMapList::MapGrid(Match.tiles, Match.config.gridSize, uiScale, true);
+        HookingMapClick = false;
+    }
+
+    void OnTileClicked(uint tileIndex) {
+        NetParams::PowerupBoardIndex = tileIndex;
+        startnew(Network::ActivatePowerup);
     }
 }

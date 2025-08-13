@@ -120,6 +120,9 @@ namespace UIMapList {
                     NetParams::RerollCellId = i;
                     startnew(Network::RerollCell);
                     RerollMenuOpen = false;
+                } else if (UIItemSelect::HookingMapClick) {
+                    UIItemSelect::OnTileClicked(i);
+                    interacted = true;
                 } else if (cell.map !is null) {
                     Visible = false;
                     Playground::PlayMap(cell.map);

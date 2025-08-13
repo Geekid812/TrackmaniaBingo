@@ -33,7 +33,7 @@ namespace Network {
 
         Response(uint seq, Json::Value @body) {
             this.sequence = seq;
-            @ this.body = body;
+            @this.body = body;
         }
 
     }
@@ -544,6 +544,7 @@ namespace Network {
 
     void ActivatePowerup() {
         auto body = Json::Object();
+        body["powerup"] = int(NetParams::Powerup);
         body["board_index"] = NetParams::PowerupBoardIndex;
         body["forwards"] = NetParams::PowerupBoardIsForward;
         Network::Post("ActivatePowerup", body, true);

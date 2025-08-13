@@ -19,7 +19,7 @@ use super::{
     models::{
         self,
         map::GameMap,
-        player::Player,
+        player::IngamePlayer,
         room::{RoomState, RoomTeam},
         team::{BaseTeam, GameTeam, TeamIdentifier},
     },
@@ -142,7 +142,33 @@ impl GameRoom {
                     .to_owned(),
                 members: players
                     .iter()
-                    .map(|id| Player::from(self.get_player(*id).expect("members should be valid")))
+                    .map(|id| {
+                        self.get_player(*id)
+                            .expect("members should be valid")
+                            .clone()
+                    })
+                    .collect(),
+            })
+            .collect()
+    }
+
+    pub fn network_teams(&self) -> Vec<NetworkTeam> {
+        self.team_members()
+            .into_iter()
+            .map(|(tid, players)| NetworkTeam {
+                info: self
+                    .get_team(tid)
+                    .expect("teams should be valid")
+                    .to_owned(),
+                members: players
+                    .iter()
+                    .map(|id| {
+                        let data = self.get_player(*id).expect("members should be valid");
+                        PlayerRef {
+                            uid: data.profile.uid as u32,
+                            name: data.profile.name.clone(),
+                        }
+                    })
                     .collect(),
             })
             .collect()
@@ -176,7 +202,7 @@ impl GameRoom {
             config: self.config.clone(),
             matchconfig: self.matchconfig.clone(),
             join_code: self.join_code.clone(),
-            teams: self.teams_as_model(),
+            teams: self.network_teams(),
         }
     }
 

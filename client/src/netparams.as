@@ -12,6 +12,7 @@ namespace NetParams {
     int PlayerSelectUid;
     int TeamSelectId;
     Team TeamCreatePreset;
+    Powerup Powerup;
     int PowerupBoardIndex;
     bool PowerupBoardIsForward;
 }

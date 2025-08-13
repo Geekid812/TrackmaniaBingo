@@ -6,6 +6,7 @@ use crate::{
         handlers::{error, ok},
     },
 };
+use chrono::Utc;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -25,7 +26,8 @@ pub fn handle(ctx: &mut ClientContext, args: SubmitRun) -> Value {
             team_id: ctx.game.as_ref().unwrap().team(),
             time: args.time,
             medal: args.medal,
-            splits: args.splits
+            splits: args.splits,
+            timestamp: Utc::now(),
         };
         let mut lock = game.lock();
         lock.add_submitted_run(args.tile_index, claim);
