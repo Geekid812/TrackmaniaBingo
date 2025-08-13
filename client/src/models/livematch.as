@@ -31,6 +31,7 @@ namespace LiveMatch {
                 cell.attemptRanking.InsertLast(
                     MapClaim::Deserialize(cell_json["claims"][j], match));
             }
+            cell.specialState = TileItemState(int(cell_json["state"]));
             match.tiles.InsertLast(cell);
         }
         return match;

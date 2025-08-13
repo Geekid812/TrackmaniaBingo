@@ -265,12 +265,13 @@ namespace UIInfoBar {
     }
 
     void FrenzyItemSelectSlot() {
-        UI::PushStyleColor(UI::Col::Border, vec4(.5, .5, .5, .9));
+        UI::PushStyleColor(UI::Col::Border, UIItemSelect::Visible ? vec4(1., .8, .2, .9) : vec4(.5, .5, .5, .9));
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2());
         UI::BeginChild("Bingo Item Select Slot", vec2(), UI::ChildFlags::Borders | UI::ChildFlags::AutoResizeX | UI::ChildFlags::AutoResizeY);
 
         Player@ localPlayer = (Gamemaster::IsBingoActive() ? Match.GetSelf() : null);
         Powerup myPowerup = (@localPlayer !is null ? localPlayer.holdingPowerup : Powerup::Empty);
+        myPowerup = Powerup::ColumnShift;
 
         if (myPowerup != Powerup::Empty) {
             UI::Dummy(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE);            
@@ -278,6 +279,7 @@ namespace UIInfoBar {
             UI::Dummy(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE);
         }
 
+        UI::PushStyleColor(UI::Col::Border, vec4());
         if (UI::BeginItemTooltip()) {
             UI::Text("\\$ff5Item Slot");
 
@@ -308,10 +310,17 @@ namespace UIInfoBar {
 
             UI::EndTooltip();
         }
+        UI::PopStyleColor();
+
 
         UI::EndChild();
         UI::PopStyleVar();
         UI::PopStyleColor();
+        
+        if (UI::IsItemClicked()) {
+            UIItemSelect::Powerup = myPowerup;
+            UIItemSelect::Visible = !UIItemSelect::Visible;
+        }
     }
 
     void GameControls() {

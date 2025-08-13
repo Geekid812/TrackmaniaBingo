@@ -540,4 +540,11 @@ namespace Network {
         body["team_id"] = NetParams::TeamSelectId;
         Network::Post("ChangePlayerTeam", body, false);
     }
+
+    void ActivatePowerup() {
+        auto body = Json::Object();
+        body["board_index"] = NetParams::PowerupBoardIndex;
+        body["forwards"] = NetParams::PowerupBoardIsForward;
+        Network::Post("ActivatePowerup", body, true);
+    }
 }

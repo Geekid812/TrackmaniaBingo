@@ -81,7 +81,7 @@ namespace UIMapList {
         UI::PushStyleColor(UI::Col::TableBorderLight, vec4(.6, .6, .6, 1.));
         UI::PushStyleColor(UI::Col::TableBorderStrong, vec4(1., 1., 1., 1.));
         UI::BeginTable(
-            "Bingo_MapList", gridSize, UI::TableFlags::SizingFixedFit | UI::TableFlags::Borders);
+            "Bingo_MapList", gridSize, UI::TableFlags::SizingFixedFit | UI::TableFlags::Borders,  vec2((176 * uiScale) * gridSize + 6, 0.));
 
         for (uint i = 0; i < maps.Length; i++) {
             auto cell = maps[i];

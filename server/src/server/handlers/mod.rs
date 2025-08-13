@@ -9,15 +9,11 @@ use ping::Ping;
 use crate::server::{
     context::ClientContext,
     handlers::{
-        change_player_team::ChangePlayerTeam, change_team::ChangeTeam, create_room::CreateRoom,
-        create_team::CreateTeam, delete_team::DeleteTeam, edit_config::EditConfig,
-        get_public_rooms::GetPublicRooms, join_match::JoinMatch, join_room::JoinRoom,
-        poll_vote::SubmitPollVote, reload_maps::ReloadMaps, send_chat::SendChatMessage,
-        shuffle_teams::ShuffleTeams, start_match::StartMatch, submit_run::SubmitRun,
-        unsubscribe_roomlist::UnsubscribeRoomlist, vote_reroll::CastRerollVote,
+        activate_powerup::ActivatePowerup, change_player_team::ChangePlayerTeam, change_team::ChangeTeam, create_room::CreateRoom, create_team::CreateTeam, delete_team::DeleteTeam, edit_config::EditConfig, get_public_rooms::GetPublicRooms, join_match::JoinMatch, join_room::JoinRoom, poll_vote::SubmitPollVote, reload_maps::ReloadMaps, send_chat::SendChatMessage, shuffle_teams::ShuffleTeams, start_match::StartMatch, submit_run::SubmitRun, unsubscribe_roomlist::UnsubscribeRoomlist, vote_reroll::CastRerollVote
     },
 };
 
+mod activate_powerup;
 mod change_player_team;
 mod change_team;
 mod create_room;
@@ -79,6 +75,7 @@ pub fn handle_request(
     define_request_handler!(SubmitRun, submit_run::handle);
     define_request_handler!(CastRerollVote, vote_reroll::handle);
     define_request_handler!(SubmitPollVote, poll_vote::handle);
+    define_request_handler!(ActivatePowerup, activate_powerup::handle);
 
     Err(RequestError::NoMatchedHandler(request.to_string()))
 }

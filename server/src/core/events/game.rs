@@ -11,7 +11,7 @@ use crate::{
             team::{BaseTeam, TeamIdentifier},
         },
     },
-    datatypes::{ChatMessage, PlayerProfile, Poll, Powerup},
+    datatypes::{ChatMessage, PlayerProfile, PlayerRef, Poll, Powerup},
 };
 
 #[serde_with::serde_as]
@@ -84,6 +84,10 @@ pub enum GameEvent {
     },
     ItemSlotEquip {
         uid: u32,
-        powerup: Powerup
-    }
+        powerup: Powerup,
+    },
+    PowerupActivated {
+        powerup: Powerup,
+        player: PlayerRef,
+    },
 }

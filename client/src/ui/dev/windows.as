@@ -19,6 +19,7 @@ namespace UIDevWindows {
         UIDevActions::Visible = UI::Checkbox("UIDevActions", UIDevActions::Visible);
         BoardLocator::Visible = UI::Checkbox("BoardLocator", BoardLocator::Visible);
         UIItemSettings::Visible = UI::Checkbox("UIItemSettings", UIItemSettings::Visible);
+        UIItemSelect::Visible = UI::Checkbox("UIItemSelect", UIItemSelect::Visible);
 
         UI::Columns(1);
     }
