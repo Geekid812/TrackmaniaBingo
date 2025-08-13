@@ -547,6 +547,7 @@ namespace Network {
         body["powerup"] = int(NetParams::Powerup);
         body["board_index"] = NetParams::PowerupBoardIndex;
         body["forwards"] = NetParams::PowerupBoardIsForward;
+        body["player_uid"] = NetParams::PlayerSelectUid;
         Network::Post("ActivatePowerup", body, true);
     }
 }

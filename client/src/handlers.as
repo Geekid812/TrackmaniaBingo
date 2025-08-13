@@ -394,9 +394,10 @@ namespace NetworkHandlers {
         PlayerRef powerupUser = PlayerRef::Deserialize(data["player"]);
         int boardIndex = int(data["board_index"]);
         bool forwards = bool(data["forwards"]);
+        PlayerRef targetPlayer = (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"]) : PlayerRef());
         
         // TODO: notify player that a powerup got activated
-        Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex,forwards);
+        Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer);
     }
 
     void ItemSlotEquip(Json::Value @data) {

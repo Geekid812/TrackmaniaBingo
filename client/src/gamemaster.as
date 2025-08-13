@@ -268,9 +268,9 @@ namespace Gamemaster {
         UIPoll::ClearAllPollsAndNotifications();
         PersistantStorage::ResetConnectedMatch();
 
-        // Remove all special tile states
+        // Remove all special tile states, except rainbow
         for (uint i = 0; i < GetTileCount(); i++) {
-            if (Match.tiles[i] !is null) {
+            if (Match.tiles[i] !is null && Match.tiles[i].specialState != TileItemState::Rainbow) {
                 Match.tiles[i].specialState = TileItemState::Empty;
             }
         }

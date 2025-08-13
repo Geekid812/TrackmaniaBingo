@@ -562,6 +562,7 @@ impl LiveMatch {
         powerup: Powerup,
         board_index: usize,
         forwards: bool,
+        player_id: i32,
     ) -> Result<(), String> {
         let Some(player) = self.get_player_mut(uid) else {
             return Err(format!("player with uid '{}' not found", uid));
@@ -577,6 +578,12 @@ impl LiveMatch {
         }
 
         let player_ref = player.as_player_ref();
+        let target = if powerup == Powerup::Jail {
+            self.get_player_mut(player_id).map(|p| p.as_player_ref())
+        } else {
+            None
+        };
+
         self.give_powerup(player_ref.clone(), Powerup::Empty);
         match powerup {
             Powerup::RowShift | Powerup::ColumnShift => {
@@ -584,6 +591,9 @@ impl LiveMatch {
             }
             Powerup::RainbowTile => self.powerup_effect_rainbow_tile(board_index),
             Powerup::Rally => self.powerup_effect_rally(board_index),
+            Powerup::Jail if target.is_some() => {
+                self.powerup_effect_jail(board_index, target.clone().unwrap())
+            }
             _ => {
                 return Err("this powerup can't be activated".to_string());
             }
@@ -594,6 +604,7 @@ impl LiveMatch {
             player: player_ref,
             board_index,
             forwards,
+            target,
         });
         self.try_do_bingo_checks();
         Ok(())
@@ -946,6 +957,20 @@ impl LiveMatch {
     fn powerup_effect_rally(&mut self, board_index: usize) {
         self.cells[board_index].state = TileItemState::Rally;
     }
+
+    fn powerup_effect_jail(&mut self, board_index: usize, target: PlayerRef) {
+        self.cells[board_index].state = TileItemState::Jail;
+    }
+
+    fn jail_resolve(&mut self, cell_id: usize) {
+        self.cells[cell_id].state = TileItemState::Empty;
+        self.channel.broadcast(&GameEvent::JailResolved { cell_id });
+    }
+
+    fn rally_resolve(&mut self, cell_id: usize) {
+        self.cells[cell_id].state = TileItemState::Empty;
+        // self.channel.broadcast(&GameEvent::RallyResolved { cell_id, team:  });
+    }
 }
 
 impl Default for MatchOptions {
@@ -972,16 +997,17 @@ pub enum Direction {
     Diagonal = 3,
 }
 
-fn iter_check_unique_team<'a>(
-    mut iter: impl Iterator<Item = &'a GameCell>,
-) -> Option<TeamIdentifier> {
-    let first = iter
-        .next()
-        .expect("invalid grid_size")
-        .leading_claim()
-        .as_ref()
-        .map(|c| c.team_id);
-    iter.fold(first, |acc, x| {
+fn iter_check_unique_team<'a>(iter: impl Iterator<Item = &'a GameCell>) -> Option<TeamIdentifier> {
+    let mut cleaned_iter = iter.filter(|x| x.state != TileItemState::Rainbow);
+    let first_opt = cleaned_iter.next();
+
+    let Some(first_tile) = first_opt else {
+        // we have a Bingo of rainbow tiles, which is funny
+        return None;
+    };
+
+    let first = first_tile.leading_claim().as_ref().map(|c| c.team_id);
+    cleaned_iter.fold(first, |acc, x| {
         acc.and_then(|y| {
             if x.leading_claim().as_ref().map(|c| c.team_id) == Some(y) {
                 Some(y)

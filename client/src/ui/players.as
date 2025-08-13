@@ -152,6 +152,9 @@ namespace UIPlayers {
         if (canBeSelected && UI::IsItemClicked()) {
             @UIGameRoom::DraggedPlayer = player;
         }
+        if (UIItemSelect::HookingPlayerClick && UI::IsItemClicked()) {
+            UIItemSelect::OnPlayerClicked(player);
+        }
     }
 
     // Helper function to build the table

@@ -91,5 +91,13 @@ pub enum GameEvent {
         player: PlayerRef,
         board_index: usize,
         forwards: bool,
+        target: Option<PlayerRef>,
+    },
+    JailResolved {
+        cell_id: usize,
+    },
+    RallyResolved {
+        cell_id: usize,
+        team: TeamIdentifier,
     },
 }

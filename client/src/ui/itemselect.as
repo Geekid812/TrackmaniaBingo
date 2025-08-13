@@ -2,6 +2,8 @@
 namespace UIItemSelect {
     bool Visible;
     bool HookingMapClick;
+    bool HookingPlayerClick;
+    int SelectedPlayerUid = -1;
     Powerup Powerup;
 
     void Render() {
@@ -25,6 +27,13 @@ namespace UIItemSelect {
             case Powerup::RainbowTile:
                 RenderSelectTile();
                 break;
+            case Powerup::Jail: {
+                if (SelectedPlayerUid == -1) {
+                    RenderSelectJailPlayer();
+                } else {
+                    RenderSelectTile();
+                }
+            }
         }
         UI::EndDisabled();
 
@@ -41,7 +50,6 @@ namespace UIItemSelect {
         float cellPadding = 8 * uiScale * 2;
         float itemSpacing = 2.;
         float rowHeight = 116 * uiScale + UI::GetTextLineHeight() + cellPadding + itemSpacing;
-        float rowWidth = 160 * uiScale + cellPadding;
         for (uint i = 0; i < Match.config.gridSize; i++) {
             if (UI::Button(Icons::ArrowRight + "##bingoboarditemR" + i, vec2(30., rowHeight))) {
                 NetParams::PowerupBoardIndex = i;
@@ -72,7 +80,6 @@ namespace UIItemSelect {
         vec2 originalPosition = UI::GetCursorPos();
 
         float cellPadding = 8 * uiScale * 2;
-        float itemSpacing = 2.;
         float rowWidth = 160 * uiScale + cellPadding + 1;
 
         UI::PushStyleVar(UI::StyleVar::ItemSpacing, vec2());
@@ -113,8 +120,21 @@ namespace UIItemSelect {
         HookingMapClick = false;
     }
 
+    void RenderSelectJailPlayer() {
+        UI::SeparatorText("Select a player to send to jail");
+        HookingPlayerClick = true;
+        UIPlayers::PlayerTable(Match.teams, Match.players);
+        HookingPlayerClick = false;
+    }
+
     void OnTileClicked(uint tileIndex) {
         NetParams::PowerupBoardIndex = tileIndex;
+        NetParams::PlayerSelectUid = SelectedPlayerUid;
+        SelectedPlayerUid = -1;
         startnew(Network::ActivatePowerup);
+    }
+
+    void OnPlayerClicked(Player@ player) {
+        SelectedPlayerUid = player.profile.uid;
     }
 }

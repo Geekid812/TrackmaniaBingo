@@ -1,6 +1,6 @@
 
 namespace Powerups {
-    void TriggerPowerup(Powerup powerup, PlayerRef powerupUser, int boardIndex, bool forwards) {
+    void TriggerPowerup(Powerup powerup, PlayerRef powerupUser, int boardIndex, bool forwards, PlayerRef@ targetPlayer) {
         if (!Gamemaster::IsBingoActive()) {
             warn("[Powerups::TriggerPowerup] Bingo is not active, ignoring this event.");
             return;
@@ -18,6 +18,8 @@ namespace Powerups {
             case Powerup::RainbowTile:
                 PowerupEffectRainbowTile(boardIndex);
                 break;
+            case Powerup::Jail:
+                PowerupEffectJail(boardIndex, targetPlayer, 900000);
         }
     }
 

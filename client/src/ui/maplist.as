@@ -121,12 +121,15 @@ namespace UIMapList {
                     startnew(Network::RerollCell);
                     RerollMenuOpen = false;
                 } else if (UIItemSelect::HookingMapClick) {
-                    UIItemSelect::OnTileClicked(i);
-                    interacted = true;
+                    if (cell.specialState == TileItemState::Empty || cell.specialState == TileItemState::HasPowerup || cell.specialState == TileItemState::HasSpecialPowerup) {
+                        UIItemSelect::OnTileClicked(i);
+                        interacted = true;
+                    }
                 } else if (cell.map !is null) {
                     Visible = false;
-                    Playground::PlayMap(cell.map);
-                    Gamemaster::SetCurrentTileIndex(i);
+                    Playground::DebugClaim(i);
+                    //Playground::PlayMap(cell.map);
+                    //Gamemaster::SetCurrentTileIndex(i);
                     interacted = true;
                 }
             }
@@ -226,6 +229,12 @@ namespace UIMapList {
                 vec3 teamColor = jailedPlayer !is null ? jailedPlayer.team.color : vec3(.5, .5, .5);
                 UI::Text("\\$" + UIColor::GetHex(teamColor) + tile.statePlayerTarget.name + " \\$f88is in jail here.\n(\\$ff8" + Time::Format(tile.stateTimeDeadline - Time::Now, false) + " \\$f88remaining)");
                 break;
+            }
+        }
+
+        if (UIItemSelect::HookingMapClick) {
+            if (tile.specialState != TileItemState::Empty && tile.specialState != TileItemState::HasPowerup && tile.specialState != TileItemState::HasSpecialPowerup) {
+                UI::Text("\\$f88Cannot select this tile, there is already a powerup active here.");
             }
         }
 
