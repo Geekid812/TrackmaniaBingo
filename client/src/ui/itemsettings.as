@@ -53,7 +53,8 @@ namespace UIItemSettings {
         MatchConfig.items.columnShift = ItemSetting("Column Shift", MatchConfig.items.columnShift);
         MatchConfig.items.rally = ItemSetting("Rally", MatchConfig.items.rally);
         MatchConfig.items.jail = ItemSetting("Jail", MatchConfig.items.jail);
-        MatchConfig.items.rainbow = ItemSetting("Rainbow", MatchConfig.items.rainbow);
+        MatchConfig.items.rainbow = ItemSetting("Rainbow Tile", MatchConfig.items.rainbow);
+        MatchConfig.items.goldenDice = ItemSetting("Golden Dice", MatchConfig.items.goldenDice);
 
         UI::NewLine();
         UI::Separator();

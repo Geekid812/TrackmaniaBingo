@@ -29,6 +29,8 @@ string itemName(Powerup powerup) {
             return "Jail";
         case Powerup::RainbowTile:
             return "Rainbow Tile";
+        case Powerup::GoldenDice:
+            return "Golden Dice";
         default:
             return "";
     }

@@ -24,6 +24,8 @@ namespace Powerups {
                 return PowerupJailTex;
             case Powerup::RainbowTile:
                 return PowerupRainbowTileTex;
+            case Powerup::GoldenDice:
+                return PowerupGoldenDiceTex;
             default:
                 return null;
         }
@@ -73,6 +75,10 @@ namespace Powerups {
                 break;
             case Powerup::Jail:
                 PowerupEffectJail(boardIndex, targetPlayer, 900000);
+                break;
+            case Powerup::GoldenDice:
+                PowerupEffectGoldenDice(boardIndex);
+                break;
         }
     }
 
@@ -140,6 +146,22 @@ namespace Powerups {
 
         if (int(targetPlayer.uid) == Profile.uid) {
             @Jail = Match.tiles[tileIndex];
+        }
+    }
+
+    void PowerupEffectGoldenDice(uint tileIndex) {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[Powerups::PowerupEffectGoldenDice] Bingo is not active, ignoring this call.");
+            return;
+        }
+
+        GameTile@ tile = Match.GetCell(tileIndex);
+        tile.SetMap(null);
+
+        if (tile.claimant.id == -1 && tile.HasRunSubmissions()) {
+            tile.claimant = tile.LeadingRun().player.team;
+            print(tile.claimant.id);
+            print(Match.GetCell(tileIndex).claimant.id);
         }
     }
 }

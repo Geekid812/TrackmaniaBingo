@@ -434,7 +434,7 @@ namespace NetworkHandlers {
         int cellUp = cellId - Match.config.gridSize;
         int cellLeft = cellId - 1;
         int cellRight = cellId + 1;
-        int cellDown = cellDown + Match.config.gridSize;
+        int cellDown = cellId + Match.config.gridSize;
 
         if (cellUp >= 0)
             Match.GetCell(cellUp).claimant = winningTeam;

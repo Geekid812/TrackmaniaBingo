@@ -56,6 +56,7 @@ class Powerup(Enum):
     RALLY = 3
     JAIL = 4
     RAINBOWTILE = 5
+    GOLDENDICE = 6
 
 # A simple reference to a registered player.
 class PlayerRef(BaseModel):
@@ -108,6 +109,7 @@ class FrenzyItemSettings(BaseModel):
     rally: int = 3
     jail: int = 3
     rainbow: int = 3
+    golden_dice: int = 3
 
 # Request to open a connection by the client using an exisiting token.
 class HandshakeRequest(BaseModel):

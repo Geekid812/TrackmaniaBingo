@@ -295,7 +295,10 @@ namespace UIInfoBar {
                     UI::Text("Jail\nSend a player you choose to any map of the Bingo board.\nThey will remain emprisoned there for 15 minutes until they can claim a new record!");
                     break;
                 case Powerup::RainbowTile:
-                    UI::Text("Rainbow Tile\nTransform any unclaimed map into a rainbow tile,\nwhich counts as if all teams had claimed it!");
+                    UI::Text("Rainbow Tile\nTransform any map into a rainbow tile,\nwhich counts as if all teams had claimed it!");
+                    break;
+                case Powerup::GoldenDice:
+                    UI::Text("Golden Dice\nReroll any map of your choice (keeps the current team color).\nAll players can vote for one of three maps that will replace it!");
                     break;
                 default:
                     UI::TextDisabled("You don't have any item to use right now.");

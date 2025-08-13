@@ -100,6 +100,8 @@ pub struct FrenzyItemSettings {
 	pub jail: u32,
     #[derivative(Default(value = "3"))]
 	pub rainbow: u32,
+    #[derivative(Default(value = "3"))]
+	pub golden_dice: u32,
 }
 
 /* Request to open a connection by the client using an exisiting token. */
@@ -231,4 +233,5 @@ pub enum Powerup {
     Rally,
     Jail,
     RainbowTile,
+    GoldenDice,
 }

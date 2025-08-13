@@ -178,6 +178,7 @@ class FrenzyItemSettings {
     uint rally = 3;
     uint jail = 3;
     uint rainbow = 3;
+    uint goldenDice = 3;
     FrenzyItemSettings() {}
 }
 namespace FrenzyItemSettings {
@@ -188,6 +189,7 @@ namespace FrenzyItemSettings {
         value["rally"] = cls.rally;
         value["jail"] = cls.jail;
         value["rainbow"] = cls.rainbow;
+        value["golden_dice"] = cls.goldenDice;
 
         return value;
     }
@@ -199,6 +201,7 @@ namespace FrenzyItemSettings {
         cls.rally = value["rally"];
         cls.jail = value["jail"];
         cls.rainbow = value["rainbow"];
+        cls.goldenDice = value["golden_dice"];
 
         return cls;
     }
@@ -424,4 +427,5 @@ enum Powerup {
     Rally,
     Jail,
     RainbowTile,
+    GoldenDice,
 }

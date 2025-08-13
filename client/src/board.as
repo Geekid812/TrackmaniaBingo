@@ -60,11 +60,18 @@ namespace Board {
      */
     vec4
     GetTileFillColor(GameTile @tile) {
-        if (tile is null || tile.map is null)
+        if (tile is null)
             return vec4(0, 0, 0, BoardTilesAlpha);
 
         if (tile.paintColor != vec3())
             return UIColor::GetAlphaColor(tile.paintColor, BoardTilesAlpha);
+        
+        if (tile.claimant.id != -1) {
+            return UIColor::GetAlphaColor(tile.claimant.color, BoardTilesAlpha);
+        }
+
+        if (tile.map is null)
+            return vec4(0, 0, 0, BoardTilesAlpha);
 
         if (tile.specialState == TileItemState::Rainbow) {
             float rainbowColorTick = float(Time::Now - Match.startTime) / RAINBOW_COLOR_TICK_DURATION;
@@ -75,10 +82,6 @@ namespace Board {
             return UIColor::GetAlphaColor(primaryColor * (1 - transitionProgress) + secondaryColor * transitionProgress, BoardTilesAlpha);
         }
 
-        if (tile.claimant.id != 0) {
-            return UIColor::GetAlphaColor(tile.claimant.color, BoardTilesAlpha);
-        }
-        
         if (tile.HasRunSubmissions()) {
             Team @tileOwnerTeam = Match.GetTeamWithId(tile.LeadingRun().teamId);
 

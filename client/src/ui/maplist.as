@@ -142,11 +142,14 @@ namespace UIMapList {
                     drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.paintColor, 0.1));
                 if (cell.specialState == TileItemState::Rainbow)
                     drawList.AddRectFilledMultiColor(rect, TeamColorIndex(0), TeamColorIndex(1), TeamColorIndex(2), TeamColorIndex(3));
+                if (cell.claimant.id != -1)
+                    drawList.AddRectFilled(
+                        rect, UIColor::GetAlphaColor(cell.claimant.color, 0.1));
                 if (cell.HasRunSubmissions())
                     drawList.AddRectFilled(
                         rect, UIColor::GetAlphaColor(cell.LeadingRun().player.team.color, 0.1));
             } else {
-                if (!cell.HasRunSubmissions() && cell.claimant.id == 0) {
+                if (!cell.HasRunSubmissions() && cell.claimant.id == -1) {
                     drawList.AddRectFilled(rect, UIColor::GetAlphaColor(vec3(.0, .6, .6), 0.1));
                 }
             }
@@ -198,19 +201,19 @@ namespace UIMapList {
         }
 
         UI::NewLine();
-        if (tile.claimant.id != 0) {
+        if (tile.claimant.id != -1) {
             UI::Text("Claimed by \\$" + UIColor::GetHex(tile.claimant.color) + tile.claimant.name);
         }
         if (tile.HasRunSubmissions()) {
             Player topPlayer = tile.LeadingRun().player;
-            UI::Text((tile.claimant.id != 0 ? "Current record by \\$" : "Claimed by \\$") + UIColor::GetHex(topPlayer.team.color) + topPlayer.name);
+            UI::Text((tile.claimant.id != -1 ? "Current record by \\$" : "Claimed by \\$") + UIColor::GetHex(topPlayer.team.color) + topPlayer.name);
             UI::Text(tile.LeadingRun().result.Display());
         } else {
             UI::TextDisabled("This map has not been claimed yet!");
         }
 
         if (RerollMenuOpen) {
-            if (tile.HasRunSubmissions() || tile.claimant.id != 0) {
+            if (tile.HasRunSubmissions() || tile.claimant.id != -1) {
                 UI::Text("\\$f88Cannot reroll this map, it has already been claimed.");
             } else {
                 UI::Text("\\$066Click to start a vote to reroll this map.");

@@ -101,18 +101,23 @@ class GameTile {
     TileItemState specialState = TileItemState::Empty;
     PlayerRef statePlayerTarget = PlayerRef();
     int64 stateTimeDeadline = 0;
-    Team claimant = Team();
+    Team claimant = Team(-1, "", vec3());
 
     GameTile() {}
 
     GameTile(GameMap map) { SetMap(map); }
 
-    void SetMap(GameMap map) {
-        @ this.map = map;
-        @ this.thumbnail = Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
-        @ this.mapImage =
-            Image("https://trackmania.exchange/maps/" + map.id +
-                  "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
+    void SetMap(GameMap@ map) {
+        @this.map = map;
+        if (@map !is null) {
+            @ this.thumbnail = Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
+            @ this.mapImage =
+                Image("https://trackmania.exchange/maps/" + map.id +
+                    "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
+        } else {
+            @this.thumbnail = null;
+            @this.mapImage = null;
+        }
     }
 
     bool HasRunSubmissions() { return attemptRanking.Length != 0; }
@@ -150,7 +155,7 @@ class GameTile {
                 specialState = TileItemState::Empty;
             }
 
-            claimant = Team(); // reset the team who owns this map to the current record holder
+            claimant = Team(-1, "", vec3()); // reset the team who owns this map to the current record holder
         }
     }
 }

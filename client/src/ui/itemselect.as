@@ -25,6 +25,7 @@ namespace UIItemSelect {
                 break;
             case Powerup::Rally:
             case Powerup::RainbowTile:
+            case Powerup::GoldenDice:
                 RenderSelectTile();
                 break;
             case Powerup::Jail: {

@@ -83,10 +83,10 @@ namespace UIPoll {
         UI::SetNextWindowPos(Draw::GetWidth() / 2, currentY, UI::Cond::Always, 0.5, 0.);
         Window::Create("##bingopoll" + data.poll.id,
                        open,
-                       500,
+                       Math::Max(500, Draw::MeasureString(data.poll.title, Font::Current()).x + 100),
                        POLL_WINDOW_HEIGHT,
                        UI::WindowFlags::NoMove | UI::WindowFlags::NoResize |
-                           UI::WindowFlags::NoTitleBar);
+                           UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoScrollbar);
 
         UITools::CenterText(data.poll.title);
 

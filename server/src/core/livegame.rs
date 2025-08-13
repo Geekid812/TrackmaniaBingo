@@ -68,6 +68,7 @@ struct PollData {
 pub enum PollResultCallback {
     None,
     Reroll(usize),
+    GoldenDice(usize),
 }
 
 impl LiveMatch {
@@ -612,6 +613,7 @@ impl LiveMatch {
             Powerup::Jail if target.is_some() => {
                 self.powerup_effect_jail(board_index, target.clone().unwrap())
             }
+            Powerup::GoldenDice => self.powerup_effect_golden_dice(board_index, &player_ref.name),
             _ => {
                 return Err("this powerup can't be activated".to_string());
             }
@@ -933,6 +935,7 @@ impl LiveMatch {
             (Powerup::Rally, item_settings.rally),
             (Powerup::Jail, item_settings.jail),
             (Powerup::RainbowTile, item_settings.rainbow),
+            (Powerup::GoldenDice, item_settings.golden_dice),
         ];
 
         let mut drafting_pool = vec![];
@@ -1010,6 +1013,46 @@ impl LiveMatch {
         );
     }
 
+    fn powerup_effect_golden_dice(&mut self, board_index: usize, player_name: &str) {
+        let ident = self.new_ident();
+        let start_index = self.cell_count();
+        let tile = &mut self.cells[board_index];
+        if let Some(winning_team) = tile.claimant.or(tile.leading_claim().map(|c| c.team_id)) {
+            tile.claimant = Some(winning_team);
+        }
+
+        let poll = Poll {
+            id: ident,
+            title: format!(
+                "{} has used \\$fd8Golden Dice \\$zto reroll \\$ff8{}\\$z. Which map shall replace it?",
+                player_name,
+                tile.map.name(),
+            ),
+            color: Color::new(128, 128, 128),
+            duration: Duration::seconds(60),
+            choices: vec![
+                PollChoice {
+                    text: self.cells[start_index].map.name(),
+                    color: Color::new(100, 0, 150),
+                },
+                PollChoice {
+                    text: self.cells[start_index + 1].map.name(),
+                    color: Color::new(0, 100, 150),
+                },
+                PollChoice {
+                    text: self.cells[start_index + 2].map.name(),
+                    color: Color::new(0, 0, 250),
+                },
+            ],
+        };
+
+        self.start_poll(
+            poll,
+            vec![vec![], vec![], vec![]],
+            PollResultCallback::GoldenDice(board_index),
+        );
+    }
+
     fn jail_resolve(&mut self, cell_id: usize, state_ident: Option<u32>) {
         if state_ident.is_none_or(|st1| {
             self.cells[cell_id]
@@ -1058,6 +1101,7 @@ impl LiveMatch {
 
             self.channel
                 .broadcast(&GameEvent::RallyResolved { cell_id, team });
+            self.try_do_bingo_checks();
         }
     }
 

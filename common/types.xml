@@ -65,6 +65,7 @@
         <m name="rally" type="uint" default="3" />
         <m name="jail" type="uint" default="3" />
         <m name="rainbow" type="uint" default="3" />
+        <m name="golden_dice" type="uint" default="3" />
     </struct>
 
     <struct name="HandshakeRequest">
@@ -155,5 +156,6 @@
         <v>Rally</v>
         <v>Jail</v>
         <v>RainbowTile</v>
+        <v>GoldenDice</v>
     </enum>
 </datatypes>
