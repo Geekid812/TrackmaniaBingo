@@ -89,7 +89,7 @@ namespace UIInfoBar {
         string displayText = "\\$ff8Time to beat: ";
         Player@ localPlayer = Match.GetSelf();
         Team myTeam = (@localPlayer != null ? localPlayer.team: Team(-1, "", vec3()));
-        if (cell.IsClaimed()) {
+        if (cell.HasRunSubmissions()) {
             MapClaim leadingClaim = cell.LeadingRun();
             if (leadingClaim.teamId == myTeam.id) {
                 displayText = "\\$ff8Your team's time: ";

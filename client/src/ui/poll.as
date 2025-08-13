@@ -21,11 +21,13 @@ class NotifyData {
     string title;
     uint64 startTime;
     uint64 expireTime;
+    UI::Texture@ thumbnail;
 
-    NotifyData(const string&in title, uint64 startTime, uint64 expireTime) {
+    NotifyData(const string&in title, uint64 startTime, uint64 expireTime, UI::Texture@ thumbnail = null) {
         this.title = title;
         this.startTime = startTime;
         this.expireTime = expireTime;
+        @this.thumbnail = thumbnail;
     }
 }
 
@@ -67,6 +69,7 @@ namespace UIPoll {
     const int ANIMATION_IN_MILLIS = 600;
     const int TIMER_PROGRESS_HEIGHT = 8;
     const vec4 TIMER_PROGRESS_COLOR = vec4(.5, .5, .5, .5);
+    const int NOTIFY_THUMBNAIL_SIZE = 48;
 
     void RenderPoll(PollData @data, uint stackIndex) {
         bool open = true;
@@ -115,7 +118,19 @@ namespace UIPoll {
 
         UI::Dummy(vec2(500, 0));
         Layout::EndLabelAlign();
-        UITools::CenterText(data.title);
+
+        string notifyTitle = data.title;
+        UI::Font @font = Font::Current();
+        Layout::MoveTo(Layout::GetPadding(
+            UI::GetWindowSize().x, Draw::MeasureString(notifyTitle, font, font.FontSize).x + (@data.thumbnail !is null ? NOTIFY_THUMBNAIL_SIZE : 0), 0.5));
+        
+        if (@data.thumbnail !is null) {
+            UI::Image(data.thumbnail, vec2(NOTIFY_THUMBNAIL_SIZE, NOTIFY_THUMBNAIL_SIZE));
+            UI::SameLine();
+            Layout::MoveToY(UI::GetCursorPos().y + (NOTIFY_THUMBNAIL_SIZE - UI::GetTextLineHeight()) / 2);
+        }
+
+        UI::Text(notifyTitle);
 
         UI::End();
     }
@@ -163,8 +178,8 @@ namespace UIPoll {
                                TIMER_PROGRESS_COLOR);
     }
 
-    void NotifyToast(const string&in title, uint64 duration = Poll::POLL_EXPIRE_MILLIS) {
-        NotifyData notifyData(title, Time::Now, Time::Now + duration);
+    void NotifyToast(const string&in title, uint64 duration = Poll::POLL_EXPIRE_MILLIS, UI::Texture@ thumbnail = null) {
+        NotifyData notifyData(title, Time::Now, Time::Now + duration, thumbnail);
         Notifications.InsertLast(notifyData);
     }
 

@@ -15,6 +15,8 @@ pub struct IngamePlayer {
     pub holding_powerup: Powerup,
 
     #[serde(skip)]
+    pub item_ident: Option<u32>,
+    #[serde(skip)]
     pub writer: NetMessager,
 }
 
@@ -25,6 +27,7 @@ impl From<PlayerData> for IngamePlayer {
             operator: value.operator,
             disconnected: value.disconnected,
             holding_powerup: Powerup::Empty,
+            item_ident: None,
             writer: value.writer,
         }
     }
@@ -32,6 +35,9 @@ impl From<PlayerData> for IngamePlayer {
 
 impl IngamePlayer {
     pub fn as_player_ref(&self) -> PlayerRef {
-        PlayerRef { uid: self.profile.uid as u32, name: self.profile.name.clone() }
+        PlayerRef {
+            uid: self.profile.uid as u32,
+            name: self.profile.name.clone(),
+        }
     }
 }

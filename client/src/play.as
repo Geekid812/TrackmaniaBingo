@@ -147,7 +147,7 @@ namespace Playground {
             return null;
 
         // Map is claimed, return the top run
-        if (!ignorePlayerClaims && currentTile.IsClaimed())
+        if (!ignorePlayerClaims && currentTile.HasRunSubmissions())
             return currentTile.LeadingRun().result;
 
         // Map is not claimed, get the target medal time

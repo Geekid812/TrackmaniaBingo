@@ -75,7 +75,11 @@ namespace Board {
             return UIColor::GetAlphaColor(primaryColor * (1 - transitionProgress) + secondaryColor * transitionProgress, BoardTilesAlpha);
         }
 
-        if (tile.IsClaimed()) {
+        if (tile.claimant.id != 0) {
+            return UIColor::GetAlphaColor(tile.claimant.color, BoardTilesAlpha);
+        }
+        
+        if (tile.HasRunSubmissions()) {
             Team @tileOwnerTeam = Match.GetTeamWithId(tile.LeadingRun().teamId);
 
             if (@tileOwnerTeam !is null)

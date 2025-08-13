@@ -19,7 +19,6 @@ use super::{
     models::{
         self,
         map::GameMap,
-        player::IngamePlayer,
         room::{RoomState, RoomTeam},
         team::{BaseTeam, GameTeam, TeamIdentifier},
     },

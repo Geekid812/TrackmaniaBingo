@@ -242,6 +242,10 @@ namespace Network {
             NetworkHandlers::PowerupActivated(body);
         } else if (event == "ItemSlotEquip") {
             NetworkHandlers::ItemSlotEquip(body);
+        } else if (event == "RallyResolved") {
+            NetworkHandlers::RallyResolved(body);
+        } else if (event == "JailResolved") {
+            NetworkHandlers::JailResolved(body);
         } else {
             warn("[Network] Unknown event: " + string(body["event"]));
         }

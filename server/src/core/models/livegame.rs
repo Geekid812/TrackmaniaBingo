@@ -32,8 +32,11 @@ pub struct GameCell {
     pub cell_id: usize,
     pub map: GameMap,
     pub claims: Vec<MapClaim>,
-    pub reroll_ids: Vec<i32>,
     pub state: TileItemState,
+    pub claimant: Option<TeamIdentifier>,
+    pub state_player: Option<PlayerRef>,
+    #[serde(skip)]
+    pub state_ident: Option<u32>,
 }
 
 impl GameCell {

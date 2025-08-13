@@ -29,6 +29,20 @@ namespace Powerups {
         }
     }
 
+    string GetExplainerText(Powerup powerup) {
+        if (powerup == Powerup::Rally) {
+            return "\nThe team who is winning here in 10 minutes will claim all adjacent squares!";
+        }
+        if (powerup == Powerup::Jail) {
+            return "\nThey have to remain on this map until they can beat the current record!";
+        }
+        if (powerup == Powerup::RainbowTile) {
+            return "\nThis map will be counted as every color for win conditions!";
+        }
+
+        return "";
+    }
+
     void InitPowerupTextures() {
         @PowerupRowShiftTex = LoadInternalTex("data/row_shift.png");
         @PowerupColumnShiftTex = LoadInternalTex("data/column_shift.png");

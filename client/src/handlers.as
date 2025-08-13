@@ -62,13 +62,13 @@ namespace NetworkHandlers {
         if (position == 1) {
             Team claimingTeam = Match.GetTeamWithId(claim.teamId);
 
-            bool isImprove = claimedMap.IsClaimed() &&
+            bool isImprove = claimedMap.HasRunSubmissions() &&
                              Match.GetTeamWithId(claimedMap.LeadingRun().teamId) == claimingTeam;
-            bool isReclaim = claimedMap.IsClaimed() &&
+            bool isReclaim = claimedMap.HasRunSubmissions() &&
                              Match.GetTeamWithId(claimedMap.LeadingRun().teamId) != claimingTeam;
 
             string deltaTime =
-                claimedMap.IsClaimed()
+                claimedMap.HasRunSubmissions()
                     ? "-" + Time::Format(claimedMap.LeadingRun().result.time - claim.result.time)
                     : "";
             string playerName = claim.player.name;
@@ -392,11 +392,13 @@ namespace NetworkHandlers {
         }
         Powerup usedPowerup = Powerup(int(data["powerup"]));
         PlayerRef powerupUser = PlayerRef::Deserialize(data["player"]);
+        Player@ user = Match.GetPlayer(powerupUser.uid);
         int boardIndex = int(data["board_index"]);
         bool forwards = bool(data["forwards"]);
         PlayerRef targetPlayer = (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"]) : PlayerRef());
-        
-        // TODO: notify player that a powerup got activated
+        string explainerText = Powerups::GetExplainerText(usedPowerup);
+
+        UIPoll::NotifyToast("\\$" + (@user !is null ? UIColor::GetHex(user.team.color) : "z") + powerupUser.name + " \\$zhas used \\$fd8" + itemName(usedPowerup) + "\\$z!" + explainerText, Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1), Powerups::GetPowerupTexture(usedPowerup));
         Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer);
     }
 
@@ -409,5 +411,52 @@ namespace NetworkHandlers {
         Player@ equipUser = Match.GetPlayer(int(data["uid"]));
         equipUser.holdingPowerup = Powerup(int(data["powerup"]));
         equipUser.powerupExpireTimestamp = Time::Now + Match.config.itemsExpire * 1000;
+    }
+
+    void RallyResolved(Json::Value @data) {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[NetworkHandlers::RallyResolved] Bingo is not active, ignoring this event.");
+            return;
+        }
+        int cellId = int(data["cell_id"]);
+        GameTile@ tile = Match.GetCell(cellId);
+
+        tile.specialState = TileItemState::Empty;
+        if (data["team"].GetType() == Json::Type::Null) return;
+
+        Team@ winningTeam = Match.GetTeamWithId(int(data["team"]));
+        vec4 teamColor =
+            UIColor::Brighten(UIColor::GetAlphaColor(winningTeam.color, 0.1), 0.75);
+        string mapName = Text::StripFormatCodes(tile.map.trackName);
+
+        UI::ShowNotification(Icons::Flag + " Rally Victory", winningTeam.name + " has won the rally on \\$fd8" + mapName + " \\$z!", teamColor, 15000);
+
+        int cellUp = cellId - Match.config.gridSize;
+        int cellLeft = cellId - 1;
+        int cellRight = cellId + 1;
+        int cellDown = cellDown + Match.config.gridSize;
+
+        if (cellUp >= 0)
+            Match.GetCell(cellUp).claimant = winningTeam;
+        if (cellLeft >= 0)
+            Match.GetCell(cellLeft).claimant = winningTeam;
+        if (cellRight < int(Gamemaster::GetTileCount()))
+            Match.GetCell(cellRight).claimant = winningTeam;
+        if (cellDown < int(Gamemaster::GetTileCount()))
+            Match.GetCell(cellDown).claimant = winningTeam;
+    }
+
+    void JailResolved(Json::Value @data) {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[NetworkHandlers::JailResolved] Bingo is not active, ignoring this event.");
+            return;
+        }
+
+        GameTile@ tile = Match.GetCell(int(data["cell_id"]));
+
+        UI::ShowNotification("", Icons::Eject + " " + tile.statePlayerTarget.name + " has escaped from their jail.", vec4(0., 0., 0., .6), 15000);
+
+        tile.specialState = TileItemState::Empty;
+        tile.statePlayerTarget = PlayerRef();
     }
 }

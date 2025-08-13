@@ -98,6 +98,6 @@ pub enum GameEvent {
     },
     RallyResolved {
         cell_id: usize,
-        team: TeamIdentifier,
+        team: Option<TeamIdentifier>,
     },
 }

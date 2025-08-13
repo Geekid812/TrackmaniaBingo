@@ -52,6 +52,7 @@ pub struct LiveMatch {
     phase: MatchPhase,
     channel: Channel<GameEvent>,
     polls: HashMap<u32, Owned<PollData>>,
+    idents: u32,
 }
 
 struct MatchOptions {
@@ -89,14 +90,17 @@ impl LiveMatch {
                     cell_id,
                     map,
                     claims: Vec::new(),
-                    reroll_ids: Vec::new(),
                     state: TileItemState::Empty,
+                    claimant: None,
+                    state_player: None,
+                    state_ident: None,
                 })
                 .collect(),
             started: None,
             phase: MatchPhase::Starting,
             channel: Channel::new(),
             polls: HashMap::new(),
+            idents: 0,
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
@@ -293,6 +297,7 @@ impl LiveMatch {
             operator: false,
             disconnected: false,
             holding_powerup: Powerup::Empty,
+            item_ident: None,
             writer: ctx.writer.clone(),
         });
         team.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
@@ -400,9 +405,22 @@ impl LiveMatch {
         }
 
         let is_new_record = i == 0;
-        if is_new_record && self.cells[id].state == TileItemState::HasPowerup {
-            self.cells[id].state = TileItemState::Empty;
-            self.give_new_powerup(running_player);
+        if is_new_record {
+            self.cells[id].claimant = None;
+
+            if self.cells[id].state == TileItemState::HasPowerup {
+                self.cells[id].state = TileItemState::Empty;
+                self.give_new_powerup(running_player.clone());
+            }
+
+            if self.cells[id].state == TileItemState::Jail
+                && self.cells[id]
+                    .state_player
+                    .as_ref()
+                    .is_some_and(|p| p.uid == running_player.uid)
+            {
+                self.jail_resolve(id, None);
+            }
         }
     }
 
@@ -532,7 +550,7 @@ impl LiveMatch {
         if !self.can_reroll() {
             return Err(anyhow!("tried to reroll, but rerolls are disallowed"));
         }
-        if self.cells[cell_id].leading_claim().is_some() {
+        if self.cells[cell_id].leading_claim().is_some() || self.cells[cell_id].claimant.is_some() {
             return Err(anyhow!("map is already claimed, cannot reroll it"));
         }
 
@@ -882,13 +900,26 @@ impl LiveMatch {
         }
     }
 
-    fn give_powerup(&mut self, player: PlayerRef, powerup: Powerup) {
-        if let Some(player) = self.get_player_mut(player.uid as i32) {
+    fn give_powerup(&mut self, player_ref: PlayerRef, powerup: Powerup) {
+        let item_ident = self.new_ident();
+        if let Some(player) = self.get_player_mut(player_ref.uid as i32) {
             player.holding_powerup = powerup;
+            player.item_ident = Some(item_ident);
+
+            if powerup != Powerup::Empty && self.config.items_expire != 0 {
+                let pref = player_ref.clone();
+                execute_delayed_task(
+                    self.ptr.clone(),
+                    move |_self| _self.item_expire(pref, item_ident),
+                    Duration::seconds(self.config.items_expire.into())
+                        .to_std()
+                        .unwrap(),
+                );
+            }
         }
 
         self.channel.broadcast(&GameEvent::ItemSlotEquip {
-            uid: player.uid,
+            uid: player_ref.uid,
             powerup,
         });
     }
@@ -955,21 +986,93 @@ impl LiveMatch {
     }
 
     fn powerup_effect_rally(&mut self, board_index: usize) {
+        let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Rally;
+        self.cells[board_index].state_ident = Some(state_ident);
+
+        execute_delayed_task(
+            self.ptr.clone(),
+            move |_self| _self.rally_resolve(board_index, Some(state_ident)),
+            Duration::minutes(10).to_std().unwrap(),
+        );
     }
 
     fn powerup_effect_jail(&mut self, board_index: usize, target: PlayerRef) {
+        let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Jail;
+        self.cells[board_index].state_player = Some(target);
+        self.cells[board_index].state_ident = Some(state_ident);
+
+        execute_delayed_task(
+            self.ptr.clone(),
+            move |_self| _self.jail_resolve(board_index, Some(state_ident)),
+            Duration::minutes(15).to_std().unwrap(),
+        );
     }
 
-    fn jail_resolve(&mut self, cell_id: usize) {
-        self.cells[cell_id].state = TileItemState::Empty;
-        self.channel.broadcast(&GameEvent::JailResolved { cell_id });
+    fn jail_resolve(&mut self, cell_id: usize, state_ident: Option<u32>) {
+        if state_ident.is_none_or(|st1| {
+            self.cells[cell_id]
+                .state_ident
+                .is_some_and(|st2| st1 == st2)
+        }) {
+            self.cells[cell_id].state = TileItemState::Empty;
+            self.cells[cell_id].state_player = None;
+            self.cells[cell_id].state_ident = None;
+            self.channel.broadcast(&GameEvent::JailResolved { cell_id });
+        }
     }
 
-    fn rally_resolve(&mut self, cell_id: usize) {
-        self.cells[cell_id].state = TileItemState::Empty;
-        // self.channel.broadcast(&GameEvent::RallyResolved { cell_id, team:  });
+    fn rally_resolve(&mut self, cell_id: usize, state_ident: Option<u32>) {
+        if state_ident.is_none_or(|st1| {
+            self.cells[cell_id]
+                .state_ident
+                .is_some_and(|st2| st1 == st2)
+        }) {
+            self.cells[cell_id].state = TileItemState::Empty;
+            self.cells[cell_id].state_ident = None;
+
+            let team = self.cells[cell_id]
+                .claimant
+                .or(self.cells[cell_id].leading_claim().map(|c| c.team_id));
+
+            if let Some(winning_team) = team {
+                let tile_up = cell_id as i32 - self.config.grid_size as i32;
+                let tile_left = cell_id as i32 - 1;
+                let tile_right = cell_id + 1;
+                let tile_down = cell_id + self.config.grid_size as usize;
+
+                if tile_up >= 0 {
+                    self.cells[tile_up as usize].claimant = Some(winning_team);
+                }
+                if tile_left >= 0 {
+                    self.cells[tile_left as usize].claimant = Some(winning_team);
+                }
+                if tile_right < self.cell_count() {
+                    self.cells[tile_right].claimant = Some(winning_team);
+                }
+                if tile_down < self.cell_count() {
+                    self.cells[tile_down].claimant = Some(winning_team);
+                }
+            }
+
+            self.channel
+                .broadcast(&GameEvent::RallyResolved { cell_id, team });
+        }
+    }
+
+    fn item_expire(&mut self, player_ref: PlayerRef, item_ident: u32) {
+        if let Some(player) = self.get_player_mut(player_ref.uid as i32) {
+            if player.item_ident.is_some_and(|ident| ident == item_ident) {
+                self.give_powerup(player_ref, Powerup::Empty);
+            }
+        }
+    }
+
+    fn new_ident(&mut self) -> u32 {
+        let ident = self.idents;
+        self.idents += 1;
+        ident
     }
 }
 
@@ -1006,10 +1109,12 @@ fn iter_check_unique_team<'a>(iter: impl Iterator<Item = &'a GameCell>) -> Optio
         return None;
     };
 
-    let first = first_tile.leading_claim().as_ref().map(|c| c.team_id);
+    let first = first_tile
+        .claimant
+        .or(first_tile.leading_claim().as_ref().map(|c| c.team_id));
     cleaned_iter.fold(first, |acc, x| {
         acc.and_then(|y| {
-            if x.leading_claim().as_ref().map(|c| c.team_id) == Some(y) {
+            if x.claimant.or(x.leading_claim().as_ref().map(|c| c.team_id)) == Some(y) {
                 Some(y)
             } else {
                 None

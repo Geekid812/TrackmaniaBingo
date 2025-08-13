@@ -108,7 +108,7 @@ namespace Gamemaster {
         for (uint i = 0; i < GetTileCount(); i++) {
             GameTile @tile = Match.tiles[i];
 
-            if (tile !is null && tile.IsClaimed() && tile.LeadingRun().player.team.id == team.id)
+            if (tile !is null && tile.HasRunSubmissions() && tile.LeadingRun().player.team.id == team.id)
                 count += 1;
         }
 

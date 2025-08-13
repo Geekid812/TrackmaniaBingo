@@ -45,7 +45,7 @@ class LiveMatch {
     uint GetTeamCellCount(Team team) {
         uint sum = 0;
         for (uint i = 0; i < tiles.Length; i++) {
-            if (tiles[i].IsClaimed() && tiles[i].LeadingRun().player.team == team) {
+            if (tiles[i].HasRunSubmissions() && tiles[i].LeadingRun().player.team == team) {
                 sum += 1;
             }
         }
@@ -101,6 +101,7 @@ class GameTile {
     TileItemState specialState = TileItemState::Empty;
     PlayerRef statePlayerTarget = PlayerRef();
     int64 stateTimeDeadline = 0;
+    Team claimant = Team();
 
     GameTile() {}
 
@@ -114,7 +115,7 @@ class GameTile {
                   "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
     }
 
-    bool IsClaimed() { return attemptRanking.Length != 0; }
+    bool HasRunSubmissions() { return attemptRanking.Length != 0; }
 
     MapClaim LeadingRun() {
         if (attemptRanking.Length == 0)
@@ -148,6 +149,8 @@ class GameTile {
             if (specialState == TileItemState::HasPowerup || specialState == TileItemState::HasSpecialPowerup) {
                 specialState = TileItemState::Empty;
             }
+
+            claimant = Team(); // reset the team who owns this map to the current record holder
         }
     }
 }
