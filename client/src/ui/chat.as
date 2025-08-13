@@ -110,7 +110,7 @@ namespace UIChat {
     void RenderChatMessage(ChatMessage msg, const string&in id) {
         Player @messageAuthor = Gamemaster::IsBingoActive() ? Match.GetPlayer(msg.uid) : null;
 
-        UI::PushStyleColor(UI::Col::ChildBg, (messageAuthor !is null && msg.teamMessage ? vec4(messageAuthor.team.color, .05): vec4()));
+        UI::PushStyleColor(UI::Col::ChildBg, (messageAuthor !is null && msg.teamMessage ? vec4(messageAuthor.team.color, .1): vec4()));
         UI::BeginChild(id, vec2(), UI::ChildFlags::AutoResizeY);
         Font::Set(Font::Style::Bold, Font::Size::Medium);
         string teamPrefix = "";
@@ -139,6 +139,9 @@ namespace UIChat {
 
     bool OnKeyPress(bool down, VirtualKey key) {
         if (!ShouldDisplay())
+            return false;
+    
+        if (Playground::IsInGameMenuOpen())
             return false;
 
         if (down && key == Settings::ChatBindingKey) {

@@ -79,6 +79,18 @@ namespace Playground {
         return true;
     }
 
+    /* Return whether the pause or end round menu is open. */
+    bool IsInGameMenuOpen() {
+        auto app = cast<CTrackMania>(GetApp());
+        CGameManiaAppPlayground@ playground = app.Network.ClientManiaAppPlayground;
+        if (playground is null) return false;
+
+        auto config = playground.UI;
+        if (config is null) return false;
+
+        return config.UISequence == CGamePlaygroundUIConfig::EUISequence::EndRound || app.Network.PlaygroundClientScriptAPI.IsInGameMenuDisplayed;
+    }
+
     namespace __internal {
         class PlayMapCoroutineData {
             string filePath;
@@ -89,17 +101,6 @@ namespace Playground {
             PlayMapCoroutineData(const string& in filePath, const string& in modeName) {
                 this.filePath = filePath;
                 this.modeName = modeName;
-            }
-
-        }
-
-        class InitManialinkCoroutineData {
-            array<MapClaim> ranking;
-
-            InitManialinkCoroutineData() {}
-
-            InitManialinkCoroutineData(array<MapClaim> ranking) {
-                this.ranking = ranking;
             }
 
         }
@@ -134,22 +135,6 @@ namespace Playground {
 
             app.ManiaTitleControlScriptAPI.PlayMap(data.filePath, data.modeName, "");
             trace("[Playground::PlayMap] Load coroutine completed.");
-        }
-
-        void
-        InitManialinkCoroutine(ref @arg) {
-            InitManialinkCoroutineData data = cast<InitManialinkCoroutineData>(arg);
-
-            auto app = cast<CTrackMania>(GetApp());
-            CGameManiaAppPlayground@ playground = app.Network.ClientManiaAppPlayground;
-            auto config = cast<CGamePlaygroundUIConfig>(playground.UI);
-            
-            while (playground !is null && config.UISequence != CGamePlaygroundUIConfig::EUISequence::Intro) yield();
-            if (playground is null) return;
-            while (playground !is null && config.UISequence != CGamePlaygroundUIConfig::EUISequence::Playing) yield();
-            if (playground is null) return;
-            yield(10);
-            if (playground is null) return;
         }
     }
 }
