@@ -3,18 +3,9 @@
  */
 #Extends "Modes/TrackMania/TM_PlayMap_Local.Script.txt"
 
-#Include "Libs/Nadeo/CMGame/Utils/Utils.Script.txt" as Utils
 #Include "Libs/Nadeo/TMGame/Modes/Base/UIModules/Checkpoint_Server.Script.txt" as UIModules_Checkpoint
+#Include "Libs/Bingo/Bingo_Events.Script.txt" as Bingo_Events
 
-#Struct K_GhostData {
-	Text Nickname;
-	Text AccountId;
-	Integer Time;
-	Integer[] Checkpoints;
-	Boolean IsPersonalBest;
-}
-
-declare Integer[][] G_GhostsTimes;
 
 ***Match_AfterLoadHud***
 ***
@@ -22,52 +13,27 @@ UIModules_TimeGap::SetTimeGapMode(UIModules_TimeGap::C_TimeGapMode_Solo);
 UIModules_Checkpoint::SetRankMode(UIModules_Checkpoint::C_RankMode_Ghost);
 ***
 
-***Match_StartMap***
-***
-declare Integer[] CPTimes = [5555, 9999, 19999];
-declare Integer ResultTime = 30000;
-declare Text AccountId = "0620b7f8-6741-4f36-9443-195c4b0faa6d";
-
-foreach (Player in Players) {
-	declare netwrite K_GhostData[] Net_TimeGap_GhostIdentList_V2 for Player;
-	Net_TimeGap_GhostIdentList_V2 = [];
-
-    Net_TimeGap_GhostIdentList_V2.add(K_GhostData {
-        Nickname = "",
-        AccountId = AccountId,
-        Time = ResultTime,
-        Checkpoints = CPTimes,
-        IsPersonalBest = False
-    });
-
-	declare CUIConfig UI <=> UIManager.GetUI(Player);
-	if (UI != Null) {
-		declare netwrite Integer[][] Net_Race_Checkpoint_GhostsTimes for UI;
-		Net_Race_Checkpoint_GhostsTimes = [];
-		Net_Race_Checkpoint_GhostsTimes.add(Utils::ToScriptArray(CPTimes));
-	}
-
-    G_GhostsTimes = [];
-	G_GhostsTimes.add(Utils::ToScriptArray(CPTimes));
-}
-***
-
 ***Match_PlayLoop***
 ***
 foreach (Player in Players) {
-    GhostUpdate(Player);
+    GhostUpdate(Player, Bingo_Events::GetGhostsTimes());
 }
+***
+
+***Match_Yield***
+***
+Bingo_Events::Yield();
 ***
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 /// Update the rank of a player against the ghosts
-Void GhostUpdate(CSmPlayer _Player) {
+Void GhostUpdate(CSmPlayer _Player, Integer[][] _GhostsTimes) {
 	declare Integer Rank = 1;
 	if (
 		_Player.RaceWaypointTimes.count > 0 &&
 		_Player.RaceWaypointTimes[_Player.RaceWaypointTimes.count - 1] >= 0
 	) {
-		foreach (WaypointsTimes in G_GhostsTimes) {
+		foreach (WaypointsTimes in _GhostsTimes) {
 			if (
 				WaypointsTimes.count >= _Player.RaceWaypointTimes.count &&
 				WaypointsTimes[_Player.RaceWaypointTimes.count - 1] >= 0 &&

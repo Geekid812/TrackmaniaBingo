@@ -14,6 +14,7 @@ pub struct SubmitRun {
     tile_index: usize,
     time: u64,
     medal: Medal,
+    splits: Vec<u64>,
 }
 
 pub fn handle(ctx: &mut ClientContext, args: SubmitRun) -> Value {
@@ -24,6 +25,7 @@ pub fn handle(ctx: &mut ClientContext, args: SubmitRun) -> Value {
             team_id: ctx.game.as_ref().unwrap().team(),
             time: args.time,
             medal: args.medal,
+            splits: args.splits
         };
         let mut lock = game.lock();
         lock.add_submitted_run(args.tile_index, claim);

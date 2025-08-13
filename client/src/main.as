@@ -13,8 +13,8 @@ void Main() {
     // Initialization
     Font::Init();
     UIHome::InitSubtitles();
-    GameUpdates::CheckUnstableConfigurations();
     Modefiles::EnsureAllModefilesCreated();
+    GameUpdates::CheckUnstableConfigurations();
 
     // Load configuration settings
     PersistantStorage::LoadItems();

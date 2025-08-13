@@ -105,6 +105,11 @@ namespace NetworkHandlers {
             }
         }
         claimedMap.RegisterClaim(claim);
+
+        // Send a manialink UI event if we are not in competitive mode
+        if (!Match.config.competitvePatch && Gamemaster::GetCurrentTileIndex() == int(data["cell_id"])) {
+            Playground::UpdateCurrentPlaygroundRecord(claim.player.profile.accountId, claim.result.time, claim.result.checkpoints);
+        }
     }
 
     void UpdateConfig(Json::Value @data) {

@@ -48,6 +48,7 @@ pub struct MapClaim {
     pub team_id: TeamIdentifier,
     pub time: u64,
     pub medal: Medal,
+    pub splits: Vec<u64>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]
@@ -68,5 +69,5 @@ pub enum TileItemState {
     HasSpecialPowerup,
     Rainbow,
     Rally,
-    Jail
+    Jail,
 }

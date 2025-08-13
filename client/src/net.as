@@ -481,6 +481,12 @@ namespace Network {
         body["tile_index"] = tileIndex;
         body["time"] = result.time;
         body["medal"] = result.medal;
+        body["splits"] = Json::Array();
+
+        for (uint i = 0; i < result.checkpoints.Length; i++) {
+            body["splits"].Add(result.checkpoints[i]);
+        }
+
         if (campaign.campaignId != -1)
             body["campaign"] = CampaignMap::Serialize(campaign);
         auto Request = Network::Post("SubmitRun", body, false);

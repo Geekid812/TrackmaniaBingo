@@ -182,13 +182,15 @@ class EndState {
 
 class RunResult {
     int time = -1;
+    array<uint> checkpoints = {};
     Medal medal = Medal::None;
 
     RunResult() {}
 
-    RunResult(int time, Medal medal) {
+    RunResult(int time, Medal medal, array<uint> checkpoints = {}) {
         this.time = time;
         this.medal = medal;
+        this.checkpoints = checkpoints;
     }
 
     string Display(const string& in color = "$z") {

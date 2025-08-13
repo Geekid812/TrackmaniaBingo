@@ -41,6 +41,44 @@ namespace Playground {
         return false;
     }
 
+    /* Send a manialink event to update the mode UI of a new record. */
+    void UpdateCurrentPlaygroundRecord(const string&in accountId, int time, array<uint> checkpoints) {
+        trace("[Playground::UpdateCurrentPlaygroundRecord] (" + accountId + ") - " + Time::Format(time));
+        auto app = cast<CTrackMania>(GetApp());
+        CGameManiaAppPlayground@ playground = app.Network.ClientManiaAppPlayground;
+        if (playground is null) return;
+
+        MwFastBuffer<wstring> arguments;
+        arguments.Add(accountId);
+        arguments.Add(tostring(time));
+        for (uint i = 0; i < checkpoints.Length; i++) {
+            arguments.Add(tostring(checkpoints[i]));
+        }
+
+        playground.SendCustomEvent("Bingo_UpdateRecord", arguments);
+    }
+
+    /* Maniascript map load events initialization. */
+    bool ManialinkInit(GameTile@ tile) {
+        if (@tile is null) return false;
+
+        auto app = cast<CTrackMania>(GetApp());
+        CGameManiaAppPlayground@ playground = app.Network.ClientManiaAppPlayground;
+        if (playground is null) return false;
+
+        auto config = playground.UI;
+        if (config is null || config.UISequence != CGamePlaygroundUIConfig::EUISequence::Intro) return false;
+
+        auto rank = tile.attemptRanking;
+        trace("[Playground::ManialinkInit] Initializing " + rank.Length + " record" + (rank.Length == 1 ? "" : "s") + "...");
+        for (uint i = 0; i < rank.Length; i++) {
+            Player@ player = rank[i].player;
+            UpdateCurrentPlaygroundRecord((@player !is null ? player.profile.accountId : ""), rank[i].result.time, rank[i].result.checkpoints);
+        }
+
+        return true;
+    }
+
     namespace __internal {
         class PlayMapCoroutineData {
             string filePath;
@@ -51,6 +89,17 @@ namespace Playground {
             PlayMapCoroutineData(const string& in filePath, const string& in modeName) {
                 this.filePath = filePath;
                 this.modeName = modeName;
+            }
+
+        }
+
+        class InitManialinkCoroutineData {
+            array<MapClaim> ranking;
+
+            InitManialinkCoroutineData() {}
+
+            InitManialinkCoroutineData(array<MapClaim> ranking) {
+                this.ranking = ranking;
             }
 
         }
@@ -85,6 +134,22 @@ namespace Playground {
 
             app.ManiaTitleControlScriptAPI.PlayMap(data.filePath, data.modeName, "");
             trace("[Playground::PlayMap] Load coroutine completed.");
+        }
+
+        void
+        InitManialinkCoroutine(ref @arg) {
+            InitManialinkCoroutineData data = cast<InitManialinkCoroutineData>(arg);
+
+            auto app = cast<CTrackMania>(GetApp());
+            CGameManiaAppPlayground@ playground = app.Network.ClientManiaAppPlayground;
+            auto config = cast<CGamePlaygroundUIConfig>(playground.UI);
+            
+            while (playground !is null && config.UISequence != CGamePlaygroundUIConfig::EUISequence::Intro) yield();
+            if (playground is null) return;
+            while (playground !is null && config.UISequence != CGamePlaygroundUIConfig::EUISequence::Playing) yield();
+            if (playground is null) return;
+            yield(10);
+            if (playground is null) return;
         }
     }
 }

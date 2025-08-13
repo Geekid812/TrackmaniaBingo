@@ -9,7 +9,7 @@ use crate::{
     config::{self, CONFIG},
     core::models::livegame::TileItemState,
     datatypes::{
-        CampaignMap, FrenzyItemSettings, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice,
+        CampaignMap, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice,
         Powerup,
     },
     server::{

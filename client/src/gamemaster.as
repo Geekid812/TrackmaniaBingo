@@ -203,11 +203,10 @@ namespace Gamemaster {
      * -1 should represent that we are not in a map.
      */
     void SetCurrentTileIndex(int tileIndex) {
-        if (Match.currentTileIndex != tileIndex) {
-            Match.currentTileIndex = tileIndex;
-        }
+        Match.currentTileIndex = tileIndex;
 
         GameUpdates::MapIsCompetitivePatched = false;
+        GameUpdates::ManialinkInitialized = false;
     }
 
     /**

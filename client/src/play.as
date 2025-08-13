@@ -46,11 +46,18 @@ namespace Playground {
 
         if (ghost.Result.Time > 0 && ghost.Result.Time < 4294967295)
             time = ghost.Result.Time;
+
+        array<uint> checkpoints;
+        for (uint i = 0; i < ghost.Result.Checkpoints.Length; i++) {
+            checkpoints.InsertLast(ghost.Result.Checkpoints[i]);
+        }
+
         playgroundScript.DataFileMgr.Ghost_Release(ghost.Id);
 
         if (time != -1) {
             return RunResult(time,
-                             CalculateMedal(time, authorTime, goldTime, silverTime, bronzeTime));
+                             CalculateMedal(time, authorTime, goldTime, silverTime, bronzeTime),
+                             checkpoints);
         }
         return null;
     }
