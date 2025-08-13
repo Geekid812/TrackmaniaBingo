@@ -1,6 +1,6 @@
 
 namespace SurveyService {
-    const string SURVEY_ENDPOINT = "http://localhost:8080/survey"; // FIXME
+    const string SURVEY_ENDPOINT = "http://38.242.214.20:8082/survey";
 
     // Check if we are currently running under Wine
     bool IsWineLinux() {
