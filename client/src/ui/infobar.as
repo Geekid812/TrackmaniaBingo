@@ -266,7 +266,6 @@ namespace UIInfoBar {
 
     void FrenzyItemSelectSlot() {
         UI::PushStyleColor(UI::Col::Border, UIItemSelect::Visible ? vec4(1., .8, .2, .9) : vec4(.5, .5, .5, .9));
-        UI::PushStyleVar(UI::StyleVar::FramePadding, vec2());
         UI::BeginChild("Bingo Item Select Slot", vec2(), UI::ChildFlags::Borders | UI::ChildFlags::AutoResizeX | UI::ChildFlags::AutoResizeY);
 
         Player@ localPlayer = (Gamemaster::IsBingoActive() ? Match.GetSelf() : null);
@@ -314,7 +313,6 @@ namespace UIInfoBar {
 
 
         UI::EndChild();
-        UI::PopStyleVar();
         UI::PopStyleColor();
         
         if (UI::IsItemClicked()) {

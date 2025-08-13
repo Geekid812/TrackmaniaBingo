@@ -1,10 +1,7 @@
-use crate::{
-    core::models::livegame::MapClaim,
-    server::{
+use crate::server::{
         context::ClientContext,
         handlers::{error, ok},
-    },
-};
+    };
 use serde::Deserialize;
 use serde_json::Value;
 

@@ -1,14 +1,16 @@
-use serde::{Deserialize, Serialize};
+use serde::{Serialize};
 
-use crate::{core::gamecommon::PlayerData, datatypes::PlayerProfile};
+use crate::{core::gamecommon::PlayerData, datatypes::PlayerProfile, transport::messager::NetMessager};
 
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct Player {
     #[serde(flatten)]
     pub profile: PlayerProfile,
     pub operator: bool,
     pub disconnected: bool,
+    #[serde(skip)]
+    pub writer: NetMessager
 }
 
 impl From<&PlayerData> for Player {
@@ -17,6 +19,7 @@ impl From<&PlayerData> for Player {
             profile: value.profile.clone(),
             operator: value.operator,
             disconnected: value.disconnected,
+            writer: value.writer.clone()
         }
     }
 }

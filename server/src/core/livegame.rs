@@ -244,6 +244,7 @@ impl LiveMatch {
 
         if let Some(team) = already_joined_team {
             self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
+            self.teams.get_mut(team).unwrap().channel.subscribe(ctx.profile.uid, ctx.writer.clone());
             return Ok(team);
         } else {
             if !self.config.late_join {
@@ -290,7 +291,9 @@ impl LiveMatch {
             profile: ctx.profile.clone(),
             operator: false,
             disconnected: false,
+            writer: ctx.writer.clone()
         });
+        team.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
         self.channel.subscribe(ctx.profile.uid, ctx.writer.clone());
         self.channel.broadcast(&GameEvent::MatchPlayerJoin {
             profile: ctx.profile.clone(),

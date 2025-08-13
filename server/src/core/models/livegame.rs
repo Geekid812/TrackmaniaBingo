@@ -15,7 +15,7 @@ use super::team::GameTeam;
 use super::team::TeamIdentifier;
 
 #[serde_with::serde_as]
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct MatchState {
     pub uid: String,
     pub config: MatchConfiguration,

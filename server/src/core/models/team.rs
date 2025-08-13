@@ -41,7 +41,7 @@ impl Team for BaseTeam {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct GameTeam {
     pub base: BaseTeam,
     pub members: Vec<Player>,
@@ -64,10 +64,12 @@ impl From<BaseTeam> for GameTeam {
 
 impl From<RoomTeam> for GameTeam {
     fn from(value: RoomTeam) -> Self {
+        let mut channel = Channel::new();
+        value.members.iter().for_each(|player| channel.subscribe(player.profile.uid, player.writer.clone()));
         Self {
             base: value.base,
             members: value.members,
-            channel: Channel::new(),
+            channel,
             winner: false,
         }
     }

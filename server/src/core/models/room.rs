@@ -9,7 +9,7 @@ use crate::{
 
 use super::{player::Player, team::BaseTeam};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct RoomState {
     pub config: RoomConfiguration,
     pub matchconfig: MatchConfiguration,
@@ -47,7 +47,7 @@ impl From<&room::GameRoom> for NetworkRoom {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct RoomTeam {
     #[serde(flatten)]
     pub base: BaseTeam,
