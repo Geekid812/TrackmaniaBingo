@@ -272,7 +272,7 @@ namespace UIInfoBar {
         Powerup myPowerup = (@localPlayer !is null ? localPlayer.holdingPowerup : Powerup::Empty);
 
         if (myPowerup != Powerup::Empty) {
-            UI::Dummy(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE);            
+            UI::Image(Powerups::GetPowerupTexture(myPowerup), vec2(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE));
         } else {
             UI::Dummy(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE);
         }

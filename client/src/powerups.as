@@ -1,5 +1,44 @@
 
 namespace Powerups {
+    UI::Texture@ PowerupRowShiftTex;
+    UI::Texture@ PowerupColumnShiftTex;
+    UI::Texture@ PowerupRallyTex;
+    UI::Texture@ PowerupJailTex;
+    UI::Texture@ PowerupRainbowTileTex;
+    UI::Texture@ PowerupGoldenDiceTex;
+
+    UI::Texture@ LoadInternalTex(const string&in filename) {
+        IO::FileSource fileSource(filename);
+        return UI::LoadTexture(fileSource.Read(fileSource.Size()));
+    }
+
+    UI::Texture@ GetPowerupTexture(Powerup powerup) {
+        switch (powerup) {
+            case Powerup::RowShift:
+                return PowerupRowShiftTex;
+            case Powerup::ColumnShift:
+                return PowerupColumnShiftTex;
+            case Powerup::Rally:
+                return PowerupRallyTex;
+            case Powerup::Jail:
+                return PowerupJailTex;
+            case Powerup::RainbowTile:
+                return PowerupRainbowTileTex;
+            default:
+                return null;
+        }
+    }
+
+    void InitPowerupTextures() {
+        @PowerupRowShiftTex = LoadInternalTex("data/row_shift.png");
+        @PowerupColumnShiftTex = LoadInternalTex("data/column_shift.png");
+        @PowerupRallyTex = LoadInternalTex("data/rally.png");
+        @PowerupJailTex = LoadInternalTex("data/jail.png");
+        @PowerupRainbowTileTex = LoadInternalTex("data/rainbow.png");
+        @PowerupGoldenDiceTex = LoadInternalTex("data/golden_dice.png");
+        trace("[Powerups::InitPowerupTextures] Item textures loaded.");
+    }
+
     void TriggerPowerup(Powerup powerup, PlayerRef powerupUser, int boardIndex, bool forwards, PlayerRef@ targetPlayer) {
         if (!Gamemaster::IsBingoActive()) {
             warn("[Powerups::TriggerPowerup] Bingo is not active, ignoring this event.");
