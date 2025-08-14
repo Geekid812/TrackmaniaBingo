@@ -1,5 +1,23 @@
-## Update 5.3
+## Update 6.0
+A major update featuring a new gamemode, new mechanics and many QOL changes and bug fixes!
 
-This is a bugfix-only release! The following issues have been fixed:
-- Fix late players always joining the first team instead of going to the least populated team
-- Fix update logic not running after the game had ended
+### New Gamemode: Frenzy
+Powerups will sometimes appear on random maps the Bingo board, they can be collected by beating the current record on that map. Items can be used to manipulate the Bingo board, apply effects to maps or other players, and generally make the game more chaotic!
+
+This initial update adds 6 different powerups to the new gamemode, drafting probabilities for each item can be configured in the game settings.
+
+### New Game Settings
+- **Gamemode**: Choose between the Standard gamemode and the newly added Frenzy gamemode.
+- **Competitive Patch**: Enabling this setting will disable the in-game records tab for all players, which will hide the leaderboards during a match and disable watching replays.
+- **Item Expire** (Frenzy): After being collected, a powerup must be used within the configured time frame or it will disappear (2 minutes, 10 minutes, no expiration).
+
+### Improvements and bug fixes
+- **Checkpoint Splits**: Checkpoint splits from other players will appear in-game during Bingo in a similar way to the Time Attack online mode. However, these splits will be hidden if Competitive Patch is enabled.
+
+- **Cell Coordinates**: For easier communication, all tiles on the Bingo grid are now labeled with a row/column coordinate system (Example: "[ B4 ] WaterGliders"). Coordinates are visible when hovering a map or on the miniature Bingo board.
+
+- **Chat improvements**: Added team messages visible only by team members (with the `/t` command). The Open Chat binding key will no longer trigger when you have focus on an in-game menu, which should reduce accidental inputs.
+
+- **Shuffle Teams**: You want quick random? With the press of a single button in the Bingo room, the host can now quickly shuffle all players into balanced teams.
+
+- **Compatibility Updates & Bug Fixes**: Regular plugin maintenance for Openplanet updates, changes to the network code, as well as some bugs having been fixed.
