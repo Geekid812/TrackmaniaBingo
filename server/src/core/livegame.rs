@@ -63,6 +63,7 @@ struct PollData {
     pub poll: Poll,
     pub votes: Vec<Vec<PlayerId>>,
     pub callback: PollResultCallback,
+    pub held_tiles: Vec<GameCell>,
 }
 
 pub enum PollResultCallback {
@@ -542,7 +543,12 @@ impl LiveMatch {
         };
 
         let initial_votes = vec![vec![player.uid], Vec::new()];
-        self.start_poll(poll, initial_votes, PollResultCallback::Reroll(cell_id));
+        self.start_poll(
+            poll,
+            initial_votes,
+            PollResultCallback::Reroll(cell_id),
+            Vec::new(),
+        );
 
         Ok(())
     }
@@ -563,6 +569,16 @@ impl LiveMatch {
             can_reroll: self.can_reroll(),
         });
         Ok(())
+    }
+
+    fn replace_map(&mut self, cell_id: usize, map: GameMap) {
+        self.cells[cell_id].map = map;
+        self.cells[cell_id].claims.clear();
+        self.channel.broadcast(&GameEvent::MapRerolled {
+            cell_id,
+            map: self.cells[cell_id].map.clone(),
+            can_reroll: self.can_reroll(),
+        });
     }
 
     pub fn get_player_mut(&mut self, uid: i32) -> Option<&mut IngamePlayer> {
@@ -613,7 +629,9 @@ impl LiveMatch {
             Powerup::Jail if target.is_some() => {
                 self.powerup_effect_jail(board_index, target.clone().unwrap())
             }
-            Powerup::GoldenDice => self.powerup_effect_golden_dice(board_index, &player_ref.name),
+            Powerup::GoldenDice => {
+                self.powerup_effect_golden_dice(board_index, &player_ref.name)?
+            }
             _ => {
                 return Err("this powerup can't be activated".to_string());
             }
@@ -761,6 +779,7 @@ impl LiveMatch {
         poll: Poll,
         initial_votes: Vec<Vec<PlayerId>>,
         callback: PollResultCallback,
+        held_tiles: Vec<GameCell>,
     ) {
         let poll_id = poll.id;
         let delay = poll.duration.to_std().unwrap();
@@ -774,6 +793,7 @@ impl LiveMatch {
             poll,
             votes: initial_votes,
             callback,
+            held_tiles,
         }));
         let poll_ref = Arc::downgrade(&poll_data);
         self.polls.insert(poll_id, poll_data);
@@ -813,7 +833,7 @@ impl LiveMatch {
 
     fn poll_end(&mut self, poll_ref: Shared<PollData>) {
         if let Some(lock) = poll_ref.upgrade() {
-            let poll = lock.lock();
+            let mut poll = lock.lock();
             let (selected_choice, _) = poll
                 .votes
                 .iter()
@@ -833,6 +853,9 @@ impl LiveMatch {
                     if let Err(e) = self.reroll_map(cell_id) {
                         error!("{}", e);
                     }
+                },
+                PollResultCallback::GoldenDice(cell_id) => {
+                    self.replace_map(cell_id, poll.held_tiles.remove(selected_choice).map);
                 }
                 _ => (),
             };
@@ -1013,9 +1036,24 @@ impl LiveMatch {
         );
     }
 
-    fn powerup_effect_golden_dice(&mut self, board_index: usize, player_name: &str) {
+    fn powerup_effect_golden_dice(
+        &mut self,
+        board_index: usize,
+        player_name: &str,
+    ) -> Result<(), String> {
+        if self.cells.len() < self.cell_count() + 3 {
+            return Err(
+                "not enough possible maps to create a vote, powerup effect was cancelled"
+                    .to_string(),
+            );
+        }
+
         let ident = self.new_ident();
-        let start_index = self.cell_count();
+        let held_tiles = vec![
+            self.cells.pop().unwrap(),
+            self.cells.pop().unwrap(),
+            self.cells.pop().unwrap(),
+        ];
         let tile = &mut self.cells[board_index];
         if let Some(winning_team) = tile.claimant.or(tile.leading_claim().map(|c| c.team_id)) {
             tile.claimant = Some(winning_team);
@@ -1032,15 +1070,15 @@ impl LiveMatch {
             duration: Duration::seconds(60),
             choices: vec![
                 PollChoice {
-                    text: self.cells[start_index].map.name(),
+                    text: held_tiles[0].map.name(),
                     color: Color::new(100, 0, 150),
                 },
                 PollChoice {
-                    text: self.cells[start_index + 1].map.name(),
+                    text: held_tiles[1].map.name(),
                     color: Color::new(0, 100, 150),
                 },
                 PollChoice {
-                    text: self.cells[start_index + 2].map.name(),
+                    text: held_tiles[2].map.name(),
                     color: Color::new(0, 0, 250),
                 },
             ],
@@ -1050,7 +1088,9 @@ impl LiveMatch {
             poll,
             vec![vec![], vec![], vec![]],
             PollResultCallback::GoldenDice(board_index),
+            held_tiles,
         );
+        Ok(())
     }
 
     fn jail_resolve(&mut self, cell_id: usize, state_ident: Option<u32>) {

@@ -323,9 +323,10 @@ namespace NetworkHandlers {
         }
 
         uint id = uint(data["cell_id"]);
-        string oldName = Text::StripFormatCodes(Match.tiles[id].map.trackName);
-        Match.tiles.RemoveAt(id);
-        Match.tiles.InsertAt(id, GameTile(GameMap::Deserialize(data["map"])));
+        GameTile@ tile = Match.GetCell(id);
+        string oldName = tile.map !is null ? Text::StripFormatCodes(Match.tiles[id].map.trackName) : "";
+        tile.SetMap(GameMap::Deserialize(data["map"]));
+        tile.attemptRanking = {};
         Match.canReroll = bool(data["can_reroll"]);
 
         UI::ShowNotification(Icons::Kenney::ReloadInverse + " Map Rerolled",
@@ -397,8 +398,18 @@ namespace NetworkHandlers {
         bool forwards = bool(data["forwards"]);
         PlayerRef targetPlayer = (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"]) : PlayerRef());
         string explainerText = Powerups::GetExplainerText(usedPowerup);
+        string targetText;
+        if (usedPowerup == Powerup::Jail) {
+            targetText = " and has sent " + targetPlayer.name;
+        }
+        if (usedPowerup == Powerup::RainbowTile || usedPowerup == Powerup::Rally || usedPowerup == Powerup::Jail) {
+            targetText += " \\$zon \\$ff8" + Text::StripOpenplanetFormatCodes(Match.GetCell(boardIndex).map.gbxName);
+        }
 
-        UIPoll::NotifyToast("\\$" + (@user !is null ? UIColor::GetHex(user.team.color) : "z") + powerupUser.name + " \\$zhas used \\$fd8" + itemName(usedPowerup) + "\\$z!" + explainerText, Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1), Powerups::GetPowerupTexture(usedPowerup));
+        if (usedPowerup != Powerup::GoldenDice) {
+            UIPoll::NotifyToast("\\$" + (@user !is null ? UIColor::GetHex(user.team.color) : "z") + powerupUser.name + " \\$zhas used \\$fd8" + itemName(usedPowerup) + targetText + "\\$z!" + explainerText, Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1), Powerups::GetPowerupTexture(usedPowerup));
+        }
+
         Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer);
     }
 

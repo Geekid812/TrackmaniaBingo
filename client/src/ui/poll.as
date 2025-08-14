@@ -144,6 +144,8 @@ namespace UIPoll {
 
             UIColor::Custom(data.poll.choices[i].color);
             float alignment = float(i + 1) / float(totalChoices + 1);
+            if (totalChoices >= 3) alignment = 0.1 + 0.8 * (float(i) / float(totalChoices - 1));
+
             Layout::AlignButton(buttonText, alignment);
             if (UI::Button(buttonText)) {
                 NetParams::PollId = data.poll.id;

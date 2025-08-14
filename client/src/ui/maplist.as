@@ -127,9 +127,8 @@ namespace UIMapList {
                     }
                 } else if (cell.map !is null) {
                     Visible = false;
-                    Playground::DebugClaim(i);
-                    //Playground::PlayMap(cell.map);
-                    //Gamemaster::SetCurrentTileIndex(i);
+                    Playground::PlayMap(cell.map);
+                    Gamemaster::SetCurrentTileIndex(i);
                     interacted = true;
                 }
             }
@@ -170,7 +169,7 @@ namespace UIMapList {
     }
 
     string GetTileTitle(GameTile tile, int x = -1, int y = -1) {
-        string mapName = Text::OpenplanetFormatCodes(tile.map.trackName);
+        string mapName = tile.map !is null ? Text::OpenplanetFormatCodes(tile.map.trackName) : "";
         string cellCoordinates = (Settings::ShowCellCoordinates ? "\\$888[ \\$ff8" + GetTextCoordinates(x, y) + " \\$888] \\$z" : "");
         
         return cellCoordinates + mapName;
