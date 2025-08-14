@@ -26,4 +26,4 @@ array<GameMap> MapCache;
 array<Team @> TeamPresets;
 
 // Jail tile for the local player
-GameTile@ Jail;
+GameTile @Jail;

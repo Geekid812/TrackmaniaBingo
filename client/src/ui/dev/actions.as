@@ -27,7 +27,7 @@ namespace UIDevActions {
             UIColor::Dark();
             TextureResourceCache();
             UIColor::Reset();
-            
+
             UI::EndTabItem();
         }
 
@@ -140,8 +140,10 @@ namespace UIDevActions {
 
     void DummyRecordControl() {
         if (UI::Button(Icons::Trophy + " Send Dummy ML Event")) {
-            Playground::UpdateCurrentPlaygroundRecord("aa02b90e-0652-4a1c-b705-4677e2983003", 70000, {11111, 22222, 33333, 44444});
-            Playground::UpdateCurrentPlaygroundRecord("0620b7f8-6741-4f36-9443-195c4b0faa6d", 40000, {5555, 10000, 15000, 18000});
+            Playground::UpdateCurrentPlaygroundRecord(
+                "aa02b90e-0652-4a1c-b705-4677e2983003", 70000, {11111, 22222, 33333, 44444});
+            Playground::UpdateCurrentPlaygroundRecord(
+                "0620b7f8-6741-4f36-9443-195c4b0faa6d", 40000, {5555, 10000, 15000, 18000});
         }
     }
 

@@ -277,17 +277,21 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::PencilSquareO + " Gamemode");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
 
-        if (UI::ButtonColored("Standard", .6, .6, (MatchConfig.mode == Gamemode::Standard ? .6 : .1))) {
+        if (UI::ButtonColored(
+                "Standard", .6, .6, (MatchConfig.mode == Gamemode::Standard ? .6 : .1))) {
             MatchConfig.mode = Gamemode::Standard;
         }
-        UI::SetItemTooltip("The classic gamemode for Bingo.\nGet a row, column, or diagonal on the board with your team to win.");
+        UI::SetItemTooltip("The classic gamemode for Bingo.\nGet a row, column, or diagonal on the "
+                           "board with your team to win.");
 
         UI::SameLine();
         Layout::EndLabelAlign();
-        if (UI::ButtonColored("Frenzy", .15, .6, (MatchConfig.mode == Gamemode::Frenzy ? .6 : .1))) {
+        if (UI::ButtonColored(
+                "Frenzy", .15, .6, (MatchConfig.mode == Gamemode::Frenzy ? .6 : .1))) {
             MatchConfig.mode = Gamemode::Frenzy;
         }
-        UI::SetItemTooltip("Powerups will appear randomly on the board.\nUse their different powers efficiently to claim victory!");
+        UI::SetItemTooltip("Powerups will appear randomly on the board.\nUse their different "
+                           "powers efficiently to claim victory!");
     }
 
     void EditItemSettings() {
@@ -302,11 +306,11 @@ namespace UIRoomSettings {
 
         UI::SetNextItemWidth(250);
         if (UI::BeginCombo("##bingoitemexpire",
-                           MatchConfig.itemsExpire == 0 ? "Never"
-                                                 : "After " + (MatchConfig.itemsExpire) / 60 + " minutes")) {
+                           MatchConfig.itemsExpire == 0
+                               ? "Never"
+                               : "After " + (MatchConfig.itemsExpire) / 60 + " minutes")) {
 
-            if (UI::Selectable("After 2 minutes",
-                               MatchConfig.itemsExpire == 120)) {
+            if (UI::Selectable("After 2 minutes", MatchConfig.itemsExpire == 120)) {
                 MatchConfig.itemsExpire = 120;
             }
 
@@ -321,7 +325,8 @@ namespace UIRoomSettings {
             UI::EndCombo();
         }
         UI::SameLine();
-        UITools::HelpTooltip("After being collected, a powerup must be used within a certain time frame or it will disappear.");
+        UITools::HelpTooltip("After being collected, a powerup must be used within a certain time "
+                             "frame or it will disappear.");
     }
 
     void SettingsView() {
@@ -367,7 +372,7 @@ namespace UIRoomSettings {
 
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0)
             TotalTimeIndicator();
-    
+
         if (MatchConfig.mode == Gamemode::Frenzy) {
             EditItemSettings();
         }

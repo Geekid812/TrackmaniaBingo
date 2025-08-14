@@ -84,7 +84,7 @@ class LiveMatch {
         return -1;
     }
 
-    GameTile@ GetCell(int id) { return this.tiles[id]; }
+    GameTile @GetCell(int id) { return this.tiles[id]; }
 
     void SetCurrentTileIndex(int index) {
         this.currentTileIndex = index;
@@ -93,6 +93,7 @@ class LiveMatch {
 }
 
 class GameTile {
+
     GameMap @map = null;
     array<MapClaim> @attemptRanking = {};
     vec3 paintColor = vec3();
@@ -107,16 +108,17 @@ class GameTile {
 
     GameTile(GameMap map) { SetMap(map); }
 
-    void SetMap(GameMap@ map) {
-        @this.map = map;
+    void SetMap(GameMap @map) {
+        @ this.map = map;
         if (@map !is null) {
-            @ this.thumbnail = Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
+            @ this.thumbnail =
+                Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
             @ this.mapImage =
                 Image("https://trackmania.exchange/maps/" + map.id +
-                    "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
+                      "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
         } else {
-            @this.thumbnail = null;
-            @this.mapImage = null;
+            @ this.thumbnail = null;
+            @ this.mapImage = null;
         }
     }
 
@@ -149,13 +151,15 @@ class GameTile {
             i -= 1;
         }
         attemptRanking.InsertAt(i, claim);
-        
+
         if (i == 0) { // new record
-            if (specialState == TileItemState::HasPowerup || specialState == TileItemState::HasSpecialPowerup) {
+            if (specialState == TileItemState::HasPowerup ||
+                specialState == TileItemState::HasSpecialPowerup) {
                 specialState = TileItemState::Empty;
             }
 
-            claimant = Team(-1, "", vec3()); // reset the team who owns this map to the current record holder
+            claimant = Team(
+                -1, "", vec3()); // reset the team who owns this map to the current record holder
         }
     }
 }

@@ -80,8 +80,10 @@ namespace UIMapList {
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(4, 4));
         UI::PushStyleColor(UI::Col::TableBorderLight, vec4(.6, .6, .6, 1.));
         UI::PushStyleColor(UI::Col::TableBorderStrong, vec4(1., 1., 1., 1.));
-        UI::BeginTable(
-            "Bingo_MapList", gridSize, UI::TableFlags::SizingFixedFit | UI::TableFlags::Borders,  vec2((176 * uiScale) * gridSize + 6, 0.));
+        UI::BeginTable("Bingo_MapList",
+                       gridSize,
+                       UI::TableFlags::SizingFixedFit | UI::TableFlags::Borders,
+                       vec2((176 * uiScale) * gridSize + 6, 0.));
 
         for (uint i = 0; i < maps.Length; i++) {
             auto cell = maps[i];
@@ -121,7 +123,9 @@ namespace UIMapList {
                     startnew(Network::RerollCell);
                     RerollMenuOpen = false;
                 } else if (UIItemSelect::HookingMapClick) {
-                    if (cell.specialState == TileItemState::Empty || cell.specialState == TileItemState::HasPowerup || cell.specialState == TileItemState::HasSpecialPowerup) {
+                    if (cell.specialState == TileItemState::Empty ||
+                        cell.specialState == TileItemState::HasPowerup ||
+                        cell.specialState == TileItemState::HasSpecialPowerup) {
                         UIItemSelect::OnTileClicked(i);
                         interacted = true;
                     }
@@ -140,10 +144,13 @@ namespace UIMapList {
                 if (cell.paintColor != vec3())
                     drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.paintColor, 0.1));
                 if (cell.specialState == TileItemState::Rainbow)
-                    drawList.AddRectFilledMultiColor(rect, TeamColorIndex(0), TeamColorIndex(1), TeamColorIndex(2), TeamColorIndex(3));
+                    drawList.AddRectFilledMultiColor(rect,
+                                                     TeamColorIndex(0),
+                                                     TeamColorIndex(1),
+                                                     TeamColorIndex(2),
+                                                     TeamColorIndex(3));
                 if (cell.claimant.id != -1)
-                    drawList.AddRectFilled(
-                        rect, UIColor::GetAlphaColor(cell.claimant.color, 0.1));
+                    drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.claimant.color, 0.1));
                 if (cell.HasRunSubmissions())
                     drawList.AddRectFilled(
                         rect, UIColor::GetAlphaColor(cell.LeadingRun().player.team.color, 0.1));
@@ -170,8 +177,11 @@ namespace UIMapList {
 
     string GetTileTitle(GameTile tile, int x = -1, int y = -1) {
         string mapName = tile.map !is null ? Text::OpenplanetFormatCodes(tile.map.trackName) : "";
-        string cellCoordinates = (Settings::ShowCellCoordinates ? "\\$888[ \\$ff8" + GetTextCoordinates(x, y) + " \\$888] \\$z" : "");
-        
+        string cellCoordinates =
+            (Settings::ShowCellCoordinates
+                 ? "\\$888[ \\$ff8" + GetTextCoordinates(x, y) + " \\$888] \\$z"
+                 : "");
+
         return cellCoordinates + mapName;
     }
 
@@ -180,11 +190,11 @@ namespace UIMapList {
             return;
         }
 
-
         UI::BeginTooltip();
 
         if (tile.specialState == TileItemState::Rainbow) {
-            UI::Text("\\$F55R\\$E65a\\$D85i\\$BA5n\\$AB6b\\$9D6o\\$9D6w \\$7BAT\\$6BBi\\$5ADl\\$49Fe");
+            UI::Text(
+                "\\$F55R\\$E65a\\$D85i\\$BA5n\\$AB6b\\$9D6o\\$9D6w \\$7BAT\\$6BBi\\$5ADl\\$49Fe");
         }
 
         string mapTitle = GetTileTitle(tile, x, y);
@@ -205,7 +215,8 @@ namespace UIMapList {
         }
         if (tile.HasRunSubmissions()) {
             Player topPlayer = tile.LeadingRun().player;
-            UI::Text((tile.claimant.id != -1 ? "Current record by \\$" : "Claimed by \\$") + UIColor::GetHex(topPlayer.team.color) + topPlayer.name);
+            UI::Text((tile.claimant.id != -1 ? "Current record by \\$" : "Claimed by \\$") +
+                     UIColor::GetHex(topPlayer.team.color) + topPlayer.name);
             UI::Text(tile.LeadingRun().result.Display());
         } else {
             UI::TextDisabled("This map has not been claimed yet!");
@@ -220,25 +231,29 @@ namespace UIMapList {
         }
 
         switch (tile.specialState) {
-            case TileItemState::HasPowerup:
-                UI::Text("\\$8ffA powerup can be obtained on this map!");
-                break;
-            case TileItemState::HasSpecialPowerup:
-                UI::Text("\\$fb0A SPECIAL powerup can be obtained on this map!");
-                break;
-            case TileItemState::Rally:
-                UI::Text("\\$fcaA rally is currently taking place on this map!");
-                break;
-            case TileItemState::Jail: {
-                Player@ jailedPlayer = Match.GetPlayer(tile.statePlayerTarget.uid);
-                vec3 teamColor = jailedPlayer !is null ? jailedPlayer.team.color : vec3(.5, .5, .5);
-                UI::Text("\\$" + UIColor::GetHex(teamColor) + tile.statePlayerTarget.name + " \\$f88is in jail here.\n(\\$ff8" + Time::Format(tile.stateTimeDeadline - Time::Now, false) + " \\$f88remaining)");
-                break;
-            }
+        case TileItemState::HasPowerup:
+            UI::Text("\\$8ffA powerup can be obtained on this map!");
+            break;
+        case TileItemState::HasSpecialPowerup:
+            UI::Text("\\$fb0A SPECIAL powerup can be obtained on this map!");
+            break;
+        case TileItemState::Rally:
+            UI::Text("\\$fcaA rally is currently taking place on this map!");
+            break;
+        case TileItemState::Jail: {
+            Player @jailedPlayer = Match.GetPlayer(tile.statePlayerTarget.uid);
+            vec3 teamColor = jailedPlayer !is null ? jailedPlayer.team.color : vec3(.5, .5, .5);
+            UI::Text("\\$" + UIColor::GetHex(teamColor) + tile.statePlayerTarget.name +
+                     " \\$f88is in jail here.\n(\\$ff8" +
+                     Time::Format(tile.stateTimeDeadline - Time::Now, false) + " \\$f88remaining)");
+            break;
+        }
         }
 
         if (UIItemSelect::HookingMapClick) {
-            if (tile.specialState != TileItemState::Empty && tile.specialState != TileItemState::HasPowerup && tile.specialState != TileItemState::HasSpecialPowerup) {
+            if (tile.specialState != TileItemState::Empty &&
+                tile.specialState != TileItemState::HasPowerup &&
+                tile.specialState != TileItemState::HasSpecialPowerup) {
                 UI::Text("\\$f88Cannot select this tile, there is already a powerup active here.");
             }
         }
@@ -259,7 +274,8 @@ namespace UIMapList {
     }
 
     string GetTextCoordinates(int x, int y) {
-        if (x == -1 || y == -1) return "";
+        if (x == -1 || y == -1)
+            return "";
 
         string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         return letters.SubStr(y % 26, 1) + tostring(x + 1);

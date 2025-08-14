@@ -19,19 +19,19 @@ bool canPlayersChooseTheirOwnTeam(RoomConfiguration @roomConfig) {
 
 string itemName(Powerup powerup) {
     switch (powerup) {
-        case Powerup::RowShift:
-            return "Row Shift";
-        case Powerup::ColumnShift:
-            return "Column Shift";
-        case Powerup::Rally:
-            return "Rally";
-        case Powerup::Jail:
-            return "Jail";
-        case Powerup::RainbowTile:
-            return "Rainbow Tile";
-        case Powerup::GoldenDice:
-            return "Golden Dice";
-        default:
-            return "";
+    case Powerup::RowShift:
+        return "Row Shift";
+    case Powerup::ColumnShift:
+        return "Column Shift";
+    case Powerup::Rally:
+        return "Rally";
+    case Powerup::Jail:
+        return "Jail";
+    case Powerup::RainbowTile:
+        return "Rainbow Tile";
+    case Powerup::GoldenDice:
+        return "Golden Dice";
+    default:
+        return "";
     }
 }

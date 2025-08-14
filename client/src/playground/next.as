@@ -42,11 +42,14 @@ namespace Playground {
     }
 
     /* Send a manialink event to update the mode UI of a new record. */
-    void UpdateCurrentPlaygroundRecord(const string&in accountId, int time, array<uint> checkpoints) {
-        trace("[Playground::UpdateCurrentPlaygroundRecord] (" + accountId + ") - " + Time::Format(time));
+    void
+    UpdateCurrentPlaygroundRecord(const string& in accountId, int time, array<uint> checkpoints) {
+        trace("[Playground::UpdateCurrentPlaygroundRecord] (" + accountId + ") - " +
+              Time::Format(time));
         auto app = cast<CTrackMania>(GetApp());
-        CGameManiaAppPlayground@ playground = app.Network.ClientManiaAppPlayground;
-        if (playground is null) return;
+        CGameManiaAppPlayground @playground = app.Network.ClientManiaAppPlayground;
+        if (playground is null)
+            return;
 
         MwFastBuffer<wstring> arguments;
         arguments.Add(accountId);
@@ -59,21 +62,27 @@ namespace Playground {
     }
 
     /* Maniascript map load events initialization. */
-    bool ManialinkInit(GameTile@ tile) {
-        if (@tile is null) return false;
+    bool ManialinkInit(GameTile @tile) {
+        if (@tile is null)
+            return false;
 
         auto app = cast<CTrackMania>(GetApp());
-        CGameManiaAppPlayground@ playground = app.Network.ClientManiaAppPlayground;
-        if (playground is null) return false;
+        CGameManiaAppPlayground @playground = app.Network.ClientManiaAppPlayground;
+        if (playground is null)
+            return false;
 
         auto config = playground.UI;
-        if (config is null || config.UISequence != CGamePlaygroundUIConfig::EUISequence::Intro) return false;
+        if (config is null || config.UISequence != CGamePlaygroundUIConfig::EUISequence::Intro)
+            return false;
 
         auto rank = tile.attemptRanking;
-        trace("[Playground::ManialinkInit] Initializing " + rank.Length + " record" + (rank.Length == 1 ? "" : "s") + "...");
+        trace("[Playground::ManialinkInit] Initializing " + rank.Length + " record" +
+              (rank.Length == 1 ? "" : "s") + "...");
         for (uint i = 0; i < rank.Length; i++) {
-            Player@ player = rank[i].player;
-            UpdateCurrentPlaygroundRecord((@player !is null ? player.profile.accountId : ""), rank[i].result.time, rank[i].result.checkpoints);
+            Player @player = rank[i].player;
+            UpdateCurrentPlaygroundRecord((@player !is null ? player.profile.accountId : ""),
+                                          rank[i].result.time,
+                                          rank[i].result.checkpoints);
         }
 
         return true;
@@ -82,13 +91,16 @@ namespace Playground {
     /* Return whether the pause or end round menu is open. */
     bool IsInGameMenuOpen() {
         auto app = cast<CTrackMania>(GetApp());
-        CGameManiaAppPlayground@ playground = app.Network.ClientManiaAppPlayground;
-        if (playground is null) return false;
+        CGameManiaAppPlayground @playground = app.Network.ClientManiaAppPlayground;
+        if (playground is null)
+            return false;
 
         auto config = playground.UI;
-        if (config is null) return false;
+        if (config is null)
+            return false;
 
-        return config.UISequence == CGamePlaygroundUIConfig::EUISequence::EndRound || app.Network.PlaygroundClientScriptAPI.IsInGameMenuDisplayed;
+        return config.UISequence == CGamePlaygroundUIConfig::EUISequence::EndRound ||
+               app.Network.PlaygroundClientScriptAPI.IsInGameMenuDisplayed;
     }
 
     namespace __internal {

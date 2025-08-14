@@ -1,33 +1,33 @@
 
 namespace Powerups {
-    UI::Texture@ PowerupRowShiftTex;
-    UI::Texture@ PowerupColumnShiftTex;
-    UI::Texture@ PowerupRallyTex;
-    UI::Texture@ PowerupJailTex;
-    UI::Texture@ PowerupRainbowTileTex;
-    UI::Texture@ PowerupGoldenDiceTex;
+    UI::Texture @PowerupRowShiftTex;
+    UI::Texture @PowerupColumnShiftTex;
+    UI::Texture @PowerupRallyTex;
+    UI::Texture @PowerupJailTex;
+    UI::Texture @PowerupRainbowTileTex;
+    UI::Texture @PowerupGoldenDiceTex;
 
-    UI::Texture@ LoadInternalTex(const string&in filename) {
+    UI::Texture @LoadInternalTex(const string& in filename) {
         IO::FileSource fileSource(filename);
         return UI::LoadTexture(fileSource.Read(fileSource.Size()));
     }
 
-    UI::Texture@ GetPowerupTexture(Powerup powerup) {
+    UI::Texture @GetPowerupTexture(Powerup powerup) {
         switch (powerup) {
-            case Powerup::RowShift:
-                return PowerupRowShiftTex;
-            case Powerup::ColumnShift:
-                return PowerupColumnShiftTex;
-            case Powerup::Rally:
-                return PowerupRallyTex;
-            case Powerup::Jail:
-                return PowerupJailTex;
-            case Powerup::RainbowTile:
-                return PowerupRainbowTileTex;
-            case Powerup::GoldenDice:
-                return PowerupGoldenDiceTex;
-            default:
-                return null;
+        case Powerup::RowShift:
+            return PowerupRowShiftTex;
+        case Powerup::ColumnShift:
+            return PowerupColumnShiftTex;
+        case Powerup::Rally:
+            return PowerupRallyTex;
+        case Powerup::Jail:
+            return PowerupJailTex;
+        case Powerup::RainbowTile:
+            return PowerupRainbowTileTex;
+        case Powerup::GoldenDice:
+            return PowerupGoldenDiceTex;
+        default:
+            return null;
         }
     }
 
@@ -55,30 +55,33 @@ namespace Powerups {
         trace("[Powerups::InitPowerupTextures] Item textures loaded.");
     }
 
-    void TriggerPowerup(Powerup powerup, PlayerRef powerupUser, int boardIndex, bool forwards, PlayerRef@ targetPlayer) {
+    void TriggerPowerup(Powerup powerup,
+                        PlayerRef powerupUser,
+                        int boardIndex,
+                        bool forwards,
+                        PlayerRef @targetPlayer) {
         if (!Gamemaster::IsBingoActive()) {
             warn("[Powerups::TriggerPowerup] Bingo is not active, ignoring this event.");
             return;
         }
 
-        
         switch (powerup) {
-            case Powerup::RowShift:
-            case Powerup::ColumnShift:
-                PowerupEffectBoardShift(powerup == Powerup::RowShift, boardIndex, forwards);
-                break;
-            case Powerup::Rally:
-                PowerupEffectRally(boardIndex, 600000);
-                break;
-            case Powerup::RainbowTile:
-                PowerupEffectRainbowTile(boardIndex);
-                break;
-            case Powerup::Jail:
-                PowerupEffectJail(boardIndex, targetPlayer, 900000);
-                break;
-            case Powerup::GoldenDice:
-                PowerupEffectGoldenDice(boardIndex);
-                break;
+        case Powerup::RowShift:
+        case Powerup::ColumnShift:
+            PowerupEffectBoardShift(powerup == Powerup::RowShift, boardIndex, forwards);
+            break;
+        case Powerup::Rally:
+            PowerupEffectRally(boardIndex, 600000);
+            break;
+        case Powerup::RainbowTile:
+            PowerupEffectRainbowTile(boardIndex);
+            break;
+        case Powerup::Jail:
+            PowerupEffectJail(boardIndex, targetPlayer, 900000);
+            break;
+        case Powerup::GoldenDice:
+            PowerupEffectGoldenDice(boardIndex);
+            break;
         }
     }
 
@@ -155,7 +158,7 @@ namespace Powerups {
             return;
         }
 
-        GameTile@ tile = Match.GetCell(tileIndex);
+        GameTile @tile = Match.GetCell(tileIndex);
         tile.SetMap(null);
 
         if (tile.claimant.id == -1 && tile.HasRunSubmissions()) {

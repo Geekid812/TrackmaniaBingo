@@ -107,8 +107,10 @@ namespace NetworkHandlers {
         claimedMap.RegisterClaim(claim);
 
         // Send a manialink UI event if we are not in competitive mode
-        if (!Match.config.competitvePatch && Gamemaster::GetCurrentTileIndex() == int(data["cell_id"])) {
-            Playground::UpdateCurrentPlaygroundRecord(claim.player.profile.accountId, claim.result.time, claim.result.checkpoints);
+        if (!Match.config.competitvePatch &&
+            Gamemaster::GetCurrentTileIndex() == int(data["cell_id"])) {
+            Playground::UpdateCurrentPlaygroundRecord(
+                claim.player.profile.accountId, claim.result.time, claim.result.checkpoints);
         }
     }
 
@@ -323,8 +325,9 @@ namespace NetworkHandlers {
         }
 
         uint id = uint(data["cell_id"]);
-        GameTile@ tile = Match.GetCell(id);
-        string oldName = tile.map !is null ? Text::StripFormatCodes(Match.tiles[id].map.trackName) : "";
+        GameTile @tile = Match.GetCell(id);
+        string oldName =
+            tile.map !is null ? Text::StripFormatCodes(Match.tiles[id].map.trackName) : "";
         tile.SetMap(GameMap::Deserialize(data["map"]));
         tile.attemptRanking = {};
         Match.canReroll = bool(data["can_reroll"]);
@@ -378,12 +381,19 @@ namespace NetworkHandlers {
         }
 
         uint tileId = uint(data["cell_id"]);
-        TileItemState newState = bool(data["is_special"]) ? TileItemState::HasSpecialPowerup : TileItemState::HasPowerup;
+        TileItemState newState =
+            bool(data["is_special"]) ? TileItemState::HasSpecialPowerup : TileItemState::HasPowerup;
 
         GameTile @tile = Match.GetCell(tileId);
         tile.specialState = newState;
 
-        UIPoll::NotifyToast("\\$" + UIColor::GetHex(Board::POWERUP_COLOR) + Icons::Star + " \\$zA powerup has appeared on " + UIMapList::GetTileTitle(tile, tileId % Match.config.gridSize, tileId / Match.config.gridSize) + "\\$z!", 10000);
+        UIPoll::NotifyToast("\\$" + UIColor::GetHex(Board::POWERUP_COLOR) + Icons::Star +
+                                " \\$zA powerup has appeared on " +
+                                UIMapList::GetTileTitle(tile,
+                                                        tileId % Match.config.gridSize,
+                                                        tileId / Match.config.gridSize) +
+                                "\\$z!",
+                            10000);
     }
 
     void PowerupActivated(Json::Value @data) {
@@ -393,21 +403,29 @@ namespace NetworkHandlers {
         }
         Powerup usedPowerup = Powerup(int(data["powerup"]));
         PlayerRef powerupUser = PlayerRef::Deserialize(data["player"]);
-        Player@ user = Match.GetPlayer(powerupUser.uid);
+        Player @user = Match.GetPlayer(powerupUser.uid);
         int boardIndex = int(data["board_index"]);
         bool forwards = bool(data["forwards"]);
-        PlayerRef targetPlayer = (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"]) : PlayerRef());
+        PlayerRef targetPlayer =
+            (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"])
+                                                          : PlayerRef());
         string explainerText = Powerups::GetExplainerText(usedPowerup);
         string targetText;
         if (usedPowerup == Powerup::Jail) {
             targetText = " and has sent " + targetPlayer.name;
         }
-        if (usedPowerup == Powerup::RainbowTile || usedPowerup == Powerup::Rally || usedPowerup == Powerup::Jail) {
-            targetText += " \\$zon \\$ff8" + Text::StripOpenplanetFormatCodes(Match.GetCell(boardIndex).map.gbxName);
+        if (usedPowerup == Powerup::RainbowTile || usedPowerup == Powerup::Rally ||
+            usedPowerup == Powerup::Jail) {
+            targetText += " \\$zon \\$ff8" +
+                          Text::StripOpenplanetFormatCodes(Match.GetCell(boardIndex).map.gbxName);
         }
 
         if (usedPowerup != Powerup::GoldenDice) {
-            UIPoll::NotifyToast("\\$" + (@user !is null ? UIColor::GetHex(user.team.color) : "z") + powerupUser.name + " \\$zhas used \\$fd8" + itemName(usedPowerup) + targetText + "\\$z!" + explainerText, Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1), Powerups::GetPowerupTexture(usedPowerup));
+            UIPoll::NotifyToast("\\$" + (@user !is null ? UIColor::GetHex(user.team.color) : "z") +
+                                    powerupUser.name + " \\$zhas used \\$fd8" +
+                                    itemName(usedPowerup) + targetText + "\\$z!" + explainerText,
+                                Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1),
+                                Powerups::GetPowerupTexture(usedPowerup));
         }
 
         Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer);
@@ -419,7 +437,7 @@ namespace NetworkHandlers {
             return;
         }
 
-        Player@ equipUser = Match.GetPlayer(int(data["uid"]));
+        Player @equipUser = Match.GetPlayer(int(data["uid"]));
         equipUser.holdingPowerup = Powerup(int(data["powerup"]));
         equipUser.powerupExpireTimestamp = Time::Now + Match.config.itemsExpire * 1000;
     }
@@ -430,17 +448,20 @@ namespace NetworkHandlers {
             return;
         }
         int cellId = int(data["cell_id"]);
-        GameTile@ tile = Match.GetCell(cellId);
+        GameTile @tile = Match.GetCell(cellId);
 
         tile.specialState = TileItemState::Empty;
-        if (data["team"].GetType() == Json::Type::Null) return;
+        if (data["team"].GetType() == Json::Type::Null)
+            return;
 
-        Team@ winningTeam = Match.GetTeamWithId(int(data["team"]));
-        vec4 teamColor =
-            UIColor::Brighten(UIColor::GetAlphaColor(winningTeam.color, 0.1), 0.75);
+        Team @winningTeam = Match.GetTeamWithId(int(data["team"]));
+        vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(winningTeam.color, 0.1), 0.75);
         string mapName = Text::StripFormatCodes(tile.map.trackName);
 
-        UI::ShowNotification(Icons::Flag + " Rally Victory", winningTeam.name + " has won the rally on \\$fd8" + mapName + " \\$z!", teamColor, 15000);
+        UI::ShowNotification(Icons::Flag + " Rally Victory",
+                             winningTeam.name + " has won the rally on \\$fd8" + mapName + " \\$z!",
+                             teamColor,
+                             15000);
 
         int cellUp = cellId - Match.config.gridSize;
         int cellLeft = cellId - 1;
@@ -463,9 +484,13 @@ namespace NetworkHandlers {
             return;
         }
 
-        GameTile@ tile = Match.GetCell(int(data["cell_id"]));
+        GameTile @tile = Match.GetCell(int(data["cell_id"]));
 
-        UI::ShowNotification("", Icons::Eject + " " + tile.statePlayerTarget.name + " has escaped from their jail.", vec4(0., 0., 0., .6), 15000);
+        UI::ShowNotification("",
+                             Icons::Eject + " " + tile.statePlayerTarget.name +
+                                 " has escaped from their jail.",
+                             vec4(0., 0., 0., .6),
+                             15000);
 
         tile.specialState = TileItemState::Empty;
         tile.statePlayerTarget = PlayerRef();

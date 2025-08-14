@@ -5,7 +5,8 @@ namespace UIItemSettings {
     const float ITEM_SETTINGS_ALIGN_X = 100;
 
     void Render() {
-        if (!Visible) return;
+        if (!Visible)
+            return;
         UI::SetNextWindowSize(400, 400, UI::Cond::FirstUseEver);
         UI::Begin(Icons::Cog + " Item Settings", Visible);
 
@@ -21,7 +22,7 @@ namespace UIItemSettings {
     void ShowItemSpoilerDisclaimer() {
         UI::NewLine();
         Font::Set(Font::Style::Bold, Font::Size::Large);
-        
+
         string header = "Spoiler alert!";
         Layout::AlignText(header, 0.5);
         UI::Text(header);
@@ -29,7 +30,11 @@ namespace UIItemSettings {
         Font::Unset();
 
         UI::NewLine();
-        UI::TextWrapped("This settings page allows you to tweak the activation of powerups for the Frenzy gamemode.\n\nAll of the new powerups will be revealed to you, it might be more fun to discover what they do during a Bingo game! We recommend leaving all powerups enabled for your first games, so no action is required right now.");
+        UI::TextWrapped(
+            "This settings page allows you to tweak the activation of powerups for the Frenzy "
+            "gamemode.\n\nAll of the new powerups will be revealed to you, it might be more fun to "
+            "discover what they do during a Bingo game! We recommend leaving all powerups enabled "
+            "for your first games, so no action is required right now.");
 
         UI::NewLine();
         if (UI::ButtonColored(Icons::ExclamationCircle + " Go back", 0.05)) {
@@ -59,8 +64,11 @@ namespace UIItemSettings {
         UI::NewLine();
         UI::Separator();
         UI::NewLine();
-        UI::TextWrapped("These settings only change the probabilties of drawing a specific item after collecting a powerup. They do not affect the spawn rate of items.\n\nCommon items are 3x more likely to be pulled than Rare.\nFrequent items are 3x more likely to be pulled than Common.");
-    
+        UI::TextWrapped("These settings only change the probabilties of drawing a specific item "
+                        "after collecting a powerup. They do not affect the spawn rate of "
+                        "items.\n\nCommon items are 3x more likely to be pulled than "
+                        "Rare.\nFrequent items are 3x more likely to be pulled than Common.");
+
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Confirm")) {
             UIItemSettings::Visible = !UIItemSettings::Visible;
@@ -68,18 +76,20 @@ namespace UIItemSettings {
         UIColor::Reset();
     }
 
-    uint ItemSetting(const string&in itemLabel, uint value) {
+    uint ItemSetting(const string& in itemLabel, uint value) {
         UITools::AlignedLabel(itemLabel);
         Layout::MoveTo(ITEM_SETTINGS_ALIGN_X * UI::GetScale());
-        
+
         uint newValue = value;
-        if (UI::ButtonColored("Frequent##bingofreq1item" + itemLabel, .6, .8, (value == 9 ? .6 : .1))) {
+        if (UI::ButtonColored(
+                "Frequent##bingofreq1item" + itemLabel, .6, .8, (value == 9 ? .6 : .1))) {
             newValue = 9;
         }
 
         UI::SameLine();
         Layout::EndLabelAlign();
-        if (UI::ButtonColored("Common##bingofreq2item" + itemLabel, .45, .6, (value == 3 ? .6 : .1))) {
+        if (UI::ButtonColored(
+                "Common##bingofreq2item" + itemLabel, .45, .6, (value == 3 ? .6 : .1))) {
             newValue = 3;
         }
 
@@ -91,7 +101,8 @@ namespace UIItemSettings {
 
         UI::SameLine();
         Layout::EndLabelAlign();
-        if (UI::ButtonColored("Disabled##bingofreq4item" + itemLabel, .05, .6, (value == 0 ? .6 : .1))) {
+        if (UI::ButtonColored(
+                "Disabled##bingofreq4item" + itemLabel, .05, .6, (value == 0 ? .6 : .1))) {
             newValue = 0;
         }
 

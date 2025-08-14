@@ -87,8 +87,8 @@ namespace UIInfoBar {
         vec4 geometry = SubwindowBegin("Bingo Map Info");
 
         string displayText = "\\$ff8Time to beat: ";
-        Player@ localPlayer = Match.GetSelf();
-        Team myTeam = (@localPlayer != null ? localPlayer.team: Team(-1, "", vec3()));
+        Player @localPlayer = Match.GetSelf();
+        Team myTeam = (@localPlayer != null ? localPlayer.team : Team(-1, "", vec3()));
         if (cell.HasRunSubmissions()) {
             MapClaim leadingClaim = cell.LeadingRun();
             if (leadingClaim.teamId == myTeam.id) {
@@ -196,16 +196,24 @@ namespace UIInfoBar {
         }
 
         for (uint i = 0; i < Gamemaster::GetTileCount(); i++) {
-            if (Match.tiles[i] is null) continue;
+            if (Match.tiles[i] is null)
+                continue;
             switch (Match.tiles[i].specialState) {
-                case TileItemState::Rally:
-                    NoticeFrame("Rally - " + Time::Format(Match.tiles[i].stateTimeDeadline - Time::Now, false), Board::RALLY_COLOR, true);
-                    break;
-                case TileItemState::Jail:
-                    if (int(Match.tiles[i].statePlayerTarget.uid) == Profile.uid) {
-                        NoticeFrame("Jailed - " + Time::Format(Match.tiles[i].stateTimeDeadline - Time::Now, false), vec3(.6, .2, .2), true);
-                    }
-                    break;
+            case TileItemState::Rally:
+                NoticeFrame("Rally - " +
+                                Time::Format(Match.tiles[i].stateTimeDeadline - Time::Now, false),
+                            Board::RALLY_COLOR,
+                            true);
+                break;
+            case TileItemState::Jail:
+                if (int(Match.tiles[i].statePlayerTarget.uid) == Profile.uid) {
+                    NoticeFrame(
+                        "Jailed - " +
+                            Time::Format(Match.tiles[i].stateTimeDeadline - Time::Now, false),
+                        vec3(.6, .2, .2),
+                        true);
+                }
+                break;
             }
         }
 
@@ -250,12 +258,12 @@ namespace UIInfoBar {
         UI::End();
     }
 
-    void NoticeFrame(const string&in text, vec3 color, bool animated) {
+    void NoticeFrame(const string& in text, vec3 color, bool animated) {
         float sideMargins = UI::GetStyleVarVec2(UI::StyleVar::WindowPadding).x * 2.;
         float size = UI::GetWindowSize().x - sideMargins;
         float padding = Layout::GetPadding(UI::GetWindowSize().x, size, 0.5);
-        vec4 buttonColor = UIColor::GetAlphaColor(
-            color, animated ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8);
+        vec4 buttonColor =
+            UIColor::GetAlphaColor(color, animated ? (Math::Sin(Time::Now / 500.) + 1.5) / 2. : .8);
         UI::PushStyleColor(UI::Col::Button, buttonColor);
         UI::PushStyleColor(UI::Col::ButtonHovered, buttonColor);
         UI::PushStyleColor(UI::Col::ButtonActive, buttonColor);
@@ -265,14 +273,19 @@ namespace UIInfoBar {
     }
 
     void FrenzyItemSelectSlot() {
-        UI::PushStyleColor(UI::Col::Border, UIItemSelect::Visible ? vec4(1., .8, .2, .9) : vec4(.5, .5, .5, .9));
-        UI::BeginChild("Bingo Item Select Slot", vec2(), UI::ChildFlags::Borders | UI::ChildFlags::AutoResizeX | UI::ChildFlags::AutoResizeY);
+        UI::PushStyleColor(UI::Col::Border,
+                           UIItemSelect::Visible ? vec4(1., .8, .2, .9) : vec4(.5, .5, .5, .9));
+        UI::BeginChild("Bingo Item Select Slot",
+                       vec2(),
+                       UI::ChildFlags::Borders | UI::ChildFlags::AutoResizeX |
+                           UI::ChildFlags::AutoResizeY);
 
-        Player@ localPlayer = (Gamemaster::IsBingoActive() ? Match.GetSelf() : null);
+        Player @localPlayer = (Gamemaster::IsBingoActive() ? Match.GetSelf() : null);
         Powerup myPowerup = (@localPlayer !is null ? localPlayer.holdingPowerup : Powerup::Empty);
 
         if (myPowerup != Powerup::Empty) {
-            UI::Image(Powerups::GetPowerupTexture(myPowerup), vec2(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE));
+            UI::Image(Powerups::GetPowerupTexture(myPowerup),
+                      vec2(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE));
         } else {
             UI::Dummy(POWERUP_FRAME_SIZE, POWERUP_FRAME_SIZE);
         }
@@ -282,41 +295,49 @@ namespace UIInfoBar {
             UI::Text("\\$ff5Item Slot");
 
             switch (myPowerup) {
-                case Powerup::RowShift:
-                    UI::Text("Row Shift\nShift all tiles on a row of the Bingo board one step in any direction!");
-                    break;
-                case Powerup::ColumnShift:
-                    UI::Text("Column Shift\nShift all tiles on a column of the Bingo board one step in any direction!");
-                    break;
-                case Powerup::Rally:
-                    UI::Text("Rally\nStart a rally on a map of your choice.\nWhichever team has the record there after 10 minutes will claim all adjacent tiles!");
-                    break;
-                case Powerup::Jail:
-                    UI::Text("Jail\nSend a player you choose to any map of the Bingo board.\nThey will remain emprisoned there for 15 minutes until they can claim a new record!");
-                    break;
-                case Powerup::RainbowTile:
-                    UI::Text("Rainbow Tile\nTransform any map into a rainbow tile,\nwhich counts as if all teams had claimed it!");
-                    break;
-                case Powerup::GoldenDice:
-                    UI::Text("Golden Dice\nReroll any map of your choice (keeps the current team color).\nAll players can vote for one of three maps that will replace it!");
-                    break;
-                default:
-                    UI::TextDisabled("You don't have any item to use right now.");
-                    break;
+            case Powerup::RowShift:
+                UI::Text("Row Shift\nShift all tiles on a row of the Bingo board one step in any "
+                         "direction!");
+                break;
+            case Powerup::ColumnShift:
+                UI::Text("Column Shift\nShift all tiles on a column of the Bingo board one step in "
+                         "any direction!");
+                break;
+            case Powerup::Rally:
+                UI::Text("Rally\nStart a rally on a map of your choice.\nWhichever team has the "
+                         "record there after 10 minutes will claim all adjacent tiles!");
+                break;
+            case Powerup::Jail:
+                UI::Text(
+                    "Jail\nSend a player you choose to any map of the Bingo board.\nThey will "
+                    "remain emprisoned there for 15 minutes until they can claim a new record!");
+                break;
+            case Powerup::RainbowTile:
+                UI::Text("Rainbow Tile\nTransform any map into a rainbow tile,\nwhich counts as if "
+                         "all teams had claimed it!");
+                break;
+            case Powerup::GoldenDice:
+                UI::Text(
+                    "Golden Dice\nReroll any map of your choice (keeps the current team "
+                    "color).\nAll players can vote for one of three maps that will replace it!");
+                break;
+            default:
+                UI::TextDisabled("You don't have any item to use right now.");
+                break;
             }
 
             if (myPowerup != Powerup::Empty) {
-                UI::Text("\\$ff8Expires in " + Time::Format(localPlayer.powerupExpireTimestamp - Time::Now, false));
+                UI::Text("\\$ff8Expires in " +
+                         Time::Format(localPlayer.powerupExpireTimestamp - Time::Now, false));
             }
 
             UI::EndTooltip();
         }
         UI::PopStyleColor();
 
-
         UI::EndChild();
         UI::PopStyleColor();
-        
+
         UIItemSelect::Powerup = myPowerup;
         if (myPowerup != Powerup::Empty && UI::IsItemClicked()) {
             UIItemSelect::Visible = !UIItemSelect::Visible;

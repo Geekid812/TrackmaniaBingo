@@ -7,34 +7,37 @@ namespace UIItemSelect {
     Powerup Powerup;
 
     void Render() {
-        if (!Visible) return;
+        if (!Visible)
+            return;
         if (!Gamemaster::IsBingoActive() || Powerup == Powerup::Empty) {
             Visible = false;
             return;
         }
-        UI::Begin(Icons::StarO + " Item: " + itemName(Powerup), Visible, UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
+        UI::Begin(Icons::StarO + " Item: " + itemName(Powerup),
+                  Visible,
+                  UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
         NetParams::Powerup = Powerup;
 
         UI::BeginDisabled(Network::IsUISuspended());
         switch (Powerup) {
-            case Powerup::RowShift:
-                RenderRowShift();
-                break;
-            case Powerup::ColumnShift:
-                RenderColumnShift();
-                break;
-            case Powerup::Rally:
-            case Powerup::RainbowTile:
-            case Powerup::GoldenDice:
+        case Powerup::RowShift:
+            RenderRowShift();
+            break;
+        case Powerup::ColumnShift:
+            RenderColumnShift();
+            break;
+        case Powerup::Rally:
+        case Powerup::RainbowTile:
+        case Powerup::GoldenDice:
+            RenderSelectTile();
+            break;
+        case Powerup::Jail: {
+            if (SelectedPlayerUid == -1) {
+                RenderSelectJailPlayer();
+            } else {
                 RenderSelectTile();
-                break;
-            case Powerup::Jail: {
-                if (SelectedPlayerUid == -1) {
-                    RenderSelectJailPlayer();
-                } else {
-                    RenderSelectTile();
-                }
             }
+        }
         }
         UI::EndDisabled();
 
@@ -135,7 +138,5 @@ namespace UIItemSelect {
         startnew(Network::ActivatePowerup);
     }
 
-    void OnPlayerClicked(Player@ player) {
-        SelectedPlayerUid = player.profile.uid;
-    }
+    void OnPlayerClicked(Player @player) { SelectedPlayerUid = player.profile.uid; }
 }

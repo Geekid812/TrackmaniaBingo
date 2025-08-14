@@ -7,7 +7,7 @@ namespace Board {
 
     // Controlled by Powerups
     uint ShiftRowColIndex;
-    bool ShiftIsRow; // true = row; false = column
+    bool ShiftIsRow;      // true = row; false = column
     bool ShiftIsForwards; // true = forward; false = backward
     int64 ShiftStartTimestamp;
 
@@ -65,7 +65,7 @@ namespace Board {
 
         if (tile.paintColor != vec3())
             return UIColor::GetAlphaColor(tile.paintColor, BoardTilesAlpha);
-        
+
         if (tile.claimant.id != -1) {
             return UIColor::GetAlphaColor(tile.claimant.color, BoardTilesAlpha);
         }
@@ -74,12 +74,16 @@ namespace Board {
             return vec4(0, 0, 0, BoardTilesAlpha);
 
         if (tile.specialState == TileItemState::Rainbow) {
-            float rainbowColorTick = float(Time::Now - Match.startTime) / RAINBOW_COLOR_TICK_DURATION;
+            float rainbowColorTick =
+                float(Time::Now - Match.startTime) / RAINBOW_COLOR_TICK_DURATION;
             vec3 primaryColor = Match.teams[int(rainbowColorTick) % Match.teams.Length].color;
-            vec3 secondaryColor = Match.teams[(int(rainbowColorTick) + 1) % Match.teams.Length].color;
+            vec3 secondaryColor =
+                Match.teams[(int(rainbowColorTick) + 1) % Match.teams.Length].color;
             float transitionProgress = rainbowColorTick - int(rainbowColorTick);
 
-            return UIColor::GetAlphaColor(primaryColor * (1 - transitionProgress) + secondaryColor * transitionProgress, BoardTilesAlpha);
+            return UIColor::GetAlphaColor(primaryColor * (1 - transitionProgress) +
+                                              secondaryColor * transitionProgress,
+                                          BoardTilesAlpha);
         }
 
         if (tile.HasRunSubmissions()) {
@@ -100,15 +104,23 @@ namespace Board {
 
         uint cellsPerRow = Match.config.gridSize;
         BoardSizes sizes = CalculateBoardSizes(cellsPerRow);
-        bool isBoardHovered = UI::GetMousePos().x >= Position.x && UI::GetMousePos().y >= Position.y && UI::GetMousePos().x < Position.x + BoardSize && UI::GetMousePos().y < Position.y + BoardSize;
+        bool isBoardHovered = UI::GetMousePos().x >= Position.x &&
+                              UI::GetMousePos().y >= Position.y &&
+                              UI::GetMousePos().x < Position.x + BoardSize &&
+                              UI::GetMousePos().y < Position.y + BoardSize;
         nvg::BeginPath();
 
         int64 animationTime = Time::Now - Match.startTime + ANIMATION_START_TIME;
-        array<CellHighlightDrawData@> cellHightlights;
+        array<CellHighlightDrawData @> cellHightlights;
 
         bool playingShiftAnimation = (Time::Now - ShiftStartTimestamp) <= SHIFTING_ANIMATION_TIME;
         float shiftDirection = ShiftIsForwards ? 1. : -1.;
-        float animationShiftOffset = sizes.step * -shiftDirection + Animation::GetProgress(Time::Now - ShiftStartTimestamp, 0, SHIFTING_ANIMATION_TIME, Animation::Easing::CubicInOut) * sizes.step * shiftDirection;
+        float animationShiftOffset =
+            sizes.step * -shiftDirection + Animation::GetProgress(Time::Now - ShiftStartTimestamp,
+                                                                  0,
+                                                                  SHIFTING_ANIMATION_TIME,
+                                                                  Animation::Easing::CubicInOut) *
+                                               sizes.step * shiftDirection;
 
         // Borders
         float timePerBorder = 1. / (cellsPerRow + 1);
@@ -141,28 +153,25 @@ namespace Board {
             float colX = Position.x + float(i) * sizes.step;
             if (upperArmLength > 0.) {
                 nvg::BeginPath();
-                nvg::Rect(colX,
-                        Position.y,
-                        sizes.border,
-                        upperArmLength);
+                nvg::Rect(colX, Position.y, sizes.border, upperArmLength);
                 nvg::Fill();
             }
 
             if (middleArmLength > 0.) {
                 nvg::BeginPath();
                 nvg::Rect(colX + animationShiftOffset,
-                        Position.y + upperArmLength,
-                        sizes.border,
-                        middleArmLength);
+                          Position.y + upperArmLength,
+                          sizes.border,
+                          middleArmLength);
                 nvg::Fill();
             }
 
             if (lowerArmLength > 0.) {
                 nvg::BeginPath();
                 nvg::Rect(colX,
-                        Position.y + upperArmLength + middleArmLength,
-                        sizes.border,
-                        lowerArmLength);
+                          Position.y + upperArmLength + middleArmLength,
+                          sizes.border,
+                          lowerArmLength);
                 nvg::Fill();
             }
         }
@@ -192,28 +201,25 @@ namespace Board {
             float rowY = Position.y + float(i) * sizes.step;
             if (leftArmLength > 0.) {
                 nvg::BeginPath();
-                nvg::Rect(Position.x,
-                        rowY,
-                        leftArmLength,
-                        sizes.border);
+                nvg::Rect(Position.x, rowY, leftArmLength, sizes.border);
                 nvg::Fill();
             }
 
             if (middleArmLength > 0.) {
                 nvg::BeginPath();
                 nvg::Rect(Position.x + leftArmLength,
-                        rowY + animationShiftOffset,
-                        middleArmLength,
-                        sizes.border);
+                          rowY + animationShiftOffset,
+                          middleArmLength,
+                          sizes.border);
                 nvg::Fill();
             }
 
             if (rightArmLength > 0.) {
                 nvg::BeginPath();
                 nvg::Rect(Position.x + leftArmLength + middleArmLength,
-                        rowY,
-                        rightArmLength,
-                        sizes.border);
+                          rowY,
+                          rightArmLength,
+                          sizes.border);
                 nvg::Fill();
             }
         }
@@ -231,8 +237,12 @@ namespace Board {
 
                 vec2 cellPosition = CellPosition(x, y, sizes);
                 vec4 color = GetTileFillColor(tile);
-                cellPosition.x += (playingShiftAnimation && ShiftIsRow && y == ShiftRowColIndex ? animationShiftOffset : 0.);
-                cellPosition.y += (playingShiftAnimation && !ShiftIsRow && x == ShiftRowColIndex ? animationShiftOffset : 0);
+                cellPosition.x += (playingShiftAnimation && ShiftIsRow && y == ShiftRowColIndex
+                                       ? animationShiftOffset
+                                       : 0.);
+                cellPosition.y += (playingShiftAnimation && !ShiftIsRow && x == ShiftRowColIndex
+                                       ? animationShiftOffset
+                                       : 0);
                 color.w *= colorAnimProgress; // opacity modifier
                 color.x *= lightness;
                 color.y *= lightness;
@@ -243,9 +253,19 @@ namespace Board {
                 nvg::Rect(cellPosition.x, cellPosition.y, sizes.cell, sizes.cell);
                 nvg::Fill();
 
-                // If this cell has a special powerup or rally state, queue it for drawing marks and highlights later
-                if (tile.specialState == TileItemState::HasPowerup || tile.specialState == TileItemState::HasSpecialPowerup || tile.specialState == TileItemState::Rally) {
-                    cellHightlights.InsertLast(CellHighlightDrawData(y, x, true, (tile.specialState == TileItemState::HasSpecialPowerup ? SPECIALPOWER_COLOR : (tile.specialState == TileItemState::HasPowerup ? POWERUP_COLOR : RALLY_COLOR))));
+                // If this cell has a special powerup or rally state, queue it for drawing marks and
+                // highlights later
+                if (tile.specialState == TileItemState::HasPowerup ||
+                    tile.specialState == TileItemState::HasSpecialPowerup ||
+                    tile.specialState == TileItemState::Rally) {
+                    cellHightlights.InsertLast(CellHighlightDrawData(
+                        y,
+                        x,
+                        true,
+                        (tile.specialState == TileItemState::HasSpecialPowerup
+                             ? SPECIALPOWER_COLOR
+                             : (tile.specialState == TileItemState::HasPowerup ? POWERUP_COLOR
+                                                                               : RALLY_COLOR))));
                     DrawPowerupCellMark(tile.specialState, cellPosition, sizes);
                 }
 
@@ -253,15 +273,24 @@ namespace Board {
                 if (tile.specialState == TileItemState::Jail) {
                     nvg::BeginPath();
                     nvg::FillColor(JAIL_BARS_COLOR);
-                    nvg::Rect(cellPosition.x + sizes.cell * 1 / 7, cellPosition.y, sizes.cell / 7, sizes.cell);
+                    nvg::Rect(cellPosition.x + sizes.cell * 1 / 7,
+                              cellPosition.y,
+                              sizes.cell / 7,
+                              sizes.cell);
                     nvg::Fill();
 
                     nvg::BeginPath();
-                    nvg::Rect(cellPosition.x + sizes.cell * 3 / 7, cellPosition.y, sizes.cell / 7, sizes.cell);
+                    nvg::Rect(cellPosition.x + sizes.cell * 3 / 7,
+                              cellPosition.y,
+                              sizes.cell / 7,
+                              sizes.cell);
                     nvg::Fill();
 
                     nvg::BeginPath();
-                    nvg::Rect(cellPosition.x + sizes.cell * 5 / 7, cellPosition.y, sizes.cell / 7, sizes.cell);
+                    nvg::Rect(cellPosition.x + sizes.cell * 5 / 7,
+                              cellPosition.y,
+                              sizes.cell / 7,
+                              sizes.cell);
                     nvg::Fill();
                 }
             }
@@ -277,16 +306,18 @@ namespace Board {
         if (currentTileIndex != -1) {
             int row = currentTileIndex / cellsPerRow;
             int col = currentTileIndex % cellsPerRow;
-            cellHightlights.InsertLast(CellHighlightDrawData(row, col));        
+            cellHightlights.InsertLast(CellHighlightDrawData(row, col));
         }
 
         // Cell highlight
         float highlightBlinkValue = (Math::Sin(float(Time::Now) / 1000.) + 1) / 2;
 
         for (uint i = 0; i < cellHightlights.Length; i++) {
-            CellHighlightDrawData@ currentHl = cellHightlights[i];
+            CellHighlightDrawData @currentHl = cellHightlights[i];
             vec4 highlightColor = vec4(currentHl.color * (0.9 + 0.2 * highlightBlinkValue), .9);
-            float paddingValue = CELL_HIGHLIGHT_PADDING * (currentHl.animated ? Math::Clamp(highlightBlinkValue, 0.4, 0.8) : 1); // Currently not animated
+            float paddingValue = CELL_HIGHLIGHT_PADDING *
+                                 (currentHl.animated ? Math::Clamp(highlightBlinkValue, 0.4, 0.8)
+                                                     : 1); // Currently not animated
             const float highlightWidth = sizes.border * paddingValue;
             const float highlightMarginOffset = sizes.border * (paddingValue - 1.);
 
@@ -356,26 +387,27 @@ namespace Board {
         vec3 fontColor;
 
         switch (state) {
-            case TileItemState::HasSpecialPowerup:
-                markSymbol = Icons::Magic;
-                fontColor = SPECIALPOWER_COLOR;
-                break;
-            case TileItemState::HasPowerup:
-                markSymbol = Icons::Star;
-                fontColor = POWERUP_COLOR;
-                break;
-            case TileItemState::Rally:
-                markSymbol = Icons::Flag;
-                fontColor = RALLY_COLOR;
-                break;
+        case TileItemState::HasSpecialPowerup:
+            markSymbol = Icons::Magic;
+            fontColor = SPECIALPOWER_COLOR;
+            break;
+        case TileItemState::HasPowerup:
+            markSymbol = Icons::Star;
+            fontColor = POWERUP_COLOR;
+            break;
+        case TileItemState::Rally:
+            markSymbol = Icons::Flag;
+            fontColor = RALLY_COLOR;
+            break;
         }
 
         nvg::BeginPath();
         nvg::FillColor(vec4(0., 0., 0., .3));
         nvg::RoundedRect(cellPosition.x + sizes.border * 5,
-                    cellPosition.y + sizes.border * 5,
-                    sizes.cell * 0.66,
-                    sizes.cell * 0.66, sizes.cell);
+                         cellPosition.y + sizes.border * 5,
+                         sizes.cell * 0.66,
+                         sizes.cell * 0.66,
+                         sizes.cell);
         nvg::Fill();
 
         nvg::FillColor(vec4(fontColor, .5));
@@ -386,7 +418,8 @@ namespace Board {
 
     void DrawCoordinates(uint cellsPerRow, BoardSizes sizes) {
         float fontSize = COORDINATES_FONT_SIZE * sizes.cell * 0.1;
-        float nudgeUnit = sizes.border; // small unit of measurement to make adjustments to the position of text (nothing aligns properly by default)
+        float nudgeUnit = sizes.border; // small unit of measurement to make adjustments to the
+                                        // position of text (nothing aligns properly by default)
 
         nvg::FillColor(COORDINATES_FONT_COLOR);
         nvg::FontSize(fontSize);
@@ -430,7 +463,10 @@ namespace Board {
         bool animated;
         vec3 color;
 
-        CellHighlightDrawData(int row, int col, bool animated = false, vec3 color = CELL_HIGHLIGHT_COLOR) {
+        CellHighlightDrawData(int row,
+                              int col,
+                              bool animated = false,
+                              vec3 color = CELL_HIGHLIGHT_COLOR) {
             this.row = row;
             this.col = col;
             this.animated = animated;

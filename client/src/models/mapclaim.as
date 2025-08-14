@@ -37,7 +37,7 @@ namespace MapClaim {
         @mapClaim.player = claimingPlayer;
         mapClaim.teamId = int(value["team_id"]);
         mapClaim.result = RunResult(uint64(value["time"]), Medal(int(value["medal"])));
-        
+
         for (uint i = 0; i < value["splits"].Length; i++) {
             mapClaim.result.checkpoints.InsertLast(uint(value["splits"][i]));
         }

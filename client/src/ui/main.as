@@ -180,14 +180,14 @@ namespace UIEditSettings {
         UI::Begin(Icons::Th + " Room Settings",
                   Visible,
                   UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
-        
+
         UI::BeginDisabled(!Room.localPlayerIsHost);
         UIRoomSettings::SettingsView();
         UI::EndDisabled();
 
         if (!Room.localPlayerIsHost)
             return;
-        
+
         // Update settings button
         UI::NewLine();
         UIColor::Cyan();

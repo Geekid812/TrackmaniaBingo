@@ -6,7 +6,8 @@ namespace UIDevPowerups {
     uint PowerupTileIndex;
 
     void Render() {
-        UI::Text(Icons::ExclamationTriangle + " Only for testing use, using this in a live game will cause desync with the game state!");
+        UI::Text(Icons::ExclamationTriangle + " Only for testing use, using this in a live game "
+                                              "will cause desync with the game state!");
 
         UIColor::Crimson();
 
@@ -30,7 +31,7 @@ namespace UIDevPowerups {
 
     void SpecificTileControls() {
         PowerupTileIndex = UI::InputInt("Target Tile Index", PowerupTileIndex);
-        
+
         if (PowerupAction("Rainbow Tile")) {
             Powerups::PowerupEffectRainbowTile(PowerupTileIndex);
         }
@@ -48,7 +49,5 @@ namespace UIDevPowerups {
         }
     }
 
-    bool PowerupAction(const string&in text) {
-        return UI::Button(text);
-    }
+    bool PowerupAction(const string& in text) { return UI::Button(text); }
 }

@@ -35,8 +35,10 @@ namespace LiveMatch {
                     MapClaim::Deserialize(cell_json["claims"][j], match));
             }
             cell.specialState = TileItemState(int(cell_json["state"]));
-            if (cell_json["state_player"].GetType() != Json::Type::Null) cell.statePlayerTarget = PlayerRef::Deserialize(cell_json["state_player"]);
-            if (cell_json["claimant"].GetType() != Json::Type::Null) cell.claimant = match.GetTeamWithId(int(cell_json["claimant"]));
+            if (cell_json["state_player"].GetType() != Json::Type::Null)
+                cell.statePlayerTarget = PlayerRef::Deserialize(cell_json["state_player"]);
+            if (cell_json["claimant"].GetType() != Json::Type::Null)
+                cell.claimant = match.GetTeamWithId(int(cell_json["claimant"]));
             match.tiles.InsertLast(cell);
         }
         return match;

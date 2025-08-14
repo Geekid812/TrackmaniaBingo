@@ -107,15 +107,23 @@ namespace UIChat {
         UI::PopStyleColor();
     }
 
-    void RenderChatMessage(ChatMessage msg, const string&in id) {
+    void RenderChatMessage(ChatMessage msg, const string& in id) {
         Player @messageAuthor = Gamemaster::IsBingoActive() ? Match.GetPlayer(msg.uid) : null;
 
-        UI::PushStyleColor(UI::Col::ChildBg, (messageAuthor !is null && msg.teamMessage ? vec4(messageAuthor.team.color, .1): vec4()));
+        UI::PushStyleColor(UI::Col::ChildBg,
+                           (messageAuthor !is null && msg.teamMessage
+                                ? vec4(messageAuthor.team.color, .1)
+                                : vec4()));
         UI::BeginChild(id, vec2(), UI::ChildFlags::AutoResizeY);
         Font::Set(Font::Style::Bold, Font::Size::Medium);
         string teamPrefix = "";
         if (msg.teamMessage) {
-            teamPrefix = "\\$" + (messageAuthor is null ? "ccc" : UIColor::GetHex(UIColor::Brighten(messageAuthor.team.color, .4) + vec3(.6, .6, .6))) + "[TEAM] ";
+            teamPrefix = "\\$" +
+                         (messageAuthor is null
+                              ? "ccc"
+                              : UIColor::GetHex(UIColor::Brighten(messageAuthor.team.color, .4) +
+                                                vec3(.6, .6, .6))) +
+                         "[TEAM] ";
         }
 
         UI::Text(teamPrefix + "\\$" +
@@ -140,7 +148,7 @@ namespace UIChat {
     bool OnKeyPress(bool down, VirtualKey key) {
         if (!ShouldDisplay())
             return false;
-    
+
         if (Playground::IsInGameMenuOpen())
             return false;
 
@@ -156,7 +164,8 @@ namespace UIChat {
     }
 
     void DisableChatHints() {
-        if (UIGameRoom::Visible) UIGameRoom::ChatPromptVisible = false;
+        if (UIGameRoom::Visible)
+            UIGameRoom::ChatPromptVisible = false;
     }
 
     void ClearHistory() {

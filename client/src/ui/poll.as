@@ -18,16 +18,20 @@ class PollData {
 }
 
 class NotifyData {
+
     string title;
     uint64 startTime;
     uint64 expireTime;
-    UI::Texture@ thumbnail;
+    UI::Texture @thumbnail;
 
-    NotifyData(const string&in title, uint64 startTime, uint64 expireTime, UI::Texture@ thumbnail = null) {
+    NotifyData(const string& in title,
+               uint64 startTime,
+               uint64 expireTime,
+               UI::Texture @thumbnail = null) {
         this.title = title;
         this.startTime = startTime;
         this.expireTime = expireTime;
-        @this.thumbnail = thumbnail;
+        @ this.thumbnail = thumbnail;
     }
 }
 
@@ -81,12 +85,13 @@ namespace UIPoll {
                 targetWindowY);
 
         UI::SetNextWindowPos(Draw::GetWidth() / 2, currentY, UI::Cond::Always, 0.5, 0.);
-        Window::Create("##bingopoll" + data.poll.id,
-                       open,
-                       Math::Max(500, Draw::MeasureString(data.poll.title, Font::Current()).x + 100),
-                       POLL_WINDOW_HEIGHT,
-                       UI::WindowFlags::NoMove | UI::WindowFlags::NoResize |
-                           UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoScrollbar);
+        Window::Create(
+            "##bingopoll" + data.poll.id,
+            open,
+            Math::Max(500, int(Draw::MeasureString(data.poll.title, Font::Current()).x) + 100),
+            POLL_WINDOW_HEIGHT,
+            UI::WindowFlags::NoMove | UI::WindowFlags::NoResize | UI::WindowFlags::NoTitleBar |
+                UI::WindowFlags::NoScrollbar);
 
         UITools::CenterText(data.poll.title);
 
@@ -99,7 +104,7 @@ namespace UIPoll {
         UI::End();
     }
 
-    void RenderNotify(NotifyData@ data, uint stackIndex) {
+    void RenderNotify(NotifyData @data, uint stackIndex) {
         bool open = true;
         int targetWindowY =
             POLL_WINDOW_MARGIN + (POLL_WINDOW_HEIGHT + POLL_WINDOW_MARGIN) * stackIndex;
@@ -121,13 +126,17 @@ namespace UIPoll {
 
         string notifyTitle = data.title;
         UI::Font @font = Font::Current();
-        Layout::MoveTo(Layout::GetPadding(
-            UI::GetWindowSize().x, Draw::MeasureString(notifyTitle, font, font.FontSize).x + (@data.thumbnail !is null ? NOTIFY_THUMBNAIL_SIZE : 0), 0.5));
-        
+        Layout::MoveTo(
+            Layout::GetPadding(UI::GetWindowSize().x,
+                               Draw::MeasureString(notifyTitle, font, font.FontSize).x +
+                                   (@data.thumbnail !is null ? NOTIFY_THUMBNAIL_SIZE : 0),
+                               0.5));
+
         if (@data.thumbnail !is null) {
             UI::Image(data.thumbnail, vec2(NOTIFY_THUMBNAIL_SIZE, NOTIFY_THUMBNAIL_SIZE));
             UI::SameLine();
-            Layout::MoveToY(UI::GetCursorPos().y + (NOTIFY_THUMBNAIL_SIZE - UI::GetTextLineHeight()) / 2);
+            Layout::MoveToY(UI::GetCursorPos().y +
+                            (NOTIFY_THUMBNAIL_SIZE - UI::GetTextLineHeight()) / 2);
         }
 
         UI::Text(notifyTitle);
@@ -144,7 +153,8 @@ namespace UIPoll {
 
             UIColor::Custom(data.poll.choices[i].color);
             float alignment = float(i + 1) / float(totalChoices + 1);
-            if (totalChoices >= 3) alignment = 0.1 + 0.8 * (float(i) / float(totalChoices - 1));
+            if (totalChoices >= 3)
+                alignment = 0.1 + 0.8 * (float(i) / float(totalChoices - 1));
 
             Layout::AlignButton(buttonText, alignment);
             if (UI::Button(buttonText)) {
@@ -180,7 +190,9 @@ namespace UIPoll {
                                TIMER_PROGRESS_COLOR);
     }
 
-    void NotifyToast(const string&in title, uint64 duration = Poll::POLL_EXPIRE_MILLIS, UI::Texture@ thumbnail = null) {
+    void NotifyToast(const string& in title,
+                     uint64 duration = Poll::POLL_EXPIRE_MILLIS,
+                     UI::Texture @thumbnail = null) {
         NotifyData notifyData(title, Time::Now, Time::Now + duration, thumbnail);
         Notifications.InsertLast(notifyData);
     }

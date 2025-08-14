@@ -114,7 +114,8 @@ namespace UIGameRoom {
         // Change / view settings button
         UI::SameLine();
 
-        string buttonText = Icons::Cog + (Room.localPlayerIsHost ? " Change Settings" : " View Settings");
+        string buttonText =
+            Icons::Cog + (Room.localPlayerIsHost ? " Change Settings" : " View Settings");
         float buttonPadding =
             Layout::GetPadding(windowWidth, Layout::ButtonWidth(buttonText) + 8, 1.0);
         UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
@@ -221,8 +222,9 @@ namespace UIGameRoom {
             UITools::ErrorMessage("StartMatch");
         }
         UI::EndChild();
-        
-        if (ChatPromptVisible) ChatPrompt();
+
+        if (ChatPromptVisible)
+            ChatPrompt();
     }
 
     void ChatPrompt() {

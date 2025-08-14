@@ -51,7 +51,7 @@ void RenderMenu() {
     if (UI::MenuItem(MAIN_MENUITEM_NAME, "", UIMainWindow::Visible)) {
         UIMainWindow::Visible = !UIMainWindow::Visible;
         UIHome::RandomizeSubtitle();
-        
+
         // Connect to server when opening plugin window the first time
         if (UIMainWindow::Visible && Network::GetState() == ConnectionState::Closed) {
             print("[Main] Plugin window opened, connecting to the servers.");
@@ -60,7 +60,8 @@ void RenderMenu() {
 
         // Ask to participate in the user survey
         if (UIMainWindow::Visible && Settings::ShowSystemSurvey) {
-            print("[Main] User has not participated in the system survey, showing UISystemSurvey now.");
+            print("[Main] User has not participated in the system survey, showing UISystemSurvey "
+                  "now.");
             UISystemSurvey::Visible = true;
         }
     }

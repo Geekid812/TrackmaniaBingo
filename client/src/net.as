@@ -33,7 +33,7 @@ namespace Network {
 
         Response(uint seq, Json::Value @body) {
             this.sequence = seq;
-            @this.body = body;
+            @ this.body = body;
         }
 
     }
@@ -504,9 +504,7 @@ namespace Network {
         Network::Post("CastRerollVote", body, true);
     }
 
-    void ShuffleTeams() {
-        Network::Post("ShuffleTeams", Json::Object(), true);
-    }
+    void ShuffleTeams() { Network::Post("ShuffleTeams", Json::Object(), true); }
 
     void SendChatMessage() {
         auto body = Json::Object();

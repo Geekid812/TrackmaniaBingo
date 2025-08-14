@@ -36,7 +36,8 @@ namespace Playground {
     void PlayMap(GameMap map) {
         switch (map.type) {
         case MapType::TMX:
-            PlayMap("https://trackmania.exchange/maps/download/" + map.id, "TrackMania/Bingo_PlayMap_Local");
+            PlayMap("https://trackmania.exchange/maps/download/" + map.id,
+                    "TrackMania/Bingo_PlayMap_Local");
             break;
         default:
             warn("[Playground::PlayMap] Unhandled MapType: " + tostring(map.type));

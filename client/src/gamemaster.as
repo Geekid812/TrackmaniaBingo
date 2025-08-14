@@ -108,7 +108,8 @@ namespace Gamemaster {
         for (uint i = 0; i < GetTileCount(); i++) {
             GameTile @tile = Match.tiles[i];
 
-            if (tile !is null && tile.HasRunSubmissions() && tile.LeadingRun().player.team.id == team.id)
+            if (tile !is null && tile.HasRunSubmissions() &&
+                tile.LeadingRun().player.team.id == team.id)
                 count += 1;
         }
 
@@ -234,9 +235,7 @@ namespace Gamemaster {
     /**
      * Return whether the local player is in jail.
      */
-    bool IsInJail() {
-        return @Jail !is null;
-    }
+    bool IsInJail() { return @Jail !is null; }
 
     /**
      * Stop the current game and close the connection.
