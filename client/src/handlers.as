@@ -417,7 +417,7 @@ namespace NetworkHandlers {
         if (usedPowerup == Powerup::RainbowTile || usedPowerup == Powerup::Rally ||
             usedPowerup == Powerup::Jail) {
             targetText += " \\$zon \\$ff8" +
-                          Text::StripOpenplanetFormatCodes(Match.GetCell(boardIndex).map.gbxName);
+                          Text::StripFormatCodes(Match.GetCell(boardIndex).map.trackName);
         }
 
         if (usedPowerup != Powerup::GoldenDice) {
