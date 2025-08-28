@@ -185,8 +185,10 @@ namespace UIEditSettings {
         UIRoomSettings::SettingsView();
         UI::EndDisabled();
 
-        if (!Room.localPlayerIsHost)
+        if (!Room.localPlayerIsHost) {
+            UI::End();
             return;
+        }
 
         // Update settings button
         UI::NewLine();
