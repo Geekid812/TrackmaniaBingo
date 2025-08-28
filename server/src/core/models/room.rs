@@ -52,6 +52,7 @@ impl From<&room::GameRoom> for NetworkRoom {
 
 #[derive(Serialize, Clone, Debug)]
 pub struct RoomTeam {
+    #[serde(flatten)]
     pub base: BaseTeam,
     pub members: Vec<PlayerData>,
 }
