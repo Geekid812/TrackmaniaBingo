@@ -31,6 +31,7 @@ pub fn setup_room(room_arc: &Owned<GameRoom>, teams: &Vec<BaseTeam>) {
 #[derive(Serialize, Clone, Debug)]
 pub struct PlayerData {
     pub uid: i32,
+    #[serde(flatten)]
     pub profile: PlayerProfile,
     pub team: TeamIdentifier,
     pub operator: bool,
