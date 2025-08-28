@@ -341,6 +341,9 @@ namespace UIInfoBar {
         UIItemSelect::Powerup = myPowerup;
         if (myPowerup != Powerup::Empty && UI::IsItemClicked()) {
             UIItemSelect::Visible = !UIItemSelect::Visible;
+
+            // Also close the map list picker to avoid players getting confused by having a duplicated map selector
+            UIMapList::Visible = false;
         }
     }
 
