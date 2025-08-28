@@ -759,8 +759,13 @@ impl LiveMatch {
             let score = iter
                 .clone()
                 .filter(|cell| {
-                    cell.leading_claim().is_some()
-                        && cell.leading_claim().unwrap().team_id == team.base.id
+                    cell.claimant
+                        .is_some_and(|claimant| claimant == team.base.id)
+                        || (cell.claimant.is_none()
+                            && cell
+                                .leading_claim()
+                                .is_some_and(|claim| claim.team_id == team.base.id))
+                        || cell.state == TileItemState::Rainbow
                 })
                 .count();
             if score > max_score {
@@ -853,7 +858,7 @@ impl LiveMatch {
                     if let Err(e) = self.reroll_map(cell_id) {
                         error!("{}", e);
                     }
-                },
+                }
                 PollResultCallback::GoldenDice(cell_id) => {
                     self.replace_map(cell_id, poll.held_tiles.remove(selected_choice).map);
                 }
