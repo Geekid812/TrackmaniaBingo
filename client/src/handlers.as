@@ -494,5 +494,10 @@ namespace NetworkHandlers {
 
         tile.specialState = TileItemState::Empty;
         tile.statePlayerTarget = PlayerRef();
+
+        if (int(tile.statePlayerTarget.uid) == Profile.uid) {
+            // We are free from jail!
+            @Jail = null;
+        }
     }
 }
