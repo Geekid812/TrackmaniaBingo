@@ -9,11 +9,12 @@ namespace UIPlayers {
                      bool canDelete = false,
                      bool canDragPlayers = false,
                      Player @draggedPlayer = null) {
-        UI::BeginTable("Bingo_PlayerTable",
+        bool isOpen = UI::BeginTable("Bingo_PlayerTable",
                        hideTeams ? 4 : teams.Length + (canCreate ? 1 : 0),
                        UI::TableFlags::None,
                        vec2(),
                        UI::GetWindowContentRegionWidth());
+        if (!isOpen) return;
 
         if (hideTeams) {
             for (uint i = 0; i < players.Length; i++) {
