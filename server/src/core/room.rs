@@ -469,8 +469,9 @@ impl GameRoom {
             return;
         }
 
-        // check if a game is active, in which case we shouldn't destroy that room
-        if self.match_uid().is_some() {
+        // check if a game is active, in which case we shouldn't destroy that room unless there is no one
+        let has_players = self.players().len() > 0;
+        if self.has_started() && has_players {
             return;
         }
 
