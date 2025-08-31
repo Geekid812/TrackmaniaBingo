@@ -1,0 +1,47 @@
+/**
+ * Maniascript mode for local Bingo map playground
+ */
+#Extends "Modes/TrackMania/TM_PlayMap_Local.Script.txt"
+
+#Include "Libs/Nadeo/TMGame/Modes/Base/UIModules/Checkpoint_Server.Script.txt" as UIModules_Checkpoint
+#Include "Libs/Bingo/Bingo_Events.Script.txt" as Bingo_Events
+
+
+***Match_AfterLoadHud***
+***
+UIModules_TimeGap::SetTimeGapMode(UIModules_TimeGap::C_TimeGapMode_Solo);
+UIModules_Checkpoint::SetRankMode(UIModules_Checkpoint::C_RankMode_Ghost);
+***
+
+***Match_PlayLoop***
+***
+foreach (Player in Players) {
+    GhostUpdate(Player, Bingo_Events::GetGhostsTimes());
+}
+***
+
+***Match_Yield***
+***
+Bingo_Events::Yield();
+***
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+/// Update the rank of a player against the ghosts
+Void GhostUpdate(CSmPlayer _Player, Integer[][] _GhostsTimes) {
+	declare Integer Rank = 1;
+	if (
+		_Player.RaceWaypointTimes.count > 0 &&
+		_Player.RaceWaypointTimes[_Player.RaceWaypointTimes.count - 1] >= 0
+	) {
+		foreach (WaypointsTimes in _GhostsTimes) {
+			if (
+				WaypointsTimes.count >= _Player.RaceWaypointTimes.count &&
+				WaypointsTimes[_Player.RaceWaypointTimes.count - 1] >= 0 &&
+				WaypointsTimes[_Player.RaceWaypointTimes.count - 1] < _Player.RaceWaypointTimes[_Player.RaceWaypointTimes.count - 1]
+			) {
+				Rank += 1;
+			}
+		}
+	}
+	CarRank::SetRank(_Player, Rank);
+}

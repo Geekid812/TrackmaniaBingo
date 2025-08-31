@@ -11,10 +11,27 @@ string stringof(MapMode mode) {
     return "Custom Mappack";
 }
 
-bool hasPlayerLimit(RoomConfiguration config) {
-    return config.size != 0;
+bool hasPlayerLimit(RoomConfiguration config) { return config.size != 0; }
+
+bool canPlayersChooseTheirOwnTeam(RoomConfiguration @roomConfig) {
+    return !roomConfig.hostControl && !roomConfig.randomize;
 }
 
-bool canPlayersChooseTheirOwnTeam(RoomConfiguration@ roomConfig) {
-    return !roomConfig.hostControl && !roomConfig.randomize;
+string itemName(Powerup powerup) {
+    switch (powerup) {
+    case Powerup::RowShift:
+        return "Row Shift";
+    case Powerup::ColumnShift:
+        return "Column Shift";
+    case Powerup::Rally:
+        return "Rally";
+    case Powerup::Jail:
+        return "Jail";
+    case Powerup::RainbowTile:
+        return "Rainbow Tile";
+    case Powerup::GoldenDice:
+        return "Golden Dice";
+    default:
+        return "";
+    }
 }

@@ -13,6 +13,9 @@ void Main() {
     // Initialization
     Font::Init();
     UIHome::InitSubtitles();
+    Powerups::InitPowerupTextures();
+    Modefiles::EnsureAllModefilesCreated();
+    GameUpdates::CheckUnstableConfigurations();
 
     // Load configuration settings
     PersistantStorage::LoadItems();
@@ -20,10 +23,11 @@ void Main() {
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
     if (PersistantStorage::LastConnectedMatchId != "") {
-        trace("[Main] Plugin was previously connected, attempting to reconnect.");
+        print("[Main] Plugin was previously connected, attempting to reconnect.");
         Network::Connect();
 
         if (Network::IsConnected()) {
+            NetParams::JoinCode = PersistantStorage::LastConnectedRoomCode;
             NetParams::MatchJoinUid = PersistantStorage::LastConnectedMatchId;
             NetParams::MatchJoinTeamId = PersistantStorage::LastConnectedMatchTeamId;
             startnew(Network::Reconnect);
@@ -32,7 +36,7 @@ void Main() {
 
     // We are interested in roomlist notifications, so we should connect
     if (PersistantStorage::SubscribeToRoomUpdates) {
-        trace("[Main] Player is subscribed to roomlist updates, connecting to the servers.");
+        print("[Main] Player is subscribed to roomlist updates, connecting to the servers.");
         Network::Connect();
         UIRoomMenu::RoomsLoad = LoadStatus::Loading;
         startnew(Network::GetPublicRooms);
@@ -48,10 +52,18 @@ void RenderMenu() {
     if (UI::MenuItem(MAIN_MENUITEM_NAME, "", UIMainWindow::Visible)) {
         UIMainWindow::Visible = !UIMainWindow::Visible;
         UIHome::RandomizeSubtitle();
+
         // Connect to server when opening plugin window the first time
         if (UIMainWindow::Visible && Network::GetState() == ConnectionState::Closed) {
-            trace("[Main] Plugin window opened, connecting to the servers.");
+            print("[Main] Plugin window opened, connecting to the servers.");
             startnew(Network::Connect);
+        }
+
+        // Ask to participate in the user survey
+        if (UIMainWindow::Visible && Settings::ShowSystemSurvey) {
+            print("[Main] User has not participated in the system survey, showing UISystemSurvey "
+                  "now.");
+            UISystemSurvey::Visible = true;
         }
     }
 
@@ -61,8 +73,10 @@ void RenderMenu() {
 }
 
 void Render() {
-    if (!UI::IsGameUIVisible()) return;
-    if (!Font::Initialized) return;
+    if (!UI::IsGameUIVisible())
+        return;
+    if (!Font::Initialized)
+        return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIGameRoom::Render();
@@ -74,10 +88,15 @@ void Render() {
     UIPaintColor::Render();
     UITeams::Render();
     UIEditSettings::Render();
+    UIItemSettings::Render();
+    UIItemSelect::Render();
     UIChat::Render();
 
     for (uint i = 0; i < Polls.Length; i++) {
         UIPoll::RenderPoll(Polls[i], i);
+    }
+    for (uint i = 0; i < Notifications.Length; i++) {
+        UIPoll::RenderNotify(Notifications[i], Polls.Length + i);
     }
 
     if (Settings::DevTools) {
@@ -88,12 +107,14 @@ void Render() {
 }
 
 void RenderInterface() {
-    if (!Font::Initialized) return;
+    if (!Font::Initialized)
+        return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIMainWindow::Render();
     UINews::Render();
     UIDevActions::Render();
+    UISystemSurvey::Render();
 
     Font::Unset();
 }
@@ -104,6 +125,9 @@ UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
 }
 
 void Update(float dt) {
+    if (Gamemaster::IsBingoActive())
+        GameUpdates::TickUpdates();
+
     if (Gamemaster::IsBingoPlaying())
-        GameUpdates::Tick();
+        GameUpdates::TickGameplay();
 }

@@ -14,6 +14,7 @@ pub mod mapload;
 pub mod requests;
 pub mod tasks;
 mod version;
+mod token;
 mod auth;
 
 /// Main TCP server internal structure that listens to incoming player connections.

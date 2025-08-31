@@ -1,3 +1,6 @@
+// Allow ununsed functions here since this is an internal database API
+#![allow(dead_code)]
+
 use sqlx::{
     query::Query,
     sqlite::{SqliteArguments, SqliteQueryResult, SqliteRow},

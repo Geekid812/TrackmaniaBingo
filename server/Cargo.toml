@@ -1,7 +1,7 @@
 [package]
 name = "bingohost"
 description = "Server application for Trackmania Bingo."
-version = "1.5.0"
+version = "1.6.0"
 edition = "2021"
 
 [dependencies]
@@ -28,9 +28,6 @@ serde_json = "1.0.89"
 
 # repr(x) support for serde
 serde_repr = "0.1.9"
-
-# Serializable trait objects
-typetag = "0.2.19"
 
 # Default log handler to print to standard output
 tracing-subscriber = "0.3.16"

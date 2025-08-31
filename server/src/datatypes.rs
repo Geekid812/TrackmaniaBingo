@@ -55,6 +55,8 @@ pub struct RoomConfiguration {
 pub struct MatchConfiguration {
     #[derivative(Default(value = "GamePlatform::Next"))]
 	pub game: GamePlatform,
+    #[derivative(Default(value = "Gamemode::Standard"))]
+	pub mode: Gamemode,
     #[derivative(Default(value = "5"))]
 	pub grid_size: u32,
     #[derivative(Default(value = "MapMode::RandomTMX"))]
@@ -78,6 +80,28 @@ pub struct MatchConfiguration {
     pub campaign_selection: Option<Vec<u32>>,
     #[derivative(Default(value = "Some(1)"))]
 	pub map_tag: Option<i32>,
+    pub items: FrenzyItemSettings,
+    #[derivative(Default(value = "600"))]
+	pub items_expire: u32,
+}
+
+/* Item drawing probabilities for configuring the Frenzy gamemode. */
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, Derivative, PartialEq, Eq)]
+#[derivative(Default)]
+pub struct FrenzyItemSettings {
+    #[derivative(Default(value = "3"))]
+	pub row_shift: u32,
+    #[derivative(Default(value = "3"))]
+	pub column_shift: u32,
+    #[derivative(Default(value = "3"))]
+	pub rally: u32,
+    #[derivative(Default(value = "3"))]
+	pub jail: u32,
+    #[derivative(Default(value = "3"))]
+	pub rainbow: u32,
+    #[derivative(Default(value = "3"))]
+	pub golden_dice: u32,
 }
 
 /* Request to open a connection by the client using an exisiting token. */
@@ -179,6 +203,15 @@ pub enum Medal {
     None,
 }
 
+/* A selection of game rules. */
+#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
+#[repr(u8)]
+pub enum Gamemode {
+    #[default]
+    Standard,
+    Frenzy,
+}
+
 /* When a connection to the server fails, give the client a hint of what it should do. */
 #[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
 #[repr(u8)]
@@ -187,4 +220,18 @@ pub enum HandshakeFailureIntentCode {
     ShowError,
     RequireUpdate,
     Reauthenticate,
+}
+
+/* A powerup from the Frenzy gamemode. */
+#[derive(Serialize_repr, Deserialize_repr, Debug, PartialEq, Eq, Copy, Clone, Default)]
+#[repr(u8)]
+pub enum Powerup {
+    #[default]
+    Empty,
+    RowShift,
+    ColumnShift,
+    Rally,
+    Jail,
+    RainbowTile,
+    GoldenDice,
 }

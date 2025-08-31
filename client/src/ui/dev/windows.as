@@ -8,6 +8,7 @@ namespace UIDevWindows {
         UIPaintColor::Visible = UI::Checkbox("UIPaintColor", UIPaintColor::Visible);
         UITeams::Visible = UI::Checkbox("UITeams", UITeams::Visible);
         UITeamEditor::Visible = UI::Checkbox("UITeamEditor", UITeamEditor::Visible);
+        UISystemSurvey::Visible = UI::Checkbox("UISystemSurvey", UISystemSurvey::Visible);
         Board::Visible = UI::Checkbox("Board", Board::Visible);
 
         UI::NextColumn();
@@ -17,6 +18,8 @@ namespace UIDevWindows {
         UINews::Visible = UI::Checkbox("UINews", UINews::Visible);
         UIDevActions::Visible = UI::Checkbox("UIDevActions", UIDevActions::Visible);
         BoardLocator::Visible = UI::Checkbox("BoardLocator", BoardLocator::Visible);
+        UIItemSettings::Visible = UI::Checkbox("UIItemSettings", UIItemSettings::Visible);
+        UIItemSelect::Visible = UI::Checkbox("UIItemSelect", UIItemSelect::Visible);
 
         UI::Columns(1);
     }

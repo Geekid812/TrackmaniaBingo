@@ -3,7 +3,8 @@ namespace UINews {
     bool Visible;
 
     void Render() {
-        if (!Visible) return;
+        if (!Visible)
+            return;
         UI::Begin(Icons::NewspaperO + " News Reader##bingonews", Visible);
         for (uint i = 0; i < Config::News.Length; i++) {
             NewsItem(Config::News[i]);
@@ -29,8 +30,9 @@ namespace UINews {
 
     void NewsCounter(int current, int max) {
         string text = current + "/" + max;
-        UI::Font@ font = Font::Current();
-        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.95);
+        UI::Font @font = Font::Current();
+        float padding = Layout::GetPadding(
+            UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.95);
         UI::SetCursorPos(vec2(padding, UI::GetCursorPos().y));
         UI::Text("\\$888" + text);
     }
@@ -61,12 +63,20 @@ namespace UINews {
         int minutes = delta / MINUTE_SECONDS;
         delta %= MINUTE_SECONDS;
 
-        if (weeks > 0) return weeks + " week" + (weeks > 1 ? "s" : "");
-        if (days >= 3) return days + " days";
-        if (days > 0) return days + " day" + (days > 1 ? "s" : "") + (hours == 0 ? "" : ", " + hours + " hour" + (hours == 1 ? "" : "s"));
-        if (hours > 0) return hours + " hour" + (hours > 1 ? "s" : "");
-        if (minutes >= 3) return minutes + " minutes";
-        if (minutes > 0) return minutes + " minute" + (minutes > 1 ? "s" : "") + (delta == 0 ? "" : ", " + delta + " second" + (delta == 1 ? "" : "s"));
+        if (weeks > 0)
+            return weeks + " week" + (weeks > 1 ? "s" : "");
+        if (days >= 3)
+            return days + " days";
+        if (days > 0)
+            return days + " day" + (days > 1 ? "s" : "") +
+                   (hours == 0 ? "" : ", " + hours + " hour" + (hours == 1 ? "" : "s"));
+        if (hours > 0)
+            return hours + " hour" + (hours > 1 ? "s" : "");
+        if (minutes >= 3)
+            return minutes + " minutes";
+        if (minutes > 0)
+            return minutes + " minute" + (minutes > 1 ? "s" : "") +
+                   (delta == 0 ? "" : ", " + delta + " second" + (delta == 1 ? "" : "s"));
         return delta + " second" + (delta > 1 ? "s" : "");
     }
 }

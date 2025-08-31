@@ -1,19 +1,16 @@
-## Update 5.2
+## Update 6.1
+A hotfix update with a couple of balance changes!
 
-This update focuses on some lobby improvements, most notably the new Teams Editor: this new tool allows you to name and create custom teams for your Bingo lobbies instead of the default ones.
+### Frenzy - Balance Changes
+- Reduced jail time from 15 minutes to 10 minutes
+- Rainbow Tile can no longer be used to immediately create a bingo line
 
-Additionally, the room host can now drag and drop players between teams to rearrange players how they like before the game starts. This should make it much easier to coordinate public games, or it may allow you to help that friend who doesn't understand how the UI works.
+### Hotfixes
+- Fixed a crash for "View Settings" inside a room
+- Potentially fixed a crash for alt-tabbing out of the game in a room
+- Fixed never ending jail time (the powerup now works as intended!)
+- Fixed creating teams in a lobby would create an undefined black team and softlock the button
+- Fixed host reconnection, you can now always go back to the room even after reconnecting!
 
-For specific competitive scenarios, a new room option has also been added that disallows players to switch their own team, while only the room host can assign players to their teams.
-
-When new players join a game that has either the "Randomize Teams" or the new "Host Controls Setup" options enabled, they will no longer be able to choose their team and instead be assigned to the least populated team.
-
-Tiles on the miniature Bingo board can now be double-clicked to open the map instead of a single click, making it easier to drag the Bingo board around the screen without accidentally opening any map.
-
-Due to some demand, it is now also possible to start Bingo games with only 1 player. However, match statistics will not be saved in that case.
-
-Bug fixes in this update:
-- Fixed win conditions not being checked immediately when the grace period ends
-- Fixed alignment issues on map leaderboards
-- Removed team controls for players who are not the host in a lobby
-- Fixed no time limit "∞" not being displayed correctly
+### New: Match MVP
+After a bingo is scored, the player who claimed the most maps for the winning team will be designated as the match MVP. They will get a shiny badge next to their name as a reward. Cool!

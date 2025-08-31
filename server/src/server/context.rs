@@ -94,7 +94,6 @@ impl RoomContext {
         if let Some(room) = self.room() {
             let mut lock = room.lock();
             lock.player_remove(self.profile.uid);
-            lock.check_close();
         }
     }
 }

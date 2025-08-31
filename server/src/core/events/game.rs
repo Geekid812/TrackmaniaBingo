@@ -6,12 +6,12 @@ use crate::{
     core::{
         livegame::BingoLine,
         models::{
-            livegame::{MapClaim, MatchPhase, MatchState},
+            livegame::{MapClaim, MatchEndInfo, MatchPhase, MatchState},
             map::GameMap,
             team::{BaseTeam, TeamIdentifier},
         },
     },
-    datatypes::{ChatMessage, PlayerProfile, PlayerRef, Poll},
+    datatypes::{ChatMessage, PlayerProfile, PlayerRef, Poll, Powerup},
 };
 
 #[serde_with::serde_as]
@@ -32,11 +32,15 @@ pub enum GameEvent {
     },
     AnnounceBingo {
         lines: Vec<BingoLine>,
+        end_state: MatchEndInfo,
     },
     AnnounceWinByCellCount {
         team: TeamIdentifier,
+        end_state: MatchEndInfo,
     },
-    AnnounceDraw,
+    AnnounceDraw {
+        end_state: MatchEndInfo,
+    },
     PhaseChange {
         phase: MatchPhase,
     },
@@ -77,5 +81,27 @@ pub enum GameEvent {
     PollResult {
         id: u32,
         selected: Option<u32>,
+    },
+    PowerupSpawn {
+        cell_id: usize,
+        is_special: bool,
+    },
+    ItemSlotEquip {
+        uid: u32,
+        powerup: Powerup,
+    },
+    PowerupActivated {
+        powerup: Powerup,
+        player: PlayerRef,
+        board_index: usize,
+        forwards: bool,
+        target: Option<PlayerRef>,
+    },
+    JailResolved {
+        cell_id: usize,
+    },
+    RallyResolved {
+        cell_id: usize,
+        team: Option<TeamIdentifier>,
     },
 }

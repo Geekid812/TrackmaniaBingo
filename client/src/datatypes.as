@@ -5,10 +5,11 @@
 class PlayerRef {
     uint uid;
     string name;
+
     PlayerRef() {}
-}
-namespace PlayerRef {
-    Json::Value@ Serialize(PlayerRef cls) {
+} namespace PlayerRef {
+
+    Json::Value @Serialize(PlayerRef cls) {
         auto value = Json::Object();
         value["uid"] = cls.uid;
         value["name"] = cls.name;
@@ -16,7 +17,7 @@ namespace PlayerRef {
         return value;
     }
 
-    PlayerRef Deserialize(Json::Value@ value) {
+    PlayerRef Deserialize(Json::Value @value) {
         auto cls = PlayerRef();
         cls.uid = value["uid"];
         cls.name = value["name"];
@@ -36,10 +37,11 @@ class PlayerProfile {
     string title;
     uint gamesPlayed;
     uint gamesWon;
+
     PlayerProfile() {}
-}
-namespace PlayerProfile {
-    Json::Value@ Serialize(PlayerProfile cls) {
+} namespace PlayerProfile {
+
+    Json::Value @Serialize(PlayerProfile cls) {
         auto value = Json::Object();
         value["uid"] = cls.uid;
         value["name"] = cls.name;
@@ -54,7 +56,7 @@ namespace PlayerProfile {
         return value;
     }
 
-    PlayerProfile Deserialize(Json::Value@ value) {
+    PlayerProfile Deserialize(Json::Value @value) {
         auto cls = PlayerProfile();
         cls.uid = value["uid"];
         cls.name = value["name"];
@@ -62,7 +64,8 @@ namespace PlayerProfile {
         cls.createdAt = value["created_at"];
         cls.lastPlayedAt = value["last_played_at"];
         cls.countryCode = value["country_code"];
-        if (value["title"].GetType() != Json::Type::Null) cls.title = value["title"];
+        if (value["title"].GetType() != Json::Type::Null)
+            cls.title = value["title"];
         cls.gamesPlayed = value["games_played"];
         cls.gamesWon = value["games_won"];
 
@@ -77,10 +80,11 @@ class RoomConfiguration {
     bool randomize;
     uint size;
     bool hostControl;
+
     RoomConfiguration() {}
-}
-namespace RoomConfiguration {
-    Json::Value@ Serialize(RoomConfiguration cls) {
+} namespace RoomConfiguration {
+
+    Json::Value @Serialize(RoomConfiguration cls) {
         auto value = Json::Object();
         value["name"] = cls.name;
         value["public"] = cls.public;
@@ -91,7 +95,7 @@ namespace RoomConfiguration {
         return value;
     }
 
-    RoomConfiguration Deserialize(Json::Value@ value) {
+    RoomConfiguration Deserialize(Json::Value @value) {
         auto cls = RoomConfiguration();
         cls.name = value["name"];
         cls.public = value["public"];
@@ -106,6 +110,7 @@ namespace RoomConfiguration {
 /* Match parameters set by the host. */
 class MatchConfiguration {
     GamePlatform game = GamePlatform::Next;
+    Gamemode mode = Gamemode::Standard;
     uint gridSize = 5;
     MapMode selection = MapMode::RandomTMX;
     Medal targetMedal = Medal::Author;
@@ -118,12 +123,16 @@ class MatchConfiguration {
     uint mappackId;
     array<uint> campaignSelection;
     int mapTag = 1;
+    FrenzyItemSettings items;
+    uint itemsExpire = 600;
+
     MatchConfiguration() {}
-}
-namespace MatchConfiguration {
-    Json::Value@ Serialize(MatchConfiguration cls) {
+} namespace MatchConfiguration {
+
+    Json::Value @Serialize(MatchConfiguration cls) {
         auto value = Json::Object();
         value["game"] = int(cls.game);
+        value["mode"] = int(cls.mode);
         value["grid_size"] = cls.gridSize;
         value["selection"] = int(cls.selection);
         value["target_medal"] = int(cls.targetMedal);
@@ -136,13 +145,16 @@ namespace MatchConfiguration {
         value["mappack_id"] = cls.mappackId;
         value["campaign_selection"] = cls.campaignSelection;
         value["map_tag"] = cls.mapTag;
+        value["items"] = FrenzyItemSettings::Serialize(cls.items);
+        value["items_expire"] = cls.itemsExpire;
 
         return value;
     }
 
-    MatchConfiguration Deserialize(Json::Value@ value) {
+    MatchConfiguration Deserialize(Json::Value @value) {
         auto cls = MatchConfiguration();
         cls.game = GamePlatform(int(value["game"]));
+        cls.mode = Gamemode(int(value["mode"]));
         cls.gridSize = value["grid_size"];
         cls.selection = MapMode(int(value["selection"]));
         cls.targetMedal = Medal(int(value["target_medal"]));
@@ -152,11 +164,53 @@ namespace MatchConfiguration {
         cls.lateJoin = value["late_join"];
         cls.rerolls = value["rerolls"];
         cls.competitvePatch = value["competitve_patch"];
-        if (value["mappack_id"].GetType() != Json::Type::Null) cls.mappackId = value["mappack_id"];
-        if (value["campaign_selection"].GetType() != Json::Type::Null) for (uint i = 0; i < value["campaign_selection"].Length; i++) {
-            cls.campaignSelection.InsertLast(value["campaign_selection"][i]);
-        }
-        if (value["map_tag"].GetType() != Json::Type::Null) cls.mapTag = value["map_tag"];
+        if (value["mappack_id"].GetType() != Json::Type::Null)
+            cls.mappackId = value["mappack_id"];
+        if (value["campaign_selection"].GetType() != Json::Type::Null)
+            for (uint i = 0; i < value["campaign_selection"].Length; i++) {
+                cls.campaignSelection.InsertLast(value["campaign_selection"][i]);
+            }
+        if (value["map_tag"].GetType() != Json::Type::Null)
+            cls.mapTag = value["map_tag"];
+        cls.items = FrenzyItemSettings::Deserialize(value["items"]);
+        cls.itemsExpire = value["items_expire"];
+
+        return cls;
+    }
+}
+
+/* Item drawing probabilities for configuring the Frenzy gamemode. */
+class FrenzyItemSettings {
+    uint rowShift = 3;
+    uint columnShift = 3;
+    uint rally = 3;
+    uint jail = 3;
+    uint rainbow = 3;
+    uint goldenDice = 3;
+
+    FrenzyItemSettings() {}
+} namespace FrenzyItemSettings {
+
+    Json::Value @Serialize(FrenzyItemSettings cls) {
+        auto value = Json::Object();
+        value["row_shift"] = cls.rowShift;
+        value["column_shift"] = cls.columnShift;
+        value["rally"] = cls.rally;
+        value["jail"] = cls.jail;
+        value["rainbow"] = cls.rainbow;
+        value["golden_dice"] = cls.goldenDice;
+
+        return value;
+    }
+
+    FrenzyItemSettings Deserialize(Json::Value @value) {
+        auto cls = FrenzyItemSettings();
+        cls.rowShift = value["row_shift"];
+        cls.columnShift = value["column_shift"];
+        cls.rally = value["rally"];
+        cls.jail = value["jail"];
+        cls.rainbow = value["rainbow"];
+        cls.goldenDice = value["golden_dice"];
 
         return cls;
     }
@@ -167,10 +221,11 @@ class HandshakeRequest {
     string version;
     GamePlatform game;
     string token;
+
     HandshakeRequest() {}
-}
-namespace HandshakeRequest {
-    Json::Value@ Serialize(HandshakeRequest cls) {
+} namespace HandshakeRequest {
+
+    Json::Value @Serialize(HandshakeRequest cls) {
         auto value = Json::Object();
         value["version"] = cls.version;
         value["game"] = int(cls.game);
@@ -179,7 +234,7 @@ namespace HandshakeRequest {
         return value;
     }
 
-    HandshakeRequest Deserialize(Json::Value@ value) {
+    HandshakeRequest Deserialize(Json::Value @value) {
         auto cls = HandshakeRequest();
         cls.version = value["version"];
         cls.game = GamePlatform(int(value["game"]));
@@ -194,10 +249,11 @@ class KeyExchangeRequest {
     string key;
     string displayName;
     string accountId;
+
     KeyExchangeRequest() {}
-}
-namespace KeyExchangeRequest {
-    Json::Value@ Serialize(KeyExchangeRequest cls) {
+} namespace KeyExchangeRequest {
+
+    Json::Value @Serialize(KeyExchangeRequest cls) {
         auto value = Json::Object();
         value["key"] = cls.key;
         value["display_name"] = cls.displayName;
@@ -206,7 +262,7 @@ namespace KeyExchangeRequest {
         return value;
     }
 
-    KeyExchangeRequest Deserialize(Json::Value@ value) {
+    KeyExchangeRequest Deserialize(Json::Value @value) {
         auto cls = KeyExchangeRequest();
         cls.key = value["key"];
         cls.displayName = value["display_name"];
@@ -220,10 +276,11 @@ namespace KeyExchangeRequest {
 class CampaignMap {
     int campaignId = -1;
     int map = -1;
+
     CampaignMap() {}
-}
-namespace CampaignMap {
-    Json::Value@ Serialize(CampaignMap cls) {
+} namespace CampaignMap {
+
+    Json::Value @Serialize(CampaignMap cls) {
         auto value = Json::Object();
         value["campaign_id"] = cls.campaignId;
         value["map"] = cls.map;
@@ -231,7 +288,7 @@ namespace CampaignMap {
         return value;
     }
 
-    CampaignMap Deserialize(Json::Value@ value) {
+    CampaignMap Deserialize(Json::Value @value) {
         auto cls = CampaignMap();
         cls.campaignId = value["campaign_id"];
         cls.map = value["map"];
@@ -248,10 +305,11 @@ class ChatMessage {
     uint64 timestamp;
     string content;
     bool teamMessage;
+
     ChatMessage() {}
-}
-namespace ChatMessage {
-    Json::Value@ Serialize(ChatMessage cls) {
+} namespace ChatMessage {
+
+    Json::Value @Serialize(ChatMessage cls) {
         auto value = Json::Object();
         value["uid"] = cls.uid;
         value["name"] = cls.name;
@@ -263,11 +321,12 @@ namespace ChatMessage {
         return value;
     }
 
-    ChatMessage Deserialize(Json::Value@ value) {
+    ChatMessage Deserialize(Json::Value @value) {
         auto cls = ChatMessage();
         cls.uid = value["uid"];
         cls.name = value["name"];
-        if (value["title"].GetType() != Json::Type::Null) cls.title = value["title"];
+        if (value["title"].GetType() != Json::Type::Null)
+            cls.title = value["title"];
         cls.timestamp = value["timestamp"];
         cls.content = value["content"];
         cls.teamMessage = value["team_message"];
@@ -280,10 +339,11 @@ namespace ChatMessage {
 class PollChoice {
     string text;
     vec3 color;
+
     PollChoice() {}
-}
-namespace PollChoice {
-    Json::Value@ Serialize(PollChoice cls) {
+} namespace PollChoice {
+
+    Json::Value @Serialize(PollChoice cls) {
         auto value = Json::Object();
         value["text"] = cls.text;
         value["color"] = Color::Serialize(cls.color);
@@ -291,7 +351,7 @@ namespace PollChoice {
         return value;
     }
 
-    PollChoice Deserialize(Json::Value@ value) {
+    PollChoice Deserialize(Json::Value @value) {
         auto cls = PollChoice();
         cls.text = value["text"];
         cls.color = Color::Deserialize(value["color"]);
@@ -307,16 +367,17 @@ class Poll {
     vec3 color;
     int64 duration;
     array<PollChoice> choices;
+
     Poll() {}
-}
-namespace Poll {
-    Json::Value@ Serialize(Poll cls) {
+} namespace Poll {
+
+    Json::Value @Serialize(Poll cls) {
         auto value = Json::Object();
         value["id"] = cls.id;
         value["title"] = cls.title;
         value["color"] = Color::Serialize(cls.color);
         value["duration"] = cls.duration;
-        array<Json::Value@> choices = {};
+        array<Json::Value @> choices = {};
         for (uint i = 0; i < cls.choices.Length; i++) {
             choices.InsertLast(PollChoice::Serialize(cls.choices[i]));
         }
@@ -325,7 +386,7 @@ namespace Poll {
         return value;
     }
 
-    Poll Deserialize(Json::Value@ value) {
+    Poll Deserialize(Json::Value @value) {
         auto cls = Poll();
         cls.id = value["id"];
         cls.title = value["title"];
@@ -361,9 +422,26 @@ enum Medal {
     None,
 }
 
+/* A selection of game rules. */
+enum Gamemode {
+    Standard,
+    Frenzy,
+}
+
 /* When a connection to the server fails, give the client a hint of what it should do. */
 enum HandshakeFailureIntentCode {
     ShowError,
     RequireUpdate,
     Reauthenticate,
+}
+
+/* A powerup from the Frenzy gamemode. */
+enum Powerup {
+    Empty,
+    RowShift,
+    ColumnShift,
+    Rally,
+    Jail,
+    RainbowTile,
+    GoldenDice,
 }

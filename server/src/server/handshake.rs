@@ -6,6 +6,7 @@ use tracing::{debug, info, warn};
 use super::auth::login;
 use super::client::{ClientCallbackImplementation, NetClient};
 use super::context::ClientContext;
+use super::token::get_player_from_token;
 use super::version::Version;
 use crate::datatypes::{HandshakeFailureIntentCode, HandshakeRequest, KeyExchangeRequest, PlayerProfile};
 use crate::{config, store};
@@ -81,12 +82,12 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
         return;
     }
 
-    // Match token to a valid user in storage
-    let player_record = store::player::get_player_from_token(&handshake.token).await;
+    // Match token to a valid user in memory
+    let player_record = get_player_from_token(&handshake.token);
 
-    let player = match player_record {
-        Ok(player) => player,
-        Err(sqlx::Error::RowNotFound) => {
+    let player_uid = match player_record {
+        Some(uid) => uid,
+        None => {
             handshake_rejection(
                 client,
                 format!("authentication token rejected"),
@@ -94,18 +95,10 @@ pub async fn handshake_message_received(client: &mut NetClient, message: BytesMu
             );
             return;
         }
-        Err(e) => {
-            handshake_rejection(
-                client,
-                format!("store error: {}", e),
-                HandshakeFailureIntentCode::ShowError,
-            );
-            return;
-        }
     };
 
     // Load that player's profile
-    let profile = match store::player::get_player_profile(player.uid).await {
+    let profile = match store::player::get_player_profile(player_uid).await {
         Ok(profile) => profile,
         Err(e) => {
             handshake_rejection(

@@ -37,11 +37,26 @@ class Medal(Enum):
     BRONZE = 3
     NONE = 4
 
+# A selection of game rules.
+class Gamemode(Enum):
+    STANDARD = 0
+    FRENZY = 1
+
 # When a connection to the server fails, give the client a hint of what it should do.
 class HandshakeFailureIntentCode(Enum):
     SHOWERROR = 0
     REQUIREUPDATE = 1
     REAUTHENTICATE = 2
+
+# A powerup from the Frenzy gamemode.
+class Powerup(Enum):
+    EMPTY = 0
+    ROWSHIFT = 1
+    COLUMNSHIFT = 2
+    RALLY = 3
+    JAIL = 4
+    RAINBOWTILE = 5
+    GOLDENDICE = 6
 
 # A simple reference to a registered player.
 class PlayerRef(BaseModel):
@@ -71,6 +86,7 @@ class RoomConfiguration(BaseModel):
 # Match parameters set by the host.
 class MatchConfiguration(BaseModel):
     game: GamePlatform = GamePlatform.NEXT
+    mode: Gamemode = Gamemode.STANDARD
     grid_size: int = 5
     selection: MapMode = MapMode.RANDOMTMX
     target_medal: Medal = Medal.AUTHOR
@@ -83,6 +99,17 @@ class MatchConfiguration(BaseModel):
     mappack_id: int | None
     campaign_selection: list[int] | None
     map_tag: int | None = 1
+    items: FrenzyItemSettings
+    items_expire: int = 600
+
+# Item drawing probabilities for configuring the Frenzy gamemode.
+class FrenzyItemSettings(BaseModel):
+    row_shift: int = 3
+    column_shift: int = 3
+    rally: int = 3
+    jail: int = 3
+    rainbow: int = 3
+    golden_dice: int = 3
 
 # Request to open a connection by the client using an exisiting token.
 class HandshakeRequest(BaseModel):

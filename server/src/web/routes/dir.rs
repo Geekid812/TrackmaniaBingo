@@ -1,5 +1,5 @@
 
-use serde::{Deserialize, Serialize};
+use serde::{Serialize};
 use warp::filters::method::get;
 use warp::Filter;
 use warp::{Rejection, Reply};
@@ -16,7 +16,7 @@ pub fn get_routes() -> impl Filter<Extract = (impl Reply,), Error = Rejection> +
     warp::path("dir").and(rooms.or(live_games))
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct NetworkLiveMatchDetail {
     #[serde(flatten)]
     state: MatchState,

@@ -19,7 +19,6 @@ use super::{
     models::{
         self,
         map::GameMap,
-        player::Player,
         room::{RoomState, RoomTeam},
         team::{BaseTeam, GameTeam, TeamIdentifier},
     },
@@ -45,6 +44,7 @@ pub struct GameRoom {
     load_marker: u32,
     loaded_maps: Vec<GameMap>,
     active_match: Option<Shared<LiveMatch>>,
+    host_uid: Option<i32>,
 }
 
 impl GameRoom {
@@ -65,6 +65,7 @@ impl GameRoom {
             load_marker: 0,
             loaded_maps: Vec::new(),
             active_match: None,
+            host_uid: None,
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
@@ -132,6 +133,10 @@ impl GameRoom {
         self.teams.get(id)
     }
 
+    pub fn set_host_uid(&mut self, uid: i32) {
+        self.host_uid = Some(uid)
+    }
+
     pub fn teams_as_model(&self) -> Vec<RoomTeam> {
         self.team_members()
             .into_iter()
@@ -142,7 +147,33 @@ impl GameRoom {
                     .to_owned(),
                 members: players
                     .iter()
-                    .map(|id| Player::from(self.get_player(*id).expect("members should be valid")))
+                    .map(|id| {
+                        self.get_player(*id)
+                            .expect("members should be valid")
+                            .clone()
+                    })
+                    .collect(),
+            })
+            .collect()
+    }
+
+    pub fn network_teams(&self) -> Vec<NetworkTeam> {
+        self.team_members()
+            .into_iter()
+            .map(|(tid, players)| NetworkTeam {
+                info: self
+                    .get_team(tid)
+                    .expect("teams should be valid")
+                    .to_owned(),
+                members: players
+                    .iter()
+                    .map(|id| {
+                        let data = self.get_player(*id).expect("members should be valid");
+                        PlayerRef {
+                            uid: data.profile.uid as u32,
+                            name: data.profile.name.clone(),
+                        }
+                    })
                     .collect(),
             })
             .collect()
@@ -176,7 +207,7 @@ impl GameRoom {
             config: self.config.clone(),
             matchconfig: self.matchconfig.clone(),
             join_code: self.join_code.clone(),
-            teams: self.teams_as_model(),
+            teams: self.network_teams(),
         }
     }
 
@@ -223,7 +254,7 @@ impl GameRoom {
         &mut self,
         ctx: &ClientContext,
         profile: &PlayerProfile,
-    ) -> Result<(), JoinRoomError> {
+    ) -> Result<bool, JoinRoomError> {
         if self.at_size_capacity() {
             return Err(JoinRoomError::PlayerLimitReached);
         }
@@ -234,7 +265,8 @@ impl GameRoom {
             return Err(JoinRoomError::PlayerAlreadyJoined);
         }
 
-        let team = self.add_player(ctx, profile, false);
+        let is_operator = self.host_uid.is_some_and(|u| u == profile.uid);
+        let team = self.add_player(ctx, profile, is_operator);
         self.channel.broadcast(&RoomEvent::PlayerJoin {
             profile: profile.clone(),
             team,
@@ -249,7 +281,7 @@ impl GameRoom {
                 });
         }
 
-        Ok(())
+        Ok(is_operator)
     }
 
     pub fn player_remove(&mut self, uid: i32) {
@@ -265,6 +297,8 @@ impl GameRoom {
                     delta: -1,
                 });
         }
+
+        self.check_close();
     }
 
     pub fn change_team(&mut self, uid: i32, team: TeamIdentifier) -> bool {
@@ -288,6 +322,14 @@ impl GameRoom {
             let selected = unproccessed.remove(rng.sample(dist));
             selected.team = teams.next().unwrap().id;
         }
+        self.broadcast_all_player_teams();
+    }
+
+    fn broadcast_all_player_teams(&mut self) {
+        self.channel
+            .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
+                updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
+            }));
     }
 
     pub fn remove_team(&mut self, id: TeamIdentifier) {
@@ -337,10 +379,7 @@ impl GameRoom {
             return Err(anyhow!("a team named '{}' already exists", &name));
         }
 
-        let team = self
-            .teams
-            .create_team(name, color)
-            .clone();
+        let team = self.teams.create_team(name, color).clone();
 
         self.team_created(&team);
         Ok(team)
@@ -430,6 +469,12 @@ impl GameRoom {
             return;
         }
 
+        // check if a game is active, in which case we shouldn't destroy that room unless there is no one
+        let has_players = self.players().len() > 0;
+        if self.has_started() && has_players {
+            return;
+        }
+
         if !self.members.iter().any(|p| p.operator) {
             debug!("No room operator, closing.");
             self.close_room("The host has left the room.".to_owned());
@@ -457,10 +502,6 @@ impl GameRoom {
     fn prepare_start_match(&mut self) {
         if self.config.randomize {
             self.sort_teams();
-            self.channel
-                .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
-                    updates: HashMap::from_iter(self.members.iter().map(|p| (p.uid, p.team))),
-                }));
         }
 
         self.loaded_maps.shuffle(&mut rand::thread_rng());

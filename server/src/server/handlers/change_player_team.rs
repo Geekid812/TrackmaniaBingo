@@ -1,7 +1,12 @@
-use crate::{core::models::team::TeamIdentifier, server::context::ClientContext};
+use crate::{
+    core::models::team::TeamIdentifier,
+    server::{
+        context::ClientContext,
+        handlers::{error, ok},
+    },
+};
 use serde::Deserialize;
-
-use super::{generic, Request, Response};
+use serde_json::Value;
 
 #[derive(Deserialize, Debug)]
 pub struct ChangePlayerTeam {
@@ -9,22 +14,17 @@ pub struct ChangePlayerTeam {
     team_id: TeamIdentifier,
 }
 
-#[typetag::deserialize]
-impl Request for ChangePlayerTeam {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
-        if let Some(room) = ctx.game_room() {
-            let mut lock = room.lock();
-            if !lock.get_player(ctx.profile.uid).unwrap().operator {
-                return Box::new(generic::Error {
-                    error: "You are not a room operator.".to_owned(),
-                });
-            }
-
-            lock.change_team(self.player_uid, self.team_id);
-        } else {
-            ctx.trace("not in a room, ignored");
+pub fn handle(ctx: &mut ClientContext, args: ChangePlayerTeam) -> Value {
+    if let Some(room) = ctx.game_room() {
+        let mut lock = room.lock();
+        if !lock.get_player(ctx.profile.uid).unwrap().operator {
+            return error("You are not a room operator.");
         }
 
-        Box::new(generic::Ok)
+        lock.change_team(args.player_uid, args.team_id);
+    } else {
+        ctx.trace("not in a room, ignored");
     }
+
+    ok()
 }

@@ -7,6 +7,7 @@ enum LoadStatus {
 }
 
 namespace UIMainWindow {
+
     bool Visible;
 
     bool ClipboardHovered;
@@ -18,8 +19,11 @@ namespace UIMainWindow {
         Create
     }
 
-    void Render() {
-        if (!Visible) return;
+    void
+    Render() {
+
+        if (!Visible)
+            return;
 
         bool offline = Network::IsOfflineMode();
         string title = (offline ? Icons::PowerOff + " Offline Mode" : "") + "###bingomain";
@@ -56,7 +60,7 @@ namespace UIMainWindow {
         if (@Room != null || @Match != null) {
             InGameHeader();
         }
-        
+
         UIColor::Crimson();
         UI::BeginTabBar("Bingo_TabBar");
         if (UI::BeginTabItem(Icons::Home + " Home")) {
@@ -72,11 +76,13 @@ namespace UIMainWindow {
             UI::EndChild();
             UI::EndTabItem();
         } else {
-            if (UIRoomMenu::RoomsLoad != LoadStatus::NotLoaded && !PersistantStorage::SubscribeToRoomUpdates) {
+            if (UIRoomMenu::RoomsLoad != LoadStatus::NotLoaded &&
+                !PersistantStorage::SubscribeToRoomUpdates) {
                 UIRoomMenu::RoomsLoad = LoadStatus::NotLoaded;
                 startnew(Network::UnsubscribeRoomlist);
             }
-            if (UIRoomMenu::RoomsLoad == LoadStatus::NotLoaded && PersistantStorage::SubscribeToRoomUpdates) {
+            if (UIRoomMenu::RoomsLoad == LoadStatus::NotLoaded &&
+                PersistantStorage::SubscribeToRoomUpdates) {
                 UIRoomMenu::RoomsLoad = LoadStatus::Loading;
                 startnew(Network::GetPublicRooms);
             }
@@ -89,12 +95,12 @@ namespace UIMainWindow {
             UI::EndTabItem();
         }
 
+        /*
         if (UI::BeginTabItem(Icons::Star + " Events")) {
             UI::NewLine();
             UITools::CenterText("Coming soon!");
             UI::EndTabItem();
-        }
-
+        }*/
 
         UI::EndTabBar();
         UIColor::Reset();
@@ -121,7 +127,8 @@ namespace UIMainWindow {
     }
 
     void OfflineWarning() {
-        UI::Text("\\$ff4" + Icons::ExclamationTriangle + "  \\$zAn error occured while connecting to the Bingo server.");
+        UI::Text("\\$ff4" + Icons::ExclamationTriangle +
+                 "  \\$zAn error occured while connecting to the Bingo server.");
         UIColor::Red();
         if (UI::Button(Icons::Repeat + " Retry")) {
             startnew(Network::Connect);
@@ -168,11 +175,23 @@ namespace UIEditSettings {
     bool Visible;
 
     void Render() {
-        if (!Visible) return;
-        UI::Begin(Icons::Th + " Room Settings", Visible, UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
-        UIRoomSettings::SettingsView();
-        UI::NewLine();
+        if (!Visible)
+            return;
+        UI::Begin(Icons::Th + " Room Settings",
+                  Visible,
+                  UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
 
+        UI::BeginDisabled(!Room.localPlayerIsHost);
+        UIRoomSettings::SettingsView();
+        UI::EndDisabled();
+
+        if (!Room.localPlayerIsHost) {
+            UI::End();
+            return;
+        }
+
+        // Update settings button
+        UI::NewLine();
         UIColor::Cyan();
         if (UI::Button(Icons::CheckCircle + " Update Settings")) {
             UIRoomSettings::SaveConfiguredSettings();

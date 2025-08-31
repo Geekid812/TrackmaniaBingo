@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::{
     core::{directory::ROOMS, models::room::RoomTeam, room::JoinRoomError},
     datatypes::{MatchConfiguration, RoomConfiguration},
-    server::context::{ClientContext, RoomContext},
+    server::{
+        context::{ClientContext, RoomContext},
+        handlers::{error, response},
+    },
 };
-
-use super::{generic, Request, Response};
 
 #[derive(Deserialize, Debug)]
 pub struct JoinRoom {
@@ -19,37 +21,31 @@ pub struct JoinRoomResponse {
     pub match_config: MatchConfiguration,
     pub match_uid: Option<String>,
     pub teams: Vec<RoomTeam>,
+    pub is_host: bool,
 }
 
-#[typetag::deserialize]
-impl Request for JoinRoom {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
-        if let Some(room) = ctx.game_room() {
-            ctx.trace("already in a room, leaving previous game");
-            room.lock().player_remove(ctx.profile.uid);
-        }
+pub fn handle(ctx: &mut ClientContext, args: JoinRoom) -> Value {
+    if let Some(room) = ctx.game_room() {
+        ctx.trace("already in a room, leaving previous game");
+        room.lock().player_remove(ctx.profile.uid);
+    }
 
-        return if let Some(room) = ROOMS.find(self.join_code.clone()) {
-            let mut lock = room.lock();
-            if let Err(e) = lock.player_join(&ctx, &ctx.profile) {
-                return Box::new(generic::Error {
-                    error: format!("{}", e),
-                });
-            }
-            ctx.room = Some(RoomContext::new(ctx.profile.clone(), &room));
-            Box::new(JoinRoomResponse {
-                config: lock.config().clone(),
-                match_config: lock.matchconfig().clone(),
-                match_uid: lock.match_uid(),
-                teams: lock.teams_as_model(),
-            })
-        } else {
-            Box::new(generic::Error {
-                error: format!("{}", JoinRoomError::DoesNotExist(self.join_code.clone())),
-            })
+    if let Some(room) = ROOMS.find(args.join_code.clone()) {
+        let mut lock = room.lock();
+        let is_host = match lock.player_join(&ctx, &ctx.profile) {
+            Ok(host) => host,
+            Err(e) => return error(&format!("{}", e)),
         };
+        ctx.room = Some(RoomContext::new(ctx.profile.clone(), &room));
+
+        response(JoinRoomResponse {
+            config: lock.config().clone(),
+            match_config: lock.matchconfig().clone(),
+            match_uid: lock.match_uid(),
+            teams: lock.teams_as_model(),
+            is_host
+        })
+    } else {
+        error(&format!("{}", JoinRoomError::DoesNotExist(args.join_code)))
     }
 }
-
-#[typetag::serialize]
-impl Response for JoinRoomResponse {}

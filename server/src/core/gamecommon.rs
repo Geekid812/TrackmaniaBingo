@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use serde::Serialize;
+
 use crate::{datatypes::PlayerProfile, server, transport::messager::NetMessager};
 
 pub type PlayerId = u32;
@@ -26,11 +28,14 @@ pub fn setup_room(room_arc: &Owned<GameRoom>, teams: &Vec<BaseTeam>) {
     );
 }
 
+#[derive(Serialize, Clone, Debug)]
 pub struct PlayerData {
     pub uid: i32,
+    #[serde(flatten)]
     pub profile: PlayerProfile,
     pub team: TeamIdentifier,
     pub operator: bool,
     pub disconnected: bool,
+    #[serde(skip)]
     pub writer: NetMessager,
 }

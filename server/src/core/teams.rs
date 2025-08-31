@@ -26,8 +26,10 @@ impl<T: Team + From<BaseTeam>> TeamsManager<T> {
 
         let mut rng = rand::thread_rng();
         let mut idx = rng.gen_range(0..teams.len());
-        while self.exists_with_name(&teams[idx].0) {
+        let mut retries = 100;
+        while self.exists_with_name(&teams[idx].0) && retries > 0 {
             idx = rng.gen_range(0..teams.len());
+            retries -= 1;
         }
 
         let color = teams[idx].1;
@@ -72,6 +74,10 @@ impl<T: Team> TeamsManager<T> {
 
     pub fn get_teams(&self) -> &Vec<T> {
         &self.teams
+    }
+
+    pub fn get_teams_mut(&mut self) -> &mut Vec<T> {
+        &mut self.teams
     }
 
     pub fn teams_id(&self) -> usize {

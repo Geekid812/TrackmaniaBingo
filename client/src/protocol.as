@@ -5,7 +5,7 @@
 // so it is the client's responsability to send a ping message at least regularly to keep
 // the connection alive.
 class Protocol {
-    Net::Socket@ socket;
+    Net::Socket @socket;
     ConnectionState state;
     int msgSize;
 
@@ -15,7 +15,9 @@ class Protocol {
         msgSize = 0;
     }
 
-    private Json::Value@ SendHandshakeRequest(Json::Value@ message) {
+  private
+
+    Json::Value @SendHandshakeRequest(Json::Value @message) {
         if (!InnerSend(Json::Write(message))) {
             trace("[Protocol::Connect] Failed sending handshake message.");
             Fail();
@@ -24,7 +26,8 @@ class Protocol {
 
         string handshakeReply = BlockRecv(Settings::NetworkTimeout);
         if (handshakeReply == "") {
-            trace("[Protocol::Connect] Handshake reply reception timed out after " + Settings::NetworkTimeout + "ms.");
+            trace("[Protocol::Connect] Handshake reply reception timed out after " +
+                  Settings::NetworkTimeout + "ms.");
             Fail();
             return null;
         }
@@ -40,46 +43,54 @@ class Protocol {
         }
     }
 
-    int HandleHandshakeFailure(Json::Value@ error) {
+    int HandleHandshakeFailure(Json::Value @error) {
         HandshakeFailureIntentCode code = HandshakeFailureIntentCode(int(error["intent_code"]));
         string reason = string(error["reason"]);
         switch (code) {
-            case HandshakeFailureIntentCode::ShowError:
-                err("Protocol::Connect", "Connection to server failed: " + reason);
-                return -2;
-            case HandshakeFailureIntentCode::RequireUpdate:
-                UI::ShowNotification(Icons::Upload + " Update Required!", "A new update is required: " + reason, vec4(.4, .4, 1., 1.), 15000);
-                print("[Protocol::Connect] New update required: " + reason);
-                return -2;
-            case HandshakeFailureIntentCode::Reauthenticate:
-                print("[Protocol::Connect] Reauthenticating: " + reason);
-                PersistantStorage::ClientToken = "";
-                return -1;
-            default:
-                err("Protocol::Connect", "Unhandled handshake failure code: " + code);
-                return -2;
+        case HandshakeFailureIntentCode::ShowError:
+            err("Protocol::Connect", "Connection to server failed: " + reason);
+            return -2;
+        case HandshakeFailureIntentCode::RequireUpdate:
+            UI::ShowNotification(Icons::Upload + " Update Required!",
+                                 "A new update is required: " + reason,
+                                 vec4(.4, .4, 1., 1.),
+                                 15000);
+            print("[Protocol::Connect] New update required: " + reason);
+            return -2;
+        case HandshakeFailureIntentCode::Reauthenticate:
+            print("[Protocol::Connect] Reauthenticating: " + reason);
+            PersistantStorage::ClientToken = "";
+            return -1;
+        default:
+            err("Protocol::Connect", "Unhandled handshake failure code: " + code);
+            return -2;
         }
     }
 
-    int Connect(const string&in host, uint16 port, HandshakeRequest handshake) {
+    int Connect(const string& in host, uint16 port, HandshakeRequest handshake) {
         state = ConnectionState::Connecting;
         @socket = Net::Socket();
         msgSize = 0;
-        
+
         // Socket Creation
         if (!socket.Connect(host, port)) {
-            trace("[Protocol::Connect] Could not create socket to connect to " + host + ":" + port + ".");
+            trace("[Protocol::Connect] Could not create socket to connect to " + host + ":" + port +
+                  ".");
             Fail();
             return -1;
         }
-        trace("[Protocol::Connect] Socket bound and ready to connect to " + host + ":" + port + ".");
+        trace("[Protocol::Connect] Socket bound and ready to connect to " + host + ":" + port +
+              ".");
 
         // Connection
         uint64 timeoutDate = Time::Now + Settings::NetworkTimeout;
         uint64 initialDate = Time::Now;
-        while (!socket.IsReady() && Time::Now < timeoutDate) { yield(); }
+        while (!socket.IsReady() && Time::Now < timeoutDate) {
+            yield();
+        }
         if (!socket.IsReady()) {
-            trace("[Protocol::Connect] Connection timed out after " + Settings::NetworkTimeout + "ms.");
+            trace("[Protocol::Connect] Connection timed out after " + Settings::NetworkTimeout +
+                  "ms.");
             Fail();
             return -1;
         }
@@ -94,8 +105,9 @@ class Protocol {
             request.displayName = User::GetLocalUsername();
 
             trace("[Protocol::Connect] Sending off key exchange request.");
-            Json::Value@ reply = SendHandshakeRequest(KeyExchangeRequest::Serialize(request));
-            if (@reply is null) return -1;
+            Json::Value @reply = SendHandshakeRequest(KeyExchangeRequest::Serialize(request));
+            if (@reply is null)
+                return -1;
 
             if (reply.HasKey("success") && !bool(reply["success"])) {
                 return HandleHandshakeFailure(reply);
@@ -108,8 +120,9 @@ class Protocol {
 
         // Opening Handshake
         trace("[Protocol::Connect] Sending opening handshake.");
-        Json::Value@ reply = SendHandshakeRequest(HandshakeRequest::Serialize(handshake));
-        if (@reply is null) return -1;
+        Json::Value @reply = SendHandshakeRequest(HandshakeRequest::Serialize(handshake));
+        if (@reply is null)
+            return -1;
 
         // Handshake Check
         bool success = false;
@@ -122,21 +135,23 @@ class Protocol {
             @Profile = PlayerProfile::Deserialize(reply["profile"]);
             PersistantStorage::LocalProfile = Json::Write(reply["profile"]);
         } catch {
-            err("Protocol::Connect", "Could not connect to the server, received an invalid response.");
+            err("Protocol::Connect",
+                "Could not connect to the server, received an invalid response.");
             error("Got this message: " + Json::Write(reply));
             error("Error: " + getExceptionInfo());
             Fail();
             return -2;
         }
 
-
-        trace("[Protocol::Connect] Handshake completed. Connection has been established!");
+        print("[Protocol::Connect] Handshake completed!");
         state = ConnectionState::Connected;
         return 0;
     }
 
-    private bool InnerSend(const string&in data) {
-        MemoryBuffer@ buf = MemoryBuffer(4 + data.Length);
+  private
+
+    bool InnerSend(const string& in data) {
+        MemoryBuffer @buf = MemoryBuffer(4 + data.Length);
         buf.Write(data.Length);
         buf.Write(data);
 
@@ -144,20 +159,25 @@ class Protocol {
         return socket.Write(buf);
     }
 
-    bool Send(const string&in data) {
-        if (state != ConnectionState::Connected) return false;
+    bool Send(const string& in data) {
+        if (state != ConnectionState::Connected)
+            return false;
         return InnerSend(data);
     }
 
     string BlockRecv(uint timeout) {
         uint timeoutDate = Time::Now + timeout;
         string message = "";
-        while (message == "" && state != ConnectionState::Closed && Time::Now < timeoutDate) { yield(); message = Recv(); }
+        while (message == "" && state != ConnectionState::Closed && Time::Now < timeoutDate) {
+            yield();
+            message = Recv();
+        }
         return message;
     }
 
     string Recv() {
-        if (state == ConnectionState::Closed) return "";
+        if (state == ConnectionState::Closed)
+            return "";
 
         if (msgSize == 0) {
             if (socket.Available() >= 4) {
@@ -183,9 +203,11 @@ class Protocol {
     }
 
     void Fail() {
-        if (state == ConnectionState::Closed) return;
+        if (state == ConnectionState::Closed)
+            return;
         trace("[Protocol::Fail] Connection fault. Closing.");
-        if (@socket != null && socket.IsReady()) socket.Close();
+        if (@socket != null && socket.IsReady())
+            socket.Close();
 
         state = ConnectionState::Closed;
         @socket = null;

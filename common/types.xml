@@ -41,6 +41,7 @@
     <struct name="MatchConfiguration">
         <comment>Match parameters set by the host.</comment>
         <m name="game" type="GamePlatform" default="GamePlatform::Next" />
+        <m name="mode" type="Gamemode" default="Gamemode::Standard" />
         <m name="grid_size" type="uint" default="5" />
         <m name="selection" type="MapMode" default="MapMode::RandomTMX" />
         <m name="target_medal" type="Medal" default="Medal::Author" />
@@ -53,6 +54,18 @@
         <m name="mappack_id" type="uint" optional="true" />
         <m name="campaign_selection" type="list[uint]" optional="true" />
         <m name="map_tag" type="int" optional="true" default="1" />
+        <m name="items" type="FrenzyItemSettings" />
+        <m name="items_expire" type="uint" default="600" />
+    </struct>
+
+    <struct name="FrenzyItemSettings">
+        <comment>Item drawing probabilities for configuring the Frenzy gamemode.</comment>
+        <m name="row_shift" type="uint" default="3" />
+        <m name="column_shift" type="uint" default="3" />
+        <m name="rally" type="uint" default="3" />
+        <m name="jail" type="uint" default="3" />
+        <m name="rainbow" type="uint" default="3" />
+        <m name="golden_dice" type="uint" default="3" />
     </struct>
 
     <struct name="HandshakeRequest">
@@ -122,10 +135,27 @@
         <v>None</v>
     </enum>
 
+    <enum name="Gamemode">
+        <comment>A selection of game rules.</comment>
+        <v>Standard</v>
+        <v>Frenzy</v>
+    </enum>
+
     <enum name="HandshakeFailureIntentCode">
         <comment>When a connection to the server fails, give the client a hint of what it should do.</comment>
         <v>ShowError</v>
         <v>RequireUpdate</v>
         <v>Reauthenticate</v>
+    </enum>
+
+    <enum name="Powerup">
+        <comment>A powerup from the Frenzy gamemode.</comment>
+        <v>Empty</v>
+        <v>RowShift</v>
+        <v>ColumnShift</v>
+        <v>Rally</v>
+        <v>Jail</v>
+        <v>RainbowTile</v>
+        <v>GoldenDice</v>
     </enum>
 </datatypes>

@@ -6,7 +6,7 @@
 environment = "dev"     # or "live"
 
 [network]
-tcp_port = 43333            # local port for TCP server
+tcp_port = 5000             # local port for TCP server
 http_port = 8080            # local port for HTTP server
 timeout = 300               # delay in seconds until TCP connection is closed when idle
 
@@ -16,6 +16,11 @@ required_version = "5.0"    # minimum version of the plugin client
 [behaviour]
 never_close = false         # disable closing inactive rooms (for debugging)
 max_teams = 6               # maximum number of teams in a game room
+powerup_tick_rate = 3       # powerup spawn ticks per minute
+powerup_spawn = 0.1         # probability of an item spawning in one tick
+claim_inactivity_secs = 30  # minimum time of inactivity on a map before a powerup can spawn
+skip_checks = false         # skip various checks (for easier debugging)
+max_match_duration = 1440   # max duration of a bingo match, in minutes
 
 [keys]
 openplanet = "KEY"      # secret key for Openplanet authentication

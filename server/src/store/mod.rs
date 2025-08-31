@@ -3,21 +3,22 @@ use std::{collections::HashMap, fs, path::Path, sync::OnceLock};
 use sqlx::{sqlite::SqlitePoolOptions, Row, SqlitePool};
 use tracing::{error, info};
 
-static DATABASE_VERSIONS: [&'static str; 2] = [
-    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/db/versions/v1.sql")),
-    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/db/versions/v2.sql")),
+static DATABASE_VERSIONS: [&'static str; 4] = [
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v1.sql")),
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v2.sql")),
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v3.sql")),
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v4.sql")),
 ];
 
 static PRIMARY_STORE: OnceLock<SqlitePool> = OnceLock::new();
 
+pub mod matches;
 mod operations;
 pub mod player;
-pub mod matches;
 
 use operations::*;
 
-pub type StoreReadResult<V> = Result<V, sqlx::Error>;
-pub type StoreWriteResult = Result<(), sqlx::Error>;
+pub type StoreResult<V = ()> = Result<V, sqlx::Error>;
 
 /// Creates an empty file if the path specified doesn't exist.
 fn file_create(path: &str) {

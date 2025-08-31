@@ -125,7 +125,7 @@ def as_deserialize(struct: dict, schema: dict) -> str:
             stmt = "for (uint i = 0; i < value[\"{2}\"].Length; i++) {{\n            cls.{0}.InsertLast({1});\n        }}".format(
                 mname, value, m['@name'])
         if optional:
-            stmt = f"if (value[\"{m['@name']}\"].GetType() != Json::Type::Null) " + stmt
+            stmt = f"if (value[\"{m['@name']}\"].GetType() != Json::Type::Null) {'@' if is_struct_type else ''}" + stmt
         statements.append(stmt)
 
     return "\n        ".join(statements)

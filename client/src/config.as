@@ -1,13 +1,14 @@
 
 namespace Config {
     string StatusMessage;
-    bool CanPlay;
+    bool CanPlay = true;
     NewsItem[] News;
     FeaturedMappack[] FeaturedMappacks;
     uint64 LastUpdate;
 
     void FetchConfig() {
-        string url = "https://openplanet.dev/plugin/trackmaniabingo/config/main-" + Meta::ExecutingPlugin().Version.SubStr(0, 1);
+        string url = "https://openplanet.dev/plugin/trackmaniabingo/config/main-" +
+                     Meta::ExecutingPlugin().Version.SubStr(0, 1);
         trace("[Config::FetchConfig] Updating configuration: " + url);
         auto req = Net::HttpGet(url);
         while (!req.Finished()) {
@@ -16,9 +17,11 @@ namespace Config {
         Json::Value json;
         try {
             json = Json::Parse(req.String());
-            if (json.HasKey("error")) throw(json["error"]);
+            if (json.HasKey("error"))
+                throw(json["error"]);
         } catch {
-            trace("[Config::FetchConfig] Response parse failed. Status code: " + req.ResponseCode() + " | Body: " + req.String());
+            trace("[Config::FetchConfig] Response parse failed. Status code: " +
+                  req.ResponseCode() + " | Body: " + req.String());
             return;
         }
 
@@ -32,7 +35,8 @@ namespace Config {
             for (uint j = 0; j < linkKeys.Length; j++) {
                 linkRefs.InsertLast(jsonItem["links"][linkKeys[j]]);
             }
-            News.InsertLast(NewsItem(jsonItem["title"], jsonItem["content"], linkKeys, linkRefs, jsonItem["ts"]));
+            News.InsertLast(NewsItem(
+                jsonItem["title"], jsonItem["content"], linkKeys, linkRefs, jsonItem["ts"]));
         }
 
         LastUpdate = Time::Now;
@@ -49,7 +53,11 @@ namespace Config {
 
         NewsItem() {}
 
-        NewsItem(const string&in title, const string&in content, string[] linkNames, string[] linkHref, int64 timestamp) {
+        NewsItem(const string& in title,
+                 const string& in content,
+                 string[] linkNames,
+                 string[] linkHref,
+                 int64 timestamp) {
             this.title = title;
             this.content = content;
             this.linkNames = linkNames;
@@ -66,7 +74,7 @@ class FeaturedMappack {
 
     FeaturedMappack() {}
 
-    FeaturedMappack(const string&in name, uint tmxid) {
+    FeaturedMappack(const string& in name, uint tmxid) {
         this.name = name;
         this.tmxid = tmxid;
     }

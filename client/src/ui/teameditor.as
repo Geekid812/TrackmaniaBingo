@@ -3,7 +3,7 @@ namespace UITeamEditor {
     vec3 CreateTeamColor;
     string CreateTeamName;
 
-    void DisplayTeamPreset(uint i, Team@ team) {
+    void DisplayTeamPreset(uint i, Team @team) {
         UI::PushStyleColor(UI::Col::ChildBg, UIColor::GetAlphaColor(team.color, 0.4));
         UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
         UI::BeginChild("###bingoteampreset" + i, vec2(0, 32), true, UI::WindowFlags::NoScrollbar);
@@ -24,20 +24,19 @@ namespace UITeamEditor {
         UIColor::Reset();
 
         if (@Room != null) {
-            Team@ teamInRoom = Room.GetTeamWithName(team.name);
+            Team @teamInRoom = Room.GetTeamWithName(team.name);
             bool teamInstantiatedInRoom = @teamInRoom != null;
 
             UI::BeginDisabled(teamInstantiatedInRoom);
-            
+
             if (teamInstantiatedInRoom) {
                 buttonText = Icons::Check;
                 UIColor::Gray();
-            }
-            else {
+            } else {
                 buttonText = Icons::PlusSquare;
                 UIColor::DarkGreen();
             }
-            
+
             UI::SameLine();
             Layout::AlignButton(buttonText, 0.85);
             UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
@@ -62,7 +61,7 @@ namespace UITeamEditor {
     void NewTeamCreateMenu() {
         CreateTeamColor = UI::InputColor3("Color##bingonewteamcolor", CreateTeamColor);
         CreateTeamName = UI::InputText("Name##bingonewteamname", CreateTeamName);
-    
+
         UIColor::DarkGreen();
         if (UI::Button(Icons::Plus + " Create New Team")) {
             Team newTeam = Team(0, CreateTeamName, CreateTeamColor);
@@ -76,9 +75,12 @@ namespace UITeamEditor {
     }
 
     void Render() {
-        if (!Visible) return;
-        UI::Begin(Icons::Th + " Teams Editor", Visible, UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
-        
+        if (!Visible)
+            return;
+        UI::Begin(Icons::Th + " Teams Editor",
+                  Visible,
+                  UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
+
         UI::SeparatorText("Team Presets");
         TeamsEnumerator();
 
@@ -95,10 +97,12 @@ namespace UITeamEditor {
     }
 
     bool HasAnyUninstantiatedTeam() {
-        if (@Room is null) return false;
+        if (@Room is null)
+            return false;
 
         for (uint i = 0; i < TeamPresets.Length; i++) {
-            if (@Room.GetTeamWithName(TeamPresets[i].name) == null) return true;
+            if (@Room.GetTeamWithName(TeamPresets[i].name) == null)
+                return true;
         }
 
         return false;
@@ -106,11 +110,13 @@ namespace UITeamEditor {
 
     void InstantiateAnyNewTeam() {
         if (@Room is null) {
-            warn("[UITeamEditor::InstantiateAnyNewTeam] Can't instantiate a new team when Room is null.");
+            warn("[UITeamEditor::InstantiateAnyNewTeam] Can't instantiate a new team when Room is "
+                 "null.");
             return;
         }
         if (!HasAnyUninstantiatedTeam()) {
-            warn("[UITeamEditor::InstantiateAnyNewTeam] All team presets are instantiated, cannot create a new one.");
+            warn("[UITeamEditor::InstantiateAnyNewTeam] All team presets are instantiated, cannot "
+                 "create a new one.");
             return;
         }
 

@@ -11,7 +11,8 @@ class NetworkRoom {
 }
 
 namespace NetworkRoom {
-    Json::Value@ Serialize(NetworkRoom room) {
+
+    Json::Value @Serialize(NetworkRoom room) {
         auto value = Json::Object();
         value["name"] = room.name;
         value["join_code"] = room.joinCode;
@@ -25,7 +26,7 @@ namespace NetworkRoom {
         return value;
     }
 
-    NetworkRoom Deserialize(Json::Value@ value) {
+    NetworkRoom Deserialize(Json::Value @value) {
         auto room = NetworkRoom();
         room.name = value["name"];
         room.joinCode = value["join_code"];

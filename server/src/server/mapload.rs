@@ -9,7 +9,7 @@ use tracing::error;
 use crate::config::CONFIG;
 use crate::core::models::map::GameMap;
 use crate::core::room::GameRoom;
-use crate::datatypes::{MapMode, MatchConfiguration};
+use crate::datatypes::{Gamemode, MapMode, MatchConfiguration};
 use crate::integrations::tmexchange::MappackLoader;
 use crate::{
     core::directory::Shared,
@@ -32,7 +32,7 @@ fn get_load_future(
     config: &MatchConfiguration,
 ) -> Pin<Box<dyn Future<Output = MaploadResult> + Send>> {
     let mut reroll_multiplier = 1;
-    if config.rerolls {
+    if config.rerolls || config.mode == Gamemode::Frenzy {
         reroll_multiplier = 2;
     }
 

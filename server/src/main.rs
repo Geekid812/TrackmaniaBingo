@@ -21,7 +21,7 @@ pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 async fn main() {
     // Logging setup
     let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::DEBUG)
+        .with_max_level(Level::INFO)
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("logging could not be initialized");
 
@@ -33,9 +33,9 @@ async fn main() {
 
     // Database setup
     info!("opening main database store");
-    store::initialize_primary_store("main.db").await;
+    store::initialize_primary_store("db/main.db").await;
     info!("opening mapcache database");
-    orm::mapcache::start_database("mapcache.db").await;
+    orm::mapcache::start_database("db/mapcache.db").await;
 
     // Run mainloop for web server
     info!("starting Web API");

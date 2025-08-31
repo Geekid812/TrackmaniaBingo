@@ -1,0 +1,88 @@
+/**
+ *	Library for handling UIManager events (because of Maniascript technical issues, it is impossible to do from within the Modescript)
+ */
+#Const Version		"2025-08-13"
+#Const ScriptName	"Libs/Bingo/Bingo_Events.Script.txt"
+
+#Include "TextLib" as TL
+#Include "Libs/Nadeo/CMGame/Utils/Utils.Script.txt" as Utils
+
+#Const C_Event_BingoUpdateRecord "Bingo_UpdateRecord"
+#Const C_GhostLabel_PB "7FA"
+
+#Struct K_GhostData {
+	Text Nickname;
+	Text AccountId;
+	Integer Time;
+	Integer[] Checkpoints;
+	Boolean IsPersonalBest;
+}
+
+declare K_GhostData[Text] G_Ghosts;
+declare Integer[][] G_GhostsTimes;
+
+Integer[][] GetGhostsTimes() {
+    return G_GhostsTimes;
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+// Get the colored "Personnal Best" text
+Text GetPBName() {
+	//L16N [Campaign] Name displayed above the ghost of the player's best time.
+	return "$"^C_GhostLabel_PB^TL::GetTranslatedText(_("Personal best"));
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+// [ML HANDLER] Receive and update a new Bingo run result (record)
+Void CreateOrUpdateRecord(Text AccountId, Integer ResultTime, Integer[] CPTimes, Boolean IsPersonalBest) {
+	declare K_GhostData GhostData = K_GhostData {
+        Nickname = GetPBName(),
+        AccountId = AccountId,
+        Time = ResultTime,
+        Checkpoints = CPTimes,
+        IsPersonalBest = IsPersonalBest
+    };
+	G_Ghosts[AccountId] = GhostData;
+}
+
+Void RecordUpdate(CSmPlayer _Player) {
+	G_GhostsTimes = [];
+
+	declare netwrite K_GhostData[] Net_TimeGap_GhostIdentList_V2 for _Player;
+	Net_TimeGap_GhostIdentList_V2 = [];
+
+    declare CUIConfig UI <=> UIManager.GetUI(_Player);
+	declare netwrite Integer[][] Net_Race_Checkpoint_GhostsTimes for UI;
+	Net_Race_Checkpoint_GhostsTimes = [];
+
+	foreach (AccountId => GhostData in G_Ghosts) {
+		Net_TimeGap_GhostIdentList_V2.add(GhostData);
+		Net_Race_Checkpoint_GhostsTimes.add(Utils::ToScriptArray(GhostData.Checkpoints));
+		G_GhostsTimes.add(Utils::ToScriptArray(GhostData.Checkpoints));
+	}
+}
+
+Void Yield() {
+	foreach (Event in UIManager.PendingEvents) {
+		if (Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent) {
+			switch (Event.CustomEventType) {
+				case C_Event_BingoUpdateRecord: {
+					declare Text AccountId = Event.CustomEventData[0];
+					log("Received new record for account: " ^ AccountId);
+					declare Integer ResultTime = TL::ToInteger(Event.CustomEventData[1]);
+					declare Integer[] CPTimes;
+					for (i, 2, Event.CustomEventData.count - 1) {
+						CPTimes.add(TL::ToInteger(Event.CustomEventData[i]));
+					}
+
+					declare LocalUserAccountId = Users[0].WebServicesUserId;
+					CreateOrUpdateRecord(AccountId, ResultTime, CPTimes, LocalUserAccountId == AccountId);
+
+					foreach (Player in Players) {
+						RecordUpdate(Player);
+					}
+				}
+			}
+		}
+	}
+}

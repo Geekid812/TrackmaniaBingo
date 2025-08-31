@@ -1,7 +1,9 @@
-use crate::server::context::ClientContext;
+use crate::server::{
+    context::ClientContext,
+    handlers::{error, ok},
+};
 use serde::Deserialize;
-
-use super::{generic, Request, Response};
+use serde_json::Value;
 
 #[derive(Deserialize, Debug)]
 pub struct SubmitPollVote {
@@ -9,19 +11,14 @@ pub struct SubmitPollVote {
     choice: usize,
 }
 
-#[typetag::deserialize]
-impl Request for SubmitPollVote {
-    fn handle(&self, ctx: &mut ClientContext) -> Box<dyn Response> {
-        ctx.game_sync();
-        if let Some(game) = ctx.game_match() {
-            let mut lock = game.lock();
-            lock.poll_cast_vote(self.poll_id, ctx.profile.uid as u32, self.choice);
-        } else {
-            return Box::new(generic::Error {
-                error: "not in a game".to_owned(),
-            });
-        }
-
-        Box::new(generic::Ok)
+pub fn handle(ctx: &mut ClientContext, args: SubmitPollVote) -> Value {
+    ctx.game_sync();
+    if let Some(game) = ctx.game_match() {
+        let mut lock = game.lock();
+        lock.poll_cast_vote(args.poll_id, ctx.profile.uid as u32, args.choice);
+    } else {
+        return error("not in a game");
     }
+
+    ok()
 }

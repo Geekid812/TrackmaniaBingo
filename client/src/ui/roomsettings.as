@@ -7,7 +7,7 @@ namespace UIRoomSettings {
     const float CHECKBOXES_ALIGN_X = 200;
     const float GAME_SETTINGS_ALIGN_X = 180;
 
-    FeaturedMappack@ SelectedPack;
+    FeaturedMappack @SelectedPack;
     int State;
 
     void RoomNameInput() {
@@ -23,7 +23,8 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::User + "  Enable Player Limit");
         Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
         bool toggle = UI::Checkbox("##bingomaxplayers", hasPlayerLimit(RoomConfig));
-        if (toggle != hasPlayerLimit(RoomConfig)) RoomConfig.size = toggle ? 4 : 0;
+        if (toggle != hasPlayerLimit(RoomConfig))
+            RoomConfig.size = toggle ? 4 : 0;
     }
 
     void PlayerLimitInput() {
@@ -35,7 +36,8 @@ namespace UIRoomSettings {
     void RandomizeToggle() {
         UITools::AlignedLabel(Icons::Random + "  Randomize Teams");
         Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
-        RoomConfig.randomize = UI::Checkbox("##bingorandomize", RoomConfig.randomize) && !RoomConfig.hostControl;
+        RoomConfig.randomize =
+            UI::Checkbox("##bingorandomize", RoomConfig.randomize) && !RoomConfig.hostControl;
     }
 
     void AccessToggle() {
@@ -58,7 +60,13 @@ namespace UIRoomSettings {
     void GridSizeSelector() {
         UITools::AlignedLabel(Icons::Th + "  Grid Size");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        auto result = UITools::MixedInputButton(MatchConfig.gridSize + "x" + MatchConfig.gridSize, "bingogridsize", 3, 8, 1, MatchConfig.gridSize, LoadState(0));
+        auto result = UITools::MixedInputButton(MatchConfig.gridSize + "x" + MatchConfig.gridSize,
+                                                "bingogridsize",
+                                                3,
+                                                8,
+                                                1,
+                                                MatchConfig.gridSize,
+                                                LoadState(0));
         MatchConfig.gridSize = result.value;
         StoreState(0, result.state);
     }
@@ -70,9 +78,12 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::MapO + "  Map Selection");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
-        if (UI::BeginCombo("##bingomaps", @SelectedPack != null ? SelectedPack.name : stringof(MatchConfig.selection))) {
+        if (UI::BeginCombo("##bingomaps",
+                           @SelectedPack != null ? SelectedPack.name
+                                                 : stringof(MatchConfig.selection))) {
 
-            if (UI::Selectable(stringof(MapMode::RandomTMX), MatchConfig.selection == MapMode::RandomTMX)) {
+            if (UI::Selectable(stringof(MapMode::RandomTMX),
+                               MatchConfig.selection == MapMode::RandomTMX)) {
                 MatchConfig.selection = MapMode::RandomTMX;
                 @SelectedPack = null;
             }
@@ -82,14 +93,17 @@ namespace UIRoomSettings {
                 @SelectedPack = null;
             }
 
-            if (UI::Selectable(stringof(MapMode::Mappack), MatchConfig.selection == MapMode::Mappack && @SelectedPack == null)) {
+            if (UI::Selectable(stringof(MapMode::Mappack),
+                               MatchConfig.selection == MapMode::Mappack &&
+                                   @SelectedPack == null)) {
                 MatchConfig.selection = MapMode::Mappack;
                 @SelectedPack = null;
             }
 
             for (uint i = 0; i < Config::FeaturedMappacks.Length; i++) {
                 FeaturedMappack pack = Config::FeaturedMappacks[i];
-                if (UI::Selectable("\\$ff8Featured Mappack: \\$z" + pack.name, @SelectedPack != null && SelectedPack.tmxid == pack.tmxid)) {
+                if (UI::Selectable("\\$ff8Featured Mappack: \\$z" + pack.name,
+                                   @SelectedPack != null && SelectedPack.tmxid == pack.tmxid)) {
                     MatchConfig.selection = MapMode::Mappack;
                     MatchConfig.mappackId = pack.tmxid;
                     @SelectedPack = pack;
@@ -105,8 +119,15 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::ClockO + "  Time Limit");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         string label = TimeFormat(MatchConfig.timeLimit);
-        if (MatchConfig.timeLimit == 0) label = "\\$888Disabled";
-        auto result = UITools::MixedInputButton(label, "bingotimelimit", 0, TIMELIMIT_MAX, 15, MatchConfig.timeLimit / 60000, LoadState(1));
+        if (MatchConfig.timeLimit == 0)
+            label = "\\$888Disabled";
+        auto result = UITools::MixedInputButton(label,
+                                                "bingotimelimit",
+                                                0,
+                                                TIMELIMIT_MAX,
+                                                15,
+                                                MatchConfig.timeLimit / 60000,
+                                                LoadState(1));
         MatchConfig.timeLimit = result.value * 60000;
         StoreState(1, result.state);
     }
@@ -115,8 +136,15 @@ namespace UIRoomSettings {
         UITools::AlignedLabel(Icons::LifeRing + "  Grace Period");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         string label = TimeFormat(MatchConfig.noBingoDuration);
-        if (MatchConfig.noBingoDuration == 0) label = "\\$888Disabled";
-        auto result = UITools::MixedInputButton(label, "nobingotime", 0, NOBINGO_MAX, 5, MatchConfig.noBingoDuration / 60000, LoadState(2));
+        if (MatchConfig.noBingoDuration == 0)
+            label = "\\$888Disabled";
+        auto result = UITools::MixedInputButton(label,
+                                                "nobingotime",
+                                                0,
+                                                NOBINGO_MAX,
+                                                5,
+                                                MatchConfig.noBingoDuration / 60000,
+                                                LoadState(2));
         MatchConfig.noBingoDuration = result.value * 60000;
         StoreState(2, result.state);
 
@@ -124,9 +152,7 @@ namespace UIRoomSettings {
         UITools::HelpTooltip("If enabled, bingos cannot be scored for the first X minutes.");
     }
 
-    int LoadState(int id) {
-        return (State >> (2 * id)) & 0b11;
-    }
+    int LoadState(int id) { return (State >> (2 * id)) & 0b11; }
 
     void StoreState(int id, int state) {
         State &= 0xffff - (0b11 << (2 * id));
@@ -150,7 +176,8 @@ namespace UIRoomSettings {
     }
 
     void MapTagSelector() {
-        // FIX: mapTag should not be 0, as it is invalid. Correct it if it was loaded from an invalid LastConfig
+        // FIX: mapTag should not be 0, as it is invalid. Correct it if it was loaded from an
+        // invalid LastConfig
         MatchConfig.mapTag = Math::Max(MatchConfig.mapTag, 1);
 
         UITools::AlignedLabel(Icons::Tag + "  Selected Map Tag");
@@ -219,7 +246,8 @@ namespace UIRoomSettings {
         Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
         RoomConfig.hostControl = UI::Checkbox("##bingohostcontrols", RoomConfig.hostControl);
         UI::SameLine();
-        UITools::HelpTooltip("The room host assigns players to their respective teams. Players cannot change their own team.");
+        UITools::HelpTooltip("The room host assigns players to their respective teams. Players "
+                             "cannot change their own team.");
     }
 
     void RerollsToggle() {
@@ -227,7 +255,8 @@ namespace UIRoomSettings {
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         MatchConfig.rerolls = UI::Checkbox("##bingorerolls", MatchConfig.rerolls);
         UI::SameLine();
-        UITools::HelpTooltip("Players can vote to reroll an unclaimed map if the majority of players agree.");
+        UITools::HelpTooltip(
+            "Players can vote to reroll an unclaimed map if the majority of players agree.");
     }
 
     void CompetitvePatchToggle() {
@@ -235,12 +264,69 @@ namespace UIRoomSettings {
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch);
         UI::SameLine();
-        UITools::HelpTooltip("In game map replays will be disabled.");
+        UITools::HelpTooltip("Viewing records, leaderboards and splits will be disabled.");
     }
 
     void TotalTimeIndicator() {
-        UITools::AlignedLabel(Icons::PlayCircle + "  Total Game Time: " + TimeFormat(MatchConfig.timeLimit + MatchConfig.noBingoDuration));
+        UITools::AlignedLabel(Icons::PlayCircle + "  Total Game Time: " +
+                              TimeFormat(MatchConfig.timeLimit + MatchConfig.noBingoDuration));
         UI::NewLine();
+    }
+
+    void GamemodeSelect() {
+        UITools::AlignedLabel(Icons::PencilSquareO + " Gamemode");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+
+        if (UI::ButtonColored(
+                "Standard", .6, .6, (MatchConfig.mode == Gamemode::Standard ? .6 : .1))) {
+            MatchConfig.mode = Gamemode::Standard;
+        }
+        UI::SetItemTooltip("The classic gamemode for Bingo.\nGet a row, column, or diagonal on the "
+                           "board with your team to win.");
+
+        UI::SameLine();
+        Layout::EndLabelAlign();
+        if (UI::ButtonColored(
+                "Frenzy", .15, .6, (MatchConfig.mode == Gamemode::Frenzy ? .6 : .1))) {
+            MatchConfig.mode = Gamemode::Frenzy;
+        }
+        UI::SetItemTooltip("Powerups will appear randomly on the board.\nUse their different "
+                           "powers efficiently to claim victory!");
+    }
+
+    void EditItemSettings() {
+        if (UI::Button(Icons::Cog + " Edit Item Settings")) {
+            UIItemSettings::Visible = !UIItemSettings::Visible;
+        }
+    }
+
+    void ItemExpiryEdit() {
+        UITools::AlignedLabel(Icons::HourglassEnd + " Items Expire");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+
+        UI::SetNextItemWidth(250);
+        if (UI::BeginCombo("##bingoitemexpire",
+                           MatchConfig.itemsExpire == 0
+                               ? "Never"
+                               : "After " + (MatchConfig.itemsExpire) / 60 + " minutes")) {
+
+            if (UI::Selectable("After 2 minutes", MatchConfig.itemsExpire == 120)) {
+                MatchConfig.itemsExpire = 120;
+            }
+
+            if (UI::Selectable("After 10 minutes", MatchConfig.itemsExpire == 600)) {
+                MatchConfig.itemsExpire = 600;
+            }
+
+            if (UI::Selectable("Never", MatchConfig.itemsExpire == 0)) {
+                MatchConfig.itemsExpire = 0;
+            }
+
+            UI::EndCombo();
+        }
+        UI::SameLine();
+        UITools::HelpTooltip("After being collected, a powerup must be used within a certain time "
+                             "frame or it will disappear.");
     }
 
     void SettingsView() {
@@ -253,7 +339,7 @@ namespace UIRoomSettings {
         UI::BeginDisabled(RoomConfig.hostControl);
         RandomizeToggle();
         UI::EndDisabled();
-        
+
         LateJoinToggle();
         HostControlsSetupToggle();
 
@@ -263,6 +349,7 @@ namespace UIRoomSettings {
 
         UI::NewLine();
         UITools::SectionHeader("Game Settings");
+        GamemodeSelect();
         MapModeSelector();
         if (MatchConfig.selection == MapMode::Mappack) {
             MappackIdInput();
@@ -278,11 +365,21 @@ namespace UIRoomSettings {
             OvertimeToggle();
         }
         RerollsToggle();
-        if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0) TotalTimeIndicator();
+        CompetitvePatchToggle();
+        if (MatchConfig.mode == Gamemode::Frenzy) {
+            ItemExpiryEdit();
+        }
+
+        if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0)
+            TotalTimeIndicator();
+
+        if (MatchConfig.mode == Gamemode::Frenzy) {
+            EditItemSettings();
+        }
     }
 
     void SaveConfiguredSettings() {
-        Json::Value@ configs = Json::Object();
+        Json::Value @configs = Json::Object();
         configs["room"] = RoomConfiguration::Serialize(RoomConfig);
         configs["game"] = MatchConfiguration::Serialize(MatchConfig);
         PersistantStorage::LastConfig = Json::Write(configs);

@@ -13,6 +13,8 @@ use crate::integrations::tmio::CountryIdentifier;
 use crate::store::player::NewPlayer;
 use crate::{config, store};
 
+use super::token::set_player_token;
+
 static AUTHENTICATOR: Lazy<Option<Arc<Authenticator>>> = Lazy::new(|| {
     if let Some(secret) = config::get_string("keys.openplanet") {
         // check that it was replaced from the default value
@@ -35,14 +37,14 @@ enum AuthenticationMethod {
 /// Handling logic for authenticating new players.
 pub async fn login(request: KeyExchangeRequest) -> Result<String, anyhow::Error> {
     let player: NewPlayer = match request.key {
-        key if key == "" => {
+        key if key.is_empty() => {
             if !config::is_development() {
                 return Err(anyhow!("must provide an Openplanet authentication key when production mode is activated")
                     );
             }
-
-            let client_token = base64::generate(32);
-            let country_result = COUNTRY_IDENTIFIER.get_country_code(&request.account_id).await;
+            let country_result = COUNTRY_IDENTIFIER
+                .get_country_code(&request.account_id)
+                .await;
 
             if let Err(e) = &country_result {
                 error!("error fetching country code: {}", e);
@@ -52,10 +54,9 @@ pub async fn login(request: KeyExchangeRequest) -> Result<String, anyhow::Error>
             NewPlayer {
                 account_id: request.account_id,
                 username: request.display_name,
-                client_token,
                 country_code,
             }
-        },
+        }
         key => {
             if AUTHENTICATOR.is_none() {
                 return Err(anyhow!(
@@ -65,7 +66,6 @@ pub async fn login(request: KeyExchangeRequest) -> Result<String, anyhow::Error>
 
             match AUTHENTICATOR.as_ref().unwrap().validate(key).await {
                 Ok(identity) => {
-                    let client_token = base64::generate(32);
                     let country_result = COUNTRY_IDENTIFIER
                         .get_country_code(&identity.account_id)
                         .await;
@@ -78,7 +78,6 @@ pub async fn login(request: KeyExchangeRequest) -> Result<String, anyhow::Error>
                     NewPlayer {
                         account_id: identity.account_id,
                         username: identity.display_name,
-                        client_token,
                         country_code,
                     }
                 }
@@ -93,10 +92,13 @@ pub async fn login(request: KeyExchangeRequest) -> Result<String, anyhow::Error>
         }
     };
 
-    let token = player.client_token.clone();
-    if let Err(e) = store::player::create_or_update_player(player).await {
-        Err(anyhow!("database error: {}", e))
-    } else {
-        Ok(token)
+    let client_token = base64::generate(32);
+
+    match store::player::create_or_update_player(player).await {
+        Ok(uid) => {
+            set_player_token(uid, client_token.clone());
+            Ok(client_token)
+        }
+        Err(e) => Err(anyhow!("database error: {}", e)),
     }
 }

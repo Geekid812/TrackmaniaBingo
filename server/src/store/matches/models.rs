@@ -6,6 +6,7 @@ pub struct Match {
     pub uid: String,
     pub started_at: DateTime<Utc>,
     pub ended_at: DateTime<Utc>,
+    pub mvp_player_uid: Option<i32>,
 }
 
 /// The outcome of a match for a single player.

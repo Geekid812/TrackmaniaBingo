@@ -15,9 +15,7 @@ namespace UIChat {
     string ChatInput;
     bool Visible = true;
 
-    bool ShouldDisplay() {
-        return Visible && (@Room !is null || @Match !is null);
-    }
+    bool ShouldDisplay() { return Visible && (@Room !is null || @Match !is null); }
 
     void RemoveExpiredMessages() {
         uint i = 0;
@@ -30,18 +28,33 @@ namespace UIChat {
     }
 
     void Render() {
-        if (!ShouldDisplay()) return;
+        if (!ShouldDisplay())
+            return;
         RemoveExpiredMessages();
         bool open = true;
 
         vec4 color = UI::GetStyleColor(UI::Col::WindowBg);
         int64 millisSinceMessage = Time::Now - LastMessageTimestamp;
-        color.w = Math::Clamp(1. - float(millisSinceMessage - CHAT_HOLD_TIME_MILLIS) / CHAT_FADE_TIME_MILLIS, MIN_CHAT_OPACITY, MAX_CHAT_OPACITY);
+        color.w = Math::Clamp(1. - float(millisSinceMessage - CHAT_HOLD_TIME_MILLIS) /
+                                       CHAT_FADE_TIME_MILLIS,
+                              MIN_CHAT_OPACITY,
+                              MAX_CHAT_OPACITY);
         UI::PushStyleColor(UI::Col::WindowBg, color);
 
-        UI::SetNextWindowPos(CHAT_POSITION_OFFSET, Draw::GetHeight() - CHAT_POSITION_OFFSET - CHAT_INPUT_HEIGHT - CHAT_WINDOW_MARGIN, UI::Cond::Appearing, 0., 1.);
-        Window::Create("##bingochat", open, 500, 200, UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoScrollbar | UI::WindowFlags::NoFocusOnAppearing | UI::WindowFlags::NoInputs | UI::WindowFlags::NoMove | UI::WindowFlags::NoResize);
-        
+        UI::SetNextWindowPos(CHAT_POSITION_OFFSET,
+                             Draw::GetHeight() - CHAT_POSITION_OFFSET - CHAT_INPUT_HEIGHT -
+                                 CHAT_WINDOW_MARGIN,
+                             UI::Cond::FirstUseEver,
+                             0.,
+                             1.);
+        Window::Create("##bingochat",
+                       open,
+                       500,
+                       200,
+                       UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoScrollbar |
+                           UI::WindowFlags::NoFocusOnAppearing | UI::WindowFlags::NoResize);
+        vec2 chatPos = UI::GetWindowPos();
+
         if (MessageHistory.Length < 10) {
             // add a buffer zone to the chat window so that new messages appear at the bottom
             for (uint i = 0; i < 10 - MessageHistory.Length; i++)
@@ -49,7 +62,7 @@ namespace UIChat {
         }
 
         for (uint i = 0; i < MessageHistory.Length; i++) {
-            RenderChatMessage(MessageHistory[i]);
+            RenderChatMessage(MessageHistory[i], "bingochatmessage" + i);
         }
         UI::SetScrollHereY();
         UI::End();
@@ -58,19 +71,26 @@ namespace UIChat {
         UI::PushStyleColor(UI::Col::WindowBg, vec4(0.));
         UI::PushStyleVar(UI::StyleVar::WindowPadding, vec2(0.));
 
-        UI::SetNextWindowPos(CHAT_POSITION_OFFSET, Draw::GetHeight() - CHAT_POSITION_OFFSET, UI::Cond::Appearing, 0., 1.);
-        Window::Create("##bingoinput", open, 500, CHAT_INPUT_HEIGHT, UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoMove | UI::WindowFlags::NoResize);
-
+        UI::SetNextWindowPos(
+            int(chatPos.x), int(chatPos.y) + 200 + CHAT_WINDOW_MARGIN, UI::Cond::Always, 0., 0.);
+        Window::Create("##bingoinput",
+                       open,
+                       500,
+                       CHAT_INPUT_HEIGHT,
+                       UI::WindowFlags::AlwaysAutoResize | UI::WindowFlags::NoTitleBar |
+                           UI::WindowFlags::NoMove | UI::WindowFlags::NoResize);
 
         if (InputEnabled) {
             UI::SetKeyboardFocusHere();
             InputEnabled = false;
         }
-        UI::PushStyleColor(UI::Col::FrameBg, vec4(0., 0., 0., InputFocused ? MAX_CHAT_OPACITY : 0.));
+        UI::PushStyleColor(UI::Col::FrameBg,
+                           vec4(0., 0., 0., InputFocused ? MAX_CHAT_OPACITY : 0.));
         UI::SetNextItemWidth(500);
 
         bool submitted = false;
-        ChatInput = UI::InputText("##inputtext", ChatInput, submitted, UI::InputTextFlags::EnterReturnsTrue);
+        ChatInput = UI::InputText(
+            "##inputtext", ChatInput, submitted, UI::InputTextFlags::EnterReturnsTrue);
         InputFocused = UI::IsItemActive();
 
         if (submitted && ChatInput != "") {
@@ -79,39 +99,70 @@ namespace UIChat {
         }
 
         UI::PopStyleColor();
-        UI::End();  
+        UI::End();
         UI::PopStyleVar();
         UI::PopStyleColor();
     }
 
-    void RenderChatMessage(ChatMessage msg) {
-        Player@ messageAuthor = Gamemaster::IsBingoActive() ? Match.GetPlayer(msg.uid) : null;
+    void RenderChatMessage(ChatMessage msg, const string& in id) {
+        Player @messageAuthor = Gamemaster::IsBingoActive() ? Match.GetPlayer(msg.uid) : null;
 
+        UI::PushStyleColor(UI::Col::ChildBg,
+                           (messageAuthor !is null && msg.teamMessage
+                                ? vec4(messageAuthor.team.color, .1)
+                                : vec4()));
+        UI::BeginChild(id, vec2(), UI::ChildFlags::AutoResizeY);
         Font::Set(Font::Style::Bold, Font::Size::Medium);
-        UI::Text("\\$" + (messageAuthor is null ? "ccc" : UIColor::GetHex(messageAuthor.team.color)) + msg.name + ":");
+        string teamPrefix = "";
+        if (msg.teamMessage) {
+            teamPrefix = "\\$" +
+                         (messageAuthor is null
+                              ? "ccc"
+                              : UIColor::GetHex(UIColor::Brighten(messageAuthor.team.color, .4) +
+                                                vec3(.6, .6, .6))) +
+                         "[TEAM] ";
+        }
+
+        UI::Text(teamPrefix + "\\$" +
+                 (messageAuthor is null ? "ccc" : UIColor::GetHex(messageAuthor.team.color)) +
+                 msg.name + ":");
         Font::Unset();
-        
+
         UI::SameLine();
 
         Font::Set(Font::Style::Regular, Font::Size::Medium);
         UI::TextWrappedWindow(msg.content);
         Font::Unset();
+        UI::EndChild();
+        UI::PopStyleColor();
     }
 
-    void SendChatMessage(const string&in textContent) {
+    void SendChatMessage(const string& in textContent) {
         NetParams::ChatMessage = textContent;
         startnew(Network::SendChatMessage);
     }
 
     bool OnKeyPress(bool down, VirtualKey key) {
-        if (!ShouldDisplay()) return false;
+        if (!ShouldDisplay())
+            return false;
+
+        if (Playground::IsInGameMenuOpen())
+            return false;
 
         if (down && key == Settings::ChatBindingKey) {
             InputEnabled = !InputEnabled;
+
+            DisableChatHints();
+
             return true;
         }
 
         return false;
+    }
+
+    void DisableChatHints() {
+        if (UIGameRoom::Visible)
+            UIGameRoom::ChatPromptVisible = false;
     }
 
     void ClearHistory() {

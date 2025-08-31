@@ -1,6 +1,6 @@
 
 namespace UITools {
-    void AlignedLabel(const string&in text) {
+    void AlignedLabel(const string& in text) {
         Layout::BeginLabelAlign();
         UI::Text(text);
         UI::SameLine();
@@ -15,9 +15,18 @@ namespace UITools {
             this.value = value;
             this.state = state;
         }
+
     }
 
-    InputResult MixedInputButton(const string&in label, const string&in id, int min, int max, int step, int value, int state) {
+    InputResult
+    MixedInputButton(const string& in label,
+                     const string& in id,
+                     int min,
+                     int max,
+                     int step,
+                     int value,
+                     int state) {
+
         UI::BeginDisabled(value <= min);
         UI::PushStyleVar(UI::StyleVar::FramePadding, vec2(9, 4));
         if (UI::Button("-##minus" + id)) {
@@ -43,7 +52,8 @@ namespace UITools {
             state &= toint(UI::IsItemActive() || grzero(state & 0b01)) << 1;
         } else {
             UIColor::Dark();
-            UI::PushStyleVar(UI::StyleVar::FramePadding, vec2((80 - Draw::MeasureString(label, Font::Current()).x) / 2, 4));
+            UI::PushStyleVar(UI::StyleVar::FramePadding,
+                             vec2((80 - Draw::MeasureString(label, Font::Current()).x) / 2, 4));
             if (UI::Button(label + "##button" + id)) {
                 state = 0b11;
             }
@@ -65,13 +75,13 @@ namespace UITools {
         return InputResult(Math::Clamp(value, min, max), state);
     }
 
-    void SectionHeader(string&in text) {
+    void SectionHeader(string& in text) {
         Font::Set(Font::Style::Bold, Font::Size::Large);
         UI::Text(text);
         Font::Unset();
     }
 
-    void HelpTooltip(const string&in content) {
+    void HelpTooltip(const string& in content) {
         UI::Text("\\$666" + Icons::QuestionCircle);
         if (UI::IsItemHovered()) {
             UI::BeginTooltip();
@@ -80,11 +90,13 @@ namespace UITools {
         }
     }
 
-    void ErrorMessage(const string&in type) {
+    void ErrorMessage(const string& in type) {
         string err = Network::GetError(type);
         if (err != "") {
             string message = "\\$ff8" + err;
-            if (err == "timeout") message = "\\$888It looks like the server is not responding.\nIf this is an issue, try reconnecting to the server.";
+            if (err == "timeout")
+                message = "\\$888It looks like the server is not responding.\nIf this is an issue, "
+                          "try reconnecting to the server.";
             UI::TextWrapped(message);
 
             if (err == "timeout") {
@@ -95,10 +107,11 @@ namespace UITools {
     }
 
     void ReconnectButton() {
-        if (UI::Button(Icons::Globe + " Reconnect")) startnew(function()  {
-            Network::CloseConnection();
-            Network::Connect();
-        });
+        if (UI::Button(Icons::Globe + " Reconnect"))
+            startnew(function() {
+                Network::CloseConnection();
+                Network::Connect();
+            });
     }
 
     void ConnectingIndicator() {
@@ -127,18 +140,21 @@ namespace UITools {
         }
     }
 
-    void CenterText(const string&in text) {
-        UI::Font@ font = Font::Current();
-        Layout::MoveTo(Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
-        UI::TextWrapped(text);
+    void CenterText(const string& in text) {
+        UI::Font @font = Font::Current();
+        Layout::MoveTo(Layout::GetPadding(
+            UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
+        UI::Text(text);
     }
 
-    void CenterTextDisabled(const string&in text) {
-        UI::Font@ font = Font::Current();
-        Layout::MoveTo(Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
+    void CenterTextDisabled(const string& in text) {
+        UI::Font @font = Font::Current();
+        Layout::MoveTo(Layout::GetPadding(
+            UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
         UI::TextDisabled(text);
     }
 
     bool grzero(int x) { return x > 0; }
-    int toint(bool x) { return x ? 1 : 0; } 
+
+    int toint(bool x) { return x ? 1 : 0; }
 }

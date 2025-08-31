@@ -5,14 +5,16 @@ namespace Settings {
         uint16 TcpPort;
 
         BackendConfiguration() {}
-        BackendConfiguration(const string&in networkAddress, uint16 tcpPort) {
+
+        BackendConfiguration(const string& in networkAddress, uint16 tcpPort) {
             this.NetworkAddress = networkAddress;
             this.TcpPort = tcpPort;
         }
     }
 
-    BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 43333);
-    BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 43333);
+    BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 5500);
+
+    BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 5500);
 
     enum BackendSelection {
         LocalDevelopment,
@@ -20,11 +22,21 @@ namespace Settings {
         Custom
     }
 
+        // clang-format off
     [Setting name="Chat" category="Bindings"]
     VirtualKey ChatBindingKey = VirtualKey::Return;
 
     [Setting name="Toggle Map List" category="Bindings"]
     VirtualKey MaplistBindingKey = VirtualKey::Tab;
+
+    [Setting name="Show cell coordinates in tooltips" category="Behaviour"]
+    bool ShowCellCoordinates = true;
+
+    [Setting name="Enable Unsupported Configuration Warnings" category="Behaviour"]
+    bool UnstableConfigWarnings = true;
+
+    [Setting name="Show the System Survey prompt on startup" category="Behaviour"]
+    bool ShowSystemSurvey = true;
 
     [Setting name="Selected Backend" category="Developer"]
     BackendSelection Backend = BackendSelection::Live;
@@ -43,16 +55,17 @@ namespace Settings {
 
     [Setting name="Enable Developer Tools" category="Developer"]
     bool DevTools = false;
+    // clang-format on
 
     // Gets the active backend configuration.
-    BackendConfiguration@ GetBackendConfiguration() {
+    BackendConfiguration @GetBackendConfiguration() {
         switch (Backend) {
-            case BackendSelection::Live:
-                return LIVE_BACKEND;
-            case BackendSelection::LocalDevelopment:
-                return LOCALHOST_BACKEND;
-            default:
-                return BackendConfiguration(CustomBackendAddress, CustomNetworkPort);
+        case BackendSelection::Live:
+            return LIVE_BACKEND;
+        case BackendSelection::LocalDevelopment:
+            return LOCALHOST_BACKEND;
+        default:
+            return BackendConfiguration(CustomBackendAddress, CustomNetworkPort);
         }
     }
 }

@@ -1,7 +1,7 @@
 
 namespace UIProfile {
     const string PLAYER_FLAG_URL = "https://trackmania.io/img/flags/";
-    PlayerProfile@ openProfiles;
+    PlayerProfile @openProfiles;
 
     void RenderProfile(PlayerProfile profile, bool showId = true) {
         Font::Set(Font::Style::Regular, Font::Size::Medium);
@@ -24,7 +24,7 @@ namespace UIProfile {
         Font::Unset();
     }
 
-    void CountryFlag(const string&in countryCode, vec2 size) {
+    void CountryFlag(const string& in countryCode, vec2 size) {
         Image flagImage(PLAYER_FLAG_URL + countryCode + ".jpg");
         if (@flagImage.Data != null) {
             UI::Image(flagImage.Data, size);
@@ -33,18 +33,16 @@ namespace UIProfile {
         }
     }
 
-    void PlayerName(PlayerProfile profile) {
-        UI::Text(profile.name);
-    }
+    void PlayerName(PlayerProfile profile) { UI::Text(profile.name); }
 
     void MatchCount(int matches) {
         UI::Text(matches + " \\$zmatch" + (matches == 1 ? "" : "es") + " played");
     }
 
     void MatchStats(int matches, int wins, int losses) {
-        UI::Text(matches + " \\$zmatch" + (matches == 1 ? "" : "es")
-        + " \\$888(\\$8f8" + wins + " \\$888win" + (wins == 1 ? "" : "s")
-        + " /\\$f88 " + losses + " \\$888loss" + (losses == 1 ? "" : "es") + ")");
+        UI::Text(matches + " \\$zmatch" + (matches == 1 ? "" : "es") + " \\$888(\\$8f8" + wins +
+                 " \\$888win" + (wins == 1 ? "" : "s") + " /\\$f88 " + losses + " \\$888loss" +
+                 (losses == 1 ? "" : "es") + ")");
     }
 
     void RatingDisplay(int rating, int deviation) {
@@ -54,14 +52,16 @@ namespace UIProfile {
         }
         ratingText += " \\$888±" + deviation;
         ratingText = "Score: " + ratingText;
-        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(ratingText, Font::Current(), 16.).x, 0.95);
+        float padding = Layout::GetPadding(
+            UI::GetWindowSize().x, Draw::MeasureString(ratingText, Font::Current(), 16.).x, 0.95);
         Layout::MoveTo(padding);
         UI::Text(ratingText);
     }
 
     void PlayerId(int uid) {
         string idText = "\\$888Player ID: " + uid;
-        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
+        float padding = Layout::GetPadding(
+            UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
         Layout::MoveTo(padding);
         UI::Text(idText);
     }
@@ -70,20 +70,33 @@ namespace UIProfile {
         Time::Info creationDate = Time::Parse(timestamp);
 
         string idText = "\\$888Joined " + MonthName(creationDate.Month) + " " + creationDate.Year;
-        float padding = Layout::GetPadding(UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
+        float padding = Layout::GetPadding(
+            UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
         Layout::MoveTo(padding);
         UI::Text(idText);
     }
 
-    void NameTitle(const string&in title) {
+    void NameTitle(const string& in title) {
         auto parts = title.Split(":");
-        if (parts.Length < 2) return;
+        if (parts.Length < 2)
+            return;
         UI::SameLine();
         UI::Text("\\$" + parts[0] + parts[1]);
     }
 
     string MonthName(int month) {
-        const array<string> months = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+        const array<string> months = {"January",
+                                      "February",
+                                      "March",
+                                      "April",
+                                      "May",
+                                      "June",
+                                      "July",
+                                      "August",
+                                      "September",
+                                      "October",
+                                      "November",
+                                      "December"};
         return months[month - 1];
     }
 }

@@ -6,17 +6,22 @@ namespace UIPaintColor {
     vec3 SelectedColor = vec3();
 
     void Render() {
-        if (!Visible) return;
+        if (!Visible)
+            return;
 
-        UI::Begin(Icons::PaintBrush + " Bingo Paint Mode", Visible, UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
+        UI::Begin(Icons::PaintBrush + " Bingo Paint Mode",
+                  Visible,
+                  UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
         InputColor = UI::InputColor3("Selected Color", InputColor);
         if (!UI::IsItemFocused()) {
-            if (InputColor != SelectedColor) ColorHistory.InsertLast(SelectedColor);
+            if (InputColor != SelectedColor)
+                ColorHistory.InsertLast(SelectedColor);
             SelectedColor = InputColor;
         }
 
         for (uint i = 0; i < ColorHistory.Length; i++) {
-            if (i % 5 != 0) UI::SameLine();
+            if (i % 5 != 0)
+                UI::SameLine();
             vec3 color = ColorHistory[i];
             UIColor::Custom(color);
             if (UI::Button(UIColor::GetHex(color))) {
@@ -27,6 +32,7 @@ namespace UIPaintColor {
         }
         UI::End();
 
-        if (!Visible) ColorHistory = {};
+        if (!Visible)
+            ColorHistory = {};
     }
 }
