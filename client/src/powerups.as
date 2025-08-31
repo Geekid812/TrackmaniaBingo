@@ -62,7 +62,8 @@ namespace Powerups {
         }
 
         for (uint i = 0; i < Match.tiles.Length; i++) {
-            if (Match.tiles[i].specialState == TileItemState::Jail && int(Match.tiles[i].statePlayerTarget.uid) == Profile.uid) {
+            if (Match.tiles[i].specialState == TileItemState::Jail &&
+                int(Match.tiles[i].statePlayerTarget.uid) == Profile.uid) {
                 @Jail = Match.GetCell(i);
             }
         }
@@ -183,11 +184,11 @@ namespace Powerups {
 
     void NotifyJail() {
         UI::ShowNotification("",
-        Icons::ExclamationCircle +
-            " You are in jail. You must go to the map where you were "
-            "emprisoned! To break out of jail, you must beat the current "
-            "record on this map within the time limit.",
-        vec4(.6, .2, .2, .9),
-        20000);
+                             Icons::ExclamationCircle +
+                                 " You are in jail. You must go to the map where you were "
+                                 "emprisoned! To break out of jail, you must beat the current "
+                                 "record on this map within the time limit.",
+                             vec4(.6, .2, .2, .9),
+                             20000);
     }
 }

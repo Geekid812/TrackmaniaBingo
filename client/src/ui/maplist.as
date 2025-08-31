@@ -274,7 +274,7 @@ namespace UIMapList {
         return false;
     }
 
-    void OnTileClicked(GameTile@ cell) {
+    void OnTileClicked(GameTile @cell) {
         if (@Jail !is null && @Jail != @cell) {
             // action cancelled, you cannot switch maps in jail
             Powerups::NotifyJail();

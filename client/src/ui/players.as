@@ -10,11 +10,12 @@ namespace UIPlayers {
                      bool canDragPlayers = false,
                      Player @draggedPlayer = null) {
         bool isOpen = UI::BeginTable("Bingo_PlayerTable",
-                       hideTeams ? 4 : teams.Length + (canCreate ? 1 : 0),
-                       UI::TableFlags::None,
-                       vec2(),
-                       UI::GetWindowContentRegionWidth());
-        if (!isOpen) return;
+                                     hideTeams ? 4 : teams.Length + (canCreate ? 1 : 0),
+                                     UI::TableFlags::None,
+                                     vec2(),
+                                     UI::GetWindowContentRegionWidth());
+        if (!isOpen)
+            return;
 
         if (hideTeams) {
             for (uint i = 0; i < players.Length; i++) {
@@ -143,7 +144,8 @@ namespace UIPlayers {
     void PlayerLabel(Player player, uint index, bool canBeSelected = false) {
         string titlePrefix =
             player.profile.title != "" ? "\\$" + player.profile.title.SubStr(0, 3) : "";
-        UI::Text((player.IsSelf() ? "\\$ff8" : "") + titlePrefix + player.name + (player.isMvp ? " \\$ff8" + Icons::Trophy : ""));
+        UI::Text((player.IsSelf() ? "\\$ff8" : "") + titlePrefix + player.name +
+                 (player.isMvp ? " \\$ff8" + Icons::Trophy : ""));
         if (UI::IsItemHovered()) {
             UI::BeginTooltip();
             UIProfile::RenderProfile(player.profile, false);

@@ -318,7 +318,8 @@ namespace UIInfoBar {
                 break;
             case Powerup::RainbowTile:
                 UI::Text("Rainbow Tile\nTransform any map into a rainbow tile,\nwhich counts as if "
-                         "all teams had claimed it!\nCan't be used to immediately create a\nbingo line.");
+                         "all teams had claimed it!\nCan't be used to immediately create a\nbingo "
+                         "line.");
                 break;
             case Powerup::GoldenDice:
                 UI::Text(
@@ -346,15 +347,20 @@ namespace UIInfoBar {
         if (myPowerup != Powerup::Empty && UI::IsItemClicked()) {
             UIItemSelect::Visible = !UIItemSelect::Visible;
 
-            // Also close the map list picker to avoid players getting confused by having a duplicated map selector
+            // Also close the map list picker to avoid players getting confused by having a
+            // duplicated map selector
             UIMapList::Visible = false;
         }
     }
 
     void MvpTextFrame() {
         if (@Match.endState.mvpPlayer !is null) {
-            UITools::CenterText("\\$ff5" + Icons::Trophy + " MVP: \\$z" + Match.endState.mvpPlayer.name + " (" + Match.endState.mvpScore + ")");
-            UI::SetItemTooltip("The match MVP is the player from the winning team who scored the most maps. Congratuations!\nIn case of a tie between players, the player who scored the bingo becomes the MVP.");
+            UITools::CenterText("\\$ff5" + Icons::Trophy + " MVP: \\$z" +
+                                Match.endState.mvpPlayer.name + " (" + Match.endState.mvpScore +
+                                ")");
+            UI::SetItemTooltip("The match MVP is the player from the winning team who scored the "
+                               "most maps. Congratuations!\nIn case of a tie between players, the "
+                               "player who scored the bingo becomes the MVP.");
         }
     }
 

@@ -71,11 +71,8 @@ namespace UIChat {
         UI::PushStyleColor(UI::Col::WindowBg, vec4(0.));
         UI::PushStyleVar(UI::StyleVar::WindowPadding, vec2(0.));
 
-        UI::SetNextWindowPos(int(chatPos.x),
-                             int(chatPos.y) + 200 + CHAT_WINDOW_MARGIN,
-                             UI::Cond::Always,
-                             0.,
-                             0.);
+        UI::SetNextWindowPos(
+            int(chatPos.x), int(chatPos.y) + 200 + CHAT_WINDOW_MARGIN, UI::Cond::Always, 0., 0.);
         Window::Create("##bingoinput",
                        open,
                        500,

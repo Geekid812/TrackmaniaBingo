@@ -114,7 +114,7 @@ namespace PersistantStorage {
 
         if (@Match !is null) {
             PersistantStorage::LastConnectedMatchId = Match.uid;
-            
+
             auto self = Match.GetSelf();
             if (@self !is null)
                 PersistantStorage::LastConnectedMatchTeamId = self.team.id;

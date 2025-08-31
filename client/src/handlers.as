@@ -292,7 +292,7 @@ namespace NetworkHandlers {
         Gamemaster::HandleGameEnd();
     }
 
-    void AnnounceDraw(Json::Value@ data) {
+    void AnnounceDraw(Json::Value @data) {
         UI::ShowNotification(Icons::HourglassEnd + " Game End",
                              "The game has ended in a tie.",
                              vec4(.5, .5, .5, 1),
@@ -424,8 +424,8 @@ namespace NetworkHandlers {
         }
         if (usedPowerup == Powerup::RainbowTile || usedPowerup == Powerup::Rally ||
             usedPowerup == Powerup::Jail) {
-            targetText += " \\$zon \\$ff8" +
-                          Text::StripFormatCodes(Match.GetCell(boardIndex).map.trackName);
+            targetText +=
+                " \\$zon \\$ff8" + Text::StripFormatCodes(Match.GetCell(boardIndex).map.trackName);
         }
 
         if (usedPowerup != Powerup::GoldenDice) {
@@ -508,10 +508,9 @@ namespace NetworkHandlers {
 
         tile.specialState = TileItemState::Empty;
         tile.statePlayerTarget = PlayerRef();
-
     }
 
-    void HandleMatchEndInfo(Json::Value@ data) {
+    void HandleMatchEndInfo(Json::Value @data) {
         if (data.HasKey("mvp")) {
             @Match.endState.mvpPlayer = PlayerRef::Deserialize(data["mvp"]["player"]);
             Match.endState.mvpScore = int(data["mvp"]["score"]);
