@@ -392,7 +392,7 @@ namespace Network {
         Room.matchConfig = MatchConfiguration::Deserialize(response["match_config"]);
         Room.name = Room.config.name;
         Room.joinCode = NetParams::JoinCode;
-        Room.localPlayerIsHost = bool(response["is_host"]);
+        Room.localPlayerIsHost = (response.HasKey("is_host") ? bool(response["is_host"]) : false);
         NetworkHandlers::LoadRoomTeams(response["teams"]);
 
         UIRoomMenu::JoinCodeVisible = false;
