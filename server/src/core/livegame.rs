@@ -7,7 +7,10 @@ use std::{
 
 use crate::{
     config::{self, CONFIG},
-    core::models::{livegame::TileItemState, team::NetworkGameTeam},
+    core::models::{
+        livegame::{MatchEndInfo, MvpData, TileItemState},
+        team::NetworkGameTeam,
+    },
     datatypes::{CampaignMap, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice, Powerup},
     server::{
         context::ClientContext,
@@ -52,6 +55,7 @@ pub struct LiveMatch {
     phase: MatchPhase,
     channel: Channel<GameEvent>,
     polls: HashMap<u32, Owned<PollData>>,
+    last_claim: Option<MapClaim>,
     idents: u32,
 }
 
@@ -103,6 +107,7 @@ impl LiveMatch {
             phase: MatchPhase::Starting,
             channel: Channel::new(),
             polls: HashMap::new(),
+            last_claim: None,
             idents: 0,
         };
         let arc = Arc::new(Mutex::new(_self));
@@ -163,7 +168,7 @@ impl LiveMatch {
         if !max_duration.is_zero() {
             execute_delayed_task(
                 self.ptr.clone(),
-                |game| game.endgame_phase_change(),
+                |game| game.draw_end_game(),
                 (countdown_duration + max_duration).to_std().unwrap(),
             );
         }
@@ -408,7 +413,7 @@ impl LiveMatch {
             i -= 1;
         }
         ranking.insert(i, claim.clone());
-        self.broadcast_submitted_run(id, claim, i + 1);
+        self.broadcast_submitted_run(id, claim.clone(), i + 1);
 
         if self.try_do_bingo_checks() {
             return;
@@ -420,6 +425,7 @@ impl LiveMatch {
         let is_new_record = i == 0;
         if is_new_record {
             self.cells[id].claimant = None;
+            self.last_claim = Some(claim);
 
             if self.cells[id].state == TileItemState::HasPowerup {
                 self.cells[id].state = TileItemState::Empty;
@@ -443,19 +449,72 @@ impl LiveMatch {
             winning_team.winner = true;
         }
 
+        let end_state = self.get_end_state();
         self.channel.broadcast(&GameEvent::AnnounceBingo {
             lines: lines.clone(),
+            end_state: end_state.clone(),
         });
-        self.set_game_ended(false);
+        self.set_game_ended(false, end_state);
     }
 
-    fn set_game_ended(&mut self, draw: bool) {
+    fn get_end_state(&self) -> MatchEndInfo {
+        MatchEndInfo {
+            mvp: self.get_mvp(),
+        }
+    }
+
+    fn get_mvp(&self) -> Option<MvpData> {
+        let mut claimed_maps_count = HashMap::new();
+
+        self.cells
+            .iter()
+            .filter(|c| !(c.claimant.is_some() || c.state == TileItemState::Rainbow))
+            .for_each(|c| {
+                if let Some(claim) = c.leading_claim() {
+                    if self
+                        .teams
+                        .get(claim.team_id)
+                        .is_some_and(|t| t.winner && t.members.len() > 1)
+                    {
+                        *claimed_maps_count.entry(claim.player.clone()).or_insert(0) += 1;
+                    }
+                }
+            });
+
+        let last_claim_player_score = self.last_claim.as_ref().map(|c| {
+            claimed_maps_count
+                .get(&c.player)
+                .map(Clone::clone)
+                .unwrap_or(0)
+        });
+        let mut mvp = claimed_maps_count.into_iter().max_by_key(|(_k, v)| *v);
+
+        // give priority to the last scorer if they are equal to current MVP
+        if mvp.as_ref().is_some_and(|(_, mvp_score)| {
+            last_claim_player_score.is_some_and(|score| score == *mvp_score)
+        }) {
+            mvp = Some((
+                self.last_claim.as_ref().unwrap().player.clone(),
+                last_claim_player_score.unwrap(),
+            ));
+        }
+
+        // don't select mvp if they didn't have a positive score
+        // this should never be reached with the current scoring system
+        if mvp.as_ref().is_some_and(|(_, score)| *score < 1) {
+            return None;
+        }
+
+        mvp.map(|(player, score)| MvpData { player, score })
+    }
+
+    fn set_game_ended(&mut self, draw: bool, end_state: MatchEndInfo) {
         if let Some(room) = self.room.upgrade() {
             room.lock().reset_match();
         }
 
         if self.should_match_be_saved() {
-            self.save_match_end(draw);
+            self.save_match_end(draw, end_state.mvp.map(|mvp| mvp.player));
         }
 
         MATCHES.remove(self.uid.clone());
@@ -474,11 +533,12 @@ impl LiveMatch {
         self.teams.get_teams().iter().map(|t| t.members.len()).sum()
     }
 
-    fn save_match_end(&mut self, draw: bool) {
+    fn save_match_end(&mut self, draw: bool, mvp: Option<PlayerRef>) {
         let match_model = Match {
             uid: self.uid.clone(),
             started_at: self.started.unwrap_or_default(),
             ended_at: Utc::now(),
+            mvp_player_uid: mvp.map(|player| player.uid as i32),
         };
         let mut player_results = Vec::new();
         for team in self.teams.get_teams() {
@@ -771,9 +831,13 @@ impl LiveMatch {
                 .get_mut(winning_team)
                 .expect("winning team exists")
                 .winner = true;
-            self.channel
-                .broadcast(&GameEvent::AnnounceWinByCellCount { team: winning_team });
-            self.set_game_ended(false);
+
+            let end_state = self.get_end_state();
+            self.channel.broadcast(&GameEvent::AnnounceWinByCellCount {
+                team: winning_team,
+                end_state: end_state.clone(),
+            });
+            self.set_game_ended(false, end_state);
             return true;
         }
         false
@@ -920,14 +984,17 @@ impl LiveMatch {
         if self.config.overtime {
             self.set_phase(MatchPhase::Overtime);
         } else {
-            self.channel.broadcast(&GameEvent::AnnounceDraw);
-            self.set_game_ended(true);
+            self.draw_end_game();
         }
     }
 
-    fn endgame_phase_change(&mut self) {
-        self.channel.broadcast(&GameEvent::AnnounceDraw);
-        self.set_game_ended(true);
+    fn draw_end_game(&mut self) {
+        let end_state = self.get_end_state();
+
+        self.channel.broadcast(&GameEvent::AnnounceDraw {
+            end_state: end_state.clone(),
+        });
+        self.set_game_ended(true, end_state);
     }
 
     fn tick_powerups_spawn(&mut self) {

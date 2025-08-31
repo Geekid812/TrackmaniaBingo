@@ -1,4 +1,5 @@
 use serde::Serialize;
+use std::hash::Hash;
 
 use crate::{
     core::gamecommon::PlayerData,
@@ -39,5 +40,11 @@ impl IngamePlayer {
             uid: self.profile.uid as u32,
             name: self.profile.name.clone(),
         }
+    }
+}
+
+impl Hash for PlayerRef {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.uid.hash(state);
     }
 }

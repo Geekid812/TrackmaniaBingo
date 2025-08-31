@@ -226,6 +226,10 @@ namespace NetworkHandlers {
         }
         UI::ShowNotification(Icons::Trophy + " Bingo!", textContent, vec4(.9, .6, 0, 1), 20000);
 
+        if (data.HasKey("end_state")) {
+            HandleMatchEndInfo(data["end_state"]);
+        }
+
         Match.endState.endTime = Time::Now;
         Gamemaster::SetPhase(GamePhase::Ended);
         Gamemaster::HandleGameEnd();
@@ -278,17 +282,25 @@ namespace NetworkHandlers {
             vec4(.9, .6, 0, 1),
             20000);
 
+        if (data.HasKey("end_state")) {
+            HandleMatchEndInfo(data["end_state"]);
+        }
+
         Match.endState.endTime = Time::Now;
         @Match.endState.team = team;
         Gamemaster::SetPhase(GamePhase::Ended);
         Gamemaster::HandleGameEnd();
     }
 
-    void AnnounceDraw() {
+    void AnnounceDraw(Json::Value@ data) {
         UI::ShowNotification(Icons::HourglassEnd + " Game End",
                              "The game has ended in a tie.",
                              vec4(.5, .5, .5, 1),
                              20000);
+
+        if (data.HasKey("end_state")) {
+            HandleMatchEndInfo(data["end_state"]);
+        }
 
         Match.endState.endTime = Time::Now;
         Gamemaster::SetPhase(GamePhase::Ended);
@@ -497,5 +509,16 @@ namespace NetworkHandlers {
         tile.specialState = TileItemState::Empty;
         tile.statePlayerTarget = PlayerRef();
 
+    }
+
+    void HandleMatchEndInfo(Json::Value@ data) {
+        if (data.HasKey("mvp")) {
+            @Match.endState.mvpPlayer = PlayerRef::Deserialize(data["mvp"]["player"]);
+            Match.endState.mvpScore = int(data["mvp"]["score"]);
+
+            if (@Room !is null) {
+                Room.SetMvp(Match.endState.mvpPlayer.uid);
+            }
+        }
     }
 }

@@ -6,7 +6,7 @@ use crate::{
     core::{
         livegame::BingoLine,
         models::{
-            livegame::{MapClaim, MatchPhase, MatchState},
+            livegame::{MapClaim, MatchEndInfo, MatchPhase, MatchState},
             map::GameMap,
             team::{BaseTeam, TeamIdentifier},
         },
@@ -32,11 +32,15 @@ pub enum GameEvent {
     },
     AnnounceBingo {
         lines: Vec<BingoLine>,
+        end_state: MatchEndInfo,
     },
     AnnounceWinByCellCount {
         team: TeamIdentifier,
+        end_state: MatchEndInfo,
     },
-    AnnounceDraw,
+    AnnounceDraw {
+        end_state: MatchEndInfo,
+    },
     PhaseChange {
         phase: MatchPhase,
     },

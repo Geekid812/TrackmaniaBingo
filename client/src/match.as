@@ -177,6 +177,8 @@ class EndState {
     BingoDirection bingoDirection;
     array<BingoLine> @bingoLines = {};
     Team @team;
+    PlayerRef @mvpPlayer;
+    int mvpScore;
 
     bool HasEnded() { return this.endTime != 0; }
 

@@ -1,8 +1,6 @@
 mod models;
 
-use super::{
-    execute_with_arguments, get_store, query_with_arguments, StoreResult,
-};
+use super::{execute_with_arguments, get_store, query_with_arguments, StoreResult};
 pub use models::*;
 use sqlx::Row;
 
@@ -13,11 +11,12 @@ const MAX_RECORDS_PER_INSERT: usize = 100;
 pub async fn save_match_record(record: &Match) -> StoreResult {
     execute_with_arguments(
     get_store(),
-    "INSERT INTO matches(uid, started_at, ended_at) VALUES (?, ?, ?) ON CONFLICT(uid) DO UPDATE SET started_at=excluded.started_at, ended_at=excluded.ended_at",
+    "INSERT INTO matches(uid, started_at, ended_at, mvp_player_uid) VALUES (?, ?, ?, ?) ON CONFLICT(uid) DO UPDATE SET started_at=excluded.started_at, ended_at=excluded.ended_at, mvp_player_uid=excluded.mvp_player_uid",
     |query| {
         query.bind(&record.uid)
         .bind(record.started_at)
         .bind(record.ended_at)
+        .bind(record.mvp_player_uid)
     }).await.map(|_| ())
 }
 
@@ -25,7 +24,7 @@ pub async fn save_match_record(record: &Match) -> StoreResult {
 pub async fn get_match_record(uid: &str) -> StoreResult<Match> {
     query_with_arguments(
         get_store(),
-        "SELECT uid, started_at, ended_at FROM matches WHERE uid = ?",
+        "SELECT uid, started_at, ended_at, mvp_player_uid FROM matches WHERE uid = ?",
         |query| query.bind(uid),
     )
     .await
@@ -33,6 +32,7 @@ pub async fn get_match_record(uid: &str) -> StoreResult<Match> {
         uid: row.get(0),
         started_at: row.get(1),
         ended_at: row.get(2),
+        mvp_player_uid: row.get(3),
     })
 }
 
@@ -41,11 +41,17 @@ pub async fn create_match_result(match_uid: &str, result: MatchResult) -> StoreR
     let chunks = result.0.chunks(MAX_RECORDS_PER_INSERT);
     for chunk in chunks {
         let query_arguments = &", (?, ?, ?)".repeat(chunk.len())[2..];
-        let query = format!("INSERT INTO matches_players(player_uid, match_uid, outcome) VALUES {}", query_arguments);
-        execute_with_arguments(get_store(), &query, |query| chunk.iter().fold(query, |query, r| {
-            query.bind(r.0).bind(match_uid).bind(r.1.as_dbcode())
-        })).await?;
-    };
+        let query = format!(
+            "INSERT INTO matches_players(player_uid, match_uid, outcome) VALUES {}",
+            query_arguments
+        );
+        execute_with_arguments(get_store(), &query, |query| {
+            chunk.iter().fold(query, |query, r| {
+                query.bind(r.0).bind(match_uid).bind(r.1.as_dbcode())
+            })
+        })
+        .await?;
+    }
 
     Ok(())
 }

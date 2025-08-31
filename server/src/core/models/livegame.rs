@@ -60,6 +60,18 @@ pub struct MapClaim {
     pub timestamp: DateTime<Utc>,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MatchEndInfo {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mvp: Option<MvpData>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MvpData {
+    pub player: PlayerRef,
+    pub score: i32,
+}
+
 #[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]
 #[repr(u8)]
 pub enum MatchPhase {

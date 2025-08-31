@@ -143,7 +143,7 @@ namespace UIPlayers {
     void PlayerLabel(Player player, uint index, bool canBeSelected = false) {
         string titlePrefix =
             player.profile.title != "" ? "\\$" + player.profile.title.SubStr(0, 3) : "";
-        UI::Text((player.IsSelf() ? "\\$ff8" : "") + titlePrefix + player.name);
+        UI::Text((player.IsSelf() ? "\\$ff8" : "") + titlePrefix + player.name + (player.isMvp ? " \\$ff8" + Icons::Trophy : ""));
         if (UI::IsItemHovered()) {
             UI::BeginTooltip();
             UIProfile::RenderProfile(player.profile, false);

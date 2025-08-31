@@ -3,17 +3,18 @@ use std::{collections::HashMap, fs, path::Path, sync::OnceLock};
 use sqlx::{sqlite::SqlitePoolOptions, Row, SqlitePool};
 use tracing::{error, info};
 
-static DATABASE_VERSIONS: [&'static str; 3] = [
+static DATABASE_VERSIONS: [&'static str; 4] = [
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v1.sql")),
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v2.sql")),
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v3.sql")),
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/versions/v4.sql")),
 ];
 
 static PRIMARY_STORE: OnceLock<SqlitePool> = OnceLock::new();
 
+pub mod matches;
 mod operations;
 pub mod player;
-pub mod matches;
 
 use operations::*;
 

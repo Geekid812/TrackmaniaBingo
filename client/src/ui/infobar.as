@@ -233,6 +233,10 @@ namespace UIInfoBar {
         }
 
         GameControls();
+        if (Match.endState.HasEnded()) {
+            UI::Separator();
+            MvpTextFrame();
+        }
 
         GameTile @tile = Gamemaster::GetCurrentTile();
         CGameCtnChallenge @gameMap = Playground::GetCurrentMap();
@@ -344,6 +348,13 @@ namespace UIInfoBar {
 
             // Also close the map list picker to avoid players getting confused by having a duplicated map selector
             UIMapList::Visible = false;
+        }
+    }
+
+    void MvpTextFrame() {
+        if (@Match.endState.mvpPlayer !is null) {
+            UITools::CenterText("\\$ff5" + Icons::Trophy + " MVP: \\$z" + Match.endState.mvpPlayer.name + " (" + Match.endState.mvpScore + ")");
+            UI::SetItemTooltip("The match MVP is the player from the winning team who scored the most maps. Congratuations!\nIn case of a tie between players, the player who scored the bingo becomes the MVP.");
         }
     }
 

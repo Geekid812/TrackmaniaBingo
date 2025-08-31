@@ -64,6 +64,12 @@ class GameRoom {
         return teams.Length > 2 && Room.localPlayerIsHost;
     }
 
+    void SetMvp(int playerUid) {
+        for (uint i = 0; i < players.Length; i++) {
+            players[i].isMvp = players[i].profile.uid == playerUid;
+        }
+    }
+
     NetworkRoom NetworkState() {
         auto netroom = NetworkRoom();
         netroom.name = this.name;
@@ -119,6 +125,7 @@ class Player {
     Team team;
     Powerup holdingPowerup = Powerup::Empty;
     int64 powerupExpireTimestamp;
+    bool isMvp;
 
     Player() {}
 

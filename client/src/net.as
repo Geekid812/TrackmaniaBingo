@@ -223,7 +223,7 @@ namespace Network {
         } else if (event == "AnnounceWinByCellCount") {
             NetworkHandlers::AnnounceWinByCellCount(body);
         } else if (event == "AnnounceDraw") {
-            NetworkHandlers::AnnounceDraw();
+            NetworkHandlers::AnnounceDraw(body);
         } else if (event == "MatchTeamCreated") {
             NetworkHandlers::MatchTeamCreated(body);
         } else if (event == "MatchPlayerJoin") {

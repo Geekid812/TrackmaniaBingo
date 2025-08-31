@@ -62,7 +62,7 @@ namespace Powerups {
         }
 
         for (uint i = 0; i < Match.tiles.Length; i++) {
-            if (Match.tiles[i].specialState == TileItemState::Jail && Match.tiles[i].statePlayerTarget.uid == Profile.uid) {
+            if (Match.tiles[i].specialState == TileItemState::Jail && int(Match.tiles[i].statePlayerTarget.uid) == Profile.uid) {
                 @Jail = Match.GetCell(i);
             }
         }
