@@ -44,7 +44,7 @@ namespace UIChat {
         UI::SetNextWindowPos(CHAT_POSITION_OFFSET,
                              Draw::GetHeight() - CHAT_POSITION_OFFSET - CHAT_INPUT_HEIGHT -
                                  CHAT_WINDOW_MARGIN,
-                             UI::Cond::Appearing,
+                             UI::Cond::FirstUseEver,
                              0.,
                              1.);
         Window::Create("##bingochat",
@@ -52,8 +52,8 @@ namespace UIChat {
                        500,
                        200,
                        UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoScrollbar |
-                           UI::WindowFlags::NoFocusOnAppearing | UI::WindowFlags::NoInputs |
-                           UI::WindowFlags::NoMove | UI::WindowFlags::NoResize);
+                           UI::WindowFlags::NoFocusOnAppearing | UI::WindowFlags::NoResize);
+        vec2 chatPos = UI::GetWindowPos();
 
         if (MessageHistory.Length < 10) {
             // add a buffer zone to the chat window so that new messages appear at the bottom
@@ -71,11 +71,11 @@ namespace UIChat {
         UI::PushStyleColor(UI::Col::WindowBg, vec4(0.));
         UI::PushStyleVar(UI::StyleVar::WindowPadding, vec2(0.));
 
-        UI::SetNextWindowPos(CHAT_POSITION_OFFSET,
-                             Draw::GetHeight() - CHAT_POSITION_OFFSET,
-                             UI::Cond::Appearing,
+        UI::SetNextWindowPos(chatPos.x,
+                             chatPos.y + 200 + CHAT_WINDOW_MARGIN,
+                             UI::Cond::Always,
                              0.,
-                             1.);
+                             0.);
         Window::Create("##bingoinput",
                        open,
                        500,
