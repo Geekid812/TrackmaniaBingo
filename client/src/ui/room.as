@@ -174,7 +174,7 @@ namespace UIGameRoom {
                 UI::SameLine();
                 UI::BeginDisabled(!Room.CanCreateMoreTeams());
                 if (UI::Button(Icons::PlusSquare)) {
-                    startnew(Network::CreateTeam);
+                    UITeamEditor::InstantiateAnyNewTeam();
                 }
                 UI::EndDisabled();
                 UI::SameLine();
