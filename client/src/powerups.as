@@ -77,7 +77,7 @@ namespace Powerups {
             PowerupEffectRainbowTile(boardIndex);
             break;
         case Powerup::Jail:
-            PowerupEffectJail(boardIndex, targetPlayer, 900000);
+            PowerupEffectJail(boardIndex, targetPlayer, 600000);
             break;
         case Powerup::GoldenDice:
             PowerupEffectGoldenDice(boardIndex);

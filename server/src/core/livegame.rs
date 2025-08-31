@@ -1037,7 +1037,7 @@ impl LiveMatch {
         execute_delayed_task(
             self.ptr.clone(),
             move |_self| _self.jail_resolve(board_index, Some(state_ident)),
-            Duration::minutes(15).to_std().unwrap(),
+            Duration::minutes(10).to_std().unwrap(),
         );
     }
 

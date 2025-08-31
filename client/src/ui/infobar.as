@@ -310,7 +310,7 @@ namespace UIInfoBar {
             case Powerup::Jail:
                 UI::Text(
                     "Jail\nSend a player you choose to any map of the Bingo board.\nThey will "
-                    "remain emprisoned there for 15 minutes until they can claim a new record!");
+                    "remain emprisoned there for 10 minutes until they can claim a new record!");
                 break;
             case Powerup::RainbowTile:
                 UI::Text("Rainbow Tile\nTransform any map into a rainbow tile,\nwhich counts as if "

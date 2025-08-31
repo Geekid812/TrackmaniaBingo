@@ -40,12 +40,12 @@ namespace UIDevPowerups {
             Powerups::PowerupEffectRally(PowerupTileIndex, 600000);
         }
         UI::SameLine();
-        if (PowerupAction("Jail Yourself (15 mins)")) {
+        if (PowerupAction("Jail Yourself (10 mins)")) {
             PlayerRef localPlayer();
             localPlayer.uid = Profile.uid;
             localPlayer.name = Profile.name;
 
-            Powerups::PowerupEffectJail(PowerupTileIndex, localPlayer, 900000);
+            Powerups::PowerupEffectJail(PowerupTileIndex, localPlayer, 600000);
         }
     }
 
