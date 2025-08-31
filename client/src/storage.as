@@ -10,6 +10,8 @@ namespace PersistantStorage {
 
     [Setting hidden] bool SubscribeToRoomUpdates = false;
 
+    [Setting hidden] string LastConnectedRoomCode = "";
+
     [Setting hidden] string LastConnectedMatchId = "";
 
     [Setting hidden] int LastConnectedMatchTeamId = -1;
@@ -103,7 +105,28 @@ namespace PersistantStorage {
         PersistantStorage::DevelMapCache = textJson;
     }
 
+    void SaveConnectedMatch() {
+        if (@Room !is null) {
+            PersistantStorage::LastConnectedRoomCode = Room.joinCode;
+        } else {
+            PersistantStorage::LastConnectedRoomCode = "";
+        }
+
+        if (@Match !is null) {
+            PersistantStorage::LastConnectedMatchId = Match.uid;
+            
+            auto self = Match.GetSelf();
+            if (@self !is null)
+                PersistantStorage::LastConnectedMatchTeamId = self.team.id;
+        } else {
+            PersistantStorage::LastConnectedMatchId = "";
+            PersistantStorage::LastConnectedMatchTeamId = -1;
+        }
+        Meta::SaveSettings();
+    }
+
     void ResetConnectedMatch() {
+        LastConnectedRoomCode = "";
         LastConnectedMatchId = "";
         LastConnectedMatchTeamId = -1;
         Meta::SaveSettings();
@@ -116,8 +139,11 @@ namespace PersistantStorage {
         MapListUiScale = 1.0f;
         LastConfig = "";
         SubscribeToRoomUpdates = false;
+        LastConnectedRoomCode = "";
         LastConnectedMatchId = "";
         LastConnectedMatchTeamId = -1;
         DevelMapCache = "[]";
+        TeamEditorStorage = GetDefaultTeams();
+        HasDismissedItemSpoiler = false;
     }
 }

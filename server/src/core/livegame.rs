@@ -136,6 +136,8 @@ impl LiveMatch {
     }
 
     fn setup_timers(&mut self) {
+        let max_duration =
+            Duration::minutes(config::get_integer("behaviour.max_match_duration").unwrap_or(0));
         let mut first_phase = MatchPhase::Running;
         let countdown_duration = self.options.start_countdown;
         let nobingo_duration = self.config.no_bingo_duration;
@@ -151,12 +153,20 @@ impl LiveMatch {
         if !main_phase_duration.is_zero() {
             execute_delayed_task(
                 self.ptr.clone(),
-                |game| game.endgame_phase_change(),
+                |game| game.endmain_phase_change(),
                 (countdown_duration + nobingo_duration + main_phase_duration)
                     .to_std()
                     .unwrap(),
             );
         }
+        if !max_duration.is_zero() {
+            execute_delayed_task(
+                self.ptr.clone(),
+                |game| game.endgame_phase_change(),
+                (countdown_duration + max_duration).to_std().unwrap(),
+            );
+        }
+
         execute_delayed_task(
             self.ptr.clone(),
             move |game| game.set_phase(first_phase),
@@ -876,7 +886,7 @@ impl LiveMatch {
         }
     }
 
-    fn endgame_phase_change(&mut self) {
+    fn endmain_phase_change(&mut self) {
         if self.phase == MatchPhase::Overtime {
             return;
         }
@@ -895,6 +905,11 @@ impl LiveMatch {
             self.channel.broadcast(&GameEvent::AnnounceDraw);
             self.set_game_ended(true);
         }
+    }
+
+    fn endgame_phase_change(&mut self) {
+        self.channel.broadcast(&GameEvent::AnnounceDraw);
+        self.set_game_ended(true);
     }
 
     fn tick_powerups_spawn(&mut self) {

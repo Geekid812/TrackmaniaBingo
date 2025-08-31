@@ -21,6 +21,7 @@ pub struct JoinRoomResponse {
     pub match_config: MatchConfiguration,
     pub match_uid: Option<String>,
     pub teams: Vec<RoomTeam>,
+    pub is_host: bool,
 }
 
 pub fn handle(ctx: &mut ClientContext, args: JoinRoom) -> Value {
@@ -31,9 +32,10 @@ pub fn handle(ctx: &mut ClientContext, args: JoinRoom) -> Value {
 
     if let Some(room) = ROOMS.find(args.join_code.clone()) {
         let mut lock = room.lock();
-        if let Err(e) = lock.player_join(&ctx, &ctx.profile) {
-            return error(&format!("{}", e));
-        }
+        let is_host = match lock.player_join(&ctx, &ctx.profile) {
+            Ok(host) => host,
+            Err(e) => return error(&format!("{}", e)),
+        };
         ctx.room = Some(RoomContext::new(ctx.profile.clone(), &room));
 
         response(JoinRoomResponse {
@@ -41,6 +43,7 @@ pub fn handle(ctx: &mut ClientContext, args: JoinRoom) -> Value {
             match_config: lock.matchconfig().clone(),
             match_uid: lock.match_uid(),
             teams: lock.teams_as_model(),
+            is_host
         })
     } else {
         error(&format!("{}", JoinRoomError::DoesNotExist(args.join_code)))

@@ -38,11 +38,7 @@ namespace NetworkHandlers {
         UIGameRoom::GrabFocus = true;
         UIMapList::Visible = false;
 
-        PersistantStorage::LastConnectedMatchId = Match.uid;
-        auto self = Match.GetSelf();
-        if (@self !is null)
-            PersistantStorage::LastConnectedMatchTeamId = self.team.id;
-        Meta::SaveSettings(); // Ensure MatchId is saved, even in the event of a crash
+        PersistantStorage::SaveConnectedMatch();
     }
 
     void LoadMaps(Json::Value @mapList) {

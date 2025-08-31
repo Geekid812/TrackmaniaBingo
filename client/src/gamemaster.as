@@ -43,8 +43,7 @@ namespace Gamemaster {
     void SetMatchId(const string& in uid) {
         Match.uid = uid;
 
-        PersistantStorage::LastConnectedMatchId = uid;
-        Meta::SaveSettings();
+        PersistantStorage::SaveConnectedMatch();
     }
 
     /**

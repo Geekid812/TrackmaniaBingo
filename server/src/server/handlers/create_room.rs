@@ -51,6 +51,7 @@ pub fn handle(ctx: &mut ClientContext, args: CreateRoom) -> Value {
     let room_ctx = Some(RoomContext::new(ctx.profile.clone(), &new_room));
     ctx.room = room_ctx;
     room.add_player(&ctx, &ctx.profile, true);
+    room.set_host_uid(ctx.profile.uid);
     if room.config().public {
         directory::send_room_visibility(&room, true);
     }

@@ -44,6 +44,7 @@ pub struct GameRoom {
     load_marker: u32,
     loaded_maps: Vec<GameMap>,
     active_match: Option<Shared<LiveMatch>>,
+    host_uid: Option<i32>,
 }
 
 impl GameRoom {
@@ -64,6 +65,7 @@ impl GameRoom {
             load_marker: 0,
             loaded_maps: Vec::new(),
             active_match: None,
+            host_uid: None,
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
@@ -129,6 +131,10 @@ impl GameRoom {
 
     pub fn get_team(&self, id: TeamIdentifier) -> Option<&BaseTeam> {
         self.teams.get(id)
+    }
+
+    pub fn set_host_uid(&mut self, uid: i32) {
+        self.host_uid = Some(uid)
     }
 
     pub fn teams_as_model(&self) -> Vec<RoomTeam> {
@@ -248,7 +254,7 @@ impl GameRoom {
         &mut self,
         ctx: &ClientContext,
         profile: &PlayerProfile,
-    ) -> Result<(), JoinRoomError> {
+    ) -> Result<bool, JoinRoomError> {
         if self.at_size_capacity() {
             return Err(JoinRoomError::PlayerLimitReached);
         }
@@ -259,7 +265,8 @@ impl GameRoom {
             return Err(JoinRoomError::PlayerAlreadyJoined);
         }
 
-        let team = self.add_player(ctx, profile, false);
+        let is_operator = self.host_uid.is_some_and(|u| u == profile.uid);
+        let team = self.add_player(ctx, profile, is_operator);
         self.channel.broadcast(&RoomEvent::PlayerJoin {
             profile: profile.clone(),
             team,
@@ -274,7 +281,7 @@ impl GameRoom {
                 });
         }
 
-        Ok(())
+        Ok(is_operator)
     }
 
     pub fn player_remove(&mut self, uid: i32) {
@@ -459,6 +466,11 @@ impl GameRoom {
     pub fn check_close(&mut self) {
         // check if a setting disables this behaviour
         if config::get_boolean("behaviour.never_close").unwrap_or(false) {
+            return;
+        }
+
+        // check if a game is active, in which case we shouldn't destroy that room
+        if self.match_uid().is_some() {
             return;
         }
 

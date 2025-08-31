@@ -15,6 +15,8 @@ namespace Network {
         array<Response @> Received = {};
         // Recent error messages
         dictionary Errors = {};
+        // Currently attempting to reconnect to a match
+        bool Reconnecting = false;
     }
 
     namespace Timings {
@@ -390,10 +392,14 @@ namespace Network {
         Room.matchConfig = MatchConfiguration::Deserialize(response["match_config"]);
         Room.name = Room.config.name;
         Room.joinCode = NetParams::JoinCode;
-        Room.localPlayerIsHost = false;
+        Room.localPlayerIsHost = bool(response["is_host"]);
         NetworkHandlers::LoadRoomTeams(response["teams"]);
 
         UIRoomMenu::JoinCodeVisible = false;
+
+        // Don't process join handlers if we are reconnecting
+        if (Internal::Reconnecting)
+            return;
 
         if (response["match_uid"].GetType() != Json::Type::Null) {
             // We're joining an active game
@@ -432,10 +438,10 @@ namespace Network {
         Gamemaster::SetBingoActive(true);
         UITeams::CloseContext();
         UIChat::ClearHistory();
-        PersistantStorage::LastConnectedMatchId = joinedMatch.uid;
         @Match = joinedMatch;
         Gamemaster::InitializeTiles();
         UIGameRoom::SwitchToPlayContext();
+        PersistantStorage::SaveConnectedMatch();
     }
 
     void GetPublicRooms() {
@@ -515,13 +521,16 @@ namespace Network {
     void ReloadMaps() { Network::Post("ReloadMaps", Json::Object(), false); }
 
     void Reconnect() {
+        Internal::Reconnecting = true;
         UI::ShowNotification(Icons::Globe + " Reconnecting to your Bingo match...");
+        JoinRoom();
         JoinMatch();
 
         if (!Gamemaster::IsBingoActive() || Match.uid != PersistantStorage::LastConnectedMatchId) {
             trace("[Network] Reconnection failure, forgetting previous game save.");
             PersistantStorage::ResetConnectedMatch();
         }
+        Internal::Reconnecting = false;
     }
 
     void PingCell() {

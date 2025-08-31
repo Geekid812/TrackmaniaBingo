@@ -27,6 +27,7 @@ void Main() {
         Network::Connect();
 
         if (Network::IsConnected()) {
+            NetParams::JoinCode = PersistantStorage::LastConnectedRoomCode;
             NetParams::MatchJoinUid = PersistantStorage::LastConnectedMatchId;
             NetParams::MatchJoinTeamId = PersistantStorage::LastConnectedMatchTeamId;
             startnew(Network::Reconnect);
