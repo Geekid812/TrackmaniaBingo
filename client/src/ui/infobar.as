@@ -314,7 +314,7 @@ namespace UIInfoBar {
                 break;
             case Powerup::RainbowTile:
                 UI::Text("Rainbow Tile\nTransform any map into a rainbow tile,\nwhich counts as if "
-                         "all teams had claimed it!");
+                         "all teams had claimed it!\nCan't be used to immediately create a\nbingo line.");
                 break;
             case Powerup::GoldenDice:
                 UI::Text(

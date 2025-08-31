@@ -629,6 +629,23 @@ impl LiveMatch {
             None
         };
 
+        // Preconditions
+        if powerup == Powerup::RainbowTile {
+            let old_state = self.cells[board_index].state;
+            let prev_bingos_count = self.check_for_bingos().len();
+            self.cells[board_index].state = TileItemState::Rainbow;
+
+            let creates_bingo = self.check_for_bingos().len() != prev_bingos_count;
+            self.cells[board_index].state = old_state;
+
+            if creates_bingo {
+                return Err(
+                    "placing this here creates a bingo line, this is not allowed!".to_string(),
+                );
+            }
+        }
+
+        // Powerup activation
         self.give_powerup(player_ref.clone(), Powerup::Empty);
         match powerup {
             Powerup::RowShift | Powerup::ColumnShift => {
