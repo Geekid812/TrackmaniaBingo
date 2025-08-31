@@ -57,13 +57,7 @@ namespace GameUpdates {
         if (@map !is null && map.EdChallengeId != Jail.map.uid &&
             Time::Now - LastSummonTimestamp > 5000) {
             print("[GameUpdates::SummonToJail] Player is not in their jail, summoning them now.");
-            UI::ShowNotification("",
-                                 Icons::ExclamationCircle +
-                                     " You are in jail. You must go to the map where you were "
-                                     "emprisoned! To break out of jail, you must beat the current "
-                                     "record on this map within the time limit.",
-                                 vec4(.6, .2, .2, .9),
-                                 20000);
+            Powerups::NotifyJail();
             LastSummonTimestamp = Time::Now;
             Playground::PlayMap(Jail.map);
         }

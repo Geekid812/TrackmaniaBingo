@@ -95,6 +95,7 @@ impl LiveMatch {
                     state: TileItemState::Empty,
                     claimant: None,
                     state_player: None,
+                    state_deadline: DateTime::default(),
                     state_ident: None,
                 })
                 .collect(),
@@ -1049,27 +1050,33 @@ impl LiveMatch {
     }
 
     fn powerup_effect_rally(&mut self, board_index: usize) {
+        let rally_duration = Duration::minutes(10);
+
         let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Rally;
         self.cells[board_index].state_ident = Some(state_ident);
+        self.cells[board_index].state_deadline = Utc::now() + rally_duration;
 
         execute_delayed_task(
             self.ptr.clone(),
             move |_self| _self.rally_resolve(board_index, Some(state_ident)),
-            Duration::minutes(10).to_std().unwrap(),
+            rally_duration.to_std().unwrap(),
         );
     }
 
     fn powerup_effect_jail(&mut self, board_index: usize, target: PlayerRef) {
+        let jail_duration = Duration::minutes(10);
+
         let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Jail;
         self.cells[board_index].state_player = Some(target);
         self.cells[board_index].state_ident = Some(state_ident);
+        self.cells[board_index].state_deadline = Utc::now() + jail_duration;
 
         execute_delayed_task(
             self.ptr.clone(),
             move |_self| _self.jail_resolve(board_index, Some(state_ident)),
-            Duration::minutes(10).to_std().unwrap(),
+            jail_duration.to_std().unwrap(),
         );
     }
 
@@ -1139,6 +1146,7 @@ impl LiveMatch {
             self.cells[cell_id].state = TileItemState::Empty;
             self.cells[cell_id].state_player = None;
             self.cells[cell_id].state_ident = None;
+            self.cells[cell_id].state_deadline = DateTime::default();
             self.channel.broadcast(&GameEvent::JailResolved { cell_id });
         }
     }
@@ -1151,6 +1159,7 @@ impl LiveMatch {
         }) {
             self.cells[cell_id].state = TileItemState::Empty;
             self.cells[cell_id].state_ident = None;
+            self.cells[cell_id].state_deadline = DateTime::default();
 
             let team = self.cells[cell_id]
                 .claimant

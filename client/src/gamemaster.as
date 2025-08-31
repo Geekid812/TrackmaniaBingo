@@ -254,6 +254,7 @@ namespace Gamemaster {
         ClearMatchId();
         @Match = null;
         @Room = null;
+        @Jail = null;
         Playground::SetMapLeaderboardVisible(true);
         UIChat::ClearHistory();
         UIPoll::ClearAllPollsAndNotifications();

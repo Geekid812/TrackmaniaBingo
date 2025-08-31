@@ -488,12 +488,14 @@ namespace NetworkHandlers {
                              vec4(0., 0., 0., .6),
                              15000);
 
+        if (int(tile.statePlayerTarget.uid) == Profile.uid) {
+            // We are free from jail!
+            trace("[NetworkHandlers::JailResolved] Removing local jail.");
+            @Jail = null;
+        }
+
         tile.specialState = TileItemState::Empty;
         tile.statePlayerTarget = PlayerRef();
 
-        if (int(tile.statePlayerTarget.uid) == Profile.uid) {
-            // We are free from jail!
-            @Jail = null;
-        }
     }
 }

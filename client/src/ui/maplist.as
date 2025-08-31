@@ -131,8 +131,9 @@ namespace UIMapList {
                     }
                 } else if (cell.map !is null) {
                     Visible = false;
-                    Playground::PlayMap(cell.map);
-                    Gamemaster::SetCurrentTileIndex(i);
+
+                    OnTileClicked(cell);
+
                     interacted = true;
                 }
             }
@@ -271,6 +272,15 @@ namespace UIMapList {
         }
 
         return false;
+    }
+
+    void OnTileClicked(GameTile@ cell) {
+        if (@Jail !is null && @Jail != @cell) {
+            // action cancelled, you cannot switch maps in jail
+            Powerups::NotifyJail();
+        } else {
+            Playground::PlayMap(cell.map);
+        }
     }
 
     string GetTextCoordinates(int x, int y) {

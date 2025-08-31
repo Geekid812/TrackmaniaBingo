@@ -49,7 +49,6 @@ namespace BoardLocator {
     void OnCellClicked(int row, int col) {
         GameTile @tile = Gamemaster::GetTileOnGrid(row, col);
 
-        if (tile.map !is null)
-            Playground::PlayMap(tile.map);
+        UIMapList::OnTileClicked(tile);
     }
 }

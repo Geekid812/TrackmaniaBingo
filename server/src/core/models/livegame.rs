@@ -27,6 +27,7 @@ pub struct MatchState {
     pub started: DateTime<Utc>,
 }
 
+#[serde_with::serde_as]
 #[derive(Serialize, Clone, Debug)]
 pub struct GameCell {
     pub cell_id: usize,
@@ -35,6 +36,8 @@ pub struct GameCell {
     pub state: TileItemState,
     pub claimant: Option<TeamIdentifier>,
     pub state_player: Option<PlayerRef>,
+    #[serde_as(as = "TimestampSeconds")]
+    pub state_deadline: DateTime<Utc>,
     #[serde(skip)]
     pub state_ident: Option<u32>,
 }

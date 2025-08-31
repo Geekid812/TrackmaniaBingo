@@ -55,6 +55,19 @@ namespace Powerups {
         trace("[Powerups::InitPowerupTextures] Item textures loaded.");
     }
 
+    void SyncPowerupEffects() {
+        if (!Gamemaster::IsBingoActive()) {
+            warn("[Powerups::SyncPowerupEffects] Bingo not active, ignoring this call.");
+            return;
+        }
+
+        for (uint i = 0; i < Match.tiles.Length; i++) {
+            if (Match.tiles[i].specialState == TileItemState::Jail && Match.tiles[i].statePlayerTarget.uid == Profile.uid) {
+                @Jail = Match.GetCell(i);
+            }
+        }
+    }
+
     void TriggerPowerup(Powerup powerup,
                         PlayerRef powerupUser,
                         int boardIndex,
@@ -166,5 +179,15 @@ namespace Powerups {
             print(tile.claimant.id);
             print(Match.GetCell(tileIndex).claimant.id);
         }
+    }
+
+    void NotifyJail() {
+        UI::ShowNotification("",
+        Icons::ExclamationCircle +
+            " You are in jail. You must go to the map where you were "
+            "emprisoned! To break out of jail, you must beat the current "
+            "record on this map within the time limit.",
+        vec4(.6, .2, .2, .9),
+        20000);
     }
 }

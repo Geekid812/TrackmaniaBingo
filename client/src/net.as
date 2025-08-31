@@ -439,7 +439,9 @@ namespace Network {
         UITeams::CloseContext();
         UIChat::ClearHistory();
         @Match = joinedMatch;
+
         Gamemaster::InitializeTiles();
+        Powerups::SyncPowerupEffects();
         UIGameRoom::SwitchToPlayContext();
         PersistantStorage::SaveConnectedMatch();
     }
