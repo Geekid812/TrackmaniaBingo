@@ -132,7 +132,8 @@ namespace UIMapList {
                 } else if (cell.map !is null) {
                     Visible = false;
 
-                    OnTileClicked(cell);
+                    Playground::DebugClaim(i);
+                    // OnTileClicked(cell);
 
                     interacted = true;
                 }

@@ -417,7 +417,7 @@ namespace NetworkHandlers {
         PlayerRef targetPlayer =
             (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"])
                                                           : PlayerRef());
-        string explainerText = Powerups::GetExplainerText(usedPowerup);
+        string explainerText = Powerups::GetExplainerText(usedPowerup, boardIndex);
         string targetText;
         if (usedPowerup == Powerup::Jail) {
             targetText = " and has sent " + targetPlayer.name;

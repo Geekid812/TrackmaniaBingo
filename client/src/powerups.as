@@ -31,18 +31,32 @@ namespace Powerups {
         }
     }
 
-    string GetExplainerText(Powerup powerup) {
-        if (powerup == Powerup::Rally) {
-            return "\nThe team who is winning here in 10 minutes will claim all adjacent squares!";
-        }
-        if (powerup == Powerup::Jail) {
-            return "\nThey have to remain on this map until they can beat the current record!";
-        }
-        if (powerup == Powerup::RainbowTile) {
-            return "\nThis map will be counted as every color for win conditions!";
+    string GetExplainerText(Powerup powerup, uint boardIndex) {
+        switch (powerup) {
+            case Powerup::Rally:
+                return "\nThe team who is winning here in 10 minutes will claim all adjacent squares!";
+            case Powerup::Jail:
+                return "\nThey have to remain on this map until they can beat the current record!";
+            case Powerup::RainbowTile:
+                return "\nThis map will be counted as every color for win conditions!";
+            case Powerup::ColumnShift:
+                return "\nThe " + tostring(boardIndex + 1) + OrdinalValue(boardIndex + 1) + " column of the board has been moved!";
+            case Powerup::RowShift:
+                return "\nThe " + tostring(boardIndex + 1) + OrdinalValue(boardIndex + 1) + " row of the board has been moved!";
         }
 
         return "";
+    }
+
+    string OrdinalValue(uint index) {
+        if (index == 1)
+            return "st";
+        if (index == 2)
+            return "nd";
+        if (index == 3)
+            return "rd";
+
+        return "th";
     }
 
     void InitPowerupTextures() {

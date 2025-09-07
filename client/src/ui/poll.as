@@ -136,7 +136,7 @@ namespace UIPoll {
             UI::Image(data.thumbnail, vec2(NOTIFY_THUMBNAIL_SIZE, NOTIFY_THUMBNAIL_SIZE));
             UI::SameLine();
             Layout::MoveToY(UI::GetCursorPos().y +
-                            (NOTIFY_THUMBNAIL_SIZE - UI::GetTextLineHeight()) / 2);
+                            (NOTIFY_THUMBNAIL_SIZE - UI::GetTextLineHeight()) / 4);
         }
 
         UI::Text(notifyTitle);
