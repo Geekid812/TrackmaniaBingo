@@ -20,7 +20,7 @@ namespace Board {
     const vec4 BINGO_STROKE_COLOR = vec4(1, 0.6, 0, 0.9);
     const uint64 ANIMATION_START_TIME = 4000;
 
-    const float CELL_SHADOW_COLOR_MULTIPLIER = 0.6;
+    const float CELL_SHADOW_COLOR_MULTIPLIER = 0.75;
 
     // Coordinates font size (proportional to the cell size, arbitrary unit)
     const float COORDINATES_FONT_SIZE = 2.5;
