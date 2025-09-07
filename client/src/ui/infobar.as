@@ -18,7 +18,7 @@ namespace UIInfoBar {
         if (@Room !is null) {
             if (UI::Button("Back to room")) {
                 Gamemaster::SetBingoActive(false);
-                UIGameRoom::Visible = true;
+                UIGameRoom::SwitchToRoomContext();
 
                 if (Room.localPlayerIsHost) {
                     // Starting a new game, ask the server to load new maps

@@ -316,4 +316,11 @@ namespace UIGameRoom {
         UIItemSettings::Visible = false;
         UITeamEditor::Visible = false;
     }
+
+    void SwitchToRoomContext() {
+        UIGameRoom::Visible = true;
+        UIMapList::Visible = false;
+        UITeams::Visible = false;
+        UIItemSelect::Visible = false;
+    }
 }
