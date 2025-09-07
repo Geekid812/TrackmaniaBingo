@@ -107,20 +107,10 @@ namespace UIChat {
     void RenderChatMessage(ChatMessage msg, const string& in id) {
         Player @messageAuthor = Gamemaster::IsBingoActive() ? Match.GetPlayer(msg.uid) : null;
 
-        UI::PushStyleColor(UI::Col::ChildBg,
-                           (messageAuthor !is null && msg.teamMessage
-                                ? vec4(messageAuthor.team.color, .1)
-                                : vec4()));
-        UI::BeginChild(id, vec2(), UI::ChildFlags::AutoResizeY);
         Font::Set(Font::Style::Bold, Font::Size::Medium);
         string teamPrefix = "";
         if (msg.teamMessage) {
-            teamPrefix = "\\$" +
-                         (messageAuthor is null
-                              ? "ccc"
-                              : UIColor::GetHex(UIColor::Brighten(messageAuthor.team.color, .4) +
-                                                vec3(.6, .6, .6))) +
-                         "[TEAM] ";
+            teamPrefix = "[TEAM] ";
         }
 
         UI::Text(teamPrefix + "\\$" +
@@ -133,8 +123,6 @@ namespace UIChat {
         Font::Set(Font::Style::Regular, Font::Size::Medium);
         UI::TextWrappedWindow(msg.content);
         Font::Unset();
-        UI::EndChild();
-        UI::PopStyleColor();
     }
 
     void SendChatMessage(const string& in textContent) {
