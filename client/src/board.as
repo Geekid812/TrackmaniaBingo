@@ -12,7 +12,7 @@ namespace Board {
     int64 ShiftStartTimestamp;
 
     const uint64 SHIFTING_ANIMATION_TIME = 1000;
-    const uint64 RAINBOW_COLOR_TICK_DURATION = 3000;
+    const uint64 RAINBOW_COLOR_TICK_DURATION = 2000;
 
     const float STROKE_WIDTH = 8.;
     const float CELL_HIGHLIGHT_PADDING = 2.5; // Multiplier for BorderSize, inside offset
@@ -20,9 +20,7 @@ namespace Board {
     const vec4 BINGO_STROKE_COLOR = vec4(1, 0.6, 0, 0.9);
     const uint64 ANIMATION_START_TIME = 4000;
 
-    const float TILE_SHADING_LIGHT_PERIOD = 1.5 / (2. * Math::PI);
-    const float TILE_SHADING_STEP = 0.3;
-    const float TILE_SHADING_VARIENCE = 0.08f;
+    const float CELL_SHADOW_COLOR_MULTIPLIER = 0.6;
 
     // Coordinates font size (proportional to the cell size, arbitrary unit)
     const float COORDINATES_FONT_SIZE = 2.5;
@@ -40,7 +38,7 @@ namespace Board {
 
     vec4 TileColorUnclaimed = vec4(.2, .2, .2, .8);
     vec4 BoardBorderColor = vec4(.7, .7, .7, 1.);
-    float BoardTilesAlpha = .85f;
+    float BoardTilesAlpha = .88f;
 
     class BoardSizes {
         float border;
@@ -55,23 +53,38 @@ namespace Board {
 
     }
 
+    class GradientVec4 {
+        vec4 color1;
+        vec4 color2;
+
+        GradientVec4(vec4 color) {
+            this.color1 = color;
+            this.color2 = UIColor::Brighten(color, CELL_SHADOW_COLOR_MULTIPLIER);
+        }
+
+        GradientVec4(vec4 color1, vec4 color2) {
+            this.color1 = color1;
+            this.color2 = color2;
+        }
+    }
+
     /**
      * Determine which color the tile should be.
      */
-    vec4
+    GradientVec4
     GetTileFillColor(GameTile @tile) {
         if (tile is null)
-            return vec4(0, 0, 0, BoardTilesAlpha);
+            return GradientVec4(vec4(0, 0, 0, BoardTilesAlpha));
 
         if (tile.paintColor != vec3())
-            return UIColor::GetAlphaColor(tile.paintColor, BoardTilesAlpha);
+            return GradientVec4(UIColor::GetAlphaColor(tile.paintColor, BoardTilesAlpha));
 
         if (tile.claimant.id != -1) {
-            return UIColor::GetAlphaColor(tile.claimant.color, BoardTilesAlpha);
+            return GradientVec4(UIColor::GetAlphaColor(tile.claimant.color, BoardTilesAlpha));
         }
 
         if (tile.map is null)
-            return vec4(0, 0, 0, BoardTilesAlpha);
+            return GradientVec4(vec4(0, 0, 0, BoardTilesAlpha));
 
         if (tile.specialState == TileItemState::Rainbow) {
             float rainbowColorTick =
@@ -79,11 +92,12 @@ namespace Board {
             vec3 primaryColor = Match.teams[int(rainbowColorTick) % Match.teams.Length].color;
             vec3 secondaryColor =
                 Match.teams[(int(rainbowColorTick) + 1) % Match.teams.Length].color;
+            vec3 tertiaryColor = Match.teams[(int(rainbowColorTick) + 2) % Match.teams.Length].color;
             float transitionProgress = rainbowColorTick - int(rainbowColorTick);
 
-            return UIColor::GetAlphaColor(primaryColor * (1 - transitionProgress) +
+            return GradientVec4(UIColor::GetAlphaColor(primaryColor * (1 - transitionProgress) +
                                               secondaryColor * transitionProgress,
-                                          BoardTilesAlpha);
+                                          BoardTilesAlpha), UIColor::GetAlphaColor(secondaryColor * (1 - transitionProgress) + tertiaryColor * transitionProgress, BoardTilesAlpha));
         }
 
         if (tile.HasRunSubmissions()) {
@@ -226,30 +240,26 @@ namespace Board {
 
         // Cell Fill Color
         float colorAnimProgress = Animation::GetProgress(animationTime, 2000, 500);
-        float lightShadingTime = -float(Time::Now - Match.startTime) / 1000.;
         for (uint x = 0; x < cellsPerRow; x++) {
-            float tileLightShading =
-                Math::Sin((lightShadingTime + x * TILE_SHADING_STEP) / TILE_SHADING_LIGHT_PERIOD);
-            float lightness = 1. + TILE_SHADING_VARIENCE * tileLightShading * 0.5;
 
             for (uint y = 0; y < cellsPerRow; y++) {
                 GameTile @tile = Gamemaster::GetTileOnGrid(x, y);
 
                 vec2 cellPosition = CellPosition(x, y, sizes);
-                vec4 color = GetTileFillColor(tile);
+                GradientVec4@ gradientColor = GetTileFillColor(tile);
                 cellPosition.x += (playingShiftAnimation && ShiftIsRow && y == ShiftRowColIndex
                                        ? animationShiftOffset
                                        : 0.);
                 cellPosition.y += (playingShiftAnimation && !ShiftIsRow && x == ShiftRowColIndex
                                        ? animationShiftOffset
                                        : 0);
-                color.w *= colorAnimProgress; // opacity modifier
-                color.x *= lightness;
-                color.y *= lightness;
-                color.z *= lightness;
+            
+                // opacity modifier
+                gradientColor.color1.w *= colorAnimProgress;
+                gradientColor.color2.w *= colorAnimProgress;
 
                 nvg::BeginPath();
-                nvg::FillColor(color);
+                nvg::FillPaint(nvg::LinearGradient(cellPosition, cellPosition + sizes.cell, gradientColor.color1, gradientColor.color2));
                 nvg::Rect(cellPosition.x, cellPosition.y, sizes.cell, sizes.cell);
                 nvg::Fill();
 
