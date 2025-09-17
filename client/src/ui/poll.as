@@ -198,7 +198,7 @@ namespace UIPoll {
     }
 
     void ClearAllPollsAndNotifications() {
-        trace("[UIPolls::ClearAllPollsAndNotifications] All toasts were removed.");
+        logtrace("[UIPolls::ClearAllPollsAndNotifications] All toasts were removed.");
         Polls.Resize(0);
         Notifications.Resize(0);
     }

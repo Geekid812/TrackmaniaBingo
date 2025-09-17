@@ -11,7 +11,7 @@ namespace UIRoomMenu {
                 return PublicRooms[i];
         }
 
-        warn("Roomlist: GetRoom(" + code + ") returned null.");
+        logwarn("Roomlist: GetRoom(" + code + ") returned null.");
         return null;
     }
 

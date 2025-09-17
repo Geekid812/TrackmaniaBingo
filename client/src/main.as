@@ -23,7 +23,7 @@ void Main() {
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
     if (PersistantStorage::LastConnectedMatchId != "") {
-        print("[Main] Plugin was previously connected, attempting to reconnect.");
+        loginfo("[Main] Plugin was previously connected, attempting to reconnect.");
         Network::Connect();
 
         if (Network::IsConnected()) {
@@ -36,7 +36,7 @@ void Main() {
 
     // We are interested in roomlist notifications, so we should connect
     if (PersistantStorage::SubscribeToRoomUpdates) {
-        print("[Main] Player is subscribed to roomlist updates, connecting to the servers.");
+        loginfo("[Main] Player is subscribed to roomlist updates, connecting to the servers.");
         Network::Connect();
         UIRoomMenu::RoomsLoad = LoadStatus::Loading;
         startnew(Network::GetPublicRooms);
@@ -55,13 +55,13 @@ void RenderMenu() {
 
         // Connect to server when opening plugin window the first time
         if (UIMainWindow::Visible && Network::GetState() == ConnectionState::Closed) {
-            print("[Main] Plugin window opened, connecting to the servers.");
+            loginfo("[Main] Plugin window opened, connecting to the servers.");
             startnew(Network::Connect);
         }
 
         // Ask to participate in the user survey
         if (UIMainWindow::Visible && Settings::ShowSystemSurvey) {
-            print("[Main] User has not participated in the system survey, showing UISystemSurvey "
+            loginfo("[Main] User has not participated in the system survey, showing UISystemSurvey "
                   "now.");
             UISystemSurvey::Visible = true;
         }

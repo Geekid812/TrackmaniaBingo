@@ -66,12 +66,12 @@ namespace Powerups {
         @PowerupJailTex = LoadInternalTex("data/jail.png");
         @PowerupRainbowTileTex = LoadInternalTex("data/rainbow.png");
         @PowerupGoldenDiceTex = LoadInternalTex("data/golden_dice.png");
-        trace("[Powerups::InitPowerupTextures] Item textures loaded.");
+        logtrace("[Powerups::InitPowerupTextures] Item textures loaded.");
     }
 
     void SyncPowerupEffects() {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::SyncPowerupEffects] Bingo not active, ignoring this call.");
+            logwarn("[Powerups::SyncPowerupEffects] Bingo not active, ignoring this call.");
             return;
         }
 
@@ -89,7 +89,7 @@ namespace Powerups {
                         bool forwards,
                         PlayerRef @targetPlayer) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::TriggerPowerup] Bingo is not active, ignoring this event.");
+            logwarn("[Powerups::TriggerPowerup] Bingo is not active, ignoring this event.");
             return;
         }
 
@@ -115,7 +115,7 @@ namespace Powerups {
 
     void PowerupEffectBoardShift(bool isRow, uint rowColIndex, bool fowards) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectBoardShift] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectBoardShift] Bingo is not active, ignoring this call.");
             return;
         }
 
@@ -148,7 +148,7 @@ namespace Powerups {
 
     void PowerupEffectRainbowTile(uint tileIndex) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectRainbowTile] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectRainbowTile] Bingo is not active, ignoring this call.");
             return;
         }
 
@@ -157,7 +157,7 @@ namespace Powerups {
 
     void PowerupEffectRally(uint tileIndex, uint64 duration) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectRally] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectRally] Bingo is not active, ignoring this call.");
             return;
         }
 
@@ -167,7 +167,7 @@ namespace Powerups {
 
     void PowerupEffectJail(uint tileIndex, PlayerRef targetPlayer, uint64 duration) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectJail] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectJail] Bingo is not active, ignoring this call.");
             return;
         }
 
@@ -182,7 +182,7 @@ namespace Powerups {
 
     void PowerupEffectGoldenDice(uint tileIndex) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectGoldenDice] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectGoldenDice] Bingo is not active, ignoring this call.");
             return;
         }
 
@@ -191,8 +191,6 @@ namespace Powerups {
 
         if (tile.claimant.id == -1 && tile.HasRunSubmissions()) {
             tile.claimant = tile.LeadingRun().player.team;
-            print(tile.claimant.id);
-            print(Match.GetCell(tileIndex).claimant.id);
         }
     }
 

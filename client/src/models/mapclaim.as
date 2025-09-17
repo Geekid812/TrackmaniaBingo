@@ -26,7 +26,7 @@ namespace MapClaim {
         auto mapClaim = MapClaim();
         if (@match is null) {
             if (!Gamemaster::IsBingoActive()) {
-                error("[MapClaim::Deserialize] Game is not active.");
+                logerror("[MapClaim::Deserialize] Game is not active.");
                 return mapClaim;
             }
 

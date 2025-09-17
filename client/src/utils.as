@@ -35,3 +35,28 @@ string itemName(Powerup powerup) {
         return "";
     }
 }
+
+void logtrace(const string&in line) {
+    if (Settings::LogLevel > Settings::LoggingLevel::Trace)
+        return;
+
+    trace(line);
+}
+
+void loginfo(const string&in line) {
+    if (Settings::LogLevel > Settings::LoggingLevel::Info)
+        return;
+
+    print(line);
+}
+
+void logwarn(const string&in line) {
+    if (Settings::LogLevel > Settings::LoggingLevel::Warning)
+        return;
+
+    warn(line);
+}
+
+void logerror(const string&in line) {
+    error(line);
+}

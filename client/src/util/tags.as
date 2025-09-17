@@ -27,7 +27,7 @@ namespace MXTags {
 
     void LoadTags() {
         TagsRequested = true;
-        trace("[MXTags::LoadTags] Loading tags...");
+        logtrace("[MXTags::LoadTags] Loading tags...");
         auto req = Net::HttpGet(MX_GETTAGS_URL);
         while (!req.Finished()) {
             yield();
@@ -40,7 +40,7 @@ namespace MXTags {
         for (uint i = 0; i < data.Length; i++) {
             Tags.InsertLast(Tag(data[i]["ID"], data[i]["Name"]));
         }
-        trace("[MXTags::LoadTags] Loaded " + Tags.Length + " tags.");
+        logtrace("[MXTags::LoadTags] Loaded " + Tags.Length + " tags.");
     }
 
     Tag GetTag(int id) {

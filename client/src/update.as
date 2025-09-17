@@ -22,7 +22,7 @@ namespace GameUpdates {
     }
 
     void ChecksWarn(const string& in warning) {
-        warn("[GameUpdates::ChecksWarn] Unsupported configuration: " + warning);
+        logwarn("[GameUpdates::ChecksWarn] Unsupported configuration: " + warning);
         UI::ShowNotification(Icons::ExclamationCircle +
                                  " Bingo: Unsupported Configuration Detected",
                              warning + "\nYou can disable this warning in the plugin settings.",
@@ -56,7 +56,7 @@ namespace GameUpdates {
         auto map = Playground::GetCurrentMap();
         if (@map !is null && map.EdChallengeId != Jail.map.uid &&
             Time::Now - LastSummonTimestamp > 5000) {
-            print("[GameUpdates::SummonToJail] Player is not in their jail, summoning them now.");
+            loginfo("[GameUpdates::SummonToJail] Player is not in their jail, summoning them now.");
             Powerups::NotifyJail();
             LastSummonTimestamp = Time::Now;
             Playground::PlayMap(Jail.map);

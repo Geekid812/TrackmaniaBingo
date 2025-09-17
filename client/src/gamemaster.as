@@ -241,7 +241,7 @@ namespace Gamemaster {
      */
     void Shutdown() {
         // this is rudimentary, it doesn't keep connection alive
-        trace("[Gamemaster::Shutdown] Closing the game.");
+        logtrace("[Gamemaster::Shutdown] Closing the game.");
         ResetAll();
         Network::CloseConnection();
     }

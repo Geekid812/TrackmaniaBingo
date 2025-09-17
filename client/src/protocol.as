@@ -19,14 +19,14 @@ class Protocol {
 
     Json::Value @SendHandshakeRequest(Json::Value @message) {
         if (!InnerSend(Json::Write(message))) {
-            trace("[Protocol::Connect] Failed sending handshake message.");
+            logtrace("[Protocol::Connect] Failed sending handshake message.");
             Fail();
             return null;
         }
 
         string handshakeReply = BlockRecv(Settings::NetworkTimeout);
         if (handshakeReply == "") {
-            trace("[Protocol::Connect] Handshake reply reception timed out after " +
+            logtrace("[Protocol::Connect] Handshake reply reception timed out after " +
                   Settings::NetworkTimeout + "ms.");
             Fail();
             return null;
@@ -36,8 +36,8 @@ class Protocol {
             return Json::Parse(handshakeReply);
         } catch {
             err("Protocol::Connect", "Received an invalid handshake response.");
-            error("Got this message: " + handshakeReply);
-            error("Error: " + getExceptionInfo());
+            logerror("Got this message: " + handshakeReply);
+            logerror("Error: " + getExceptionInfo());
             Fail();
             return null;
         }
@@ -55,10 +55,10 @@ class Protocol {
                                  "A new update is required: " + reason,
                                  vec4(.4, .4, 1., 1.),
                                  15000);
-            print("[Protocol::Connect] New update required: " + reason);
+            loginfo("[Protocol::Connect] New update required: " + reason);
             return -2;
         case HandshakeFailureIntentCode::Reauthenticate:
-            print("[Protocol::Connect] Reauthenticating: " + reason);
+            loginfo("[Protocol::Connect] Reauthenticating: " + reason);
             PersistantStorage::ClientToken = "";
             return -1;
         default:
@@ -74,12 +74,12 @@ class Protocol {
 
         // Socket Creation
         if (!socket.Connect(host, port)) {
-            trace("[Protocol::Connect] Could not create socket to connect to " + host + ":" + port +
+            logtrace("[Protocol::Connect] Could not create socket to connect to " + host + ":" + port +
                   ".");
             Fail();
             return -1;
         }
-        trace("[Protocol::Connect] Socket bound and ready to connect to " + host + ":" + port +
+        logtrace("[Protocol::Connect] Socket bound and ready to connect to " + host + ":" + port +
               ".");
 
         // Connection
@@ -89,22 +89,22 @@ class Protocol {
             yield();
         }
         if (!socket.IsReady()) {
-            trace("[Protocol::Connect] Connection timed out after " + Settings::NetworkTimeout +
+            logwarn("[Protocol::Connect] Connection timed out after " + Settings::NetworkTimeout +
                   "ms.");
             Fail();
             return -1;
         }
-        trace("[Protocol::Connect] Connected to server after " + (Time::Now - initialDate) + "ms.");
+        logtrace("[Protocol::Connect] Connected to server after " + (Time::Now - initialDate) + "ms.");
 
         // Exchange keys, if necessary
         if (handshake.token == "") {
-            trace("[Protocol::Connect] Not logged in, exchanging authentication keys.");
+            loginfo("[Protocol::Connect] Not logged in, exchanging authentication keys.");
             KeyExchangeRequest request;
             request.key = Login::GetExchangeToken();
             request.accountId = User::GetAccountId();
             request.displayName = User::GetLocalUsername();
 
-            trace("[Protocol::Connect] Sending off key exchange request.");
+            logtrace("[Protocol::Connect] Sending off key exchange request.");
             Json::Value @reply = SendHandshakeRequest(KeyExchangeRequest::Serialize(request));
             if (@reply is null)
                 return -1;
@@ -113,13 +113,13 @@ class Protocol {
                 return HandleHandshakeFailure(reply);
             }
 
-            trace("[Protocol::Connect] Got new authentication token.");
+            loginfo("[Protocol::Connect] Got new authentication token.");
             PersistantStorage::ClientToken = reply["token"];
             handshake.token = reply["token"];
         }
 
         // Opening Handshake
-        trace("[Protocol::Connect] Sending opening handshake.");
+        loginfo("[Protocol::Connect] Sending opening handshake.");
         Json::Value @reply = SendHandshakeRequest(HandshakeRequest::Serialize(handshake));
         if (@reply is null)
             return -1;
@@ -137,13 +137,13 @@ class Protocol {
         } catch {
             err("Protocol::Connect",
                 "Could not connect to the server, received an invalid response.");
-            error("Got this message: " + Json::Write(reply));
-            error("Error: " + getExceptionInfo());
+            logerror("Got this message: " + Json::Write(reply));
+            logerror("Error: " + getExceptionInfo());
             Fail();
             return -2;
         }
 
-        print("[Protocol::Connect] Handshake completed!");
+        loginfo("[Protocol::Connect] Handshake completed!");
         state = ConnectionState::Connected;
         return 0;
     }
@@ -183,7 +183,7 @@ class Protocol {
             if (socket.Available() >= 4) {
                 int Size = socket.ReadInt32();
                 if (Size <= 0) {
-                    trace("[Protocol::Recv] buffer size violation (got " + Size + ").");
+                    logtrace("[Protocol::Recv] buffer size violation (got " + Size + ").");
                     Fail();
                     return "";
                 }
@@ -205,7 +205,7 @@ class Protocol {
     void Fail() {
         if (state == ConnectionState::Closed)
             return;
-        trace("[Protocol::Fail] Connection fault. Closing.");
+        logtrace("[Protocol::Fail] Connection fault. Closing.");
         if (@socket != null && socket.IsReady())
             socket.Close();
 

@@ -60,7 +60,7 @@ class LiveMatch {
                 return player;
         }
 
-        warn("Match: GetPlayer(" + uid + ") returned null.");
+        logwarn("Match: GetPlayer(" + uid + ") returned null.");
         return null;
     }
 

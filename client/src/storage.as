@@ -42,7 +42,7 @@ namespace PersistantStorage {
                 @Profile = PlayerProfile::Deserialize(Json::Parse(LocalProfile));
             }
         } catch {
-            warn("[PersistantStorage::LoadItems] Deserialize of {LocalProfile} failed (" +
+            logwarn("[PersistantStorage::LoadItems] Deserialize of {LocalProfile} failed (" +
                  getExceptionInfo() + ")");
         }
 
@@ -54,7 +54,7 @@ namespace PersistantStorage {
                 MatchConfig = MatchConfiguration::Deserialize(configs["game"]);
             }
         } catch {
-            warn("[PersistantStorage::LoadItems] Deserialize of {LastConfig} failed (" +
+            logwarn("[PersistantStorage::LoadItems] Deserialize of {LastConfig} failed (" +
                  getExceptionInfo() + ")");
         }
 
@@ -65,7 +65,7 @@ namespace PersistantStorage {
                 MapCache.InsertLast(GameMap::Deserialize(mapCache[i]));
             }
         } catch {
-            warn("[PersistantStorage::LoadItems] Deserialize of {DevelMapCache} failed (" +
+            logwarn("[PersistantStorage::LoadItems] Deserialize of {DevelMapCache} failed (" +
                  getExceptionInfo() + ")");
         }
 
@@ -80,7 +80,7 @@ namespace PersistantStorage {
                 TeamPresets.InsertLast(Team::Deserialize(presetTeams[i]));
             }
         } catch {
-            warn("[PersistantStorage::LoadItems] Deserialize of {TeamEditorStorage} failed (" +
+            logwarn("[PersistantStorage::LoadItems] Deserialize of {TeamEditorStorage} failed (" +
                  getExceptionInfo() + ")");
         }
     }
@@ -133,7 +133,7 @@ namespace PersistantStorage {
     }
 
     void ResetStorage() {
-        warn("[PersistantStorage::ResetStorage] Resetting all items...");
+        logwarn("[PersistantStorage::ResetStorage] Resetting all items...");
         ClientToken = "";
         LocalProfile = "";
         MapListUiScale = 1.0f;

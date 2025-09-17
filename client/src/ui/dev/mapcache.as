@@ -77,7 +77,7 @@ namespace UIDevMapCache {
         int originalAmount = amount;
 
         while (amount > 0) {
-            trace("[UIDevMapCache::LoadTMXMapsCoroutine] Fetching new map... (" + amount +
+            logtrace("[UIDevMapCache::LoadTMXMapsCoroutine] Fetching new map... (" + amount +
                   " remaining)");
 
             Net::HttpRequest @req = Net::HttpGet(MAP_REQUEST_TMX_URL);
@@ -111,7 +111,7 @@ namespace UIDevMapCache {
             MapCache.InsertLast(map);
         }
 
-        print("[UIDevMapCache::LoadTMXMapsCoroutine] Loaded " + originalAmount +
+        loginfo("[UIDevMapCache::LoadTMXMapsCoroutine] Loaded " + originalAmount +
               " new maps in local cache.");
         PersistantStorage::SaveDevMapCache();
     }

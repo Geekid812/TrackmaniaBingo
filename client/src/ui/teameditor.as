@@ -110,12 +110,12 @@ namespace UITeamEditor {
 
     void InstantiateAnyNewTeam() {
         if (@Room is null) {
-            warn("[UITeamEditor::InstantiateAnyNewTeam] Can't instantiate a new team when Room is "
+            logwarn("[UITeamEditor::InstantiateAnyNewTeam] Can't instantiate a new team when Room is "
                  "null.");
             return;
         }
         if (!HasAnyUninstantiatedTeam()) {
-            warn("[UITeamEditor::InstantiateAnyNewTeam] All team presets are instantiated, cannot "
+            logwarn("[UITeamEditor::InstantiateAnyNewTeam] All team presets are instantiated, cannot "
                  "create a new one.");
             return;
         }

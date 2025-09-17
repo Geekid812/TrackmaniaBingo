@@ -131,7 +131,7 @@ namespace Playground {
         mapClaimData.tileIndex = Gamemaster::GetCurrentTileIndex();
         mapClaimData.mapResult = result;
 
-        trace("[Playground::CheckRunFinished] Claiming map '" + map.MapName + "' with time of " +
+        logtrace("[Playground::CheckRunFinished] Claiming map '" + map.MapName + "' with time of " +
               result.time);
         startnew(ClaimMedalCoroutine);
     }
@@ -185,15 +185,15 @@ namespace Playground {
                 mapClaimData.tileIndex, mapClaimData.campaign, mapClaimData.mapResult);
             mapClaimData.retries -= 1;
             if (Success) {
-                trace("[Playground::ClaimMedalCoroutine] Map successfully claimed.");
+                logtrace("[Playground::ClaimMedalCoroutine] Map successfully claimed.");
                 ok = true;
                 break;
             } else
-                trace("[Playground::ClaimMedalCoroutine] Map claim failed, retrying... (" +
+                logtrace("[Playground::ClaimMedalCoroutine] Map claim failed, retrying... (" +
                       mapClaimData.retries + " attempts left)");
         }
         if (!ok) {
-            warn("[Playground::ClaimMedalCoroutine] Warning! Failed to claim a map after several "
+            logwarn("[Playground::ClaimMedalCoroutine] Warning! Failed to claim a map after several "
                  "retries.");
         }
         mapClaimData.retries = 0;

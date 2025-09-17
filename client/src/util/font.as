@@ -82,7 +82,7 @@ namespace Font {
         UI::Font @font = UI::LoadFont(fontName, size);
 
         if (@font is null) {
-            warn("Fonts: null font loaded!");
+            logwarn("Fonts: null font loaded!");
         }
 
         InsertFont(fontCache, font);
@@ -102,7 +102,7 @@ namespace Font {
         LoadFont(Style::Bold, 16);
         LoadFont(Style::Mono, 16);
 
-        trace("[Font::Init] Fonts loaded.");
+        logtrace("[Font::Init] Fonts loaded.");
         Initialized = true;
     }
 

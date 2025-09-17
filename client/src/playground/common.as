@@ -40,7 +40,7 @@ namespace Playground {
                     "TrackMania/Bingo_PlayMap_Local");
             break;
         default:
-            warn("[Playground::PlayMap] Unhandled MapType: " + tostring(map.type));
+            logwarn("[Playground::PlayMap] Unhandled MapType: " + tostring(map.type));
         }
     }
 }

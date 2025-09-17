@@ -91,7 +91,7 @@ namespace Network {
 
             if (!IsConnected()) {
                 retries -= 1;
-                trace("[Network] Failed to connect. " + retries + " retry attempts left.");
+                logwarn("[Network] Failed to connect. " + retries + " retry attempts left.");
             }
         }
     }
@@ -104,19 +104,19 @@ namespace Network {
         }
 
         if (!ShouldStayConnected()) {
-            trace("[Network] Plugin not active, disconnecting from the server.");
+            loginfo("[Network] Plugin not active, disconnecting from the server.");
             CloseConnection();
             return;
         }
 
         string message = _protocol.Recv();
         while (message != "") {
-            trace("[Network] <- " + message);
+            logtrace("[Network] <- " + message);
             Json::Value json;
             try {
                 json = Json::Parse(message);
             } catch {
-                warn("[Network] Failed to parse received message. Got: " + message);
+                logwarn("[Network] Failed to parse received message. Got: " + message);
                 _protocol.Fail();
                 break;
             }
@@ -150,7 +150,7 @@ namespace Network {
     }
 
     void OnDisconnect() {
-        trace("[Network] Disconnected! Attempting to reconnect...");
+        logtrace("[Network] Disconnected! Attempting to reconnect...");
         Reset();
         Connect();
         if (!IsConnected()) {
@@ -161,7 +161,7 @@ namespace Network {
                                  10000);
             Internal::OfflineMode = true;
         } else {
-            trace("[Network] Reconnected to server.");
+            logtrace("[Network] Reconnected to server.");
         }
     }
 
@@ -170,7 +170,7 @@ namespace Network {
         auto response = Post("Ping", Json::Object(), false);
         uint64 end = Time::Now - start;
         bool result = response !is null;
-        trace("[Network::TestConnection] " + tostring(result) + " in " + end + "ms");
+        logtrace("[Network::TestConnection] " + tostring(result) + " in " + end + "ms");
     }
 
     void Handle(Json::Value @body) {
@@ -182,7 +182,7 @@ namespace Network {
             return;
         }
         if (!body.HasKey("event")) {
-            warn("Invalid message, discarding.");
+            logwarn("Invalid message, discarding.");
             return;
         }
         string event = body["event"];
@@ -249,13 +249,13 @@ namespace Network {
         } else if (event == "JailResolved") {
             NetworkHandlers::JailResolved(body);
         } else {
-            warn("[Network] Unknown event: " + string(body["event"]));
+            logwarn("[Network] Unknown event: " + string(body["event"]));
         }
     }
 
     void CloseConnection() {
         Reset();
-        trace("[Network::CloseConnection] Connection closed.");
+        logtrace("[Network::CloseConnection] Connection closed.");
     }
 
     int AddSequenceValue(Json::Value @val) {
@@ -287,9 +287,9 @@ namespace Network {
         body["req"] = type;
         uint Sequence = AddSequenceValue(body);
         string Text = Json::Write(body);
-        trace("[Network] -> " + Text);
+        logtrace("[Network] -> " + Text);
         if (!_protocol.Send(Text)) {
-            warn("[Network] Post preemptively failed!");
+            logwarn("[Network] Post preemptively failed!");
             if (Network::IsConnected())
                 OnDisconnect();
             return null;
@@ -303,7 +303,7 @@ namespace Network {
 
         if (reply !is null && reply.HasKey("error")) {
             string err = string(reply["error"]);
-            trace("[Network::Post] Request [" + type + "]: Error: " + err);
+            logtrace("[Network::Post] Request [" + type + "]: Error: " + err);
             UI::ShowNotification(
                 "", Icons::Times + " Error in " + type + ": " + err, vec4(.8, 0., 0., 1.), 10000);
             Internal::Errors[type] = err;
@@ -335,7 +335,7 @@ namespace Network {
 
         Json::Value @response = Post("CreateRoom", body, true);
         if (response is null) {
-            trace("[Network] CreateRoom - No reply from server.");
+            logtrace("[Network] CreateRoom - No reply from server.");
             return;
         }
 
@@ -383,7 +383,7 @@ namespace Network {
 
         auto response = Post("JoinRoom", body, true);
         if (response is null) {
-            trace("[Network] JoinRoom - No reply from server.");
+            logtrace("[Network] JoinRoom - No reply from server.");
             return;
         }
 
@@ -429,7 +429,7 @@ namespace Network {
 
         auto response = Post("JoinMatch", body, true);
         if (response is null) {
-            trace("[Network] JoinMatch - No reply from server.");
+            logtrace("[Network] JoinMatch - No reply from server.");
             return;
         }
 
@@ -449,7 +449,7 @@ namespace Network {
     void GetPublicRooms() {
         auto response = Post("GetPublicRooms", Json::Object(), false);
         if (response is null) {
-            trace("[Network] GetPublicRooms - No reply from server.");
+            logtrace("[Network] GetPublicRooms - No reply from server.");
             UIRoomMenu::RoomsLoad = LoadStatus::Error;
             return;
         }
@@ -471,7 +471,7 @@ namespace Network {
 
         auto response = Post("EditConfig", body, true);
         if (response is null) {
-            trace("[Network] EditConfig - No reply from server.");
+            logtrace("[Network] EditConfig - No reply from server.");
             return;
         }
         UIEditSettings::Visible = false;
@@ -529,7 +529,7 @@ namespace Network {
         JoinMatch();
 
         if (!Gamemaster::IsBingoActive() || Match.uid != PersistantStorage::LastConnectedMatchId) {
-            trace("[Network] Reconnection failure, forgetting previous game save.");
+            logtrace("[Network] Reconnection failure, forgetting previous game save.");
             PersistantStorage::ResetConnectedMatch();
         }
         Internal::Reconnecting = false;

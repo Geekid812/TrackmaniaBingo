@@ -99,7 +99,7 @@ namespace UISystemSurvey {
         if (canShowDenyButton) {
             if (UI::ButtonColored(denyButtonText, 0.05)) {
                 State = SurveyViewState::Cancelled;
-                warn("[UISystemSurvey::SurveyChoiceButtons] System surveying explicitly cancelled "
+                logwarn("[UISystemSurvey::SurveyChoiceButtons] System surveying explicitly cancelled "
                      "by the user.");
             }
         } else {

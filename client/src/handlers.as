@@ -254,7 +254,7 @@ namespace NetworkHandlers {
 
     void PhaseChange(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("Handlers [PhaseChange]: Bingo game is inactive!");
+            logwarn("Handlers [PhaseChange]: Bingo game is inactive!");
             return;
         }
         Gamemaster::SetPhase(GamePhase(int(data["phase"])));
@@ -269,7 +269,7 @@ namespace NetworkHandlers {
         LoadRoomTeams(data["teams"]);
     }
 
-    void MatchSync(Json::Value @data) { warn("MatchSync unimplemented"); }
+    void MatchSync(Json::Value @data) { logwarn("MatchSync unimplemented"); }
 
     void AnnounceWinByCellCount(Json::Value @data) {
         Team team = Match.GetTeamWithId(int(data["team"]));
@@ -328,7 +328,7 @@ namespace NetworkHandlers {
 
     void MapRerolled(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("Handlers: got MapRerolled event but game is inactive.");
+            logwarn("Handlers: got MapRerolled event but game is inactive.");
             return;
         }
 
@@ -384,7 +384,7 @@ namespace NetworkHandlers {
 
     void PowerupSpawn(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::PowerupSpawn] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::PowerupSpawn] Bingo is not active, ignoring this event.");
             return;
         }
 
@@ -406,7 +406,7 @@ namespace NetworkHandlers {
 
     void PowerupActivated(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::PowerupActivated] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::PowerupActivated] Bingo is not active, ignoring this event.");
             return;
         }
         Powerup usedPowerup = Powerup(int(data["powerup"]));
@@ -441,7 +441,7 @@ namespace NetworkHandlers {
 
     void ItemSlotEquip(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::ItemSlotEquip] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::ItemSlotEquip] Bingo is not active, ignoring this event.");
             return;
         }
 
@@ -452,7 +452,7 @@ namespace NetworkHandlers {
 
     void RallyResolved(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::RallyResolved] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::RallyResolved] Bingo is not active, ignoring this event.");
             return;
         }
         int cellId = int(data["cell_id"]);
@@ -488,7 +488,7 @@ namespace NetworkHandlers {
 
     void JailResolved(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::JailResolved] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::JailResolved] Bingo is not active, ignoring this event.");
             return;
         }
 
@@ -502,7 +502,7 @@ namespace NetworkHandlers {
 
         if (int(tile.statePlayerTarget.uid) == Profile.uid) {
             // We are free from jail!
-            trace("[NetworkHandlers::JailResolved] Removing local jail.");
+            logtrace("[NetworkHandlers::JailResolved] Removing local jail.");
             @Jail = null;
         }
 
