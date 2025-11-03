@@ -1,8 +1,4 @@
-use chrono::Duration;
-use once_cell::sync::Lazy;
 use parking_lot::Mutex;
-use serde::Deserialize;
-use serde_with::DurationSeconds;
 use std::{
     collections::HashMap,
     fmt::Display,
@@ -12,14 +8,6 @@ use std::{
 };
 use toml::{map::Map, Value};
 use tracing::{debug, error, info, warn};
-
-
-pub static CONFIG: Lazy<Config> = Lazy::new(|| {
-    let toml_content = std::fs::read_to_string("config.toml");
-    toml_content
-        .map(|s| toml::from_str(&s).expect("config file parsing error"))
-        .unwrap_or_default()
-});
 
 static CONFIGURATION_KEYS: OnceLock<Mutex<HashMap<String, ConfigValue>>> = OnceLock::new();
 
@@ -205,121 +193,4 @@ pub fn enumerate_keys() {
 /// Return whether the current environment has development status enabled.
 pub fn is_development() -> bool {
     get_string("environment").is_some_and(|v| v == "dev")
-}
-
-#[derive(Deserialize)]
-#[serde(default)]
-pub struct Config {
-    pub log_level: String,
-    pub database_url: String,
-    pub mapcache_url: String,
-    pub min_client: String,
-    pub tmx_useragent: String,
-    pub secrets: Secrets,
-    pub mapqueue: MapsConfig,
-    pub game: GameConfig,
-    pub routes: RestConfig,
-}
-
-#[derive(Deserialize)]
-pub struct Secrets {
-    pub openplanet_auth: Option<String>,
-    pub admin_key: Option<String>,
-}
-
-#[serde_with::serde_as]
-#[derive(Deserialize)]
-#[serde(default)]
-pub struct MapsConfig {
-    pub queue_size: usize,
-    pub queue_capacity: usize,
-    #[serde_as(as = "DurationSeconds<i64>")]
-    pub fetch_timeout: Duration,
-    #[serde_as(as = "DurationSeconds<i64>")]
-    pub fetch_interval: Duration,
-}
-
-#[serde_with::serde_as]
-#[derive(Deserialize)]
-#[serde(default)]
-pub struct GameConfig {
-    #[serde_as(as = "DurationSeconds<i64>")]
-    pub mxrandom_max_author_time: Duration,
-    #[serde_as(as = "DurationSeconds<i64>")]
-    pub start_countdown: Duration,
-}
-
-#[derive(Deserialize)]
-#[serde(default)]
-pub struct RestConfig {
-    pub openplanet: OpenplanetRoutes,
-    pub tmx: TmxRoutes,
-}
-
-#[derive(Deserialize)]
-pub struct OpenplanetRoutes {
-    pub base: String,
-    pub auth_validate: String,
-}
-
-#[derive(Deserialize)]
-pub struct TmxRoutes {
-    pub base: String,
-    pub map_search: String,
-    pub mappack_maps: String,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            log_level: "INFO".to_owned(),
-            database_url: "sqlite://db/main.db".to_owned(),
-            mapcache_url: "sqlite://mapcache.db".to_owned(),
-            min_client: "4.0".to_owned(),
-            tmx_useragent: "TrackmaniaBingo (development)".to_string(),
-            secrets: Secrets {
-                openplanet_auth: None,
-                admin_key: None,
-            },
-            mapqueue: MapsConfig::default(),
-            game: GameConfig::default(),
-            routes: RestConfig::default(),
-        }
-    }
-}
-
-impl Default for MapsConfig {
-    fn default() -> Self {
-        MapsConfig {
-            queue_size: 10,
-            queue_capacity: 30,
-            fetch_timeout: Duration::seconds(20),
-            fetch_interval: Duration::seconds(4),
-        }
-    }
-}
-
-impl Default for GameConfig {
-    fn default() -> Self {
-        GameConfig {
-            mxrandom_max_author_time: Duration::minutes(5),
-            start_countdown: Duration::seconds(5)
-        }
-    }
-}
-
-impl Default for RestConfig {
-    fn default() -> Self {
-        RestConfig {
-            openplanet: OpenplanetRoutes {
-                base: "https://openplanet.dev".to_owned(),
-                auth_validate: "/api/auth/validate".to_owned(),
-            },
-            tmx: TmxRoutes {
-                base: "https://trackmania.exchange".to_owned(),
-                map_search: "/mapsearch2/search".to_owned(),
-                mappack_maps: "/api/mappack/get_mappack_tracks/".to_owned(),
-            },
-        }
-    }
 }

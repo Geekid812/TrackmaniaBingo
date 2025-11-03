@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 use sqlx::FromRow;
 use tracing::error;
 
-use crate::config::CONFIG;
+use crate::config;
 use crate::core::models::map::GameMap;
 use crate::core::room::GameRoom;
 use crate::datatypes::{Gamemode, MapMode, MatchConfiguration};
@@ -71,7 +71,7 @@ async fn cache_load_mxrandom(count: u32) -> MaploadResult {
     mapcache::execute(move |mut conn| {
         let query =
             sqlx::query("SELECT * FROM maps WHERE tmxid IN (SELECT tmxid FROM maps WHERE author_time <= ? ORDER BY RANDOM() LIMIT ?)")
-                .bind(CONFIG.game.mxrandom_max_author_time.num_milliseconds() as i32)
+                .bind(config::get_integer("maps.max_author_millis").unwrap_or(180000))
                 .bind(count as i32);
         block_on(query.fetch_all(&mut *conn)).map(|v| {
             v.iter()
@@ -87,7 +87,7 @@ async fn cache_load_tag(count: u32, tag: i32) -> MaploadResult {
     mapcache::execute(move |mut conn| {
         let query =
             sqlx::query("SELECT * FROM maps WHERE tmxid IN (SELECT tmxid FROM maps WHERE author_time <= ? AND (tags = ? OR tags LIKE ? + ',%') ORDER BY RANDOM() LIMIT ?)")
-                .bind(CONFIG.game.mxrandom_max_author_time.num_milliseconds() as i32)
+                .bind(config::get_integer("maps.max_author_millis").unwrap_or(180000))
                 .bind(tag)
                 .bind(tag)
                 .bind(count as i32);

@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::{
-    config::{self, CONFIG},
+    config,
     core::models::{
         livegame::{MatchEndInfo, MvpData, TileItemState},
         team::NetworkGameTeam,
@@ -22,7 +22,7 @@ use crate::{
     },
     transport::Channel,
 };
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, TimeDelta, Utc};
 use parking_lot::Mutex;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
@@ -1276,7 +1276,7 @@ impl LiveMatch {
 impl Default for MatchOptions {
     fn default() -> Self {
         Self {
-            start_countdown: CONFIG.game.start_countdown,
+            start_countdown: TimeDelta::milliseconds(config::get_integer("behaviour.start_countdown").unwrap_or(5000)),
         }
     }
 }
