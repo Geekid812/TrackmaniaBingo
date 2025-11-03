@@ -9,7 +9,6 @@ pub mod orm;
 pub mod server;
 pub mod store;
 pub mod transport;
-pub mod web;
 
 pub mod config;
 
@@ -36,10 +35,6 @@ async fn main() {
     store::initialize_primary_store("db/main.db").await;
     info!("opening mapcache database");
     orm::mapcache::start_database("db/mapcache.db").await;
-
-    // Run mainloop for web server
-    info!("starting Web API");
-    tokio::spawn(web::main());
 
     // TCP server startup
     let port = config::get_integer("network.tcp_port")
