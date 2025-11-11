@@ -15,12 +15,12 @@ namespace UIInfoBar {
     void PostgameControls() {
         vec4 geometry = SubwindowBegin("Bingo Infobar Controls");
         UIColor::LightGray();
-        if (@Room !is null) {
+        if (@Match !is null) {
             if (UI::Button("Back to room")) {
                 Gamemaster::SetBingoActive(false);
                 UIGameRoom::SwitchToRoomContext();
 
-                if (Room.localPlayerIsHost) {
+                if (Match.isLocalPlayerHost) {
                     // Starting a new game, ask the server to load new maps
                     startnew(Network::ReloadMaps);
                 }

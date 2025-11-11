@@ -22,7 +22,7 @@ namespace MapClaim {
         return value;
     }
 
-    MapClaim Deserialize(Json::Value @value, LiveMatch @match = null) {
+    MapClaim Deserialize(Json::Value @value, GameServer @match = null) {
         auto mapClaim = MapClaim();
         if (@match is null) {
             if (!Gamemaster::IsBingoActive()) {

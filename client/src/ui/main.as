@@ -57,7 +57,7 @@ namespace UIMainWindow {
         }
         UI::Dummy(vec2(0, 10));
 
-        if (@Room != null || @Match != null) {
+        if (@Match != null || @Match != null) {
             InGameHeader();
         }
 
@@ -150,8 +150,8 @@ namespace UIMainWindow {
         UI::Text("\\$f44IN GAME");
 
         UI::SameLine();
-        if (@Room !is null) {
-            UIRoomMenu::RoomInfo(Room.NetworkState());
+        if (@Match !is null) {
+            UIRoomMenu::RoomInfo(Match.NetworkState());
         } else {
             UI::NewLine();
             UI::Text(string::Join(UIGameRoom::MatchConfigInfo(Match.config), "\t"));
@@ -181,11 +181,11 @@ namespace UIEditSettings {
                   Visible,
                   UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
 
-        UI::BeginDisabled(!Room.localPlayerIsHost);
+        UI::BeginDisabled(!Match.isLocalPlayerHost);
         UIRoomSettings::SettingsView();
         UI::EndDisabled();
 
-        if (!Room.localPlayerIsHost) {
+        if (!Match.isLocalPlayerHost) {
             UI::End();
             return;
         }
