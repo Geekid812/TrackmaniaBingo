@@ -33,6 +33,7 @@ namespace NetworkHandlers {
         Match.players = Match.players;
         Match.config = Match.config;
         Match.canReroll = bool(match["can_reroll"]);
+        Match.phase = GamePhase::Starting;
         LoadMaps(match["maps"]);
         UIGameRoom::GrabFocus = true;
         UIMapList::Visible = false;
