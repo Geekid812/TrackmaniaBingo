@@ -1,17 +1,6 @@
 
-enum LoadStatus {
-    NotLoaded,
-    Loading,
-    Ok,
-    Error
-}
-
 namespace UIMainWindow {
-
     bool Visible;
-
-    bool ClipboardHovered;
-    bool ClipboardCopied;
 
     enum WindowTab {
         Home,
@@ -19,9 +8,7 @@ namespace UIMainWindow {
         Create
     }
 
-    void
-    Render() {
-
+    void Render() {
         if (!Visible)
             return;
 
@@ -94,13 +81,6 @@ namespace UIMainWindow {
             UI::EndChild();
             UI::EndTabItem();
         }
-
-        /*
-        if (UI::BeginTabItem(Icons::Star + " Events")) {
-            UI::NewLine();
-            UITools::CenterText("Coming soon!");
-            UI::EndTabItem();
-        }*/
 
         UI::EndTabBar();
         UIColor::Reset();

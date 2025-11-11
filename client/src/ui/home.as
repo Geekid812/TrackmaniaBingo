@@ -19,7 +19,7 @@ namespace UIHome {
     void Title() {
         Font::Set(Font::Style::Bold, Font::Size::XXLarge);
 
-        string title = "\\$ff5Trackmania Bingo \\$888" + Meta::ExecutingPlugin().Version;
+        string title = PLUGIN_TITLE;
         float titleSize = Draw::MeasureString(title, Font::Current()).x;
         float titlePadding = Layout::GetPadding(UI::GetWindowSize().x, titleSize, 0.5);
         UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));

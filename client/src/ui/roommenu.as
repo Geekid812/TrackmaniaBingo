@@ -1,3 +1,9 @@
+enum LoadStatus {
+    NotLoaded,
+    Loading,
+    Ok,
+    Error
+}
 
 namespace UIRoomMenu {
     string JoinCodeInput;

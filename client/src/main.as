@@ -7,6 +7,8 @@ const string DEVELOPER_MENUITEM_NAME = "\\$82a" + DEVELOPER_WINDOW_NAME;
 const string BINGO_REPO_URL = "https://github.com/Geekid812/TrackmaniaBingo";
 const string BINGO_ISSUES_URL = "https://github.com/Geekid812/TrackmaniaBingo/issues";
 
+const string PLUGIN_TITLE = "\\$ff5Trackmania Bingo \\$888" + Meta::ExecutingPlugin().Version;
+
 const GamePlatform CURRENT_GAME = GamePlatform::Next;
 
 void Main() {
