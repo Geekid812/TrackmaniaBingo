@@ -23,8 +23,8 @@ namespace UITeamEditor {
         }
         UIColor::Reset();
 
-        if (@Room != null) {
-            Team @teamInRoom = Room.GetTeamWithName(team.name);
+        if (@Match != null) {
+            Team @teamInRoom = Match.GetTeamWithName(team.name);
             bool teamInstantiatedInRoom = @teamInRoom != null;
 
             UI::BeginDisabled(teamInstantiatedInRoom);
@@ -97,11 +97,11 @@ namespace UITeamEditor {
     }
 
     bool HasAnyUninstantiatedTeam() {
-        if (@Room is null)
+        if (@Match is null)
             return false;
 
         for (uint i = 0; i < TeamPresets.Length; i++) {
-            if (@Room.GetTeamWithName(TeamPresets[i].name) == null)
+            if (@Match.GetTeamWithName(TeamPresets[i].name) == null)
                 return true;
         }
 
@@ -109,7 +109,7 @@ namespace UITeamEditor {
     }
 
     void InstantiateAnyNewTeam() {
-        if (@Room is null) {
+        if (@Match is null) {
             logwarn("[UITeamEditor::InstantiateAnyNewTeam] Can't instantiate a new team when Room is "
                  "null.");
             return;
@@ -121,7 +121,7 @@ namespace UITeamEditor {
         }
 
         int index = -1;
-        while (index < 0 || @Room.GetTeamWithName(TeamPresets[index].name) != null) {
+        while (index < 0 || @Match.GetTeamWithName(TeamPresets[index].name) != null) {
             index = Math::Rand(0, TeamPresets.Length);
         }
 

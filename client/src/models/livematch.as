@@ -1,7 +1,7 @@
 
 namespace LiveMatch {
-    LiveMatch Deserialize(Json::Value @value) {
-        auto match = LiveMatch();
+    GameServer Deserialize(Json::Value @value) {
+        auto match = GameServer();
         match.uid = value["uid"];
         match.config = MatchConfiguration::Deserialize(value["config"]);
         match.phase = GamePhase(int(value["phase"]));

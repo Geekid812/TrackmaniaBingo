@@ -1,19 +1,23 @@
+const uint MAX_TEAMS = 6;
 
-class LiveMatch {
+class GameServer {
     string uid;
+    string joinCode;
+    RoomConfiguration roomConfig;
     MatchConfiguration config;
     array<GameTile> @tiles = {};
     array<Team> @teams = {};
     array<Player> @players = {};
+    GamePhase phase = GamePhase::Pregame;
     int64 startTime = 0;
     int64 overtimeStartTime = 0;
-    GamePhase phase = GamePhase::Starting;
     bool canReroll = false;
     EndState endState;
 
     // Local state
     int currentTileIndex = -1;
     bool currentTileInvalid = false;
+    bool isLocalPlayerHost = false;
 
     Player @GetSelf() {
         for (uint i = 0; i < players.Length; i++) {
@@ -40,6 +44,14 @@ class LiveMatch {
                 players.InsertLast(player);
         }
         return players;
+    }
+
+    Team @GetTeamWithName(const string& in name) {
+        for (uint i = 0; i < teams.Length; i++) {
+            if (teams[i].name == name)
+                return teams[i];
+        }
+        return null;
     }
 
     uint GetTeamCellCount(Team team) {
@@ -84,11 +96,39 @@ class LiveMatch {
         return -1;
     }
 
+    NetworkRoom NetworkState() {
+        auto netroom = NetworkRoom();
+        netroom.name = this.roomConfig.name;
+        netroom.config = this.roomConfig;
+        netroom.matchConfig = this.config;
+        netroom.playerCount = this.players.Length;
+        netroom.hostName = "";
+
+        return netroom;
+    }
+
     GameTile @GetCell(int id) { return this.tiles[id]; }
 
     void SetCurrentTileIndex(int index) {
         this.currentTileIndex = index;
         this.currentTileInvalid = false;
+    }
+
+    void SetMvp(int playerUid) {
+        for (uint i = 0; i < players.Length; i++) {
+            players[i].isMvp = players[i].profile.uid == playerUid;
+        }
+    }
+
+    bool CanCreateMoreTeams() {
+        return teams.Length <
+                   uint(Math::Min(MAX_TEAMS, hasPlayerLimit(roomConfig) ? roomConfig.size : MAX_TEAMS)) &&
+               Match.isLocalPlayerHost && !Gamemaster::IsBingoActive();
+    }
+
+    bool CanDeleteTeams() {
+        // Must have at least 2 teams to play
+        return teams.Length > 2 && Match.isLocalPlayerHost;
     }
 }
 
@@ -109,16 +149,16 @@ class GameTile {
     GameTile(GameMap map) { SetMap(map); }
 
     void SetMap(GameMap @map) {
-        @ this.map = map;
+        @this.map = map;
         if (@map !is null) {
-            @ this.thumbnail =
+            @this.thumbnail =
                 Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
-            @ this.mapImage =
+            @this.mapImage =
                 Image("https://trackmania.exchange/maps/" + map.id +
                       "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
         } else {
-            @ this.thumbnail = null;
-            @ this.mapImage = null;
+            @this.thumbnail = null;
+            @this.mapImage = null;
         }
     }
 
@@ -214,6 +254,74 @@ class RunResult {
     string DisplayTime() { return Time::Format(this.time); }
 }
 
+
+class Team {
+
+    string name;
+    int id;
+    vec3 color;
+
+    Team() {}
+
+    Team(int id, string& in name, vec3 color) {
+        this.name = name;
+        this.id = id;
+        this.color = color;
+    }
+
+    bool opEquals(Team other) { return id == other.id; }
+}
+
+namespace Team {
+    Team Deserialize(Json::Value @value) {
+        return Team(
+            value["id"],
+            value["name"],
+            vec3(value["color"][0] / 255., value["color"][1] / 255., value["color"][2] / 255.));
+    }
+
+    Json::Value @Serialize(Team team) {
+        Json::Value @value = Json::Object();
+        value["id"] = team.id;
+        value["name"] = team.name;
+        value["color"] = Json::Array();
+        value["color"].Add(int(team.color.x * 255.));
+        value["color"].Add(int(team.color.y * 255.));
+        value["color"].Add(int(team.color.z * 255.));
+        return value;
+    }
+}
+
+class Player {
+    PlayerProfile profile;
+    string name;
+    Team team;
+    Powerup holdingPowerup = Powerup::Empty;
+    int64 powerupExpireTimestamp;
+    bool isMvp;
+
+    Player() {}
+
+    Player(PlayerProfile profile, Team team) {
+        this.profile = profile;
+        this.name = profile.name;
+        this.team = team;
+    }
+
+    bool IsSelf() {
+        if (@Profile is null)
+            return false;
+        return profile.uid == Profile.uid;
+    }
+
+    PlayerRef AsRef() {
+        PlayerRef playerRef();
+        playerRef.name = this.name;
+        playerRef.uid = this.profile.uid;
+        return playerRef;
+    }
+}
+
 enum BingoDirection {
     None,
     Horizontal,
@@ -222,6 +330,7 @@ enum BingoDirection {
 }
 
 enum GamePhase {
+    Pregame,
     Starting,
     NoBingo,
     Running,

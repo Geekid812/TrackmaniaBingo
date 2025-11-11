@@ -15,7 +15,7 @@ namespace Gamemaster {
     void SetBingoActive(bool active) {
         __internal::GameActive = active;
         if (active && Match is null)
-            @Match = LiveMatch();
+            @Match = GameServer();
     }
 
     /**
@@ -253,7 +253,6 @@ namespace Gamemaster {
         SetBingoActive(false);
         ClearMatchId();
         @Match = null;
-        @Room = null;
         @Jail = null;
         Playground::SetMapLeaderboardVisible(true);
         UIChat::ClearHistory();

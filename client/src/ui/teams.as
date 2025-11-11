@@ -20,7 +20,7 @@ namespace UITeams {
 
         JoinTeamsNotice();
         UI::BeginDisabled(Network::IsUISuspended());
-        UIPlayers::PlayerTable(Room.teams, Room.players, null, false, true);
+        UIPlayers::PlayerTable(Match.teams, Match.players, null, false, true);
         UI::EndDisabled();
 
         UI::End();

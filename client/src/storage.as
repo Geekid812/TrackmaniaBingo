@@ -106,8 +106,8 @@ namespace PersistantStorage {
     }
 
     void SaveConnectedMatch() {
-        if (@Room !is null) {
-            PersistantStorage::LastConnectedRoomCode = Room.joinCode;
+        if (@Match !is null) {
+            PersistantStorage::LastConnectedRoomCode = Match.joinCode;
         } else {
             PersistantStorage::LastConnectedRoomCode = "";
         }

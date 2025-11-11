@@ -131,9 +131,9 @@ namespace UIRoomMenu {
                 else
                     UIColor::Orange();
 
-                if (UI::Button(buttonText + "##bingojoin" + room.joinCode)) {
+                if (UI::Button(buttonText + "##bingojoin" + Match.joinCode)) {
                     Gamemaster::SetBingoActive(false);
-                    NetParams::JoinCode = room.joinCode;
+                    NetParams::JoinCode = Match.joinCode;
                     startnew(Network::JoinRoom);
                 }
 

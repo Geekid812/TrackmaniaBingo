@@ -138,7 +138,7 @@ namespace Network {
     }
 
     bool ShouldStayConnected() {
-        return UIMainWindow::Visible || @Room != null || @Match != null ||
+        return UIMainWindow::Visible || @Match != null ||
                PersistantStorage::SubscribeToRoomUpdates ||
                PersistantStorage::LastConnectedMatchId != "";
     }
@@ -340,29 +340,27 @@ namespace Network {
         }
 
         // The room was created. Setting up room status (local player is host)
-        @Room = GameRoom();
-        Room.config = RoomConfig;
-        Room.matchConfig = MatchConfig;
+        @Match = GameServer();
+        Match.roomConfig = RoomConfig;
+        Match.config = MatchConfig;
         string roomCode = response["join_code"];
-        Room.maxTeams = int(response["max_teams"]);
         UIRoomMenu::JoinCodeVisible = false;
         UIRoomMenu::SwitchToContext();
 
-        Room.teams = {};
+        Match.teams = {};
         auto jsonTeams = response["teams"];
         for (uint i = 0; i < jsonTeams.Length; i++) {
             auto JsonTeam = jsonTeams[i];
-            Room.teams.InsertLast(Team(JsonTeam["id"],
+            Match.teams.InsertLast(Team(JsonTeam["id"],
                                        JsonTeam["name"],
                                        vec3(JsonTeam["color"][0] / 255.,
                                             JsonTeam["color"][1] / 255.,
                                             JsonTeam["color"][2] / 255.)));
         }
 
-        Room.name = response["name"];
-        Room.localPlayerIsHost = true;
-        Room.joinCode = roomCode;
-        @Room.players = {Player(Profile, Room.teams[0])};
+        Match.isLocalPlayerHost = true;
+        Match.joinCode = roomCode;
+        @Match.players = {Player(Profile, Match.teams[0])};
     }
 
     void CreateTeam() {
@@ -387,12 +385,11 @@ namespace Network {
             return;
         }
 
-        @Room = GameRoom();
-        Room.config = RoomConfiguration::Deserialize(response["config"]);
-        Room.matchConfig = MatchConfiguration::Deserialize(response["match_config"]);
-        Room.name = Room.config.name;
-        Room.joinCode = NetParams::JoinCode;
-        Room.localPlayerIsHost = (response.HasKey("is_host") ? bool(response["is_host"]) : false);
+        @Match = GameServer();
+        Match.roomConfig = RoomConfiguration::Deserialize(response["config"]);
+        Match.config = MatchConfiguration::Deserialize(response["match_config"]);
+        Match.joinCode = NetParams::JoinCode;
+        Match.isLocalPlayerHost = (response.HasKey("is_host") ? bool(response["is_host"]) : false);
         NetworkHandlers::LoadRoomTeams(response["teams"]);
 
         UIRoomMenu::JoinCodeVisible = false;
@@ -406,7 +403,7 @@ namespace Network {
             string currentMatchUid = response["match_uid"];
             NetParams::MatchJoinUid = currentMatchUid;
 
-            if (canPlayersChooseTheirOwnTeam(Room.config)) {
+            if (canPlayersChooseTheirOwnTeam(Match.roomConfig)) {
                 // We have to choose a team before joining
                 UITeams::SwitchToJoinContext();
             } else {
@@ -433,7 +430,7 @@ namespace Network {
             return;
         }
 
-        LiveMatch @joinedMatch = LiveMatch::Deserialize(response["state"]);
+        GameServer @joinedMatch = LiveMatch::Deserialize(response["state"]);
 
         Gamemaster::SetBingoActive(true);
         UITeams::CloseContext();
@@ -479,7 +476,7 @@ namespace Network {
     }
 
     void JoinTeam(Team team) {
-        if (Room.GetSelf().team == team)
+        if (Match.GetSelf().team == team)
             return;
 
         auto body = Json::Object();

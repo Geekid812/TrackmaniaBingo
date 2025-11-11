@@ -2,11 +2,11 @@
 
 namespace NetworkHandlers {
     void TeamsUpdate(Json::Value @status) {
-        @Room.teams = {};
+        @Match.teams = {};
         auto JsonTeams = status["teams"];
         for (uint i = 0; i < JsonTeams.Length; i++) {
             auto JsonTeam = JsonTeams[i];
-            Room.teams.InsertLast(Team(JsonTeam["id"],
+            Match.teams.InsertLast(Team(JsonTeam["id"],
                                        JsonTeam["name"],
                                        UIColor::FromRgb(JsonTeam["color"][0],
                                                         JsonTeam["color"][1],
@@ -18,21 +18,20 @@ namespace NetworkHandlers {
         auto uids = status["updates"].GetKeys();
         for (uint i = 0; i < uids.Length; i++) {
             int uid = Text::ParseInt(uids[i]);
-            Player @player = Room.GetPlayer(uid);
+            Player @player = Match.GetPlayer(uid);
             if (player is null)
                 continue;
-            player.team = Room.GetTeamWithId(int(status["updates"].Get(tostring(uid))));
+            player.team = Match.GetTeamWithId(int(status["updates"].Get(tostring(uid))));
         }
     }
 
     void MatchStart(Json::Value @match) {
         Gamemaster::SetBingoActive(true);
-        @Match = LiveMatch();
         Match.uid = match["uid"];
         Match.startTime = Time::Now + uint64(match["start_ms"]);
-        Match.teams = Room.teams;
-        Match.players = Room.players;
-        Match.config = Room.matchConfig;
+        Match.teams = Match.teams;
+        Match.players = Match.players;
+        Match.config = Match.config;
         Match.canReroll = bool(match["can_reroll"]);
         LoadMaps(match["maps"]);
         UIGameRoom::GrabFocus = true;
@@ -111,8 +110,8 @@ namespace NetworkHandlers {
     }
 
     void UpdateConfig(Json::Value @data) {
-        Room.config = RoomConfiguration::Deserialize(data["config"]);
-        Room.matchConfig = MatchConfiguration::Deserialize(data["match_config"]);
+        Match.roomConfig = RoomConfiguration::Deserialize(data["config"]);
+        Match.config = MatchConfiguration::Deserialize(data["match_config"]);
     }
 
     void AddRoomListing(Json::Value @room) {
@@ -120,7 +119,7 @@ namespace NetworkHandlers {
         UIRoomMenu::PublicRooms.InsertLast(netRoom);
 
         if (PersistantStorage::SubscribeToRoomUpdates && !Gamemaster::IsBingoActive() &&
-            @Room is null) {
+            @Match is null) {
             array<string> params = {stringof(netRoom.matchConfig.selection),
                                     netRoom.matchConfig.gridSize + "x" +
                                         netRoom.matchConfig.gridSize,
@@ -150,8 +149,8 @@ namespace NetworkHandlers {
 
     void RoomlistUpdateConfig(Json::Value @data) {
         NetworkRoom @room = UIRoomMenu::GetRoom(data["code"]);
-        room.config = RoomConfiguration::Deserialize(data["config"]);
-        room.matchConfig = MatchConfiguration::Deserialize(data["match_config"]);
+        Match.roomConfig = RoomConfiguration::Deserialize(data["config"]);
+        Match.config = MatchConfiguration::Deserialize(data["match_config"]);
     }
 
     void RoomlistPlayerUpdate(Json::Value @data) {
@@ -165,33 +164,33 @@ namespace NetworkHandlers {
     }
 
     void LoadRoomTeams(Json::Value @teams) {
-        @Room.teams = {};
-        @Room.players = {};
+        @Match.teams = {};
+        @Match.players = {};
         for (uint i = 0; i < teams.Length; i++) {
             Json::Value @t = teams[i];
             Team team = Team::Deserialize(t);
-            Room.teams.InsertLast(team);
+            Match.teams.InsertLast(team);
 
             for (uint j = 0; j < t["members"].Length; j++) {
                 Json::Value @m = t["members"][j];
                 PlayerProfile profile = PlayerProfile::Deserialize(m);
-                Room.players.InsertLast(Player(profile, team));
+                Match.players.InsertLast(Player(profile, team));
             }
         }
     }
 
     void PlayerJoin(Json::Value @data) {
-        if (@Room is null)
+        if (@Match is null)
             return;
-        Room.players.InsertLast(
-            Player(PlayerProfile::Deserialize(data["profile"]), Room.GetTeamWithId(data["team"])));
+        Match.players.InsertLast(
+            Player(PlayerProfile::Deserialize(data["profile"]), Match.GetTeamWithId(data["team"])));
     }
 
     void PlayerLeave(Json::Value @data) {
         int uid = int(data["uid"]);
-        for (uint i = 0; i < Room.players.Length; i++) {
-            if (Room.players[i].profile.uid == uid) {
-                Room.players.RemoveAt(i);
+        for (uint i = 0; i < Match.players.Length; i++) {
+            if (Match.players[i].profile.uid == uid) {
+                Match.players.RemoveAt(i);
                 return;
             }
         }
@@ -236,7 +235,7 @@ namespace NetworkHandlers {
     }
 
     void TeamCreated(Json::Value @data) {
-        Room.teams.InsertLast(
+        Match.teams.InsertLast(
             Team(data["id"],
                  data["name"],
                  vec3(data["color"][0] / 255., data["color"][1] / 255., data["color"][2] / 255.)));
@@ -244,9 +243,9 @@ namespace NetworkHandlers {
 
     void TeamDeleted(Json::Value @data) {
         int id = data["id"];
-        for (uint i = 0; i < Room.teams.Length; i++) {
-            if (Room.teams[i].id == id) {
-                Room.teams.RemoveAt(i);
+        for (uint i = 0; i < Match.teams.Length; i++) {
+            if (Match.teams[i].id == id) {
+                Match.teams.RemoveAt(i);
                 return;
             }
         }
@@ -263,9 +262,9 @@ namespace NetworkHandlers {
     void LoadGameData(Json::Value @data) {}
 
     void RoomSync(Json::Value @data) {
-        Room.config = RoomConfiguration::Deserialize(data["config"]);
-        Room.matchConfig = MatchConfiguration::Deserialize(data["matchconfig"]);
-        Room.joinCode = data["join_code"];
+        Match.roomConfig = RoomConfiguration::Deserialize(data["config"]);
+        Match.config = MatchConfiguration::Deserialize(data["matchconfig"]);
+        Match.joinCode = data["join_code"];
         LoadRoomTeams(data["teams"]);
     }
 
@@ -515,8 +514,8 @@ namespace NetworkHandlers {
             @Match.endState.mvpPlayer = PlayerRef::Deserialize(data["mvp"]["player"]);
             Match.endState.mvpScore = int(data["mvp"]["score"]);
 
-            if (@Room !is null) {
-                Room.SetMvp(Match.endState.mvpPlayer.uid);
+            if (@Match !is null) {
+                Match.SetMvp(Match.endState.mvpPlayer.uid);
             }
         }
     }

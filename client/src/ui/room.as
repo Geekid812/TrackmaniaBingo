@@ -11,7 +11,7 @@ namespace UIGameRoom {
     Player @DraggedPlayer = null;
 
     void Render() {
-        if (@Room == null)
+        if (@Match == null)
             Visible = false;
         if (!Visible)
             return;
@@ -20,7 +20,7 @@ namespace UIGameRoom {
         UI::PushStyleColor(UI::Col::TitleBgActive, UI::GetStyleColor(UI::Col::WindowBg));
         UI::PushStyleVar(UI::StyleVar::WindowTitleAlign, vec2(0.5, 0.5));
         UI::SetNextWindowSize(600, 400, UI::Cond::FirstUseEver);
-        bool windowOpen = UI::Begin(Room.config.name +
+        bool windowOpen = UI::Begin(Match.roomConfig.name +
                                         (IncludePlayerCountInTitle
                                              ? "\t\\$ffa" + Icons::Users + "  " + PlayerCount()
                                              : "") +
@@ -32,7 +32,7 @@ namespace UIGameRoom {
             // Room window was closed, should disconnect the player.
             // Ideally show a confirmation dialog here, but the Dialogs framework might get
             // reworked. So for now, the player will get yeeted out.
-            @Room = null;
+            @Match = null;
             Network::CloseConnection();
             CleanupUI();
             return;
@@ -52,7 +52,7 @@ namespace UIGameRoom {
         GrabFocus = false;
         if (!UI::IsMouseDown()) {
             if (@DraggedPlayer !is null) {
-                Player @playerOldState = Room.GetPlayer(DraggedPlayer.profile.uid);
+                Player @playerOldState = Match.GetPlayer(DraggedPlayer.profile.uid);
                 if (@playerOldState !is null && playerOldState.team.id != DraggedPlayer.team.id) {
                     // Player was dragged to a new team, request an update
                     NetParams::TeamSelectId = DraggedPlayer.team.id;
@@ -79,19 +79,19 @@ namespace UIGameRoom {
         UI::Text(playerStatus);
         if (UI::IsItemHovered()) {
             StatusTooltip(
-                "", Room.players.Length + (Room.players.Length == 1 ? " player" : " players"));
+                "", Match.players.Length + (Match.players.Length == 1 ? " player" : " players"));
         }
 
         UI::SameLine();
         string roomCodeStatus = StatusLabel((RoomCodeHovered ? "\\$ff8" : "") + Icons::Kenney::Key,
-                                            RoomCodeVisible ? Room.joinCode : "******");
+                                            RoomCodeVisible ? Match.joinCode : "******");
         UI::Text(roomCodeStatus);
         if (UI::IsItemClicked())
             RoomCodeVisible = !RoomCodeVisible;
         RoomCodeHovered = UI::IsItemHovered();
         if (RoomCodeHovered) {
             StatusTooltip("Room Code",
-                          RoomCodeVisible ? Room.joinCode : "\\$aaaHidden  (Click to reveal)");
+                          RoomCodeVisible ? Match.joinCode : "\\$aaaHidden  (Click to reveal)");
         }
         UI::SameLine();
         UI::Text((ClipboardHovered ? "\\$ff8" : "") + Icons::Clipboard);
@@ -103,7 +103,7 @@ namespace UIGameRoom {
             UI::EndTooltip();
         }
         if (UI::IsItemClicked()) {
-            IO::SetClipboard(Room.joinCode);
+            IO::SetClipboard(Match.joinCode);
             ClipboardCopied = true;
         } else if (!ClipboardHovered) {
             ClipboardCopied = false;
@@ -115,7 +115,7 @@ namespace UIGameRoom {
         UI::SameLine();
 
         string buttonText =
-            Icons::Cog + (Room.localPlayerIsHost ? " Change Settings" : " View Settings");
+            Icons::Cog + (Match.isLocalPlayerHost ? " Change Settings" : " View Settings");
         float buttonPadding =
             Layout::GetPadding(windowWidth, Layout::ButtonWidth(buttonText) + 8, 1.0);
         UI::SetCursorPos(vec2(buttonPadding, UI::GetCursorPos().y - 4));
@@ -129,7 +129,7 @@ namespace UIGameRoom {
 
         UI::Separator();
 
-        string[] roomInfo = MatchConfigInfo(Room.matchConfig);
+        string[] roomInfo = MatchConfigInfo(Match.config);
         string combinedInfo = string::Join(roomInfo, " ");
         float infoPadding =
             Layout::GetPadding(windowWidth, Draw::MeasureString(combinedInfo).x, 0.5);
@@ -140,20 +140,20 @@ namespace UIGameRoom {
 
             if (UI::IsItemHovered()) {
                 if (i == 0) {
-                    StatusTooltip("Gamemode", tostring(Room.matchConfig.mode));
+                    StatusTooltip("Gamemode", tostring(Match.config.mode));
                 } else if (i == 1) {
                     StatusTooltip("Grid Size",
-                                  tostring(Room.matchConfig.gridSize) + "x" +
-                                      tostring(Room.matchConfig.gridSize));
+                                  tostring(Match.config.gridSize) + "x" +
+                                      tostring(Match.config.gridSize));
                 } else if (i == 2) {
-                    StatusTooltip("Map Selection", stringof(Room.matchConfig.selection));
+                    StatusTooltip("Map Selection", stringof(Match.config.selection));
                 } else if (i == 3) {
-                    StatusTooltip("Target Medal", stringof(Room.matchConfig.targetMedal));
+                    StatusTooltip("Target Medal", stringof(Match.config.targetMedal));
                 } else {
                     StatusTooltip("Time Limit",
-                                  Room.matchConfig.timeLimit == 0
+                                  Match.config.timeLimit == 0
                                       ? "Disabled"
-                                      : tostring(Room.matchConfig.timeLimit / 60000) + " minutes");
+                                      : tostring(Match.config.timeLimit / 60000) + " minutes");
                 }
             }
 
@@ -162,17 +162,17 @@ namespace UIGameRoom {
         UI::NewLine();
 
         UI::BeginChild("Bingo Room View", vec2(0, -24));
-        if (Room.config.randomize) {
-            if (Room.localPlayerIsHost) {
-                UI::BeginDisabled(!Room.CanDeleteTeams());
+        if (Match.roomConfig.randomize) {
+            if (Match.isLocalPlayerHost) {
+                UI::BeginDisabled(!Match.CanDeleteTeams());
                 if (UI::Button(Icons::MinusSquare)) {
-                    NetParams::DeletedTeamId = Room.teams[0].id;
+                    NetParams::DeletedTeamId = Match.teams[0].id;
                     startnew(Network::DeleteTeam);
                 }
                 UI::EndDisabled();
 
                 UI::SameLine();
-                UI::BeginDisabled(!Room.CanCreateMoreTeams());
+                UI::BeginDisabled(!Match.CanCreateMoreTeams());
                 if (UI::Button(Icons::PlusSquare)) {
                     UITeamEditor::InstantiateAnyNewTeam();
                 }
@@ -180,21 +180,21 @@ namespace UIGameRoom {
                 UI::SameLine();
             }
 
-            UI::Text("\\$ff8Number of teams: \\$z" + Room.teams.Length);
-        } else if (Room.config.hostControl) {
+            UI::Text("\\$ff8Number of teams: \\$z" + Match.teams.Length);
+        } else if (Match.roomConfig.hostControl) {
             UI::Text("\\$ff8" + Icons::Lock + " \\$zThe host controls the team setup.");
         } else {
             UI::NewLine();
         }
 
-        UIPlayers::PlayerTable(Room.teams,
-                               Room.players,
-                               Room.GetSelf().team,
-                               (Room.config.randomize && !Gamemaster::IsBingoActive()),
-                               !Room.config.hostControl,
-                               Room.CanCreateMoreTeams(),
-                               Room.CanDeleteTeams(),
-                               Room.localPlayerIsHost,
+        UIPlayers::PlayerTable(Match.teams,
+                               Match.players,
+                               Match.GetSelf().team,
+                               (Match.roomConfig.randomize && !Gamemaster::IsBingoActive()),
+                               !Match.roomConfig.hostControl,
+                               Match.CanCreateMoreTeams(),
+                               Match.CanDeleteTeams(),
+                               Match.isLocalPlayerHost,
                                DraggedPlayer);
 
         // Quit early if we disconnected from the room
@@ -203,9 +203,9 @@ namespace UIGameRoom {
             return;
         }
 
-        if (Room.localPlayerIsHost) {
+        if (Match.isLocalPlayerHost) {
             UIColor::DarkGreen();
-            bool isSolo = Room.players.Length < 2;
+            bool isSolo = Match.players.Length < 2;
 
             UI::SameLine();
             if (UI::Button(Icons::PlayCircleO + " Start")) {
@@ -239,7 +239,7 @@ namespace UIGameRoom {
 
         UIColor::DarkRed();
         if (UI::Button(Icons::Kenney::Exit + " Leave")) {
-            @Room = null;
+            @Match = null;
             Gamemaster::Shutdown();
             hasDisconnected = true;
 
@@ -303,9 +303,9 @@ namespace UIGameRoom {
     }
 
     string PlayerCount() {
-        if (@Room is null)
+        if (@Match is null)
             return "";
-        return Room.players.Length + (hasPlayerLimit(Room.config) ? "/" + Room.config.size : "");
+        return Match.players.Length + (hasPlayerLimit(Match.roomConfig) ? "/" + Match.roomConfig.size : "");
     }
 
     void SwitchToPlayContext() {

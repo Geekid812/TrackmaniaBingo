@@ -11,7 +11,6 @@ class NetworkRoom {
 }
 
 namespace NetworkRoom {
-
     Json::Value @Serialize(NetworkRoom room) {
         auto value = Json::Object();
         value["name"] = room.name;
