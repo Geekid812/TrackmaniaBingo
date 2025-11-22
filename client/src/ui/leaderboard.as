@@ -1,7 +1,7 @@
 
 namespace UILeaderboards {
     void Render() {
-        UIColor::Cyan();
+        UIColor::Navy();
         UI::BeginTabBar("##bingoleaderboards");
 
         if (UI::BeginTabItem("Seasonal Leaderboard")) {
@@ -28,7 +28,7 @@ namespace UILeaderboards {
     }
 
     void SeasonExplainerText() {
-        UI::PushStyleColor(UI::Col::ChildBg, vec4(.1, .2, .2, .8));
+        UI::PushStyleColor(UI::Col::ChildBg, vec4(.2, .3, .9, .1));
         UI::BeginChild("Season Explainer", vec2(0., 60.), UI::ChildFlags::AlwaysUseWindowPadding);
         
         UI::TextWrapped("Explainer Text.");

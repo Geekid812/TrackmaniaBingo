@@ -29,11 +29,9 @@ namespace NetworkHandlers {
         Gamemaster::SetBingoActive(true);
         Match.uid = match["uid"];
         Match.startTime = Time::Now + uint64(match["start_ms"]);
-        Match.teams = Match.teams;
-        Match.players = Match.players;
-        Match.config = Match.config;
         Match.canReroll = bool(match["can_reroll"]);
-        Match.phase = GamePhase::Starting;
+
+        Gamemaster::SetPhase(GamePhase::Starting);
         LoadMaps(match["maps"]);
         UIGameRoom::GrabFocus = true;
         UIMapList::Visible = false;
