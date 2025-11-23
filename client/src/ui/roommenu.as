@@ -175,7 +175,29 @@ namespace UIRoomMenu {
                          PersistantStorage::SubscribeToRoomUpdates);
     }
 
+    void Matchmaking() {
+        UI::Text("\\$aaaYour seasonal matchmaking points: \\$ff8100\n\\$aaaMatchmaking is open from 16:00 to 22:00 CET.");
+
+
+        string joinMatchmakingText = Icons::Play + " Quick Play";
+
+        UI::NewLine();
+        Layout::AlignButton(joinMatchmakingText, 0.45);
+        UI::Button(joinMatchmakingText);
+
+        UI::SameLine();
+        UIColor::Gray();
+        UI::Button(Icons::BellO);
+        UI::SetItemTooltip("Enable notifications to join new matchmaking games");
+        UIColor::Reset();
+
+        UI::NewLine();
+    }
+
     void RoomMenu() {
+        UITools::SectionHeader("Matchmaking");
+        Matchmaking();
+
         UITools::SectionHeader("Public Rooms");
         if (Network::GetState() == ConnectionState::Connected) {
             PublicRoomList();
