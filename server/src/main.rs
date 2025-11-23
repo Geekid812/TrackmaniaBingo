@@ -20,7 +20,7 @@ pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 async fn main() {
     // Logging setup
     let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
+        .with_max_level(Level::DEBUG)
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("logging could not be initialized");
 
