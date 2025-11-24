@@ -53,7 +53,7 @@ pub struct LiveMatch {
     cells: Vec<GameCell>,
     started: Option<DateTime<Utc>>,
     phase: MatchPhase,
-    channel: Channel<GameEvent>,
+    channel: Channel,
     polls: HashMap<u32, Owned<PollData>>,
     last_claim: Option<MapClaim>,
     idents: u32,
@@ -119,7 +119,7 @@ impl LiveMatch {
         self.room = room;
     }
 
-    pub fn set_channel(&mut self, channel: Channel<GameEvent>) {
+    pub fn set_channel(&mut self, channel: Channel) {
         self.channel = channel;
     }
 
@@ -223,7 +223,7 @@ impl LiveMatch {
         &self.config
     }
 
-    pub fn channel(&mut self) -> &mut Channel<GameEvent> {
+    pub fn channel(&mut self) -> &mut Channel {
         &mut self.channel
     }
 

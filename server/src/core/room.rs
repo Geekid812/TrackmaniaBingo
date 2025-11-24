@@ -39,7 +39,7 @@ pub struct GameRoom {
     matchconfig: MatchConfiguration,
     members: Vec<PlayerData>,
     teams: TeamsManager<BaseTeam>,
-    channel: Channel<RoomEvent>,
+    channel: Channel,
     created: DateTime<Utc>,
     load_marker: u32,
     loaded_maps: Vec<GameMap>,
@@ -92,7 +92,7 @@ impl GameRoom {
         self.config.size != 0 && (self.members.len() as u32) >= self.config.size
     }
 
-    pub fn channel(&mut self) -> &mut Channel<RoomEvent> {
+    pub fn channel(&mut self) -> &mut Channel {
         &mut self.channel
     }
 
@@ -536,7 +536,7 @@ impl GameRoom {
         );
         let mut lock = match_arc.lock();
         lock.set_parent_room(self.ptr.clone());
-        lock.set_channel(Channel::<GameEvent>::from(&self.channel));
+        lock.set_channel(self.channel.clone());
 
         lock.setup_match_start(start_date);
         directory::MATCHES.insert(lock.uid().to_owned(), match_arc.clone());

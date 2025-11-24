@@ -45,7 +45,7 @@ impl Team for BaseTeam {
 pub struct GameTeam {
     pub base: BaseTeam,
     pub members: Vec<IngamePlayer>,
-    pub channel: Channel<GameEvent>,
+    pub channel: Channel,
     pub winner: bool,
 }
 
