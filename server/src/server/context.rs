@@ -58,7 +58,6 @@ impl ClientContext {
 
 impl Drop for ClientContext {
     fn drop(&mut self) {
-        debug!("ClientContext dropped");
         self.room.as_mut().map(|r| r.cleanup());
         self.game.as_mut().map(|g| g.cleanup());
     }
