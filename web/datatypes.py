@@ -90,6 +90,7 @@ class MatchConfiguration(BaseModel):
     grid_size: int = 5
     selection: MapMode = MapMode.RANDOMTMX
     target_medal: Medal = Medal.AUTHOR
+    discovery: bool = False
     time_limit: TimedeltaMilliseconds
     no_bingo_duration: TimedeltaMilliseconds
     overtime: bool = True
