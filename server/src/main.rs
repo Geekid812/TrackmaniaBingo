@@ -1,3 +1,7 @@
+use reqwest::{
+    header::{HeaderMap, USER_AGENT},
+    ClientBuilder,
+};
 use std::net::{Ipv4Addr, SocketAddrV4};
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
@@ -12,7 +16,7 @@ pub mod transport;
 
 pub mod config;
 
-use crate::server::NetServer;
+use crate::{integrations::webservices::NadeoWebserivcesClient, server::NetServer};
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -36,10 +40,37 @@ async fn main() {
     info!("opening mapcache database");
     orm::mapcache::start_database("db/mapcache.db").await;
 
+    // Initialize integrations
+    let mut headers = HeaderMap::new();
+    headers.insert(USER_AGENT, integrations::USER_AGENT.parse().unwrap());
+    let client = ClientBuilder::new()
+        .default_headers(headers)
+        .build()
+        .expect("could not initialize integrations client");
+
+    let keys = config::get_string("keys.webservices")
+        .expect("configuration value keys.webservices not provided");
+    let (username, password) = keys
+        .split_once(':')
+        .expect("malformed keys.websevices value, expected username:password");
+    let nadeo_client =
+        NadeoWebserivcesClient::new(client, username.to_string(), password.to_string());
+    integrations::NADEOSERVICES_CLIENT
+        .set(nadeo_client)
+        .map_err(|_| ())
+        .expect("failed to initialize NadeoWebservices");
+
     // TCP server startup
     let port = config::get_integer("network.tcp_port")
         .expect("configuration key network.tcp_port not specified") as u16;
-    let local_addr = SocketAddrV4::new(if config::is_development() { Ipv4Addr::LOCALHOST } else { Ipv4Addr::new(0, 0, 0, 0) }, port);
+    let local_addr = SocketAddrV4::new(
+        if config::is_development() {
+            Ipv4Addr::LOCALHOST
+        } else {
+            Ipv4Addr::new(0, 0, 0, 0)
+        },
+        port,
+    );
 
     let mut server = NetServer::new();
     server.set_reuseaddr_opt(true);

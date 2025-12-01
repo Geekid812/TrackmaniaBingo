@@ -115,6 +115,14 @@ namespace UIRoomSettings {
         UI::EndDisabled();
     }
 
+    void DiscoveryToggle() {
+        UITools::AlignedLabel(Icons::Search + " Discovery");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        MatchConfig.discovery = UI::Checkbox("##bingodiscovery", MatchConfig.discovery) && !(MatchConfig.selection == MapMode::Mappack);
+        UI::SameLine();
+        UITools::HelpTooltip("Excludes maps where any player in the match currently has a record on.");
+    }
+
     void TimeLimitControl() {
         UITools::AlignedLabel(Icons::ClockO + "  Time Limit");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
@@ -358,12 +366,18 @@ namespace UIRoomSettings {
             MapTagSelector();
         }
         TargetMedalSelector();
+
         GridSizeSelector();
         TimeLimitControl();
         NoBingoTimeControl();
         if (MatchConfig.timeLimit != 0) {
             OvertimeToggle();
         }
+
+        UI::BeginDisabled(MatchConfig.selection == MapMode::Mappack);
+        DiscoveryToggle();
+        UI::EndDisabled();
+
         RerollsToggle();
         CompetitvePatchToggle();
         if (MatchConfig.mode == Gamemode::Frenzy) {
