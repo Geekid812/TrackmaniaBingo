@@ -60,13 +60,6 @@ void RenderMenu() {
             loginfo("[Main] Plugin window opened, connecting to the servers.");
             startnew(Network::Connect);
         }
-
-        // Ask to participate in the user survey
-        if (UIMainWindow::Visible && Settings::ShowSystemSurvey) {
-            loginfo("[Main] User has not participated in the system survey, showing UISystemSurvey "
-                  "now.");
-            UISystemSurvey::Visible = true;
-        }
     }
 
     if (Settings::DevTools && UI::MenuItem(DEVELOPER_MENUITEM_NAME, "", UIDevActions::Visible)) {
@@ -116,7 +109,6 @@ void RenderInterface() {
     UIMainWindow::Render();
     UINews::Render();
     UIDevActions::Render();
-    UISystemSurvey::Render();
 
     Font::Unset();
 }
