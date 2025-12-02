@@ -12,6 +12,8 @@ pub struct MapRecord {
     pub username: String,
     pub track_name: String,
     pub gbx_name: String,
+    #[sqlx(default)]
+    pub wr_time: Option<i32>,
     pub author_time: i32,
     pub gold_time: i32,
     pub silver_time: i32,

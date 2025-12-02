@@ -12,6 +12,7 @@ class GameMap {
     string username;
     string trackName;
     string gbxName;
+    int wrTime;
     int authorTime;
     int goldTime;
     int silverTime;
@@ -49,6 +50,7 @@ namespace GameMap {
         value["username"] = map.username;
         value["track_name"] = map.trackName;
         value["gbx_name"] = map.gbxName;
+        value["wr_time"] = map.wrTime;
         value["author_time"] = map.authorTime;
         value["gold_time"] = map.goldTime;
         value["silver_time"] = map.silverTime;
@@ -72,6 +74,10 @@ namespace GameMap {
         map.username = value["username"];
         map.trackName = value["track_name"];
         map.gbxName = value["gbx_name"];
+
+        if (value["wr_time"].GetType() != Json::Type::Null)
+            map.wrTime = value["wr_time"];
+
         map.authorTime = value["author_time"];
         map.goldTime = value["gold_time"];
         map.silverTime = value["silver_time"];

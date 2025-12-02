@@ -31,11 +31,12 @@ class MapMode(Enum):
 
 # A Trackmania medal ranking.
 class Medal(Enum):
-    AUTHOR = 0
-    GOLD = 1
-    SILVER = 2
-    BRONZE = 3
-    NONE = 4
+    WR = 0
+    AUTHOR = 1
+    GOLD = 2
+    SILVER = 3
+    BRONZE = 4
+    NONE = 5
 
 # A selection of game rules.
 class Gamemode(Enum):

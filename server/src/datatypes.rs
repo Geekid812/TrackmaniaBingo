@@ -200,6 +200,7 @@ pub enum MapMode {
 #[repr(u8)]
 pub enum Medal {
     #[default]
+    WR,
     Author,
     Gold,
     Silver,

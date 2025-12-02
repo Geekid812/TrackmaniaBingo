@@ -217,10 +217,14 @@ namespace UIRoomSettings {
     }
 
     void TargetMedalSelector() {
-        UITools::AlignedLabel(Icons::Kenney::ButtonCircle + "  Target Medal");
+        UITools::AlignedLabel(Icons::Kenney::ButtonCircle + " Medal Objective");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
         if (UI::BeginCombo("##bingomedal", stringof(MatchConfig.targetMedal))) {
+            if (UI::Selectable(stringof(Medal::WR), MatchConfig.targetMedal == Medal::WR)) {
+                MatchConfig.targetMedal = Medal::WR;
+            }
+
             if (UI::Selectable(stringof(Medal::Author), MatchConfig.targetMedal == Medal::Author)) {
                 MatchConfig.targetMedal = Medal::Author;
             }

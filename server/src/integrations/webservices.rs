@@ -2,8 +2,10 @@ use chrono::{DateTime, Utc};
 use parking_lot::RwLock;
 use reqwest::{Client, RequestBuilder, Response};
 use serde::Deserialize;
-use serde_json::json;
+use serde_json::{json, Value};
+use serde_with::{serde_as, TimestampSeconds};
 use thiserror::Error;
+use tracing::info;
 
 const NADEO_CORE_AUDIENCE: &'static str = "NadeoServices";
 const NADEO_LIVE_AUDIENCE: &'static str = "NadeoLiveServices";
@@ -12,6 +14,8 @@ const ENDPOINT_AUTHENTICATE_TOKEN: &'static str =
     "https://prod.trackmania.core.nadeo.online/v2/authentication/token/basic";
 const CORE_ENDPOINT_MAP_RECORDS_BY_ACCOUNT: &'static str =
     "https://prod.trackmania.core.nadeo.online/v2/mapRecords/by-account";
+const LIVE_ENDPOINT_MAP_LEADERBOARDS: &'static str =
+    "https://live-services.trackmania.nadeo.live/api/token/leaderboard/group/Personal_Best/map/";
 
 pub struct NadeoWebserivcesClient {
     client: Client,
@@ -56,12 +60,29 @@ pub struct WebservicesRecordScore {
     pub time: i32,
 }
 
+#[serde_as]
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct WebservicesLeaderboardEntry {
+    pub account_id: String,
+    pub zone_id: String,
+    pub zone_name: String,
+    pub position: i32,
+    pub score: i32,
+    #[serde_as(as = "TimestampSeconds")]
+    pub timestamp: DateTime<Utc>,
+}
+
 #[derive(Error, Debug)]
 pub enum WebservicesError {
     #[error("invalid credentials for audience '{0:?}'")]
     NoCredientials(NadeoAudience),
     #[error(transparent)]
     Reqwest(reqwest::Error),
+    #[error("unexpected response format")]
+    InvalidResponse,
+    #[error(transparent)]
+    SerdeJson(serde_json::Error),
 }
 
 impl NadeoWebserivcesClient {
@@ -87,29 +108,36 @@ impl NadeoWebserivcesClient {
         }
     }
 
-    async fn send_core_request(
+    async fn send_request(
         &self,
         request: RequestBuilder,
+        audience: NadeoAudience,
     ) -> Result<Response, WebservicesError> {
-        self.prepare_request(NadeoAudience::Core).await;
-
-        let credentials = self.core_credentials.read();
-        let core_token = credentials
-            .as_ref()
-            .map(|credentials| &credentials.access_token);
-        let Some(token) = core_token else {
-            return Err(WebservicesError::NoCredientials(NadeoAudience::Core));
+        self.prepare_request(audience).await;
+        let Some(token) = self.get_request_token(audience) else {
+            return Err(WebservicesError::NoCredientials(audience));
         };
 
         // TODO: handle expired tokens
-        request
-            .header(
-                reqwest::header::AUTHORIZATION,
-                format!("nadeo_v1 t={}", token),
-            )
+        let authenticated = request.header(
+            reqwest::header::AUTHORIZATION,
+            format!("nadeo_v1 t={}", token),
+        );
+        authenticated
             .send()
             .await
             .map_err(WebservicesError::Reqwest)
+    }
+
+    fn get_request_token(&self, audience: NadeoAudience) -> Option<String> {
+        let credentials = match audience {
+            NadeoAudience::Core => self.core_credentials.read(),
+            NadeoAudience::Live => self.live_credentials.read(),
+        };
+        let token = credentials
+            .as_ref()
+            .map(|credentials| &credentials.access_token);
+        token.cloned()
     }
 
     async fn refresh_credentials(
@@ -177,12 +205,43 @@ impl NadeoWebserivcesClient {
             .query(&[("accountIdList", account_ids.join(","))])
             .query(&[("mapId", map_id)]);
         let response: Vec<WebserivcesMapRecord> = self
-            .send_core_request(request)
+            .send_request(request, NadeoAudience::Core)
             .await?
             .json()
             .await
             .map_err(WebservicesError::Reqwest)?;
 
         Ok(response)
+    }
+
+    pub async fn live_get_map_leaderboard(
+        &self,
+        map_uid: &str,
+    ) -> Result<Vec<WebservicesLeaderboardEntry>, WebservicesError> {
+        let request = self
+            .client
+            .get(format!("{}{}/top", LIVE_ENDPOINT_MAP_LEADERBOARDS, map_uid));
+        let response: Value = self
+            .send_request(request, NadeoAudience::Live)
+            .await?
+            .json()
+            .await
+            .map_err(WebservicesError::Reqwest)?;
+
+        let top = response
+            .get("tops")
+            .and_then(|r| r.get(0))
+            .and_then(|r| r.get("top"))
+            .and_then(|r| r.as_array());
+
+        match top {
+            Some(value) => Ok(value
+                .iter()
+                .map(|v| serde_json::from_value(v.clone()))
+                .filter(|e| e.is_ok())
+                .map(Result::unwrap)
+                .collect()),
+            None => Err(WebservicesError::InvalidResponse),
+        }
     }
 }
