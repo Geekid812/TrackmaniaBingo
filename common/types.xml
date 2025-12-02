@@ -46,6 +46,7 @@
         <m name="selection" type="MapMode" default="MapMode::RandomTMX" />
         <m name="target_medal" type="Medal" default="Medal::Author" />
         <m name="discovery" type="bool" default="false" />
+        <m name="secret" type="bool" default="false" />
         <m name="time_limit" type="duration" />
         <m name="no_bingo_duration" type="duration" />
         <m name="overtime" type="bool" default="true" />
