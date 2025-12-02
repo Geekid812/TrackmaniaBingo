@@ -181,8 +181,9 @@ impl LiveMatch {
     }
 
     fn setup_powerups(&mut self) {
-        let tick_duration = std::time::Duration::from_secs(60)
-            / config::get_integer("behaviour.powerup_tick_rate").unwrap_or(0) as u32;
+        let tick_duration = std::time::Duration::from_millis(60)
+            / (config::get_integer("behaviour.powerup_tick_rate").unwrap_or(1) as f32
+                * (self.config.items_tick_multiplier as f32 / 1000.)) as u32;
 
         if !tick_duration.is_zero() {
             execute_repeating_task(
@@ -1276,7 +1277,9 @@ impl LiveMatch {
 impl Default for MatchOptions {
     fn default() -> Self {
         Self {
-            start_countdown: TimeDelta::milliseconds(config::get_integer("behaviour.start_countdown").unwrap_or(5000)),
+            start_countdown: TimeDelta::milliseconds(
+                config::get_integer("behaviour.start_countdown").unwrap_or(5000),
+            ),
         }
     }
 }

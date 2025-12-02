@@ -349,6 +349,36 @@ namespace UIRoomSettings {
                              "frame or it will disappear.");
     }
 
+    void ItemTickrateEdit() {
+        UITools::AlignedLabel(Icons::Forward + " Item Spawns");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+
+        UI::SetNextItemWidth(250);
+        if (UI::BeginCombo("##bingoitemtickrate",
+                           MatchConfig.itemsTickMultiplier <= 1000 ? (MatchConfig.itemsTickMultiplier == 400 ? "Few" : "Balanced") : (MatchConfig.itemsTickMultiplier == 2000 ? "Many" : "True Frenzy"))) {
+
+            if (UI::Selectable("Few", MatchConfig.itemsTickMultiplier == 400)) {
+                MatchConfig.itemsTickMultiplier = 400;
+            }
+
+            if (UI::Selectable("Balanced", MatchConfig.itemsTickMultiplier == 1000)) {
+                MatchConfig.itemsTickMultiplier = 1000;
+            }
+
+            if (UI::Selectable("Many", MatchConfig.itemsTickMultiplier == 2000)) {
+                MatchConfig.itemsTickMultiplier = 2000;
+            }
+
+            if (UI::Selectable("True Frenzy", MatchConfig.itemsTickMultiplier == 4000)) {
+                MatchConfig.itemsTickMultiplier = 4000;
+            }
+
+            UI::EndCombo();
+        }
+        UI::SameLine();
+        UITools::HelpTooltip("Controls how frequently new items will appear.");
+    }
+
     void SettingsView() {
         UITools::SectionHeader("Room Settings");
         RoomNameInput();
@@ -400,6 +430,7 @@ namespace UIRoomSettings {
 
         if (MatchConfig.mode == Gamemode::Frenzy) {
             ItemExpiryEdit();
+            ItemTickrateEdit();
         }
 
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0)

@@ -104,6 +104,7 @@ class MatchConfiguration(BaseModel):
     map_tag: int | None = 1
     items: FrenzyItemSettings
     items_expire: int = 600
+    items_tick_multiplier: int = 1000
 
 # Item drawing probabilities for configuring the Frenzy gamemode.
 class FrenzyItemSettings(BaseModel):

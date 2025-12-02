@@ -123,6 +123,7 @@ class MatchConfiguration {
     int mapTag = 1;
     FrenzyItemSettings items;
     uint itemsExpire = 600;
+    uint itemsTickMultiplier = 1000;
     MatchConfiguration() {}
 }
 namespace MatchConfiguration {
@@ -146,6 +147,7 @@ namespace MatchConfiguration {
         value["map_tag"] = cls.mapTag;
         value["items"] = FrenzyItemSettings::Serialize(cls.items);
         value["items_expire"] = cls.itemsExpire;
+        value["items_tick_multiplier"] = cls.itemsTickMultiplier;
 
         return value;
     }
@@ -172,6 +174,7 @@ namespace MatchConfiguration {
         if (value["map_tag"].GetType() != Json::Type::Null) cls.mapTag = value["map_tag"];
         cls.items = FrenzyItemSettings::Deserialize(value["items"]);
         cls.itemsExpire = value["items_expire"];
+        cls.itemsTickMultiplier = value["items_tick_multiplier"];
 
         return cls;
     }
