@@ -21,4 +21,3 @@ You can then start the server as usual.
 - `-o`, `--output`   : Output file path for the generated SQLite database (default: `./out.db`). To generate the database in the correct location for the server, use `-o ../../db/mapcache.db`.
 - `-i`, `--interval` : Interval (in seconds) between two API requests (default: 10).
 - `-e`, `--errinterval` : Interval (in seconds) before retrying after a failed request (default: 60).
-- `-l`, `--limit`    : Number of maps to fetch per API request (between 20 and 100, default: 50).

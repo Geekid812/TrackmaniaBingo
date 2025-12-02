@@ -7,13 +7,15 @@ class GameMap {
     MapType type = MapType::TMX;
     int id;
     string uid;
+    string webservicesId;
     int userid;
-    string authorLogin;
     string username;
     string trackName;
     string gbxName;
-    int coppers;
     int authorTime;
+    int goldTime;
+    int silverTime;
+    int bronzeTime;
     int uploadedTimestamp;
     int updatedTimestamp;
     string tags;
@@ -42,13 +44,15 @@ namespace GameMap {
         value["type"] = tostring(map.type);
         value["tmxid"] = map.id;
         value["uid"] = map.uid;
+        value["webservices_id"] = map.webservicesId;
         value["userid"] = map.userid;
-        value["author_login"] = map.authorLogin;
         value["username"] = map.username;
         value["track_name"] = map.trackName;
         value["gbx_name"] = map.gbxName;
-        value["coppers"] = map.coppers;
         value["author_time"] = map.authorTime;
+        value["gold_time"] = map.goldTime;
+        value["silver_time"] = map.silverTime;
+        value["bronze_time"] = map.bronzeTime;
         value["uploaded_at"] = map.uploadedTimestamp;
         value["updated_at"] = map.updatedTimestamp;
         value["tags"] = map.tags;
@@ -61,13 +65,17 @@ namespace GameMap {
         map.type = MapType::TMX;
         map.id = value["tmxid"];
         map.uid = value["uid"];
+        if (value["webservices_id"].GetType() != Json::Type::Null)
+            map.webservicesId = value["webservices_id"];
+
         map.userid = value["userid"];
-        map.authorLogin = value["author_login"];
         map.username = value["username"];
         map.trackName = value["track_name"];
         map.gbxName = value["gbx_name"];
-        map.coppers = value["coppers"];
         map.authorTime = value["author_time"];
+        map.goldTime = value["gold_time"];
+        map.silverTime = value["silver_time"];
+        map.bronzeTime = value["bronze_time"];
         map.uploadedTimestamp = value["uploaded_at"];
         map.updatedTimestamp = value["updated_at"];
         if (value["tags"].GetType() != Json::Type::Null)

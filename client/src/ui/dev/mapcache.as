@@ -95,10 +95,8 @@ namespace UIDevMapCache {
             // Ad-hoc parsing of TMX results
             map.id = int(body["TrackID"]);
             map.uid = body["TrackUID"];
-            map.authorLogin = body["AuthorLogin"];
             map.authorTime = int(body["AuthorTime"]);
             map.gbxName = body["GbxMapName"];
-            map.coppers = int(body["DisplayCost"]);
             map.trackName = body["Name"];
             map.type = MapType::TMX;
             map.userid = int(body["UserID"]);

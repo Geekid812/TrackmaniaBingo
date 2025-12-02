@@ -43,3 +43,15 @@ int objectiveOf(Medal medal, CGameCtnChallenge @map) {
         return map.TMObjective_BronzeTime;
     return -1;
 }
+
+int objectiveOf(Medal medal, GameMap@ map) {
+    if (medal == Medal::Author)
+        return map.authorTime;
+    if (medal == Medal::Gold)
+        return map.goldTime;
+    if (medal == Medal::Silver)
+        return map.silverTime;
+    if (medal == Medal::Bronze)
+        return map.bronzeTime;
+    return -1;
+}
