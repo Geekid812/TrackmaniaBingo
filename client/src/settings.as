@@ -43,9 +43,6 @@ namespace Settings {
     [Setting name="Enable Unsupported Configuration Warnings" category="Behaviour"]
     bool UnstableConfigWarnings = true;
 
-    [Setting name="Show the System Survey prompt on startup" category="Behaviour"]
-    bool ShowSystemSurvey = true;
-
     [Setting name="Selected Backend" category="Developer"]
     BackendSelection Backend = BackendSelection::Live;
 
