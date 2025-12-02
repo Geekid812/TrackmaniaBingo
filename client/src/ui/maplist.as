@@ -221,7 +221,14 @@ namespace UIMapList {
                      UIColor::GetHex(topPlayer.team.color) + topPlayer.name);
             UI::Text(tile.LeadingRun().result.Display());
         } else {
-            UI::TextDisabled("This map has not been claimed yet!");
+            Medal targetMedal = (@Match !is null ? Match.config.targetMedal : Medal::None);
+            
+            if (targetMedal == Medal::None) {
+                UI::TextDisabled("This map has not been claimed yet!");
+            } else {
+                int targetTime = objectiveOf(targetMedal, tile.map);
+                UI::Text("\\$888Target Medal: " + RunResult(targetTime, targetMedal).Display());
+            }
         }
 
         if (RerollMenuOpen) {
