@@ -277,15 +277,18 @@ namespace UIInfoBar {
     }
 
     void FrenzyItemSelectSlot() {
+        Player @localPlayer = (Gamemaster::IsBingoActive() ? Match.GetSelf() : null);
+        Powerup myPowerup = (@localPlayer !is null ? localPlayer.holdingPowerup : Powerup::Empty);
+        int powerupExpireTimeRemaining = localPlayer.powerupExpireTimestamp - Time::Now;
+        bool isLowPowerupExpireTime = myPowerup != Powerup::Empty && powerupExpireTimeRemaining < 40000;
+
         UI::PushStyleColor(UI::Col::Border,
                            UIItemSelect::Visible ? vec4(1., .8, .2, .9) : vec4(.5, .5, .5, .9));
+        UI::PushStyleColor(UI::Col::ChildBg, (isLowPowerupExpireTime && (powerupExpireTimeRemaining / 800) % 2 == 1 ? vec4(.8, .1, .1, .2) : vec4()));
         UI::BeginChild("Bingo Item Select Slot",
                        vec2(),
                        UI::ChildFlags::Borders | UI::ChildFlags::AutoResizeX |
                            UI::ChildFlags::AutoResizeY);
-
-        Player @localPlayer = (Gamemaster::IsBingoActive() ? Match.GetSelf() : null);
-        Powerup myPowerup = (@localPlayer !is null ? localPlayer.holdingPowerup : Powerup::Empty);
 
         if (myPowerup != Powerup::Empty) {
             UI::Image(Powerups::GetPowerupTexture(myPowerup),
@@ -331,9 +334,9 @@ namespace UIInfoBar {
                 break;
             }
 
-            if (myPowerup != Powerup::Empty) {
+            if (myPowerup != Powerup::Empty && powerupExpireTimeRemaining > 0) {
                 UI::Text("\\$ff8Expires in " +
-                         Time::Format(localPlayer.powerupExpireTimestamp - Time::Now, false));
+                         Time::Format(powerupExpireTimeRemaining, false));
             }
 
             UI::EndTooltip();
@@ -341,7 +344,7 @@ namespace UIInfoBar {
         UI::PopStyleColor();
 
         UI::EndChild();
-        UI::PopStyleColor();
+        UI::PopStyleColor(2);
 
         UIItemSelect::Powerup = myPowerup;
         if (myPowerup != Powerup::Empty && UI::IsItemClicked()) {
