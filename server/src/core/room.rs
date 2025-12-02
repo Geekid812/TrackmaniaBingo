@@ -9,7 +9,7 @@ use parking_lot::Mutex;
 use rand::{distributions::Uniform, seq::SliceRandom, Rng};
 use serde::{Serialize, Serializer};
 use thiserror::Error;
-use tracing::debug;
+use tracing::{debug, info};
 
 use super::{
     directory::{self, Owned, Shared, PUB_ROOMS_CHANNEL, ROOMS},
@@ -27,7 +27,7 @@ use super::{
 };
 use crate::{
     config,
-    datatypes::{MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
+    datatypes::{MatchConfiguration, Medal, PlayerProfile, PlayerRef, RoomConfiguration},
     server::{context::ClientContext, mapload},
     transport::Channel,
 };
@@ -239,8 +239,28 @@ impl GameRoom {
 
     pub fn maps_load_callback(&mut self, maps: Vec<GameMap>, userdata: u32) {
         if userdata == self.load_marker {
-            self.loaded_maps = maps;
+            let verified_maps = self.verify_map_compatibility(maps);
+            info!("loaded {} maps", verified_maps.len());
+            self.loaded_maps = verified_maps;
         }
+    }
+
+    fn verify_map_compatibility(&self, maps: Vec<GameMap>) -> Vec<GameMap> {
+        if self.matchconfig.target_medal == Medal::WR {
+            // for maps that don't have a WR set, require reloading
+            let (maps_with_wr, maps_without_wr): (Vec<GameMap>, Vec<GameMap>) =
+                maps.into_iter().partition(|map| match map {
+                    GameMap::TMX(record) => record.wr_time.is_some_and(|record| record > 0),
+                    _ => false,
+                });
+
+            if !maps_without_wr.is_empty() {
+                mapload::reload_maps(self.ptr.clone(), maps_without_wr, self.load_marker);
+            }
+            return maps_with_wr;
+        }
+
+        maps
     }
 
     pub fn has_started(&self) -> bool {

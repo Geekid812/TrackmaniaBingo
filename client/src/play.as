@@ -122,8 +122,8 @@ namespace Playground {
         if (myRun !is null && myRun.result.time <= result.time)
             return;
 
-        int medalTime = Playground::GetMedalTime(map, config.targetMedal);
-        if (medalTime != -1 && result.time > medalTime)
+        int minimumTime = Playground::GetCurrentTimeToBeat(true).time;
+        if (minimumTime != -1 && result.time > minimumTime)
             return;
 
         // Map should be claimed
@@ -151,11 +151,7 @@ namespace Playground {
             return currentTile.LeadingRun().result;
 
         // Map is not claimed, get the target medal time
-        CGameCtnChallenge @map = Playground::GetCurrentMap();
-        if (map is null)
-            return null;
-
-        return RunResult(GetMedalTime(map, Match.config.targetMedal), Match.config.targetMedal);
+        return RunResult(objectiveOf(Match.config.targetMedal, currentTile.map), Match.config.targetMedal);
     }
 
     Medal CalculateMedal(int time, int author, int gold, int silver, int bronze) {

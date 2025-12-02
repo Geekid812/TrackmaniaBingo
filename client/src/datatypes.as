@@ -405,6 +405,7 @@ enum MapMode {
 
 /* A Trackmania medal ranking. */
 enum Medal {
+    WR,
     Author,
     Gold,
     Silver,

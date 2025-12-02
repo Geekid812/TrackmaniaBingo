@@ -130,6 +130,7 @@
 
     <enum name="Medal">
         <comment>A Trackmania medal ranking.</comment>
+        <v>WR</v>
         <v>Author</v>
         <v>Gold</v>
         <v>Silver</v>

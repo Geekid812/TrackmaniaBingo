@@ -37,6 +37,7 @@ impl TryFrom<MapResponse> for MapRecord {
             .collect();
         let tags = tag_ids.join(",");
 
+        let wr_time = value.online_wr.map(|record| record.record_time);
         let style_name = value.tags.first().map(|t| t.name.clone());
         Ok(Self {
             uid: value.map_uid,
@@ -46,6 +47,7 @@ impl TryFrom<MapResponse> for MapRecord {
             username: primary_author.name.clone(),
             track_name: value.name,
             gbx_name: value.gbx_map_name,
+            wr_time,
             author_time: value.medals.author,
             gold_time: value.medals.gold,
             silver_time: value.medals.silver,
@@ -103,7 +105,7 @@ impl MappackLoader {
             .map(|map_uid| format!("&after={}", map_uid))
             .unwrap_or_default();
         let url = Url::from_str(
-            &format!("{}{}?mappackid={}{}&count=100&fields=MapId,MapUid,Name,GbxMapName,Authors[],UploadedAt,UpdatedAt,Medals.Author,Medals.Gold,Medals.Silver,Medals.Bronze,Tags[]", BASE, ROUTE_MAPPACK, mappack_id, query_extra)
+            &format!("{}{}?mappackid={}{}&count=100&fields=MapId,MapUid,OnlineMapId,Name,GbxMapName,Authors[],UploadedAt,UpdatedAt,Medals.Author,Medals.Gold,Medals.Silver,Medals.Bronze,Tags[],OnlineWR", BASE, ROUTE_MAPPACK, mappack_id, query_extra)
         )?;
         debug!("requesting TMX tracks: {}", url);
 

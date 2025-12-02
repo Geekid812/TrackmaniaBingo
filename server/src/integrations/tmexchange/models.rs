@@ -21,6 +21,14 @@ pub struct MapResponse {
     pub updated_at: NaiveDateTime,
     pub medals: MedalModel,
     pub tags: Vec<TagModel>,
+    #[serde(rename = "OnlineWR")]
+    pub online_wr: Option<RecordModel>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RecordModel {
+    pub record_time: i32,
 }
 
 #[derive(Deserialize)]
