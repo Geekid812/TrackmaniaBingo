@@ -57,18 +57,25 @@ namespace UIInfoBar {
             Font::Set(textStyle, Font::Size::Medium);
 
             Layout::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
-            UI::Text(claim.result.Display());
-            UI::SameLine();
+
+            if (!Match.config.secret || Match.endState.HasEnded()) {
+                UI::Text(claim.result.Display());
+                UI::SameLine();
+            }
+
             UITools::PlayerTag(claimingPlayer);
 
             Font::Unset();
         }
         if (Match.config.targetMedal != Medal::None) {
-            Layout::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
+            if (map.attemptRanking.Length > 0) {
+                Layout::MoveTo(MAP_LEADERBOARD_SIDE_MARGIN);
+            }
+
             UI::Text(Playground::GetCurrentTimeToBeat(true).Display("$aaa") + "  Target Medal");
         }
 
-        if (!Match.endState.HasEnded()) {
+        if (!Match.endState.HasEnded() && !Match.config.secret) {
             UI::Separator();
 
             float width = UI::GetWindowSize().x;
@@ -241,7 +248,7 @@ namespace UIInfoBar {
         GameTile @tile = Gamemaster::GetCurrentTile();
         CGameCtnChallenge @gameMap = Playground::GetCurrentMap();
         if (tile !is null) {
-            if (gameMap.EdChallengeId == MapLeaderboardUid || Match.endState.HasEnded()) {
+            if (gameMap.EdChallengeId == MapLeaderboardUid || Match.endState.HasEnded() || Match.config.secret) {
                 MapLeaderboard(tile);
             } else {
                 TimeToBeatDisplay(tile);

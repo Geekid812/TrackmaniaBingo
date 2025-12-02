@@ -116,11 +116,19 @@ namespace UIRoomSettings {
     }
 
     void DiscoveryToggle() {
-        UITools::AlignedLabel(Icons::Search + " Discovery");
+        UITools::AlignedLabel(Icons::Search + " Map Discovery");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         MatchConfig.discovery = UI::Checkbox("##bingodiscovery", MatchConfig.discovery) && !(MatchConfig.selection == MapMode::Mappack);
         UI::SameLine();
         UITools::HelpTooltip("Excludes maps where any player in the match currently has a record on.");
+    }
+
+    void SecretToggle() {
+        UITools::AlignedLabel(Icons::QuestionCircle + " Secret Records");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        MatchConfig.secret = UI::Checkbox("##bingosecret", MatchConfig.secret);
+        UI::SameLine();
+        UITools::HelpTooltip("All records from other players will be hidden until the end of the game.");
     }
 
     void TimeLimitControl() {
@@ -259,7 +267,7 @@ namespace UIRoomSettings {
     }
 
     void RerollsToggle() {
-        UITools::AlignedLabel(Icons::Kenney::ReloadInverse + " Enable Map Rerolls");
+        UITools::AlignedLabel(Icons::Kenney::ReloadInverse + " Map Rerolls");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         MatchConfig.rerolls = UI::Checkbox("##bingorerolls", MatchConfig.rerolls);
         UI::SameLine();
@@ -270,7 +278,7 @@ namespace UIRoomSettings {
     void CompetitvePatchToggle() {
         UITools::AlignedLabel(Icons::Trophy + " Competitive Patch");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch);
+        MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch) || MatchConfig.secret;
         UI::SameLine();
         UITools::HelpTooltip("Viewing records, leaderboards and splits will be disabled.");
     }
@@ -379,7 +387,13 @@ namespace UIRoomSettings {
         UI::EndDisabled();
 
         RerollsToggle();
+        
+        UI::BeginDisabled(MatchConfig.secret);
         CompetitvePatchToggle();
+        UI::EndDisabled();
+
+        SecretToggle();
+
         if (MatchConfig.mode == Gamemode::Frenzy) {
             ItemExpiryEdit();
         }

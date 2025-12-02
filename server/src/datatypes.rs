@@ -65,6 +65,8 @@ pub struct MatchConfiguration {
 	pub target_medal: Medal,
     #[derivative(Default(value = "false"))]
 	pub discovery: bool,
+    #[derivative(Default(value = "false"))]
+	pub secret: bool,
     #[derivative(Default(value = "Duration::milliseconds(0)"))]
 	#[serde_as(as = "DurationMilliSeconds<i64>")]
 	pub time_limit: Duration,

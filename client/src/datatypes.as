@@ -111,6 +111,7 @@ class MatchConfiguration {
     MapMode selection = MapMode::RandomTMX;
     Medal targetMedal = Medal::Author;
     bool discovery = false;
+    bool secret = false;
     int64 timeLimit;
     int64 noBingoDuration;
     bool overtime = true;
@@ -133,6 +134,7 @@ namespace MatchConfiguration {
         value["selection"] = int(cls.selection);
         value["target_medal"] = int(cls.targetMedal);
         value["discovery"] = cls.discovery;
+        value["secret"] = cls.secret;
         value["time_limit"] = cls.timeLimit;
         value["no_bingo_duration"] = cls.noBingoDuration;
         value["overtime"] = cls.overtime;
@@ -156,6 +158,7 @@ namespace MatchConfiguration {
         cls.selection = MapMode(int(value["selection"]));
         cls.targetMedal = Medal(int(value["target_medal"]));
         cls.discovery = value["discovery"];
+        cls.secret = value["secret"];
         cls.timeLimit = value["time_limit"];
         cls.noBingoDuration = value["no_bingo_duration"];
         cls.overtime = value["overtime"];

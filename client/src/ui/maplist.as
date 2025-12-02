@@ -200,6 +200,7 @@ namespace UIMapList {
         }
 
         string mapTitle = GetTileTitle(tile, x, y);
+        bool isSecret = @Match !is null && Match.config.secret;
         UI::Text(mapTitle);
 
         if (tile.map.username != "")
@@ -219,11 +220,14 @@ namespace UIMapList {
             Player topPlayer = tile.LeadingRun().player;
             UI::Text((tile.claimant.id != -1 ? "Current record by \\$" : "Claimed by \\$") +
                      UIColor::GetHex(topPlayer.team.color) + topPlayer.name);
-            UI::Text(tile.LeadingRun().result.Display());
+
+            if (!isSecret || (@Match !is null && Match.endState.HasEnded())) {
+                UI::Text(tile.LeadingRun().result.Display());
+            }
         } else {
             Medal targetMedal = (@Match !is null ? Match.config.targetMedal : Medal::None);
             
-            if (targetMedal == Medal::None) {
+            if (targetMedal == Medal::None || isSecret) {
                 UI::TextDisabled("This map has not been claimed yet!");
             } else {
                 int targetTime = objectiveOf(targetMedal, tile.map);

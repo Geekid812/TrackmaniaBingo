@@ -74,26 +74,30 @@ namespace NetworkHandlers {
                 UIColor::Brighten(UIColor::GetAlphaColor(claimingTeam.color, 0.1), 0.75);
             vec4 dimmedColor = teamColor / 1.5;
             RunResult result = claim.result;
+            string recordDetail = "\n" + result.Display() + " (" + deltaTime + ")";
+
+            if (Match.config.secret) {
+                // don't show records in secret mode
+                recordDetail = "";
+            }
 
             if (isReclaim) {
                 UI::ShowNotification(Icons::Retweet + " Map Reclaimed",
                                      playerName + " has reclaimed \\$fd8" + mapName + "\\$z " +
-                                         teamCredit + "\n" + result.Display() + " (" + deltaTime +
-                                         ")",
+                                         teamCredit + recordDetail,
                                      teamColor,
                                      15000);
             } else if (isImprove) {
                 UI::ShowNotification(Icons::ClockO + " Time Improved",
                                      playerName + " has improved " + teamName +
                                          (teamName.EndsWith("s") ? "'" : "'s") + " time on \\$fd8" +
-                                         mapName + "\\$z\n" + result.Display() + " (" + deltaTime +
-                                         ")",
+                                         mapName + "\\$z" + recordDetail,
                                      dimmedColor,
                                      15000);
             } else { // Normal claim
                 UI::ShowNotification(Icons::Bookmark + " Map Claimed",
                                      playerName + " has claimed \\$fd8" + mapName + "\\$z " +
-                                         teamCredit + "\n" + result.Display(),
+                                         teamCredit + (Match.config.secret ? "" : "\n" + result.Display()),
                                      teamColor,
                                      15000);
             }
