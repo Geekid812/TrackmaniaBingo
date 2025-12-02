@@ -241,7 +241,7 @@ impl GameRoom {
         if userdata == self.load_marker {
             let verified_maps = self.verify_map_compatibility(maps);
             info!("loaded {} maps", verified_maps.len());
-            self.loaded_maps = verified_maps;
+            self.loaded_maps.extend(verified_maps);
         }
     }
 
