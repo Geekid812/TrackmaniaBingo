@@ -6,7 +6,7 @@ use futures::Future;
 use once_cell::sync::Lazy;
 use sqlx::FromRow;
 use tokio::time::sleep;
-use tracing::{debug, error};
+use tracing::error;
 
 use crate::core::models::map::GameMap;
 use crate::core::room::GameRoom;

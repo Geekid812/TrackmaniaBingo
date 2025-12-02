@@ -58,6 +58,7 @@
         <m name="map_tag" type="int" optional="true" default="1" />
         <m name="items" type="FrenzyItemSettings" />
         <m name="items_expire" type="uint" default="600" />
+        <m name="items_tick_multiplier" type="uint" default="1000" />
     </struct>
 
     <struct name="FrenzyItemSettings">
