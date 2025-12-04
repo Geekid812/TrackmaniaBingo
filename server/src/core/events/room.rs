@@ -38,4 +38,7 @@ pub enum RoomEvent {
     },
     RoomSync(RoomState),
     ChatMessage(ChatMessage),
+    StartPlayVerification {
+        locked: bool,
+    },
 }

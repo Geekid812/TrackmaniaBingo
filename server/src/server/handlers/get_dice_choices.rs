@@ -1,9 +1,8 @@
 use crate::{
     core::models::map::GameMap,
-    datatypes::Powerup,
     server::{
         context::ClientContext,
-        handlers::{error, ok, response},
+        handlers::{error, response},
     },
 };
 use serde::{Deserialize, Serialize};

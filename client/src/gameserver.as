@@ -18,6 +18,7 @@ class GameServer {
     int currentTileIndex = -1;
     bool currentTileInvalid = false;
     bool isLocalPlayerHost = false;
+    bool verificationLocked = false;
 
     Player @GetSelf() {
         for (uint i = 0; i < players.Length; i++) {

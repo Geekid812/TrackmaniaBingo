@@ -45,6 +45,7 @@ pub struct GameRoom {
     loaded_maps: Vec<GameMap>,
     active_match: Option<Shared<LiveMatch>>,
     host_uid: Option<i32>,
+    verification_locked: bool,
 }
 
 impl GameRoom {
@@ -66,6 +67,7 @@ impl GameRoom {
             loaded_maps: Vec::new(),
             active_match: None,
             host_uid: None,
+            verification_locked: false,
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
@@ -242,6 +244,12 @@ impl GameRoom {
             let verified_maps = self.verify_map_compatibility(maps);
             info!("loaded {} maps", verified_maps.len());
             self.loaded_maps.extend(verified_maps);
+
+            if self.verification_locked {
+                // try and start the game after a verification
+                let _ = self.check_start_match();
+                self.set_verification_locked(false);
+            }
         }
     }
 
@@ -283,6 +291,9 @@ impl GameRoom {
         }
         if self.has_player(ctx.profile.uid) {
             return Err(JoinRoomError::PlayerAlreadyJoined);
+        }
+        if self.verification_locked {
+            return Err(JoinRoomError::Locked);
         }
 
         let is_operator = self.host_uid.is_some_and(|u| u == profile.uid);
@@ -527,7 +538,7 @@ impl GameRoom {
         self.loaded_maps.shuffle(&mut rand::thread_rng());
     }
 
-    pub fn check_start_match(&mut self) -> Result<Owned<LiveMatch>, anyhow::Error> {
+    pub fn check_start_match(&mut self) -> Result<(), anyhow::Error> {
         let map_count_minimum = self.matchconfig.grid_size * self.matchconfig.grid_size;
         let count = self.loaded_maps.len();
         if count < map_count_minimum as usize {
@@ -537,7 +548,35 @@ impl GameRoom {
             }
             return Err(err);
         }
-        Ok(self.start_match())
+
+        if self.matchconfig.discovery && !self.verification_locked {
+            // we haven't verified our maps yet
+            self.start_map_discovery_verification();
+        } else {
+            self.start_match();
+        }
+
+        Ok(())
+    }
+
+    fn start_map_discovery_verification(&mut self) {
+        let maps = std::mem::take(&mut self.loaded_maps);
+        self.set_verification_locked(true);
+        mapload::verify_map_records(
+            self.ptr.clone(),
+            maps,
+            self.players()
+                .iter()
+                .map(|p| p.profile.account_id.clone())
+                .collect(),
+            self.get_load_marker(),
+        );
+    }
+
+    fn set_verification_locked(&mut self, locked: bool) {
+        self.verification_locked = locked;
+        self.channel
+            .broadcast(&RoomEvent::StartPlayVerification { locked });
     }
 
     fn start_match(&mut self) -> Owned<LiveMatch> {
@@ -615,6 +654,8 @@ pub enum JoinRoomError {
     HasStarted,
     #[error("You have already joined this room.")]
     PlayerAlreadyJoined,
+    #[error("The room you are trying to join is locked, it might have just started.")]
+    Locked,
 }
 
 #[derive(Serialize, Clone, Debug)]

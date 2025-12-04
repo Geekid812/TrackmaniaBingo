@@ -5,6 +5,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use serde_with::{serde_as, TimestampSeconds};
 use thiserror::Error;
+use tracing::info;
 
 const NADEO_CORE_AUDIENCE: &'static str = "NadeoServices";
 const NADEO_LIVE_AUDIENCE: &'static str = "NadeoLiveServices";
@@ -196,7 +197,7 @@ impl NadeoWebserivcesClient {
     pub async fn core_get_map_records(
         &self,
         map_id: &str,
-        account_ids: Vec<&str>,
+        account_ids: &Vec<String>,
     ) -> Result<Vec<WebserivcesMapRecord>, WebservicesError> {
         let request = self
             .client

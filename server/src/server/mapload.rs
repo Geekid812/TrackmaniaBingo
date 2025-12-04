@@ -31,6 +31,16 @@ pub fn reload_maps(room: Shared<GameRoom>, maps: Vec<GameMap>, userdata: u32) {
     tokio::spawn(fetch_and_load(room, fut, userdata));
 }
 
+pub fn verify_map_records(
+    room: Shared<GameRoom>,
+    maps: Vec<GameMap>,
+    account_ids: Vec<String>,
+    userdata: u32,
+) {
+    let fut = maps_verify_discovery(maps, account_ids);
+    tokio::spawn(fetch_and_load(room, fut, userdata));
+}
+
 pub async fn gather_maps(config: &MatchConfiguration) -> MaploadResult {
     get_load_future(config).await
 }
@@ -38,17 +48,17 @@ pub async fn gather_maps(config: &MatchConfiguration) -> MaploadResult {
 fn get_load_future(
     config: &MatchConfiguration,
 ) -> Pin<Box<dyn Future<Output = MaploadResult> + Send>> {
-    let mut reroll_multiplier = 1;
-    if config.rerolls || config.mode == Gamemode::Frenzy {
-        reroll_multiplier = 2;
+    let mut number_of_grids = 1;
+    if config.rerolls || config.mode == Gamemode::Frenzy || config.discovery {
+        number_of_grids += 1;
     }
 
     match config.selection {
         MapMode::RandomTMX => Box::pin(cache_load_mxrandom(
-            config.grid_size * config.grid_size * reroll_multiplier,
+            config.grid_size * config.grid_size * number_of_grids,
         )),
         MapMode::Tags => Box::pin(cache_load_tag(
-            config.grid_size * config.grid_size * reroll_multiplier,
+            config.grid_size * config.grid_size * number_of_grids,
             config.map_tag.unwrap(),
         )),
         MapMode::Mappack => Box::pin(network_load_mappack(config.mappack_id.unwrap())),
@@ -149,6 +159,37 @@ pub async fn maps_get_world_record(maps: Vec<GameMap>) -> MaploadResult {
         };
 
         if let Some(map) = valid_map {
+            valid_maps.push(map);
+        }
+    }
+    Ok(valid_maps)
+}
+
+pub async fn maps_verify_discovery(maps: Vec<GameMap>, account_ids: Vec<String>) -> MaploadResult {
+    let mut valid_maps = Vec::new();
+    for map in maps {
+        let valid_map = match map {
+            GameMap::TMX(ref mxmap) => match mxmap.webservices_id {
+                Some(ref webservices_id) => {
+                    sleep(Duration::from_millis(200)).await;
+                    match integrations::NADEOSERVICES_CLIENT
+                        .wait()
+                        .core_get_map_records(webservices_id, &account_ids)
+                        .await
+                    {
+                        Ok(records) => records.first().is_none(),
+                        Err(e) => {
+                            error!("{}", e);
+                            false
+                        }
+                    }
+                }
+                None => false,
+            },
+            _ => false,
+        };
+
+        if valid_map {
             valid_maps.push(map);
         }
     }
