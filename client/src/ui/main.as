@@ -82,12 +82,13 @@ namespace UIMainWindow {
             UI::EndTabItem();
         }
 
+        /* Not ready yet!
         if (UI::BeginTabItem(Icons::Trophy + " Rankings")) {
             UI::BeginChild("bingoleaderboards");
             UILeaderboards::Render();
             UI::EndChild();
             UI::EndTabItem();
-        }
+        }*/
 
         UI::EndTabBar();
         UIColor::Reset();

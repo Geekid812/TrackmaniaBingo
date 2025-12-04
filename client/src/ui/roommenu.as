@@ -195,8 +195,10 @@ namespace UIRoomMenu {
     }
 
     void RoomMenu() {
+        /* Not ready yet!
         UITools::SectionHeader("Matchmaking");
         Matchmaking();
+        */
 
         UITools::SectionHeader("Public Rooms");
         if (Network::GetState() == ConnectionState::Connected) {
