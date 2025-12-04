@@ -1,6 +1,6 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use parking_lot::RwLock;
-use reqwest::{Client, RequestBuilder, Response};
+use reqwest::{Client, RequestBuilder, Response, StatusCode};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use serde_with::{serde_as, TimestampSeconds};
@@ -21,8 +21,8 @@ pub struct NadeoWebserivcesClient {
     client: Client,
     username: String,
     password: String,
-    core_credentials: RwLock<Option<WebserivcesToken>>,
-    live_credentials: RwLock<Option<WebserivcesToken>>,
+    core_credentials: RwLock<Option<WebservicesCredentialsInfo>>,
+    live_credentials: RwLock<Option<WebservicesCredentialsInfo>>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -30,6 +30,11 @@ pub struct NadeoWebserivcesClient {
 pub struct WebserivcesToken {
     pub access_token: String,
     pub refresh_token: String,
+}
+
+pub struct WebservicesCredentialsInfo {
+    pub token: WebserivcesToken,
+    pub expiration: DateTime<Utc>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -102,7 +107,10 @@ impl NadeoWebserivcesClient {
             NadeoAudience::Live => &self.live_credentials,
         };
 
-        let has_valid_credentials = credentials.read().is_some();
+        let has_valid_credentials = credentials
+            .read()
+            .as_ref()
+            .is_some_and(|c| c.expiration > Utc::now());
         if !has_valid_credentials {
             self.refresh(audience).await;
         }
@@ -136,14 +144,14 @@ impl NadeoWebserivcesClient {
         };
         let token = credentials
             .as_ref()
-            .map(|credentials| &credentials.access_token);
+            .map(|credentials| &credentials.token.access_token);
         token.cloned()
     }
 
     async fn refresh_credentials(
         &self,
         audience: &str,
-        credentials: &RwLock<Option<WebserivcesToken>>,
+        credentials: &RwLock<Option<WebservicesCredentialsInfo>>,
     ) {
         match self
             .get_audience_token(audience, &self.username, &self.password)
@@ -151,7 +159,10 @@ impl NadeoWebserivcesClient {
         {
             Ok(token) => {
                 let mut writer = credentials.write();
-                *writer = Some(token);
+                *writer = Some(WebservicesCredentialsInfo {
+                    token,
+                    expiration: Utc::now() + Duration::minutes(30),
+                });
             }
             Err(e) => tracing::error!(
                 "failed to refresh credentials for audience '{}': {}",
