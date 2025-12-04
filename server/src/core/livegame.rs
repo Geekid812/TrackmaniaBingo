@@ -437,7 +437,7 @@ impl LiveMatch {
                 && self.cells[id]
                     .state_player
                     .as_ref()
-                    .is_some_and(|p| p.uid == running_player.uid)
+                    .is_some_and(|p| self.get_player_team(p.uid as i32) == self.get_player_team(running_player.uid as i32))
             {
                 self.jail_resolve(id, None);
             }
