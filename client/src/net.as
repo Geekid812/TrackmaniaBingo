@@ -248,6 +248,8 @@ namespace Network {
             NetworkHandlers::RallyResolved(body);
         } else if (event == "JailResolved") {
             NetworkHandlers::JailResolved(body);
+        } else if (event == "StartPlayVerification") {
+            NetworkHandlers::StartPlayVerification(body);
         } else {
             logwarn("[Network] Unknown event: " + string(body["event"]));
         }

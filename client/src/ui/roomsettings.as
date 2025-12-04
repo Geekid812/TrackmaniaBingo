@@ -118,7 +118,7 @@ namespace UIRoomSettings {
     void DiscoveryToggle() {
         UITools::AlignedLabel(Icons::Search + " Map Discovery");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        MatchConfig.discovery = UI::Checkbox("##bingodiscovery", MatchConfig.discovery) && !(MatchConfig.selection == MapMode::Mappack);
+        MatchConfig.discovery = UI::Checkbox("##bingodiscovery", MatchConfig.discovery);
         UI::SameLine();
         UITools::HelpTooltip("Excludes maps where any player in the match currently has a record on.");
     }

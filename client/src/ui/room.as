@@ -41,7 +41,7 @@ namespace UIGameRoom {
         PlayerLabelHovered = false;
         if (windowOpen) {
             bool gameIsStarting =
-                Gamemaster::IsBingoActive() && Gamemaster::GetPhase() == GamePhase::Starting;
+                (Gamemaster::IsBingoActive() && Gamemaster::GetPhase() == GamePhase::Starting) || Match.verificationLocked;
             UI::BeginDisabled(gameIsStarting);
             RenderContent();
             UI::EndDisabled();
@@ -287,6 +287,10 @@ namespace UIGameRoom {
         vec2 windowSize = UI::GetWindowSize();
         int secondsRemaining = (Match.startTime - Time::Now) / 1000 + 1;
         string countdownText = "Game starting in " + secondsRemaining + "...";
+        if (Match.verificationLocked) {
+            countdownText = "Verifying all player records before starting...";
+        }
+
         vec2 textSize = Draw::MeasureString(countdownText, Font::Current());
         float padding = Layout::GetPadding(windowSize.x, textSize.x, 1.0);
         vec4 textColor = UI::GetStyleColor(UI::Col::Text);
@@ -294,7 +298,7 @@ namespace UIGameRoom {
 
         int sinTimeValue = Match.startTime - Time::Now - 250;
         float alphaValue = sinTimeValue * 2. * Math::PI;
-        textColor.w = (Math::Sin(alphaValue / 1000.) + 1) / 1.6;
+        if (!Match.verificationLocked) textColor.w = (Math::Sin(alphaValue / 1000.) + 1) / 1.6;
 
         UI::SetCursorPos(vec2(padding - margin, windowSize.y - textSize.y - margin));
         UI::PushStyleColor(UI::Col::Text, textColor);

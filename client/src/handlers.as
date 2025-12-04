@@ -532,4 +532,8 @@ namespace NetworkHandlers {
             }
         }
     }
+
+    void StartPlayVerification(Json::Value @data) {
+        Match.verificationLocked = bool(data["locked"]);
+    }
 }
