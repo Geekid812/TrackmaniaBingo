@@ -14,5 +14,6 @@ namespace NetParams {
     Team TeamCreatePreset;
     Powerup Powerup;
     int PowerupBoardIndex;
+    int PowerupChoiceIndex;
     bool PowerupBoardIsForward;
 }

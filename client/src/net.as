@@ -558,6 +558,17 @@ namespace Network {
         body["board_index"] = NetParams::PowerupBoardIndex;
         body["forwards"] = NetParams::PowerupBoardIsForward;
         body["player_uid"] = NetParams::PlayerSelectUid;
+        body["choice"] = NetParams::PowerupChoiceIndex;
         Network::Post("ActivatePowerup", body, true);
+    }
+
+    void GetDiceChoices() {
+        auto request = Network::Post("GetDiceChoices", Json::Object(), true);
+        if (@request is null) return;
+
+        UIItemSelect::MapChoices = {};
+        for (uint i = 0; i < request["maps"].Length; i++) {
+            UIItemSelect::MapChoices.InsertLast(GameMap::Deserialize(request["maps"][i]));
+        }
     }
 }

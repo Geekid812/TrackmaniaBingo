@@ -187,11 +187,11 @@ namespace Powerups {
         }
 
         GameTile @tile = Match.GetCell(tileIndex);
-        tile.SetMap(null);
 
         if (tile.claimant.id == -1 && tile.HasRunSubmissions()) {
             tile.claimant = tile.LeadingRun().player.team;
         }
+        tile.attemptRanking = {};
     }
 
     void NotifyJail() {
