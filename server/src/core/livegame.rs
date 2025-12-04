@@ -434,10 +434,10 @@ impl LiveMatch {
             }
 
             if self.cells[id].state == TileItemState::Jail
-                && self.cells[id]
-                    .state_player
-                    .as_ref()
-                    .is_some_and(|p| self.get_player_team(p.uid as i32) == self.get_player_team(running_player.uid as i32))
+                && self.cells[id].state_player.as_ref().is_some_and(|p| {
+                    self.get_player_team(p.uid as i32)
+                        == self.get_player_team(running_player.uid as i32)
+                })
             {
                 self.jail_resolve(id, None);
             }
@@ -669,6 +669,7 @@ impl LiveMatch {
         powerup: Powerup,
         board_index: usize,
         forwards: bool,
+        choice: i32,
         player_id: i32,
     ) -> Result<(), String> {
         let Some(player) = self.get_player_mut(uid) else {
@@ -718,9 +719,7 @@ impl LiveMatch {
             Powerup::Jail if target.is_some() => {
                 self.powerup_effect_jail(board_index, target.clone().unwrap())
             }
-            Powerup::GoldenDice => {
-                self.powerup_effect_golden_dice(board_index, &player_ref.name)?
-            }
+            Powerup::GoldenDice => self.powerup_effect_golden_dice(board_index, choice)?,
             _ => {
                 return Err("this powerup can't be activated".to_string());
             }
@@ -927,6 +926,15 @@ impl LiveMatch {
             votes: votes.iter().map(|v| v.len() as i32).collect(),
         };
         self.channel.broadcast(&event);
+    }
+
+    pub fn get_dice_choices(&self) -> Vec<GameMap> {
+        self.cells
+            .iter()
+            .skip(self.cell_count())
+            .take(3)
+            .map(|cell| cell.map.clone())
+            .collect()
     }
 
     fn poll_end(&mut self, poll_ref: Shared<PollData>) {
@@ -1151,57 +1159,35 @@ impl LiveMatch {
     fn powerup_effect_golden_dice(
         &mut self,
         board_index: usize,
-        player_name: &str,
+        choice: i32,
     ) -> Result<(), String> {
         if self.cells.len() < self.cell_count() + 3 {
             return Err(
-                "not enough possible maps to create a vote, powerup effect was cancelled"
+                "not enough possible maps to activate this powerup, effect was cancelled"
                     .to_string(),
             );
         }
+        if choice < 0 || choice >= 3 {
+            return Err(format!(
+                "invalid choice value ({}), powerup effect was cancelled",
+                choice
+            ));
+        }
 
-        let ident = self.new_ident();
-        let held_tiles = vec![
-            self.cells.pop().unwrap(),
-            self.cells.pop().unwrap(),
-            self.cells.pop().unwrap(),
-        ];
+        let cell_count = self.cell_count();
+        let new_tile = self.cells.remove(cell_count + choice as usize);
         let tile = &mut self.cells[board_index];
         if let Some(winning_team) = tile.claimant.or(tile.leading_claim().map(|c| c.team_id)) {
             tile.claimant = Some(winning_team);
         }
 
-        let poll = Poll {
-            id: ident,
-            title: format!(
-                "{} has used \\$fd8Golden Dice \\$zto reroll \\$ff8{}\\$z. Which map shall replace it?",
-                player_name,
-                tile.map.name(),
-            ),
-            color: Color::new(128, 128, 128),
-            duration: Duration::seconds(60),
-            choices: vec![
-                PollChoice {
-                    text: held_tiles[0].map.name(),
-                    color: Color::new(100, 0, 150),
-                },
-                PollChoice {
-                    text: held_tiles[1].map.name(),
-                    color: Color::new(0, 100, 150),
-                },
-                PollChoice {
-                    text: held_tiles[2].map.name(),
-                    color: Color::new(0, 0, 250),
-                },
-            ],
-        };
+        self.replace_map(board_index, new_tile.map);
 
-        self.start_poll(
-            poll,
-            vec![vec![], vec![], vec![]],
-            PollResultCallback::GoldenDice(board_index),
-            held_tiles,
-        );
+        // move the other 2 choices to the back of the cells array, so they can be later reused
+        let unused_choices: Vec<GameCell> =
+            self.cells.drain(cell_count..(cell_count + 2)).collect();
+        self.cells.extend(unused_choices.into_iter());
+
         Ok(())
     }
 

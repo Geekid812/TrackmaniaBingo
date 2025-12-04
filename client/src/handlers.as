@@ -1,6 +1,8 @@
 
 
 namespace NetworkHandlers {
+    string LastRerolledMapName;
+
     void TeamsUpdate(Json::Value @status) {
         @Match.teams = {};
         auto JsonTeams = status["teams"];
@@ -339,9 +341,9 @@ namespace NetworkHandlers {
         string oldName =
             tile.map !is null ? Text::StripFormatCodes(Match.tiles[id].map.trackName) : "";
         tile.SetMap(GameMap::Deserialize(data["map"]));
-        tile.attemptRanking = {};
         Match.canReroll = bool(data["can_reroll"]);
 
+        LastRerolledMapName = oldName;
         UI::ShowNotification(Icons::Kenney::ReloadInverse + " Map Rerolled",
                              "The map \\$fd8" + oldName + " \\$zhas been rerolled.",
                              vec4(0., .6, .6, 1.),
@@ -422,21 +424,29 @@ namespace NetworkHandlers {
         string explainerText = Powerups::GetExplainerText(usedPowerup, boardIndex);
         string targetText;
         if (usedPowerup == Powerup::Jail) {
-            targetText = " and has sent " + targetPlayer.name;
+            targetText = " \\$zand has sent " + targetPlayer.name;
         }
         if (usedPowerup == Powerup::RainbowTile || usedPowerup == Powerup::Rally ||
             usedPowerup == Powerup::Jail) {
             targetText +=
                 " \\$zon \\$ff8" + Text::StripFormatCodes(Match.GetCell(boardIndex).map.trackName);
         }
-
-        if (usedPowerup != Powerup::GoldenDice) {
-            UIPoll::NotifyToast("\\$" + (@user !is null ? UIColor::GetHex(user.team.color) : "z") +
-                                    powerupUser.name + " \\$zhas used \\$fd8" +
-                                    itemName(usedPowerup) + targetText + "\\$z!" + explainerText,
-                                Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1),
-                                Powerups::GetPowerupTexture(usedPowerup));
+        if (usedPowerup == Powerup::GoldenDice) {
+            targetText += " \\$zon \\$ff8" + LastRerolledMapName + "\\$z";
+            explainerText += "\nThe map has been switched to \\$ff8" + Text::StripFormatCodes(Match.GetCell(boardIndex).map.trackName) + "\\$z.";
         }
+
+        if (usedPowerup == Powerup::GoldenDice && UIItemSelect::MapChoices.Length > 0 && powerupUser.uid != Profile.uid) {
+            // Someone used Golden Dice while we had our own, reload our map choices as they will be different now
+            UIItemSelect::MapChoices = {};
+            startnew(Network::GetDiceChoices);
+        }
+
+        UIPoll::NotifyToast("\\$" + (@user !is null ? UIColor::GetHex(user.team.color) : "z") +
+                                powerupUser.name + " \\$zhas used \\$fd8" +
+                                itemName(usedPowerup) + targetText + "\\$z!" + explainerText,
+                            Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1),
+                            Powerups::GetPowerupTexture(usedPowerup));
 
         Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer);
     }
