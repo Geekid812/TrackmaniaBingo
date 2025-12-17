@@ -13,7 +13,7 @@ use tracing::{debug, info};
 
 use super::{
     directory::{self, Owned, Shared, PUB_ROOMS_CHANNEL, ROOMS},
-    events::{game::GameEvent, room::RoomEvent, roomlist::RoomlistEvent},
+    events::{room::RoomEvent, roomlist::RoomlistEvent},
     gamecommon::PlayerData,
     livegame::LiveMatch,
     models::{

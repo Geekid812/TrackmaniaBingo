@@ -1,7 +1,6 @@
 use palette::serde::as_array;
 use serde::{Deserialize, Serialize};
 
-use crate::core::events::game::GameEvent;
 use crate::core::{teams::Team, util::Color};
 use crate::transport::Channel;
 

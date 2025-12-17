@@ -1,11 +1,10 @@
 use chrono::{DateTime, Duration, Utc};
 use parking_lot::RwLock;
-use reqwest::{Client, RequestBuilder, Response, StatusCode};
+use reqwest::{Client, RequestBuilder, Response};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use serde_with::{serde_as, TimestampSeconds};
 use thiserror::Error;
-use tracing::info;
 
 const NADEO_CORE_AUDIENCE: &'static str = "NadeoServices";
 const NADEO_LIVE_AUDIENCE: &'static str = "NadeoLiveServices";
