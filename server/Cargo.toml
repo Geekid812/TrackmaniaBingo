@@ -1,7 +1,7 @@
 [package]
 name = "bingohost"
 description = "Server application for Trackmania Bingo."
-version = "1.6.0"
+version = "1.6.2"
 edition = "2021"
 
 [dependencies]
@@ -51,7 +51,11 @@ chrono = { version = "0.4.24", features = ["serde"] }
 toml = "0.7.3"
 
 # HTTP requests
-reqwest = { version = "0.11.17", features = ["multipart", "json", "rustls-tls"], default-features = false }
+reqwest = { version = "0.11.17", features = [
+    "multipart",
+    "json",
+    "rustls-tls",
+], default-features = false }
 
 # Utilities for protocol codec
 tokio-util = { version = "0.7.8", features = ["codec"] }

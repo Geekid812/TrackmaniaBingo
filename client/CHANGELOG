@@ -1,16 +1,20 @@
-## Update 6.1
-A hotfix update with a couple of balance changes!
+## Update 6.2
+Here with the last feature update of the year! This update mixes it up with new game settings, quality of life changes, balance changes for the Frenzy mode as well as some usual fixes all around!
+
+### Game Settings
+- **New Target Medal Objective: World Record**. You can now choose to make the objective to claim a map to beat the current world record, for all of you extreme players out there.
+- **Discovery Mode**: When this setting is activated, the server will make sure to only select maps where no player has already set a record, to make every game feel brand new. **Please note:** Selecting this option means that an extra leaderboard check will have to take place before the game starts, which lasts a few seconds.
+- **Secret Records**: What if you just didn't know what time other players had set on a map, or by how much someone else had retaken your map? This extra challenge will now be available in your Bingo matches.
+- **Frenzy Item Spawns**: You can now tune how frequently items appear in the Frenzy gamemode. If you so choose, you can have fewer items appear, or you can choose to get an wilder frenzy of items!
 
 ### Frenzy - Balance Changes
-- Reduced jail time from 15 minutes to 10 minutes
-- Rainbow Tile can no longer be used to immediately create a bingo line
+- During a **Jail**, your teammates can now also free you from the tile where you are imprisoned by beating the current record.
+- The **Golden Dice** powerup has been reworked to be slightly less democratic. The player who cast it can now immediately choose one of three maps to replace the previous one instead of going to a vote. As before, the tile will remain of the same color as its previous owner until a record is set on the new map.
 
-### Hotfixes
-- Fixed a crash for "View Settings" inside a room
-- Potentially fixed a crash for alt-tabbing out of the game in a room
-- Fixed never ending jail time (the powerup now works as intended!)
-- Fixed creating teams in a lobby would create an undefined black team and softlock the button
-- Fixed host reconnection, you can now always go back to the room even after reconnecting!
+### QOL Changes
+- Map miniatures now show you the target medal time on the board itself without needing to open the map. This should come in useful when planning out your opening moves.
+- The **Rainbow Tile** is now a gradient shifting between colors and should become easier to distinguish on the board.
+- When a **Row/Column Shift** powerup is activated, the popup alert will now tell you more precisely which tiles moved.
+- When a powerup is about to expire, the item slot will start to blink red to warn you that you are about to lose your item. Use it now!
 
-### New: Match MVP
-After a bingo is scored, the player who claimed the most maps for the winning team will be designated as the match MVP. They will get a shiny badge next to their name as a reward. Cool!
+This release also includes some bug fixes, including fixes for the chat module being left unusable for some players. Please report all the new bugs you find in this update on the Discord server!
