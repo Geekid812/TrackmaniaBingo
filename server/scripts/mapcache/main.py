@@ -114,7 +114,7 @@ while True:
             print('COMPLETE')
             break
     
-        next_param = f"&after={j["Results"][-1]["MapId"]}"
+        next_param = f"&after={j['Results'][-1]['MapId']}"
     except Exception as e:
         err(e)
         # SQLite error
