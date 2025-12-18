@@ -445,7 +445,7 @@ namespace NetworkHandlers {
             explainerText += "\nThe map has been switched to \\$ff8" + Text::StripFormatCodes(Match.GetCell(boardIndex).map.trackName) + "\\$z.";
         }
 
-        if (usedPowerup == Powerup::GoldenDice && UIItemSelect::MapChoices.Length > 0 && powerupUser.uid != Profile.uid) {
+        if (usedPowerup == Powerup::GoldenDice && UIItemSelect::MapChoices.Length > 0 && int(powerupUser.uid) != Profile.uid) {
             // Someone used Golden Dice while we had our own, reload our map choices as they will be different now
             UIItemSelect::MapChoices = {};
             startnew(Network::GetDiceChoices);
