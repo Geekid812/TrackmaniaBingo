@@ -154,8 +154,8 @@ namespace NetworkHandlers {
 
     void RoomlistUpdateConfig(Json::Value @data) {
         NetworkRoom @room = UIRoomMenu::GetRoom(data["code"]);
-        room.roomConfig = RoomConfiguration::Deserialize(data["config"]);
-        room.config = MatchConfiguration::Deserialize(data["match_config"]);
+        room.config = RoomConfiguration::Deserialize(data["config"]);
+        room.matchConfig = MatchConfiguration::Deserialize(data["match_config"]);
     }
 
     void RoomlistPlayerUpdate(Json::Value @data) {
@@ -321,9 +321,18 @@ namespace NetworkHandlers {
     void MatchPlayerJoin(Json::Value @data) {
         if (!Gamemaster::IsBingoActive())
             return;
-        Player player(PlayerProfile::Deserialize(data["profile"]),
-                      Match.GetTeamWithId(data["team"]));
-        Match.players.InsertLast(player);
+
+        Player@ player = Match.GetPlayer(int(data["profile"]["uid"]));
+        Team team = Match.GetTeamWithId(data["team"]);
+
+        if (@player is null) {
+            Player newPlayer(PlayerProfile::Deserialize(data["profile"]),
+                        team);
+            Match.players.InsertLast(newPlayer);
+            player = newPlayer;
+        } else {
+            player.team = team;
+        }
 
         vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(player.team.color, 0.1), 0.5);
         UI::ShowNotification(
