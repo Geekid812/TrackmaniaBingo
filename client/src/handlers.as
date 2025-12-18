@@ -32,6 +32,7 @@ namespace NetworkHandlers {
         Match.uid = match["uid"];
         Match.startTime = Time::Now + uint64(match["start_ms"]);
         Match.canReroll = bool(match["can_reroll"]);
+        Match.endState = EndState();
 
         Gamemaster::SetPhase(GamePhase::Starting);
         LoadMaps(match["maps"]);
