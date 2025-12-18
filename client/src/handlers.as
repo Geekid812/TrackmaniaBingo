@@ -154,8 +154,8 @@ namespace NetworkHandlers {
 
     void RoomlistUpdateConfig(Json::Value @data) {
         NetworkRoom @room = UIRoomMenu::GetRoom(data["code"]);
-        Match.roomConfig = RoomConfiguration::Deserialize(data["config"]);
-        Match.config = MatchConfiguration::Deserialize(data["match_config"]);
+        room.roomConfig = RoomConfiguration::Deserialize(data["config"]);
+        room.config = MatchConfiguration::Deserialize(data["match_config"]);
     }
 
     void RoomlistPlayerUpdate(Json::Value @data) {
