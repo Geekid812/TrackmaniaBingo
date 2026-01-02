@@ -432,7 +432,7 @@ namespace NetworkHandlers {
         PlayerRef targetPlayer =
             (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"])
                                                           : PlayerRef());
-        string explainerText = Powerups::GetExplainerText(usedPowerup, boardIndex);
+        string explainerText = Powerups::GetExplainerText(usedPowerup, boardIndex, duration);
         string targetText;
         if (usedPowerup == Powerup::Jail) {
             targetText = " \\$zand has sent " + targetPlayer.name;
