@@ -319,12 +319,12 @@ namespace UIInfoBar {
                 break;
             case Powerup::Rally:
                 UI::Text("Rally\nStart a rally on a map of your choice.\nWhichever team has the "
-                         "record there after 10 minutes will claim all adjacent tiles!");
+                         "record there after " + MatchConfig.rallyLength+ " seconds will claim all adjacent tiles!");
                 break;
             case Powerup::Jail:
                 UI::Text(
                     "Jail\nSend a player you choose to any map of the Bingo board.\nThey will "
-                    "remain emprisoned there for 10 minutes until they can claim a new record!");
+                    "remain emprisoned there for " + MatchConfig.jailLength + " seconds until they can claim a new record!");
                 break;
             case Powerup::RainbowTile:
                 UI::Text("Rainbow Tile\nTransform any map into a rainbow tile,\nwhich counts as if "

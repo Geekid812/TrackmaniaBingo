@@ -34,7 +34,7 @@ namespace Powerups {
     string GetExplainerText(Powerup powerup, uint boardIndex) {
         switch (powerup) {
             case Powerup::Rally:
-                return "\nThe team who is winning here in 10 minutes will claim all adjacent squares!";
+                return "\nThe team who is winning here in " + MatchConfig.rallyLength + " seconds will claim all adjacent squares!";
             case Powerup::Jail:
                 return "\nThey have to remain on this map until they can beat the current record!";
             case Powerup::RainbowTile:
