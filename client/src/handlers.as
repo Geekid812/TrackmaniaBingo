@@ -495,7 +495,7 @@ namespace NetworkHandlers {
         
         int cellUp;
         if (cellId - Match.config.gridSize < 0) {
-            cellUp = cellId - Match.config.gridSize + Match.config.gridSize^2;
+            cellUp = cellId - Match.config.gridSize + Math::Pow(Match.config.gridSize, 2);
         } else {
             cellUp = cellId - Match.config.gridSize;
         }
@@ -515,8 +515,8 @@ namespace NetworkHandlers {
         }
 
         int cellDown;
-        if (cellId - Match.config.gridSize < 0) {
-            cellDown = cellId + Match.config.gridSize - Match.config.gridSize^2;
+        if (cellId + Match.config.gridSize > int(Gamemaster::GetTileCount())) {
+            cellDown = cellId + Match.config.gridSize - Math::Pow(Match.config.gridSize, 2);
         } else {
             cellDown = cellId + Match.config.gridSize;
         }
