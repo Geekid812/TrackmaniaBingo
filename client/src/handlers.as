@@ -492,10 +492,20 @@ namespace NetworkHandlers {
                              winningTeam.name + " has won the rally on \\$fd8" + mapName + " \\$z!",
                              teamColor,
                              15000);
-
+        
         int cellUp = cellId - Match.config.gridSize;
-        int cellLeft = cellId - 1;
-        int cellRight = cellId + 1;
+        int cellLeft;
+        if (cellId % Match.config.gridSize == 1) {
+            cellLeft = cellId - 1 + Match.config.gridSize;
+        } else {
+            cellLeft = cellId - 1;
+        }
+        int cellRight;
+        if (cellId % Match.config.gridSize == 0) {
+            cellRight = cellId + 1 - Match.config.gridSize;
+        } else {
+            cellRight = cellId + 1;
+        }
         int cellDown = cellId + Match.config.gridSize;
 
         if (cellUp >= 0)

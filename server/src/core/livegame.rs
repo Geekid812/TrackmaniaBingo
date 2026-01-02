@@ -1221,8 +1221,21 @@ impl LiveMatch {
 
             if let Some(winning_team) = team {
                 let tile_up = cell_id as i32 - self.config.grid_size as i32;
-                let tile_left = cell_id as i32 - 1;
-                let tile_right = cell_id + 1;
+
+                let tile_left;
+                if cell_id % self.config.grid_size as usize == 1 {
+                    tile_left = cell_id - 1 + self.config.grid_size as usize;
+                } else {
+                    tile_left = cell_id - 1;
+                }
+
+                let tile_right;
+                if cell_id % self.config.grid_size as usize == 0 {
+                    tile_right = cell_id + 1 - self.config.grid_size as usize;
+                } else {
+                    tile_right = cell_id + 1;
+                }
+
                 let tile_down = cell_id + self.config.grid_size as usize;
 
                 if tile_up >= 0 {
