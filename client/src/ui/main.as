@@ -169,9 +169,27 @@ namespace UIEditSettings {
                   Visible,
                   UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
 
-        UI::BeginDisabled(!Match.isLocalPlayerHost);
-        UIRoomSettings::SettingsView();
-        UI::EndDisabled();
+        if (!Match.isLocalPlayerHost) {
+            // Read-only view of the match's config
+
+            // Sort of hacky behaviour: temporarily swap the config globals to the current match's config
+            // The global variables are supported to be local state for the Create tab, they are NOT reflecting the current match config!
+            RoomConfiguration roomConfig = RoomConfig;
+            MatchConfiguration matchConfig = MatchConfig;
+
+            UI::BeginDisabled(!Match.isLocalPlayerHost);
+            RoomConfig = Match.roomConfig;
+            MatchConfig = Match.config;
+            UIRoomSettings::SettingsView();
+            UI::EndDisabled();
+
+            // Restore global configs
+            RoomConfig = roomConfig;
+            MatchConfig = matchConfig;
+        } else {
+            // Read/write view of the player's local RoomConfig and MatchConfig
+            UIRoomSettings::SettingsView();
+        }
 
         if (!Match.isLocalPlayerHost) {
             UI::End();
