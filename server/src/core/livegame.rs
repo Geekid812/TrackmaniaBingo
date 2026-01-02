@@ -1241,9 +1241,9 @@ impl LiveMatch {
                 if tile_up >= 0 {
                     self.cells[tile_up as usize].claimant = Some(winning_team);
                 }
-                if tile_left >= 0 {
-                    self.cells[tile_left as usize].claimant = Some(winning_team);
-                }
+
+                self.cells[tile_left as usize].claimant = Some(winning_team);
+
                 if tile_right < self.cell_count() {
                     self.cells[tile_right].claimant = Some(winning_team);
                 }
