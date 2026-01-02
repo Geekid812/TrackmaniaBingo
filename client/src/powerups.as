@@ -99,13 +99,13 @@ namespace Powerups {
             PowerupEffectBoardShift(powerup == Powerup::RowShift, boardIndex, forwards);
             break;
         case Powerup::Rally:
-            PowerupEffectRally(boardIndex, 600000);
+            PowerupEffectRally(boardIndex, MatchConfig.rallyLength * 1000);
             break;
         case Powerup::RainbowTile:
             PowerupEffectRainbowTile(boardIndex);
             break;
         case Powerup::Jail:
-            PowerupEffectJail(boardIndex, targetPlayer, 600000);
+            PowerupEffectJail(boardIndex, targetPlayer, MatchConfig.jailLength * 1000);
             break;
         case Powerup::GoldenDice:
             PowerupEffectGoldenDice(boardIndex);

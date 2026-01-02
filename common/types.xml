@@ -59,6 +59,8 @@
         <m name="items" type="FrenzyItemSettings" />
         <m name="items_expire" type="uint" default="600" />
         <m name="items_tick_multiplier" type="uint" default="1000" />
+        <m name="rally_length" type="uint" default="600" />
+        <m name="jail_length" type="uint" default="600" />
     </struct>
 
     <struct name="FrenzyItemSettings">
