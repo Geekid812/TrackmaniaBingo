@@ -671,7 +671,6 @@ impl LiveMatch {
         forwards: bool,
         choice: i32,
         player_id: i32,
-        duration: i64
     ) -> Result<(), String> {
         let Some(player) = self.get_player_mut(uid) else {
             return Err(format!("player with uid '{}' not found", uid));
@@ -716,14 +715,22 @@ impl LiveMatch {
                 self.powerup_effect_board_shift(powerup == Powerup::RowShift, board_index, forwards)
             }
             Powerup::RainbowTile => self.powerup_effect_rainbow_tile(board_index),
-            Powerup::Rally => self.powerup_effect_rally(board_index, duration),
+            Powerup::Rally => {
+                self.powerup_effect_rally(board_index)
+            },
             Powerup::Jail if target.is_some() => {
-                self.powerup_effect_jail(board_index, target.clone().unwrap(), duration)
+                self.powerup_effect_jail(board_index, target.clone().unwrap())
             }
             Powerup::GoldenDice => self.powerup_effect_golden_dice(board_index, choice)?,
             _ => {
                 return Err("this powerup can't be activated".to_string());
             }
+        };
+
+        let duration = if powerup == Powerup::Jail {
+            self.config.jail_length as i64
+        } else {
+            self.config.rally_length as i64
         };
 
         self.channel.broadcast(&GameEvent::PowerupActivated {
@@ -1127,8 +1134,8 @@ impl LiveMatch {
         self.cells[board_index].state = TileItemState::Rainbow;
     }
 
-    fn powerup_effect_rally(&mut self, board_index: usize, rally_length: i64) {
-        let rally_duration = Duration::seconds(rally_length);
+    fn powerup_effect_rally(&mut self, board_index: usize) {
+        let rally_duration = Duration::seconds(self.config.rally_length as i64);
         let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Rally;
         self.cells[board_index].state_ident = Some(state_ident);
@@ -1141,8 +1148,8 @@ impl LiveMatch {
         );
     }
 
-    fn powerup_effect_jail(&mut self, board_index: usize, target: PlayerRef, jail_length: i64) {
-        let jail_duration = Duration::seconds(jail_length);
+    fn powerup_effect_jail(&mut self, board_index: usize, target: PlayerRef) {
+        let jail_duration = Duration::seconds(self.config.jail_length as i64);
 
         let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Jail;

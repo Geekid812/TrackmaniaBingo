@@ -15,7 +15,6 @@ pub struct ActivatePowerup {
     forwards: bool,
     player_uid: i32,
     choice: i32,
-    duration: i64
 }
 
 pub fn handle(ctx: &mut ClientContext, args: ActivatePowerup) -> Value {
@@ -28,7 +27,6 @@ pub fn handle(ctx: &mut ClientContext, args: ActivatePowerup) -> Value {
             args.forwards,
             args.choice,
             args.player_uid,
-            args.duration
         ) {
             Ok(()) => ok(),
             Err(msg) => error(&msg),
