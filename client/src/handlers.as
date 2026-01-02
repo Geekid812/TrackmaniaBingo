@@ -493,20 +493,33 @@ namespace NetworkHandlers {
                              teamColor,
                              15000);
         
-        int cellUp = cellId - Match.config.gridSize;
+        int cellUp;
+        if (cellId - Match.config.gridSize < 0) {
+            cellUp = cellId - Match.config.gridSize + Match.config.gridSize^2;
+        } else {
+            cellUp = cellId - Match.config.gridSize;
+        }
+
         int cellLeft;
-        if (cellId % Match.config.gridSize == 1) {
+        if ((cellId + 1) % Match.config.gridSize == 1) {
             cellLeft = cellId - 1 + Match.config.gridSize;
         } else {
             cellLeft = cellId - 1;
         }
+
         int cellRight;
-        if (cellId % Match.config.gridSize == 0) {
+        if ((cellId + 1) % Match.config.gridSize == 0) {
             cellRight = cellId + 1 - Match.config.gridSize;
         } else {
             cellRight = cellId + 1;
         }
-        int cellDown = cellId + Match.config.gridSize;
+
+        int cellDown;
+        if (cellId - Match.config.gridSize < 0) {
+            cellDown = cellId + Match.config.gridSize - Match.config.gridSize^2;
+        } else {
+            cellDown = cellId + Match.config.gridSize;
+        }
 
         if (cellUp >= 0)
             Match.GetCell(cellUp).claimant = winningTeam;

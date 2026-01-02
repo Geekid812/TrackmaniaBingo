@@ -1220,7 +1220,12 @@ impl LiveMatch {
                 .or(self.cells[cell_id].leading_claim().map(|c| c.team_id));
 
             if let Some(winning_team) = team {
-                let tile_up = cell_id as i32 - self.config.grid_size as i32;
+                let tile_up;
+                if cell_id as i32 - (self.config.grid_size as i32) < 0 {
+                    tile_up = cell_id as i32 - self.config.grid_size as i32 + (self.config.grid_size as i32)^2;
+                } else {
+                    tile_up = cell_id as i32 - self.config.grid_size as i32;
+                }
 
                 let tile_left;
                 if cell_id % self.config.grid_size as usize == 1 {
@@ -1236,13 +1241,18 @@ impl LiveMatch {
                     tile_right = cell_id + 1;
                 }
 
-                let tile_down = cell_id + self.config.grid_size as usize;
+                let tile_down;
+                if cell_id + self.config.grid_size as usize > self.cell_count() {
+                    tile_down = cell_id + self.config.grid_size as usize - (self.config.grid_size as usize)^2;
+                } else {
+                    tile_down = cell_id + self.config.grid_size as usize;
+                }
 
                 if tile_up >= 0 {
                     self.cells[tile_up as usize].claimant = Some(winning_team);
                 }
 
-                self.cells[tile_left as usize].claimant = Some(winning_team);
+                self.cells[tile_left].claimant = Some(winning_team);
 
                 if tile_right < self.cell_count() {
                     self.cells[tile_right].claimant = Some(winning_team);
