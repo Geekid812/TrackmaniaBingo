@@ -11,7 +11,11 @@ use crate::{
         livegame::{MatchEndInfo, MvpData, TileItemState},
         team::NetworkGameTeam,
     },
-    datatypes::{CampaignMap, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice, Powerup},
+    datatypes::{
+        CampaignMap, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice, Powerup,
+        RoomConfiguration,
+    },
+    integrations::{self, hooks::MatchEndEffect},
     server::{
         context::ClientContext,
         tasks::{execute_delayed_task, execute_repeating_task},
@@ -516,6 +520,36 @@ impl LiveMatch {
 
         if self.should_match_be_saved() {
             self.save_match_end(draw, end_state.mvp.map(|mvp| mvp.player));
+        }
+
+        if let Some(hook) = integrations::HOOK.get() {
+            // Hook event: match ended
+            let teams = self
+                .teams
+                .get_teams()
+                .iter()
+                .map(NetworkGameTeam::from)
+                .collect();
+            let started = self.started.unwrap_or_default();
+            let ended = Utc::now();
+            let uid = self.uid().to_string();
+            let match_config = self.config.clone();
+            let room_config = if let Some(room) = self.room.upgrade() {
+                room.lock().config().clone()
+            } else {
+                RoomConfiguration::default()
+            };
+            tokio::spawn(async move {
+                hook.post_match_end(&MatchEndEffect {
+                    uid,
+                    room_config,
+                    match_config,
+                    teams,
+                    started,
+                    ended,
+                })
+                .await
+            });
         }
 
         MATCHES.remove(self.uid.clone());

@@ -27,5 +27,6 @@ start_countdown = 5000      # milliseconds counting down at match start
 max_author_millis = 180000  # in MXRandom mode, maximum author time for a map
 
 [keys]
-openplanet = "KEY"                  # secret key for Openplanet authentication
-webservices = "username:password"   # server account credentials for Nadeo Webservices (api.trackmania.com)
+openplanet = "KEY"                       # secret key for Openplanet authentication
+webservices = "username:password"        # server account credentials for Nadeo Webservices (api.trackmania.com)
+hook_endpoint = "http://localhost:3000/" # endpoint for receiving POST events (optional)

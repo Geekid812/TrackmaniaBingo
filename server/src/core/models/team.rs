@@ -52,6 +52,7 @@ pub struct GameTeam {
 pub struct NetworkGameTeam {
     pub base: BaseTeam,
     pub members: Vec<IngamePlayer>,
+    pub winner: bool,
 }
 
 impl From<BaseTeam> for GameTeam {
@@ -86,6 +87,7 @@ impl From<&GameTeam> for NetworkGameTeam {
         Self {
             base: value.base.clone(),
             members: value.members.clone(),
+            winner: value.winner,
         }
     }
 }
