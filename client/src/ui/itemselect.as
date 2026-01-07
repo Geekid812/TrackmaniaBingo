@@ -158,12 +158,6 @@ namespace UIItemSelect {
     }
 
     void OnTileClicked(uint tileIndex) {
-        if (Powerup == Powerup::Jail){
-            NetParams::Duration = MatchConfig.jailLength;
-        }
-        if (Powerup == Powerup::Rally){
-            NetParams::Duration = MatchConfig.rallyLength;
-        }
         if (Powerup == Powerup::GoldenDice) {
             if (IsSelectingNewTile) {
                 NetParams::PowerupChoiceIndex = tileIndex;

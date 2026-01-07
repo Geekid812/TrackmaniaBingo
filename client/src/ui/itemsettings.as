@@ -136,7 +136,7 @@ namespace UIItemSettings {
         
         UI::SameLine();
         Layout::EndLabelAlign();
-        UI::Text("Seconds");
+        UI::Text("seconds");
         return newValue;
     }
 }

@@ -16,5 +16,4 @@ namespace NetParams {
     int PowerupBoardIndex;
     int PowerupChoiceIndex;
     bool PowerupBoardIsForward;
-    int Duration;
 }

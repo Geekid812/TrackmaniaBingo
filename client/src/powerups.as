@@ -35,9 +35,9 @@ namespace Powerups {
         switch (powerup) {
             case Powerup::Rally:
                 if (duration > 90) {
-                    return "\nThe team who is winning here in " + duration/60 + " minutes will claim all adjacent squares!";
+                    return "\nThe team who is winning here in " + tostring(duration / 60) + " minutes will claim all adjacent squares!";
                 } else{
-                return "\nThe team who is winning here in " + duration + " seconds will claim all adjacent squares!";
+                return "\nThe team who is winning here in " + tostring(duration) + " seconds will claim all adjacent squares!";
                 }
             case Powerup::Jail:
                 return "\nThey have to remain on this map until they can beat the current record!";

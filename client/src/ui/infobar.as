@@ -317,29 +317,26 @@ namespace UIInfoBar {
                 UI::Text("Column Shift\nShift all tiles on a column of the Bingo board one step in "
                          "any direction!");
                 break;
-            case Powerup::Rally:
-                if (Match.config.rallyLength > 89){
-                    UI::Text(
-                        "Rally\nStart a rally on a map of your choice.\nWhichever team has the "
-                        "record there after " + float(Match.config.rallyLength) / 60 + " minutes will claim all adjacent tiles!");
-                } else {
-                    UI::Text(
-                        "Rally\nStart a rally on a map of your choice.\nWhichever team has the "
-                        "record there after " + Match.config.rallyLength + " seconds will claim all adjacent tiles!");
+            case Powerup::Rally: {
+                string timeDescription = tostring(Match.config.rallyLength) + " seconds";
+                if (Match.config.rallyLength > 90) {
+                    timeDescription = tostring(Match.config.rallyLength / 60) + " minutes";
                 }
+                UI::Text(
+                    "Rally\nStart a rally on a map of your choice.\nWhichever team has the "
+                    "record there after " + timeDescription + " will claim all adjacent tiles!");
                 break;
-            case Powerup::Jail:
-                if (Match.config.jailLength > 89) {
-                    UI::Text(
-                        "Jail\nSend a player you choose to any map of the Bingo board.\nThey will "
-                        "remain emprisoned there for " + float(Match.config.jailLength) / 60 + " minutes until they can claim a new record!");
-                } else {
-                    UI::Text(
-                        "Jail\nSend a player you choose to any map of the Bingo board.\nThey will "
-                        "remain emprisoned there for " + Match.config.jailLength + " seconds until they can claim a new record!");
+            }
+            case Powerup::Jail: {
+                string timeDescription = tostring(Match.config.jailLength) + " seconds";
+                if (Match.config.jailLength > 90) {
+                    timeDescription = tostring(Match.config.jailLength / 60) + " minutes";
                 }
-
+                UI::Text(
+                    "Jail\nSend a player you choose to any map of the Bingo board.\nThey will "
+                    "remain emprisoned there for " + timeDescription + " until they can claim a new record!");
                 break;
+            }
             case Powerup::RainbowTile:
                 UI::Text("Rainbow Tile\nTransform any map into a rainbow tile,\nwhich counts as if "
                          "all teams had claimed it!\nCan't be used to immediately create a\nbingo "
