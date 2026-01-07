@@ -428,10 +428,11 @@ namespace NetworkHandlers {
         Player @user = Match.GetPlayer(powerupUser.uid);
         int boardIndex = int(data["board_index"]);
         bool forwards = bool(data["forwards"]);
+        uint duration = uint(data["duration"]);
         PlayerRef targetPlayer =
             (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"])
                                                           : PlayerRef());
-        string explainerText = Powerups::GetExplainerText(usedPowerup, boardIndex);
+        string explainerText = Powerups::GetExplainerText(usedPowerup, boardIndex, duration);
         string targetText;
         if (usedPowerup == Powerup::Jail) {
             targetText = " \\$zand has sent " + targetPlayer.name;
@@ -458,7 +459,7 @@ namespace NetworkHandlers {
                             Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1),
                             Powerups::GetPowerupTexture(usedPowerup));
 
-        Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer);
+        Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer, duration);
     }
 
     void ItemSlotEquip(Json::Value @data) {

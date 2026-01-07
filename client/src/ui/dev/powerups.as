@@ -47,6 +47,18 @@ namespace UIDevPowerups {
 
             Powerups::PowerupEffectJail(PowerupTileIndex, localPlayer, 600000);
         }
+                UI::SameLine();
+        if (PowerupAction("Rally (Match Config Length)")) {
+            Powerups::PowerupEffectRally(PowerupTileIndex, MatchConfig.rallyLength * 1000);
+        }
+        UI::SameLine();
+        if (PowerupAction("Jail Yourself (Match Config Length)")) {
+            PlayerRef localPlayer();
+            localPlayer.uid = Profile.uid;
+            localPlayer.name = Profile.name;
+
+            Powerups::PowerupEffectJail(PowerupTileIndex, localPlayer, MatchConfig.jailLength * 1000);
+        }
     }
 
     bool PowerupAction(const string& in text) { return UI::Button(text); }

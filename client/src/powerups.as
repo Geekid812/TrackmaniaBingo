@@ -31,10 +31,14 @@ namespace Powerups {
         }
     }
 
-    string GetExplainerText(Powerup powerup, uint boardIndex) {
+    string GetExplainerText(Powerup powerup, uint boardIndex, uint duration) {
         switch (powerup) {
             case Powerup::Rally:
-                return "\nThe team who is winning here in 10 minutes will claim all adjacent squares!";
+                if (duration > 90) {
+                    return "\nThe team who is winning here in " + duration/60 + " minutes will claim all adjacent squares!";
+                } else{
+                return "\nThe team who is winning here in " + duration + " seconds will claim all adjacent squares!";
+                }
             case Powerup::Jail:
                 return "\nThey have to remain on this map until they can beat the current record!";
             case Powerup::RainbowTile:
@@ -87,7 +91,8 @@ namespace Powerups {
                         PlayerRef powerupUser,
                         int boardIndex,
                         bool forwards,
-                        PlayerRef @targetPlayer) {
+                        PlayerRef @targetPlayer,
+                        uint duration) {
         if (!Gamemaster::IsBingoActive()) {
             logwarn("[Powerups::TriggerPowerup] Bingo is not active, ignoring this event.");
             return;
@@ -99,13 +104,13 @@ namespace Powerups {
             PowerupEffectBoardShift(powerup == Powerup::RowShift, boardIndex, forwards);
             break;
         case Powerup::Rally:
-            PowerupEffectRally(boardIndex, 600000);
+            PowerupEffectRally(boardIndex, duration * 1000);
             break;
         case Powerup::RainbowTile:
             PowerupEffectRainbowTile(boardIndex);
             break;
         case Powerup::Jail:
-            PowerupEffectJail(boardIndex, targetPlayer, 600000);
+            PowerupEffectJail(boardIndex, targetPlayer, duration * 1000);
             break;
         case Powerup::GoldenDice:
             PowerupEffectGoldenDice(boardIndex);

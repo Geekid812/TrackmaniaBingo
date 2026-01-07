@@ -749,7 +749,9 @@ impl LiveMatch {
                 self.powerup_effect_board_shift(powerup == Powerup::RowShift, board_index, forwards)
             }
             Powerup::RainbowTile => self.powerup_effect_rainbow_tile(board_index),
-            Powerup::Rally => self.powerup_effect_rally(board_index),
+            Powerup::Rally => {
+                self.powerup_effect_rally(board_index)
+            },
             Powerup::Jail if target.is_some() => {
                 self.powerup_effect_jail(board_index, target.clone().unwrap())
             }
@@ -759,12 +761,19 @@ impl LiveMatch {
             }
         };
 
+        let duration = if powerup == Powerup::Jail {
+            self.config.jail_length as i64
+        } else {
+            self.config.rally_length as i64
+        };
+
         self.channel.broadcast(&GameEvent::PowerupActivated {
             powerup,
             player: player_ref,
             board_index,
             forwards,
             target,
+            duration,
         });
         self.try_do_bingo_checks();
         Ok(())
@@ -1160,8 +1169,7 @@ impl LiveMatch {
     }
 
     fn powerup_effect_rally(&mut self, board_index: usize) {
-        let rally_duration = Duration::minutes(10);
-
+        let rally_duration = Duration::seconds(self.config.rally_length as i64);
         let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Rally;
         self.cells[board_index].state_ident = Some(state_ident);
@@ -1175,7 +1183,7 @@ impl LiveMatch {
     }
 
     fn powerup_effect_jail(&mut self, board_index: usize, target: PlayerRef) {
-        let jail_duration = Duration::minutes(10);
+        let jail_duration = Duration::seconds(self.config.jail_length as i64);
 
         let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Jail;

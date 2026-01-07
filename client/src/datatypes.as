@@ -124,6 +124,8 @@ class MatchConfiguration {
     FrenzyItemSettings items;
     uint itemsExpire = 600;
     uint itemsTickMultiplier = 1000;
+    uint rallyLength = 600;
+    uint jailLength = 600;
     MatchConfiguration() {}
 }
 namespace MatchConfiguration {
@@ -148,6 +150,8 @@ namespace MatchConfiguration {
         value["items"] = FrenzyItemSettings::Serialize(cls.items);
         value["items_expire"] = cls.itemsExpire;
         value["items_tick_multiplier"] = cls.itemsTickMultiplier;
+        value["rally_length"] = cls.rallyLength;
+        value["jail_length"] = cls.jailLength;
 
         return value;
     }
@@ -175,6 +179,8 @@ namespace MatchConfiguration {
         cls.items = FrenzyItemSettings::Deserialize(value["items"]);
         cls.itemsExpire = value["items_expire"];
         cls.itemsTickMultiplier = value["items_tick_multiplier"];
+        cls.rallyLength = value["rally_length"];
+        cls.jailLength = value["jail_length"];
 
         return cls;
     }

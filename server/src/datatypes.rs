@@ -89,6 +89,10 @@ pub struct MatchConfiguration {
 	pub items_expire: u32,
     #[derivative(Default(value = "1000"))]
 	pub items_tick_multiplier: u32,
+    #[derivative(Default(value = "600"))]
+	pub rally_length: u32,
+    #[derivative(Default(value = "600"))]
+	pub jail_length: u32,
 }
 
 /* Item drawing probabilities for configuring the Frenzy gamemode. */
