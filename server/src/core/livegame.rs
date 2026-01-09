@@ -185,7 +185,7 @@ impl LiveMatch {
     }
 
     fn setup_powerups(&mut self) {
-        let tick_duration = std::time::Duration::from_millis(60)
+        let tick_duration = std::time::Duration::from_secs(60)
             / (config::get_integer("behaviour.powerup_tick_rate").unwrap_or(1) as f32
                 * (self.config.items_tick_multiplier as f32 / 1000.)) as u32;
 
@@ -749,9 +749,7 @@ impl LiveMatch {
                 self.powerup_effect_board_shift(powerup == Powerup::RowShift, board_index, forwards)
             }
             Powerup::RainbowTile => self.powerup_effect_rainbow_tile(board_index),
-            Powerup::Rally => {
-                self.powerup_effect_rally(board_index)
-            },
+            Powerup::Rally => self.powerup_effect_rally(board_index),
             Powerup::Jail if target.is_some() => {
                 self.powerup_effect_jail(board_index, target.clone().unwrap())
             }
