@@ -76,7 +76,7 @@ struct PollData {
 
 pub enum PollResultCallback {
     None,
-    Reroll(usize),
+    Reroll(u32),
     GoldenDice(usize),
 }
 
@@ -105,6 +105,7 @@ impl LiveMatch {
                     state_player: None,
                     state_deadline: DateTime::default(),
                     state_ident: None,
+                    reroll_ident: None,
                 })
                 .collect(),
             started: None,
@@ -626,7 +627,9 @@ impl LiveMatch {
             return Err(anyhow!("there is already a reroll vote for this map"));
         }
 
-        let cell = &self.cells[cell_id];
+        let reroll_ident = self.new_ident();
+        let cell = &mut self.cells[cell_id];
+        cell.reroll_ident = Some(reroll_ident);
         let poll = Poll {
             id: poll_id,
             title: format!(
@@ -652,29 +655,35 @@ impl LiveMatch {
         self.start_poll(
             poll,
             initial_votes,
-            PollResultCallback::Reroll(cell_id),
+            PollResultCallback::Reroll(reroll_ident),
             Vec::new(),
         );
 
         Ok(())
     }
 
-    fn reroll_map(&mut self, cell_id: usize) -> Result<(), anyhow::Error> {
+    fn reroll_map(&mut self, selector: TileSelector) -> Result<(), anyhow::Error> {
         if !self.can_reroll() {
             return Err(anyhow!("tried to reroll, but rerolls are disallowed"));
         }
-        if self.cells[cell_id].leading_claim().is_some() || self.cells[cell_id].claimant.is_some() {
-            return Err(anyhow!("map is already claimed, cannot reroll it"));
-        }
 
-        self.cells.swap_remove(cell_id);
-        self.cells[cell_id].cell_id = cell_id;
-        self.channel.broadcast(&GameEvent::MapRerolled {
-            cell_id,
-            map: self.cells[cell_id].map.clone(),
-            can_reroll: self.can_reroll(),
-        });
-        Ok(())
+        if let Some(tile) = self.get_tile_mut(&selector) {
+            if tile.leading_claim().is_some() || tile.claimant.is_some() {
+                return Err(anyhow!("map is already claimed, cannot reroll it"));
+            }
+            let cell_id = tile.cell_id;
+
+            self.cells.swap_remove(cell_id);
+            self.cells[cell_id].cell_id = cell_id;
+            self.channel.broadcast(&GameEvent::MapRerolled {
+                cell_id,
+                map: self.cells[cell_id].map.clone(),
+                can_reroll: self.can_reroll(),
+            });
+            Ok(())
+        } else {
+            Err(anyhow!("map {:?} not found", selector))
+        }
     }
 
     fn replace_map(&mut self, cell_id: usize, map: GameMap) {
@@ -994,10 +1003,10 @@ impl LiveMatch {
             });
 
             match poll.callback {
-                PollResultCallback::Reroll(cell_id)
+                PollResultCallback::Reroll(reroll_ident)
                     if poll.votes[0].len() > poll.votes[1].len() =>
                 {
-                    if let Err(e) = self.reroll_map(cell_id) {
+                    if let Err(e) = self.reroll_map(TileSelector::RerollIdent(reroll_ident)) {
                         error!("{}", e);
                     }
                 }
@@ -1232,7 +1241,7 @@ impl LiveMatch {
     }
 
     fn jail_resolve(&mut self, selector: TileSelector) {
-        if let Some(tile) = self.get_tile_mut(selector) {
+        if let Some(tile) = self.get_tile_mut(&selector) {
             tile.state = TileItemState::Empty;
             tile.state_player = None;
             tile.state_ident = None;
@@ -1244,7 +1253,7 @@ impl LiveMatch {
     }
 
     fn rally_resolve(&mut self, selector: TileSelector) {
-        if let Some(tile) = self.get_tile_mut(selector) {
+        if let Some(tile) = self.get_tile_mut(&selector) {
             tile.state = TileItemState::Empty;
             tile.state_ident = None;
             tile.state_deadline = DateTime::default();
@@ -1292,13 +1301,17 @@ impl LiveMatch {
         ident
     }
 
-    fn get_tile_mut(&mut self, selector: TileSelector) -> Option<&mut GameCell> {
+    fn get_tile_mut(&mut self, selector: &TileSelector) -> Option<&mut GameCell> {
         match selector {
-            TileSelector::BoardIndex(index) => self.cells.get_mut(index),
+            TileSelector::BoardIndex(index) => self.cells.get_mut(*index),
             TileSelector::StateIdent(ident) => self
                 .cells
                 .iter_mut()
-                .find(|c| c.state_ident.is_some_and(|cell_state| cell_state == ident)),
+                .find(|c| c.state_ident.is_some_and(|cell_state| cell_state == *ident)),
+            TileSelector::RerollIdent(ident) => self.cells.iter_mut().find(|c| {
+                c.reroll_ident
+                    .is_some_and(|cell_reroll| cell_reroll == *ident)
+            }),
         }
     }
 }
