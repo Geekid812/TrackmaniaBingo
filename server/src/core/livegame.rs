@@ -751,6 +751,24 @@ impl LiveMatch {
             }
         }
 
+        if powerup == Powerup::Jail {
+            let owned_team = self.cells[board_index]
+                .claimant
+                .or_else(|| self.cells[board_index].leading_claim().map(|c| c.team_id));
+
+            if owned_team.is_none() {
+                return Err(
+                    "Jail must be used on a tile which has already been claimed!".to_string(),
+                );
+            }
+
+            if owned_team == self.get_player_team(player_id) {
+                return Err(
+                    "You cannot imprison someone on a tile their team has claimed!".to_string(),
+                );
+            }
+        }
+
         // Powerup activation
         self.give_powerup(player_ref.clone(), Powerup::Empty);
         match powerup {

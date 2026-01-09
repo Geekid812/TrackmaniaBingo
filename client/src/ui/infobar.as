@@ -333,7 +333,7 @@ namespace UIInfoBar {
                     timeDescription = tostring(Match.config.jailLength / 60) + " minutes";
                 }
                 UI::Text(
-                    "Jail\nSend a player you choose to any map of the Bingo board.\nThey will "
+                    "Jail\nSend a player you choose to a map of the Bingo board that is claimed by another team.\nThey will "
                     "remain emprisoned there for " + timeDescription + " until they can claim a new record!");
                 break;
             }
@@ -345,7 +345,7 @@ namespace UIInfoBar {
             case Powerup::GoldenDice:
                 UI::Text(
                     "Golden Dice\nReroll any map of your choice (keeps the current team "
-                    "color).\nAll players can vote for one of three maps that will replace it!");
+                    "color).\nYou can pick one of three new maps to replace it!");
                 break;
             default:
                 UI::TextDisabled("You don't have any item to use right now.");
