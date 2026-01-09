@@ -263,6 +263,10 @@ namespace Board {
                 nvg::Rect(cellPosition.x, cellPosition.y, sizes.cell, sizes.cell);
                 nvg::Fill();
 
+                // Don't apply special states if tile doesn't exist
+                if (@tile is null)
+                    continue;
+
                 // If this cell has a special powerup or rally state, queue it for drawing marks and
                 // highlights later
                 if (tile.specialState == TileItemState::HasPowerup ||
