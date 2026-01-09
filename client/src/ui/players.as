@@ -94,6 +94,9 @@ namespace UIPlayers {
                 }
                 UIColor::Reset();
                 UI::EndDisabled();
+                if (!teamPresetAvailable)
+                    UI::SetItemTooltip("Not enough team presets are available to create a new "
+                                       "team.\nCreate a new team in the Teams Editor.");
 
                 UI::SameLine();
                 UIColor::Gray();
@@ -109,10 +112,6 @@ namespace UIPlayers {
                 UI::SetItemTooltip("Shuffle Teams");
 
                 UIColor::Reset();
-
-                if (!teamPresetAvailable)
-                    UI::SetItemTooltip("Not enough team presets are available to create a new "
-                                       "team.\nCreate a new team in the Teams Editor.");
             }
 
             uint rowIndex = 0;

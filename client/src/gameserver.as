@@ -1,4 +1,4 @@
-const uint MAX_TEAMS = 6;
+const uint MAX_TEAMS = 10;
 
 class GameServer {
     string uid;
