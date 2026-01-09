@@ -105,7 +105,7 @@ namespace UIChat {
     }
 
     void RenderChatMessage(ChatMessage msg, const string& in id) {
-        Player @messageAuthor = Gamemaster::IsBingoActive() ? PlayerEnsureNotNull(Match.GetPlayer(msg.uid)) : null;
+        Player @messageAuthor = Gamemaster::IsBingoActive() ? Match.GetPlayer(msg.uid) : null;
 
         Font::Set(Font::Style::Bold, Font::Size::Medium);
         string teamPrefix = "";
