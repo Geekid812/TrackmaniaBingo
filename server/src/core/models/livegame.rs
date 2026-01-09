@@ -93,3 +93,9 @@ pub enum TileItemState {
     Rally,
     Jail,
 }
+
+#[derive(Clone, Debug)]
+pub enum TileSelector {
+    StateIdent(u32),
+    BoardIndex(usize),
+}

@@ -8,7 +8,7 @@ use std::{
 use crate::{
     config,
     core::models::{
-        livegame::{MatchEndInfo, MvpData, TileItemState},
+        livegame::{MatchEndInfo, MvpData, TileItemState, TileSelector},
         team::NetworkGameTeam,
     },
     datatypes::{
@@ -443,7 +443,7 @@ impl LiveMatch {
                         == self.get_player_team(running_player.uid as i32)
                 })
             {
-                self.jail_resolve(id, None);
+                self.jail_resolve(TileSelector::BoardIndex(id));
             }
         }
     }
@@ -1175,7 +1175,7 @@ impl LiveMatch {
 
         execute_delayed_task(
             self.ptr.clone(),
-            move |_self| _self.rally_resolve(board_index, Some(state_ident)),
+            move |_self| _self.rally_resolve(TileSelector::StateIdent(state_ident)),
             rally_duration.to_std().unwrap(),
         );
     }
@@ -1191,7 +1191,7 @@ impl LiveMatch {
 
         execute_delayed_task(
             self.ptr.clone(),
-            move |_self| _self.jail_resolve(board_index, Some(state_ident)),
+            move |_self| _self.jail_resolve(TileSelector::StateIdent(state_ident)),
             jail_duration.to_std().unwrap(),
         );
     }
@@ -1231,34 +1231,27 @@ impl LiveMatch {
         Ok(())
     }
 
-    fn jail_resolve(&mut self, cell_id: usize, state_ident: Option<u32>) {
-        if state_ident.is_none_or(|st1| {
-            self.cells[cell_id]
-                .state_ident
-                .is_some_and(|st2| st1 == st2)
-        }) {
-            self.cells[cell_id].state = TileItemState::Empty;
-            self.cells[cell_id].state_player = None;
-            self.cells[cell_id].state_ident = None;
-            self.cells[cell_id].state_deadline = DateTime::default();
+    fn jail_resolve(&mut self, selector: TileSelector) {
+        if let Some(tile) = self.get_tile_mut(selector) {
+            tile.state = TileItemState::Empty;
+            tile.state_player = None;
+            tile.state_ident = None;
+            tile.state_deadline = DateTime::default();
+
+            let cell_id = tile.cell_id;
             self.channel.broadcast(&GameEvent::JailResolved { cell_id });
         }
     }
 
-    fn rally_resolve(&mut self, cell_id: usize, state_ident: Option<u32>) {
-        if state_ident.is_none_or(|st1| {
-            self.cells[cell_id]
-                .state_ident
-                .is_some_and(|st2| st1 == st2)
-        }) {
-            self.cells[cell_id].state = TileItemState::Empty;
-            self.cells[cell_id].state_ident = None;
-            self.cells[cell_id].state_deadline = DateTime::default();
+    fn rally_resolve(&mut self, selector: TileSelector) {
+        if let Some(tile) = self.get_tile_mut(selector) {
+            tile.state = TileItemState::Empty;
+            tile.state_ident = None;
+            tile.state_deadline = DateTime::default();
 
-            let team = self.cells[cell_id]
-                .claimant
-                .or(self.cells[cell_id].leading_claim().map(|c| c.team_id));
+            let team = tile.claimant.or(tile.leading_claim().map(|c| c.team_id));
 
+            let cell_id = tile.cell_id;
             if let Some(winning_team) = team {
                 let tile_up = cell_id as i32 - self.config.grid_size as i32;
                 let tile_left = cell_id as i32 - 1;
@@ -1297,6 +1290,16 @@ impl LiveMatch {
         let ident = self.idents;
         self.idents += 1;
         ident
+    }
+
+    fn get_tile_mut(&mut self, selector: TileSelector) -> Option<&mut GameCell> {
+        match selector {
+            TileSelector::BoardIndex(index) => self.cells.get_mut(index),
+            TileSelector::StateIdent(ident) => self
+                .cells
+                .iter_mut()
+                .find(|c| c.state_ident.is_some_and(|cell_state| cell_state == ident)),
+        }
     }
 }
 
