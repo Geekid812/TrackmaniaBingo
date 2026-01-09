@@ -425,7 +425,7 @@ namespace NetworkHandlers {
         }
         Powerup usedPowerup = Powerup(int(data["powerup"]));
         PlayerRef powerupUser = PlayerRef::Deserialize(data["player"]);
-        Player @user = Match.GetPlayer(powerupUser.uid);
+        Player @user = PlayerEnsureNotNull(Match.GetPlayer(powerupUser.uid));
         int boardIndex = int(data["board_index"]);
         bool forwards = bool(data["forwards"]);
         uint duration = uint(data["duration"]);
@@ -469,6 +469,9 @@ namespace NetworkHandlers {
         }
 
         Player @equipUser = Match.GetPlayer(int(data["uid"]));
+        if (@equipUser is null) {
+            logwarn("[NetworkHandlers::ItemSlotEquip] Player is null, ignoring this event. This means something is likely broken!");
+        }
         equipUser.holdingPowerup = Powerup(int(data["powerup"]));
         equipUser.powerupExpireTimestamp = Time::Now + Match.config.itemsExpire * 1000;
     }
