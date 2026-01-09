@@ -132,7 +132,7 @@ namespace UIItemSettings {
 
         UI::SetNextItemWidth(50);
         uint newValue = value;
-        newValue = UI::InputInt("##"+itemLabel, newValue, 0);
+        newValue = Math::Max(UI::InputInt("##"+itemLabel, newValue, 0), 5);
         
         UI::SameLine();
         Layout::EndLabelAlign();
