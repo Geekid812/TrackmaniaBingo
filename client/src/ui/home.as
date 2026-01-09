@@ -43,7 +43,6 @@ namespace UIHome {
     void InitSubtitles() {
         // WARNING: Large array initializers slow down the Angelscript extension.
         // This initalisation (although quite ugly) avoids the problem.
-        Subtitles.InsertLast("BINGO BANGO");
         Subtitles.InsertLast("Fun with friends and enemies alike!");
         Subtitles.InsertLast("Available Monday through Sunday, even when COTD is down!");
         Subtitles.InsertLast("The Bingo grid strikes back.");
@@ -52,16 +51,16 @@ namespace UIHome {
         Subtitles.InsertLast("Powered by Trackmania Exchange!");
         Subtitles.InsertLast("Get in there and make your team proud!");
         Subtitles.InsertLast("It's all fun and games :)");
-        Subtitles.InsertLast("Oh my god there's a kacky map");
+        Subtitles.InsertLast("Just pray you don't get a Kacky map!");
         Subtitles.InsertLast("No map is ever unbeatable!");
         Subtitles.InsertLast("Communication is your top priority!");
-        Subtitles.InsertLast("Not sponsored by Wirtual!");
-        Subtitles.InsertLast("Rules? What are they?");
-        Subtitles.InsertLast("Wallbangs are illegal!");
+        Subtitles.InsertLast("Not sponsored by Ubisoft Nadeo!");
+        Subtitles.InsertLast("Play with your own rules!");
+        Subtitles.InsertLast("Do whatever it takes to overcome the challanges ahead!");
         Subtitles.InsertLast("Much better than Stunt mode!");
         Subtitles.InsertLast("Slightly better than Platform mode!");
         Subtitles.InsertLast("Multiplayer Versus for up to 9999 players!");
-        Subtitles.InsertLast("Type 1 in chat if you read these subtitles!");
+        Subtitles.InsertLast("Who even reads these subtitles?");
         Subtitles.InsertLast("No drivers license required!");
         Subtitles.InsertLast("Never gonna give you up!");
         Subtitles.InsertLast("Racing Edition™");
@@ -74,6 +73,8 @@ namespace UIHome {
         Subtitles.InsertLast("Also check out Tic Tac Go!");
         Subtitles.InsertLast("Finally getting updated again!");
         Subtitles.InsertLast("Made me crash my game!");
+        Subtitles.InsertLast("May your runs be blessed today!");
+        Subtitles.InsertLast("Fight amongst the greatest!");
     }
 
     void LinksFooter() {
