@@ -1,20 +1,15 @@
-## Update 6.2
-Here with the last feature update of the year! This update mixes it up with new game settings, quality of life changes, balance changes for the Frenzy mode as well as some usual fixes all around!
+## Update 6.5
 
-### Game Settings
-- **New Target Medal Objective: World Record**. You can now choose to make the objective to claim a map to beat the current world record, for all of you extreme players out there.
-- **Discovery Mode**: When this setting is activated, the server will make sure to only select maps where no player has already set a record, to make every game feel brand new. **Please note:** Selecting this option means that an extra leaderboard check will have to take place before the game starts, which lasts a few seconds.
-- **Secret Records**: What if you just didn't know what time other players had set on a map, or by how much someone else had retaken your map? This extra challenge will now be available in your Bingo matches.
-- **Frenzy Item Spawns**: You can now tune how frequently items appear in the Frenzy gamemode. If you so choose, you can have fewer items appear, or you can choose to get an wilder frenzy of items!
+An important stability update with mostly bug fixes, but also a few Frenzy technical changes!
 
-### Frenzy - Balance Changes
-- During a **Jail**, your teammates can now also free you from the tile where you are imprisoned by beating the current record.
-- The **Golden Dice** powerup has been reworked to be slightly less democratic. The player who cast it can now immediately choose one of three maps to replace the previous one instead of going to a vote. As before, the tile will remain of the same color as its previous owner until a record is set on the new map.
+- **New Frenzy settings:** You can now configure how long the Jail and Rally items last. They will remain at 10 minutes by default for the forseeable future, but you are now free to customize their duration in the Item Settings panel. Thanks to Simber for contributing this new feature!
+- **Jail has been nerfed:** You cannot send someone to Jail on a tile their team has already claimed or on a map which no one has claimed yet! Jail should now become a much less frustrating powerup to be hit with now that you can no longer be sent to any unbeatable maps on the grid.
+- **New team colors, Team Editor upgrades:** The team cap has been raised to 10, the new team colors available by default in this update are: Red, Orange, Yellow, Green, Teal, Cyan, Blue, Purple, Magenta and Pink! The custom Team Editor should now also be clearer to use and it is no longer possible to accidentally softlock your lobby by deleting too many teams anymore.
 
-### QOL Changes
-- Map miniatures now show you the target medal time on the board itself without needing to open the map. This should come in useful when planning out your opening moves.
-- The **Rainbow Tile** is now a gradient shifting between colors and should become easier to distinguish on the board.
-- When a **Row/Column Shift** powerup is activated, the popup alert will now tell you more precisely which tiles moved.
-- When a powerup is about to expire, the item slot will start to blink red to warn you that you are about to lose your item. Use it now!
-
-This release also includes some bug fixes, including fixes for the chat module being left unusable for some players. Please report all the new bugs you find in this update on the Discord server!
+Bug fixes in this update:
+- Total end timer now includes grace period time (A full match of 20 minutes with 5 minutes grace period lasts 25 minutes!)
+- Add fallback when a player isn't found in the current room to avoid crashing the plugin
+- Perhaps you noticed too many powerups spawning in the Frenzy mode? That has been fixed and the powerups are back to normal, now properly matching the Item Rate setting.
+- Fix crashes when tabbing out of the game when rendering the board
+- Powerups and rerolls will now properly activate after their countdown even if they were moved around by a row/column shift powerup.
+- New subtitles in the home screen! (Not a bug fix, but it's always cool to know)

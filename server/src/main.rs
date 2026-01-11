@@ -3,7 +3,7 @@ use reqwest::{
     ClientBuilder,
 };
 use std::net::{Ipv4Addr, SocketAddrV4};
-use tracing::{info, Level};
+use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
 pub mod core;
@@ -16,7 +16,10 @@ pub mod transport;
 
 pub mod config;
 
-use crate::{integrations::webservices::NadeoWebserivcesClient, server::NetServer};
+use crate::{
+    integrations::{hooks::HooksClient, webservices::NadeoWebserivcesClient},
+    server::NetServer,
+};
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -54,11 +57,24 @@ async fn main() {
         .split_once(':')
         .expect("malformed keys.websevices value, expected username:password");
     let nadeo_client =
-        NadeoWebserivcesClient::new(client, username.to_string(), password.to_string());
+        NadeoWebserivcesClient::new(client.clone(), username.to_string(), password.to_string());
     integrations::NADEOSERVICES_CLIENT
         .set(nadeo_client)
         .map_err(|_| ())
         .expect("failed to initialize NadeoWebservices");
+
+    let hook_url = config::get_string("keys.hook_endpoint");
+    if let Some(url) = hook_url {
+        let client = HooksClient::new(client.clone(), url);
+        match client {
+            Ok(c) => {
+                let _ = integrations::HOOK.set(c);
+            }
+            Err(e) => warn!("invalid keys.hook_endpoint: {}", e),
+        }
+    } else {
+        info!("keys.hook_endpoint not provided, external event hooks are disabled");
+    }
 
     // TCP server startup
     let port = config::get_integer("network.tcp_port")

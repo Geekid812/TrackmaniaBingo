@@ -425,13 +425,14 @@ namespace NetworkHandlers {
         }
         Powerup usedPowerup = Powerup(int(data["powerup"]));
         PlayerRef powerupUser = PlayerRef::Deserialize(data["player"]);
-        Player @user = Match.GetPlayer(powerupUser.uid);
+        Player @user = PlayerEnsureNotNull(Match.GetPlayer(powerupUser.uid));
         int boardIndex = int(data["board_index"]);
         bool forwards = bool(data["forwards"]);
+        uint duration = uint(data["duration"]);
         PlayerRef targetPlayer =
             (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"])
                                                           : PlayerRef());
-        string explainerText = Powerups::GetExplainerText(usedPowerup, boardIndex);
+        string explainerText = Powerups::GetExplainerText(usedPowerup, boardIndex, duration);
         string targetText;
         if (usedPowerup == Powerup::Jail) {
             targetText = " \\$zand has sent " + targetPlayer.name;
@@ -458,7 +459,7 @@ namespace NetworkHandlers {
                             Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1),
                             Powerups::GetPowerupTexture(usedPowerup));
 
-        Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer);
+        Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer, duration);
     }
 
     void ItemSlotEquip(Json::Value @data) {
@@ -468,6 +469,9 @@ namespace NetworkHandlers {
         }
 
         Player @equipUser = Match.GetPlayer(int(data["uid"]));
+        if (@equipUser is null) {
+            logwarn("[NetworkHandlers::ItemSlotEquip] Player is null, ignoring this event. This means something is likely broken!");
+        }
         equipUser.holdingPowerup = Powerup(int(data["powerup"]));
         equipUser.powerupExpireTimestamp = Time::Now + Match.config.itemsExpire * 1000;
     }

@@ -61,6 +61,7 @@ namespace UIItemSettings {
         MatchConfig.items.rainbow = ItemSetting("Rainbow Tile", MatchConfig.items.rainbow);
         MatchConfig.items.goldenDice = ItemSetting("Golden Dice", MatchConfig.items.goldenDice);
 
+
         UI::NewLine();
         UI::Separator();
         UI::NewLine();
@@ -68,6 +69,22 @@ namespace UIItemSettings {
                         "after collecting a powerup. They do not affect the spawn rate of "
                         "items.\n\nCommon items are 3x more likely to be pulled than "
                         "Rare.\nFrequent items are 3x more likely to be pulled than Common.");
+
+
+        UI::NewLine();
+
+        UITools::SectionHeader(Icons::Flask + " Specific Item Settings");
+
+        UI::NewLine();
+        UI::Separator();
+        UI::NewLine();
+
+        MatchConfig.rallyLength = ItemNumber("Rally Length", MatchConfig.rallyLength);
+        MatchConfig.jailLength = ItemNumber("Jail Length", MatchConfig.jailLength);
+
+        UI::NewLine();
+        UI::Separator();
+        UI::NewLine();
 
         UIColor::Lime();
         if (UI::Button(Icons::CheckCircle + " Confirm")) {
@@ -106,6 +123,20 @@ namespace UIItemSettings {
             newValue = 0;
         }
 
+        return newValue;
+    }
+
+    uint64 ItemNumber(const string& in itemLabel, uint64 value){
+        UITools::AlignedLabel(itemLabel);
+        Layout::MoveTo(ITEM_SETTINGS_ALIGN_X * UI::GetScale());
+
+        UI::SetNextItemWidth(50);
+        uint newValue = value;
+        newValue = Math::Max(UI::InputInt("##"+itemLabel, newValue, 0), 5);
+        
+        UI::SameLine();
+        Layout::EndLabelAlign();
+        UI::Text("seconds");
         return newValue;
     }
 }

@@ -33,7 +33,7 @@ namespace MapClaim {
             @match = @Match;
         }
 
-        Player @claimingPlayer = match.GetPlayer(int(value["player"]["uid"]));
+        Player @claimingPlayer = PlayerEnsureNotNull(match.GetPlayer(int(value["player"]["uid"])));
         @mapClaim.player = claimingPlayer;
         mapClaim.teamId = int(value["team_id"]);
         mapClaim.result = RunResult(uint64(value["time"]), Medal(int(value["medal"])));

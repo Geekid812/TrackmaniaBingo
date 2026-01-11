@@ -317,15 +317,26 @@ namespace UIInfoBar {
                 UI::Text("Column Shift\nShift all tiles on a column of the Bingo board one step in "
                          "any direction!");
                 break;
-            case Powerup::Rally:
-                UI::Text("Rally\nStart a rally on a map of your choice.\nWhichever team has the "
-                         "record there after 10 minutes will claim all adjacent tiles!");
-                break;
-            case Powerup::Jail:
+            case Powerup::Rally: {
+                string timeDescription = tostring(Match.config.rallyLength) + " seconds";
+                if (Match.config.rallyLength > 90) {
+                    timeDescription = tostring(Match.config.rallyLength / 60) + " minutes";
+                }
                 UI::Text(
-                    "Jail\nSend a player you choose to any map of the Bingo board.\nThey will "
-                    "remain emprisoned there for 10 minutes until they can claim a new record!");
+                    "Rally\nStart a rally on a map of your choice.\nWhichever team has the "
+                    "record there after " + timeDescription + " will claim all adjacent tiles!");
                 break;
+            }
+            case Powerup::Jail: {
+                string timeDescription = tostring(Match.config.jailLength) + " seconds";
+                if (Match.config.jailLength > 90) {
+                    timeDescription = tostring(Match.config.jailLength / 60) + " minutes";
+                }
+                UI::Text(
+                    "Jail\nSend a player you choose to a map of the Bingo board that is claimed by another team.\nThey will "
+                    "remain emprisoned there for " + timeDescription + " until they can claim a new record!");
+                break;
+            }
             case Powerup::RainbowTile:
                 UI::Text("Rainbow Tile\nTransform any map into a rainbow tile,\nwhich counts as if "
                          "all teams had claimed it!\nCan't be used to immediately create a\nbingo "
@@ -334,7 +345,7 @@ namespace UIInfoBar {
             case Powerup::GoldenDice:
                 UI::Text(
                     "Golden Dice\nReroll any map of your choice (keeps the current team "
-                    "color).\nAll players can vote for one of three maps that will replace it!");
+                    "color).\nYou can pick one of three new maps to replace it!");
                 break;
             default:
                 UI::TextDisabled("You don't have any item to use right now.");

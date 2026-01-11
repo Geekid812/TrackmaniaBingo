@@ -1,4 +1,4 @@
-const uint MAX_TEAMS = 6;
+const uint MAX_TEAMS = 10;
 
 class GameServer {
     string uid;
@@ -321,6 +321,22 @@ class Player {
         playerRef.uid = this.profile.uid;
         return playerRef;
     }
+}
+
+/**
+ * Makes sure the player handle given as an argument is not null.
+ * If it is, replace it by a "BROKEN PLAYER" handle.
+ */
+Player@ PlayerEnsureNotNull(Player@ player) {
+    if (@player !is null)
+        return player;
+
+    PlayerProfile profile();
+    profile.name = "\\$f00Broken Player";
+    profile.uid = -1;
+
+    Team team(-1, "\\$f00Broken Player", vec3(1., 0., 0.));
+    return Player(profile, team);
 }
 
 enum BingoDirection {

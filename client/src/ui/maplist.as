@@ -253,12 +253,19 @@ namespace UIMapList {
         }
 
         switch (tile.specialState) {
-        case TileItemState::HasPowerup:
-            UI::Text("\\$8ffA powerup can be obtained on this map!");
+        case TileItemState::HasPowerup: {
+            if (!UIItemSelect::HookingMapClick) {
+                UI::Text("\\$8ffA powerup can be obtained on this map!");
+
+            }
             break;
-        case TileItemState::HasSpecialPowerup:
-            UI::Text("\\$fb0A SPECIAL powerup can be obtained on this map!");
+        }
+        case TileItemState::HasSpecialPowerup: {
+            if (!UIItemSelect::HookingMapClick) {
+                UI::Text("\\$fb0A SPECIAL powerup can be obtained on this map!");
+            }
             break;
+        }
         case TileItemState::Rally:
             UI::Text("\\$fcaA rally is currently taking place on this map!");
             break;
@@ -277,6 +284,10 @@ namespace UIMapList {
                 tile.specialState != TileItemState::HasPowerup &&
                 tile.specialState != TileItemState::HasSpecialPowerup) {
                 UI::Text("\\$f88Cannot select this tile, there is already a powerup active here.");
+            }
+
+            if (UIItemSelect::Powerup == Powerup::Jail && !tile.HasRunSubmissions() && tile.claimant.id == -1) {
+                UI::Text("\\$f88Cannot select an unclaimed tile.");
             }
         }
 

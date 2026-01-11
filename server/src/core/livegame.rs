@@ -8,10 +8,14 @@ use std::{
 use crate::{
     config,
     core::models::{
-        livegame::{MatchEndInfo, MvpData, TileItemState},
+        livegame::{MatchEndInfo, MvpData, TileItemState, TileSelector},
         team::NetworkGameTeam,
     },
-    datatypes::{CampaignMap, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice, Powerup},
+    datatypes::{
+        CampaignMap, Gamemode, MatchConfiguration, PlayerRef, Poll, PollChoice, Powerup,
+        RoomConfiguration,
+    },
+    integrations::{self, hooks::MatchEndEffect},
     server::{
         context::ClientContext,
         tasks::{execute_delayed_task, execute_repeating_task},
@@ -72,7 +76,7 @@ struct PollData {
 
 pub enum PollResultCallback {
     None,
-    Reroll(usize),
+    Reroll(u32),
     GoldenDice(usize),
 }
 
@@ -101,6 +105,7 @@ impl LiveMatch {
                     state_player: None,
                     state_deadline: DateTime::default(),
                     state_ident: None,
+                    reroll_ident: None,
                 })
                 .collect(),
             started: None,
@@ -181,7 +186,7 @@ impl LiveMatch {
     }
 
     fn setup_powerups(&mut self) {
-        let tick_duration = std::time::Duration::from_millis(60)
+        let tick_duration = std::time::Duration::from_secs(60)
             / (config::get_integer("behaviour.powerup_tick_rate").unwrap_or(1) as f32
                 * (self.config.items_tick_multiplier as f32 / 1000.)) as u32;
 
@@ -439,7 +444,7 @@ impl LiveMatch {
                         == self.get_player_team(running_player.uid as i32)
                 })
             {
-                self.jail_resolve(id, None);
+                self.jail_resolve(TileSelector::BoardIndex(id));
             }
         }
     }
@@ -518,6 +523,36 @@ impl LiveMatch {
             self.save_match_end(draw, end_state.mvp.map(|mvp| mvp.player));
         }
 
+        if let Some(hook) = integrations::HOOK.get() {
+            // Hook event: match ended
+            let teams = self
+                .teams
+                .get_teams()
+                .iter()
+                .map(NetworkGameTeam::from)
+                .collect();
+            let started = self.started.unwrap_or_default();
+            let ended = Utc::now();
+            let uid = self.uid().to_string();
+            let match_config = self.config.clone();
+            let room_config = if let Some(room) = self.room.upgrade() {
+                room.lock().config().clone()
+            } else {
+                RoomConfiguration::default()
+            };
+            tokio::spawn(async move {
+                hook.post_match_end(&MatchEndEffect {
+                    uid,
+                    room_config,
+                    match_config,
+                    teams,
+                    started,
+                    ended,
+                })
+                .await
+            });
+        }
+
         MATCHES.remove(self.uid.clone());
     }
 
@@ -592,7 +627,9 @@ impl LiveMatch {
             return Err(anyhow!("there is already a reroll vote for this map"));
         }
 
-        let cell = &self.cells[cell_id];
+        let reroll_ident = self.new_ident();
+        let cell = &mut self.cells[cell_id];
+        cell.reroll_ident = Some(reroll_ident);
         let poll = Poll {
             id: poll_id,
             title: format!(
@@ -618,29 +655,35 @@ impl LiveMatch {
         self.start_poll(
             poll,
             initial_votes,
-            PollResultCallback::Reroll(cell_id),
+            PollResultCallback::Reroll(reroll_ident),
             Vec::new(),
         );
 
         Ok(())
     }
 
-    fn reroll_map(&mut self, cell_id: usize) -> Result<(), anyhow::Error> {
+    fn reroll_map(&mut self, selector: TileSelector) -> Result<(), anyhow::Error> {
         if !self.can_reroll() {
             return Err(anyhow!("tried to reroll, but rerolls are disallowed"));
         }
-        if self.cells[cell_id].leading_claim().is_some() || self.cells[cell_id].claimant.is_some() {
-            return Err(anyhow!("map is already claimed, cannot reroll it"));
-        }
 
-        self.cells.swap_remove(cell_id);
-        self.cells[cell_id].cell_id = cell_id;
-        self.channel.broadcast(&GameEvent::MapRerolled {
-            cell_id,
-            map: self.cells[cell_id].map.clone(),
-            can_reroll: self.can_reroll(),
-        });
-        Ok(())
+        if let Some(tile) = self.get_tile_mut(&selector) {
+            if tile.leading_claim().is_some() || tile.claimant.is_some() {
+                return Err(anyhow!("map is already claimed, cannot reroll it"));
+            }
+            let cell_id = tile.cell_id;
+
+            self.cells.swap_remove(cell_id);
+            self.cells[cell_id].cell_id = cell_id;
+            self.channel.broadcast(&GameEvent::MapRerolled {
+                cell_id,
+                map: self.cells[cell_id].map.clone(),
+                can_reroll: self.can_reroll(),
+            });
+            Ok(())
+        } else {
+            Err(anyhow!("map {:?} not found", selector))
+        }
     }
 
     fn replace_map(&mut self, cell_id: usize, map: GameMap) {
@@ -708,6 +751,24 @@ impl LiveMatch {
             }
         }
 
+        if powerup == Powerup::Jail {
+            let owned_team = self.cells[board_index]
+                .claimant
+                .or_else(|| self.cells[board_index].leading_claim().map(|c| c.team_id));
+
+            if owned_team.is_none() {
+                return Err(
+                    "Jail must be used on a tile which has already been claimed!".to_string(),
+                );
+            }
+
+            if owned_team == self.get_player_team(player_id) {
+                return Err(
+                    "You cannot imprison someone on a tile their team has claimed!".to_string(),
+                );
+            }
+        }
+
         // Powerup activation
         self.give_powerup(player_ref.clone(), Powerup::Empty);
         match powerup {
@@ -725,12 +786,19 @@ impl LiveMatch {
             }
         };
 
+        let duration = if powerup == Powerup::Jail {
+            self.config.jail_length as i64
+        } else {
+            self.config.rally_length as i64
+        };
+
         self.channel.broadcast(&GameEvent::PowerupActivated {
             powerup,
             player: player_ref,
             board_index,
             forwards,
             target,
+            duration,
         });
         self.try_do_bingo_checks();
         Ok(())
@@ -953,10 +1021,10 @@ impl LiveMatch {
             });
 
             match poll.callback {
-                PollResultCallback::Reroll(cell_id)
+                PollResultCallback::Reroll(reroll_ident)
                     if poll.votes[0].len() > poll.votes[1].len() =>
                 {
-                    if let Err(e) = self.reroll_map(cell_id) {
+                    if let Err(e) = self.reroll_map(TileSelector::RerollIdent(reroll_ident)) {
                         error!("{}", e);
                     }
                 }
@@ -1126,8 +1194,7 @@ impl LiveMatch {
     }
 
     fn powerup_effect_rally(&mut self, board_index: usize) {
-        let rally_duration = Duration::minutes(10);
-
+        let rally_duration = Duration::seconds(self.config.rally_length as i64);
         let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Rally;
         self.cells[board_index].state_ident = Some(state_ident);
@@ -1135,13 +1202,13 @@ impl LiveMatch {
 
         execute_delayed_task(
             self.ptr.clone(),
-            move |_self| _self.rally_resolve(board_index, Some(state_ident)),
+            move |_self| _self.rally_resolve(TileSelector::StateIdent(state_ident)),
             rally_duration.to_std().unwrap(),
         );
     }
 
     fn powerup_effect_jail(&mut self, board_index: usize, target: PlayerRef) {
-        let jail_duration = Duration::minutes(10);
+        let jail_duration = Duration::seconds(self.config.jail_length as i64);
 
         let state_ident = self.new_ident();
         self.cells[board_index].state = TileItemState::Jail;
@@ -1151,7 +1218,7 @@ impl LiveMatch {
 
         execute_delayed_task(
             self.ptr.clone(),
-            move |_self| _self.jail_resolve(board_index, Some(state_ident)),
+            move |_self| _self.jail_resolve(TileSelector::StateIdent(state_ident)),
             jail_duration.to_std().unwrap(),
         );
     }
@@ -1191,34 +1258,27 @@ impl LiveMatch {
         Ok(())
     }
 
-    fn jail_resolve(&mut self, cell_id: usize, state_ident: Option<u32>) {
-        if state_ident.is_none_or(|st1| {
-            self.cells[cell_id]
-                .state_ident
-                .is_some_and(|st2| st1 == st2)
-        }) {
-            self.cells[cell_id].state = TileItemState::Empty;
-            self.cells[cell_id].state_player = None;
-            self.cells[cell_id].state_ident = None;
-            self.cells[cell_id].state_deadline = DateTime::default();
+    fn jail_resolve(&mut self, selector: TileSelector) {
+        if let Some(tile) = self.get_tile_mut(&selector) {
+            tile.state = TileItemState::Empty;
+            tile.state_player = None;
+            tile.state_ident = None;
+            tile.state_deadline = DateTime::default();
+
+            let cell_id = tile.cell_id;
             self.channel.broadcast(&GameEvent::JailResolved { cell_id });
         }
     }
 
-    fn rally_resolve(&mut self, cell_id: usize, state_ident: Option<u32>) {
-        if state_ident.is_none_or(|st1| {
-            self.cells[cell_id]
-                .state_ident
-                .is_some_and(|st2| st1 == st2)
-        }) {
-            self.cells[cell_id].state = TileItemState::Empty;
-            self.cells[cell_id].state_ident = None;
-            self.cells[cell_id].state_deadline = DateTime::default();
+    fn rally_resolve(&mut self, selector: TileSelector) {
+        if let Some(tile) = self.get_tile_mut(&selector) {
+            tile.state = TileItemState::Empty;
+            tile.state_ident = None;
+            tile.state_deadline = DateTime::default();
 
-            let team = self.cells[cell_id]
-                .claimant
-                .or(self.cells[cell_id].leading_claim().map(|c| c.team_id));
+            let team = tile.claimant.or(tile.leading_claim().map(|c| c.team_id));
 
+            let cell_id = tile.cell_id;
             if let Some(winning_team) = team {
                 let tile_up;
                 if cell_id as i32 - (self.config.grid_size as i32) < 0 {
@@ -1282,6 +1342,20 @@ impl LiveMatch {
         let ident = self.idents;
         self.idents += 1;
         ident
+    }
+
+    fn get_tile_mut(&mut self, selector: &TileSelector) -> Option<&mut GameCell> {
+        match selector {
+            TileSelector::BoardIndex(index) => self.cells.get_mut(*index),
+            TileSelector::StateIdent(ident) => self
+                .cells
+                .iter_mut()
+                .find(|c| c.state_ident.is_some_and(|cell_state| cell_state == *ident)),
+            TileSelector::RerollIdent(ident) => self.cells.iter_mut().find(|c| {
+                c.reroll_ident
+                    .is_some_and(|cell_reroll| cell_reroll == *ident)
+            }),
+        }
     }
 }
 

@@ -96,6 +96,7 @@ pub enum GameEvent {
         board_index: usize,
         forwards: bool,
         target: Option<PlayerRef>,
+        duration: i64,
     },
     JailResolved {
         cell_id: usize,

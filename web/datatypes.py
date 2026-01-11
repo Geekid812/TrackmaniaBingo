@@ -105,6 +105,8 @@ class MatchConfiguration(BaseModel):
     items: FrenzyItemSettings
     items_expire: int = 600
     items_tick_multiplier: int = 1000
+    rally_length: int = 600
+    jail_length: int = 600
 
 # Item drawing probabilities for configuring the Frenzy gamemode.
 class FrenzyItemSettings(BaseModel):

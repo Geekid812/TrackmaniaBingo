@@ -1,9 +1,9 @@
 namespace UITeamEditor {
     bool Visible;
-    vec3 CreateTeamColor;
+    vec3 CreateTeamColor = vec3(.5, .5, .5);
     string CreateTeamName;
 
-    void DisplayTeamPreset(uint i, Team @team) {
+    void DisplayTeamPreset(uint i, Team @team, bool canBeDeleted = false) {
         UI::PushStyleColor(UI::Col::ChildBg, UIColor::GetAlphaColor(team.color, 0.4));
         UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
         UI::BeginChild("###bingoteampreset" + i, vec2(0, 32), true, UI::WindowFlags::NoScrollbar);
@@ -14,14 +14,16 @@ namespace UITeamEditor {
         UI::SameLine();
 
         string buttonText = Icons::Trash;
-        Layout::AlignButton(buttonText, 1.0);
-        UI::SetCursorPos(UI::GetCursorPos() - vec2(4, 4));
-        UIColor::Gray();
-        if (UI::Button(buttonText)) {
-            TeamPresets.RemoveAt(i);
-            PersistantStorage::SaveTeamEditor();
+        if (canBeDeleted) {
+            Layout::AlignButton(buttonText, 1.0);
+            UI::SetCursorPos(UI::GetCursorPos() - vec2(4, 4));
+            UIColor::Gray();
+            if (UI::Button(buttonText)) {
+                TeamPresets.RemoveAt(i);
+                PersistantStorage::SaveTeamEditor();
+            }
+            UIColor::Reset();
         }
-        UIColor::Reset();
 
         if (@Match != null) {
             Team @teamInRoom = Match.GetTeamWithName(team.name);
@@ -53,8 +55,10 @@ namespace UITeamEditor {
     }
 
     void TeamsEnumerator() {
+        auto defaultTeams = PersistantStorage::GetDefaultTeams();
         for (uint i = 0; i < TeamPresets.Length; i++) {
-            DisplayTeamPreset(i, TeamPresets[i]);
+            bool canBeDeleted = i >= defaultTeams.Length;
+            DisplayTeamPreset(i, TeamPresets[i], canBeDeleted);
         }
     }
 

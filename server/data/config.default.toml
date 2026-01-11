@@ -15,7 +15,7 @@ required_version = "5.0"    # minimum version of the plugin client
 
 [behaviour]
 never_close = false         # disable closing inactive rooms (for debugging)
-max_teams = 6               # maximum number of teams in a game room
+max_teams = 10              # maximum number of teams in a game room
 powerup_tick_rate = 3       # powerup spawn ticks per minute
 powerup_spawn = 0.1         # probability of an item spawning in one tick
 claim_inactivity_secs = 30  # minimum time of inactivity on a map before a powerup can spawn
@@ -27,4 +27,6 @@ start_countdown = 5000      # milliseconds counting down at match start
 max_author_millis = 180000  # in MXRandom mode, maximum author time for a map
 
 [keys]
-openplanet = "KEY"      # secret key for Openplanet authentication
+openplanet = "KEY"                       # secret key for Openplanet authentication
+webservices = "username:password"        # server account credentials for Nadeo Webservices (api.trackmania.com)
+hook_endpoint = "http://localhost:3000/" # endpoint for receiving POST events (optional)
