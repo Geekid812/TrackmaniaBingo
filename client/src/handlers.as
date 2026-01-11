@@ -496,11 +496,34 @@ namespace NetworkHandlers {
                              winningTeam.name + " has won the rally on \\$fd8" + mapName + " \\$z!",
                              teamColor,
                              15000);
+        
+        int cellUp;
+        if (cellId - Match.config.gridSize < 0) {
+            cellUp = cellId;
+        } else {
+            cellUp = cellId - Match.config.gridSize;
+        }
 
-        int cellUp = cellId - Match.config.gridSize;
-        int cellLeft = cellId - 1;
-        int cellRight = cellId + 1;
-        int cellDown = cellId + Match.config.gridSize;
+        int cellLeft;
+        if ((cellId + 1) % Match.config.gridSize == 1) {
+            cellLeft = cellId;
+        } else {
+            cellLeft = cellId - 1;
+        }
+
+        int cellRight;
+        if ((cellId + 1) % Match.config.gridSize == 0) {
+            cellRight = cellId;
+        } else {
+            cellRight = cellId + 1;
+        }
+
+        int cellDown;
+        if (cellId + Match.config.gridSize > int(Gamemaster::GetTileCount())) {
+            cellDown = cellId;
+        } else {
+            cellDown = cellId + Match.config.gridSize;
+        }
 
         if (cellUp >= 0)
             Match.GetCell(cellUp).claimant = winningTeam;
