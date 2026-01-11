@@ -495,28 +495,28 @@ namespace NetworkHandlers {
         
         int cellUp;
         if (cellId - Match.config.gridSize < 0) {
-            cellUp = cellId - Match.config.gridSize + Math::Pow(Match.config.gridSize, 2);
+            cellUp = cellId;
         } else {
             cellUp = cellId - Match.config.gridSize;
         }
 
         int cellLeft;
         if ((cellId + 1) % Match.config.gridSize == 1) {
-            cellLeft = cellId - 1 + Match.config.gridSize;
+            cellLeft = cellId;
         } else {
             cellLeft = cellId - 1;
         }
 
         int cellRight;
         if ((cellId + 1) % Match.config.gridSize == 0) {
-            cellRight = cellId + 1 - Match.config.gridSize;
+            cellRight = cellId;
         } else {
             cellRight = cellId + 1;
         }
 
         int cellDown;
         if (cellId + Match.config.gridSize > int(Gamemaster::GetTileCount())) {
-            cellDown = cellId + Match.config.gridSize - Math::Pow(Match.config.gridSize, 2);
+            cellDown = cellId;
         } else {
             cellDown = cellId + Match.config.gridSize;
         }
