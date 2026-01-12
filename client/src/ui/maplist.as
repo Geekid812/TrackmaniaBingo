@@ -118,7 +118,7 @@ namespace UIMapList {
             UI::BeginChild(id, vec2(160. * uiScale, UI::GetTextLineHeight()));
 
             string mapName =
-                cell.map !is null ? Text::OpenplanetFormatCodes(cell.map.trackName) : "";
+                cell.map !is null ? Text::OpenplanetFormatCodes(cell.map.trackName).Replace("\uFEFF", "") : "";
             UI::Text(mapName);
 
             UI::EndChild();
@@ -187,7 +187,7 @@ namespace UIMapList {
     }
 
     string GetTileTitle(GameTile tile, int x = -1, int y = -1) {
-        string mapName = tile.map !is null ? Text::OpenplanetFormatCodes(tile.map.trackName) : "";
+        string mapName = tile.map !is null ? Text::OpenplanetFormatCodes(tile.map.trackName).Replace("\uFEFF", "") : "";
         string cellCoordinates =
             (Settings::ShowCellCoordinates && x != -1 && y != -1
                  ? "\\$888[ \\$ff8" + GetTextCoordinates(x, y) + " \\$888] \\$z"
