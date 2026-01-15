@@ -100,10 +100,7 @@ namespace UIPlayers {
 
                 UI::SameLine();
                 UIColor::Gray();
-                if (UI::Button(Icons::Pencil)) {
-                    UITeamEditor::Visible = !UITeamEditor::Visible;
-                }
-                UI::SetItemTooltip("Edit Teams");
+                EditTeamsButton();
 
                 UI::SameLine();
                 if (UI::Button(Icons::Random)) {
@@ -138,6 +135,13 @@ namespace UIPlayers {
             }
         }
         UI::EndTable();
+    }
+
+    void EditTeamsButton() {
+        if (UI::Button(Icons::Pencil)) {
+            UITeamEditor::Visible = !UITeamEditor::Visible;
+        }
+        UI::SetItemTooltip("Edit Teams");
     }
 
     void PlayerLabel(Player player, uint index, bool canBeSelected = false) {

@@ -181,6 +181,10 @@ namespace UIGameRoom {
             }
 
             UI::Text("\\$ff8Number of teams: \\$z" + Match.teams.Length);
+            UI::SameLine();
+            UIColor::Gray();
+            UIPlayers::EditTeamsButton();
+            UIColor::Reset();
         } else if (Match.roomConfig.hostControl) {
             UI::Text("\\$ff8" + Icons::Lock + " \\$zThe host controls the team setup.");
         } else {

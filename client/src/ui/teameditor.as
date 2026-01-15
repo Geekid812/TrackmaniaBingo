@@ -29,11 +29,10 @@ namespace UITeamEditor {
             Team @teamInRoom = Match.GetTeamWithName(team.name);
             bool teamInstantiatedInRoom = @teamInRoom != null;
 
-            UI::BeginDisabled(teamInstantiatedInRoom);
 
             if (teamInstantiatedInRoom) {
-                buttonText = Icons::Check;
-                UIColor::Gray();
+                buttonText = Icons::MinusSquare;
+                UIColor::DarkRed();
             } else {
                 buttonText = Icons::PlusSquare;
                 UIColor::DarkGreen();
@@ -43,10 +42,14 @@ namespace UITeamEditor {
             Layout::AlignButton(buttonText, 0.85);
             UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
             if (UI::Button(buttonText)) {
-                InstantiatePresetTeam(i);
+                if (!teamInstantiatedInRoom) {
+                    InstantiatePresetTeam(i);
+                } else {
+                    NetParams::DeletedTeamId = teamInRoom.id;
+                    startnew(Network::DeleteTeam);
+                }
             }
             UIColor::Reset();
-            UI::EndDisabled();
         }
 
         UI::EndChild();

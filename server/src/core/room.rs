@@ -363,30 +363,30 @@ impl GameRoom {
             }));
     }
 
-    pub fn remove_team(&mut self, id: TeamIdentifier) {
-        let team = self.teams.remove_team(id);
-        if let Some(team) = team {
-            let mut updated_players = Vec::new();
-            let default = self.teams.get_index(0).unwrap().id;
-            self.members.iter_mut().for_each(|p| {
-                if p.team == team.id {
-                    p.team = default;
-                    updated_players.push(p);
-                }
-            });
+    pub fn remove_team(&mut self, id: TeamIdentifier) -> Result<(), anyhow::Error> {
+        let removed_team = self.teams.remove_team(id)?;
 
-            if updated_players.len() > 0 {
-                self.channel
-                    .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
-                        updates: HashMap::from_iter(
-                            updated_players
-                                .into_iter()
-                                .map(|p| (p.profile.uid, default)),
-                        ),
-                    }));
+        let mut updated_players = Vec::new();
+        let default = self.teams.get_index(0).unwrap().id;
+        self.members.iter_mut().for_each(|p| {
+            if p.team == removed_team.id {
+                p.team = default;
+                updated_players.push(p);
             }
+        });
+
+        if updated_players.len() > 0 {
+            self.channel
+                .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
+                    updates: HashMap::from_iter(
+                        updated_players
+                            .into_iter()
+                            .map(|p| (p.profile.uid, default)),
+                    ),
+                }));
         }
         self.channel.broadcast(&RoomEvent::TeamDeleted { id });
+        Ok(())
     }
 
     pub fn create_team_from_preset(&mut self, teams: &Vec<(String, Color)>) -> Option<BaseTeam> {
