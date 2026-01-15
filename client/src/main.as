@@ -13,7 +13,6 @@ const GamePlatform CURRENT_GAME = GamePlatform::Next;
 
 void Main() {
     // Initialization
-    Font::Init();
     UIHome::InitSubtitles();
     Powerups::InitPowerupTextures();
     Modefiles::EnsureAllModefilesCreated();
@@ -70,8 +69,6 @@ void RenderMenu() {
 void Render() {
     if (!UI::IsGameUIVisible())
         return;
-    if (!Font::Initialized)
-        return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIGameRoom::Render();
@@ -102,8 +99,6 @@ void Render() {
 }
 
 void RenderInterface() {
-    if (!Font::Initialized)
-        return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIMainWindow::Render();
