@@ -53,7 +53,7 @@ namespace UITools {
         } else {
             UIColor::Dark();
             UI::PushStyleVar(UI::StyleVar::FramePadding,
-                             vec2((80 - Draw::MeasureString(label, Font::Current()).x) / 2, 4));
+                             vec2((80 - Draw::MeasureString(label).x) / 2, 4));
             if (UI::Button(label + "##button" + id)) {
                 state = 0b11;
             }
@@ -141,16 +141,14 @@ namespace UITools {
     }
 
     void CenterText(const string& in text) {
-        UI::Font @font = Font::Current();
         Layout::MoveTo(Layout::GetPadding(
-            UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
+            UI::GetWindowSize().x, Draw::MeasureString(text).x, 0.5));
         UI::Text(text);
     }
 
     void CenterTextDisabled(const string& in text) {
-        UI::Font @font = Font::Current();
         Layout::MoveTo(Layout::GetPadding(
-            UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.5));
+            UI::GetWindowSize().x, Draw::MeasureString(text).x, 0.5));
         UI::TextDisabled(text);
     }
 

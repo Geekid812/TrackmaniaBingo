@@ -16,18 +16,16 @@ namespace Font {
         Huge = 38
     }
 
-    UI::Font@ current = UI::Font::Default;
-    UI::Font@ Current() {return current;}
-
     void Set(Style style, Size size) {
+        UI::Font@ font;
         if (style == Regular) {
-            @current = UI::Font::Default;
+            @font = UI::Font::Default;
         } else if (style == Bold) {
-            @current = UI::Font::DefaultBold;
+            @font = UI::Font::DefaultBold;
         } else if (style == Mono) {
-            @current = UI::Font::DefaultMono;
+            @font = UI::Font::DefaultMono;
         }
-        UI::PushFont(current, size);
+        UI::PushFont(font, size);
     }
     void Unset() {
         UI::PopFont();
