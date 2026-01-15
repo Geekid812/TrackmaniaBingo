@@ -48,7 +48,7 @@ namespace GameMap {
         value["webservices_id"] = map.webservicesId;
         value["userid"] = map.userid;
         value["username"] = map.username;
-        value["track_name"] = map.trackName;
+        value["track_name"] = map.trackName.Replace("\uFEFF", "");
         value["gbx_name"] = map.gbxName;
         value["wr_time"] = map.wrTime;
         value["author_time"] = map.authorTime;
