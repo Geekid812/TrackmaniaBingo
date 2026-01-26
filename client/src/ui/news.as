@@ -30,9 +30,8 @@ namespace UINews {
 
     void NewsCounter(int current, int max) {
         string text = current + "/" + max;
-        UI::Font @font = Font::Current();
         float padding = Layout::GetPadding(
-            UI::GetWindowSize().x, Draw::MeasureString(text, font, font.FontSize).x, 0.95);
+            UI::GetWindowSize().x, Draw::MeasureString(text).x, 0.95);
         UI::SetCursorPos(vec2(padding, UI::GetCursorPos().y));
         UI::Text("\\$888" + text);
     }

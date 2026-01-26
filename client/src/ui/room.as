@@ -329,7 +329,7 @@ namespace UIGameRoom {
             countdownText = "Verifying all player records before starting...";
         }
 
-        vec2 textSize = Draw::MeasureString(countdownText, Font::Current());
+        vec2 textSize = Draw::MeasureString(countdownText);
         float padding = Layout::GetPadding(windowSize.x, textSize.x, 1.0);
         vec4 textColor = UI::GetStyleColor(UI::Col::Text);
         float margin = 16;

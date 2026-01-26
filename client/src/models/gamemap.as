@@ -72,7 +72,7 @@ namespace GameMap {
 
         map.userid = value["userid"];
         map.username = value["username"];
-        map.trackName = value["track_name"];
+        map.trackName = string(value["track_name"]).Replace("\uFEFF", "");
         map.gbxName = value["gbx_name"];
 
         if (value["wr_time"].GetType() != Json::Type::Null)
