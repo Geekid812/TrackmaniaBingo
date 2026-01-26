@@ -140,7 +140,8 @@ namespace Network {
     bool ShouldStayConnected() {
         return UIMainWindow::Visible || @Match != null ||
                PersistantStorage::SubscribeToRoomUpdates ||
-               PersistantStorage::LastConnectedMatchId != "";
+               PersistantStorage::LastConnectedMatchId != "" ||
+               PersistantStorage::LastConnectedRoomCode != "";
     }
 
     void DoPing() {
@@ -367,6 +368,7 @@ namespace Network {
         Match.isLocalPlayerHost = true;
         Match.joinCode = roomCode;
         @Match.players = {Player(Profile, Match.teams[0])};
+        PersistantStorage::SaveConnectedMatch();
     }
 
     void CreateTeam() {
@@ -400,12 +402,14 @@ namespace Network {
 
         UIRoomMenu::JoinCodeVisible = false;
 
-        // Don't process join handlers if we are reconnecting
-        if (Internal::Reconnecting)
-            return;
-
+        PersistantStorage::SaveConnectedMatch();
         if (response["match_uid"].GetType() != Json::Type::Null) {
             // We're joining an active game
+
+            // Don't process join handlers if we are reconnecting
+            if (Internal::Reconnecting)
+                return;
+
             string currentMatchUid = response["match_uid"];
             NetParams::MatchJoinUid = currentMatchUid;
 
@@ -437,6 +441,10 @@ namespace Network {
         }
 
         GameServer @joinedMatch = LiveMatch::Deserialize(response["state"]);
+        if (@Match !is null) {
+            joinedMatch.roomConfig = Match.roomConfig;
+            joinedMatch.isLocalPlayerHost = Match.isLocalPlayerHost;
+        }
 
         Gamemaster::SetBingoActive(true);
         UITeams::CloseContext();
@@ -528,10 +536,10 @@ namespace Network {
     void Reconnect() {
         Internal::Reconnecting = true;
         UI::ShowNotification(Icons::Globe + " Reconnecting to your Bingo match...");
-        JoinRoom();
-        JoinMatch();
+        if (NetParams::JoinCode != "") JoinRoom();
+        if (NetParams::MatchJoinUid != "") JoinMatch();
 
-        if (!Gamemaster::IsBingoActive() || Match.uid != PersistantStorage::LastConnectedMatchId) {
+        if (@Match is null) {
             logtrace("[Network] Reconnection failure, forgetting previous game save.");
             PersistantStorage::ResetConnectedMatch();
         }

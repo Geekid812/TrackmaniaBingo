@@ -5,6 +5,7 @@ namespace Config {
     NewsItem[] News;
     FeaturedMappack[] FeaturedMappacks;
     uint64 LastUpdate;
+    array<string> CompetitiveBlockedPlugins = {};
 
     void FetchConfig() {
         string url = "https://openplanet.dev/plugin/trackmaniabingo/config/main-" +
@@ -37,6 +38,12 @@ namespace Config {
             }
             News.InsertLast(NewsItem(
                 jsonItem["title"], jsonItem["content"], linkKeys, linkRefs, jsonItem["ts"]));
+        }
+
+        CompetitiveBlockedPlugins = {};
+        auto banned = json["competitive_banned_plugins"];
+        for (uint i = 0; i < banned.Length; i++) {
+            CompetitiveBlockedPlugins.InsertLast(string(banned[i]));
         }
 
         LastUpdate = Time::Now;

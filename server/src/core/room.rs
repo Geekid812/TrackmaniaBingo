@@ -297,6 +297,7 @@ impl GameRoom {
         }
 
         let is_operator = self.host_uid.is_some_and(|u| u == profile.uid);
+        info!("{:#?}", self.host_uid);
         let team = self.add_player(ctx, profile, is_operator);
         self.channel.broadcast(&RoomEvent::PlayerJoin {
             profile: profile.clone(),

@@ -284,7 +284,7 @@ namespace UIRoomSettings {
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch) || MatchConfig.secret;
         UI::SameLine();
-        UITools::HelpTooltip("Viewing records, leaderboards and splits will be disabled.");
+        UITools::HelpTooltip("Viewing records, leaderboards and splits will be disabled. Some blacklisted plugins will be disabled during the match.");
     }
 
     void TotalTimeIndicator() {

@@ -25,7 +25,7 @@ pub struct JoinMatchOk {
 
 pub fn handle(ctx: &mut ClientContext, args: JoinMatch) -> Value {
     if let Some(room) = ctx.game_room() {
-        if !room.lock().match_uid().is_some_and(|uid| uid == args.uid) {
+        if room.lock().match_uid().is_some_and(|uid| uid != args.uid) {
             ctx.trace("already joined a different room, leaving previous game");
             room.lock().player_remove(ctx.profile.uid);
         }

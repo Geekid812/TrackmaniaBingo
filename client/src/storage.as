@@ -117,7 +117,7 @@ namespace PersistantStorage {
             PersistantStorage::LastConnectedRoomCode = "";
         }
 
-        if (@Match !is null) {
+        if (@Match !is null && Match.uid != "") {
             PersistantStorage::LastConnectedMatchId = Match.uid;
 
             auto self = Match.GetSelf();
