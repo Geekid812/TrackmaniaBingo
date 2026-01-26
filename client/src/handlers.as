@@ -547,7 +547,8 @@ namespace NetworkHandlers {
         }
     }
 
-    void StartPlayVerification(Json::Value @data) {
+    void RoomExtrasUpdate(Json::Value @data) {
         Match.verificationLocked = bool(data["locked"]);
+        Match.maploadStatus = LoadStatus(int(data["load_status"]));
     }
 }

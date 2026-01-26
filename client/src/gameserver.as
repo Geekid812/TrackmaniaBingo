@@ -13,6 +13,7 @@ class GameServer {
     int64 overtimeStartTime = 0;
     bool canReroll = false;
     EndState endState;
+    LoadStatus maploadStatus;
 
     // Local state
     int currentTileIndex = -1;

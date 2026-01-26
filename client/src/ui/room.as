@@ -159,6 +159,9 @@ namespace UIGameRoom {
 
             UI::SameLine();
         }
+        UI::SameLine();
+        MaploadStatusIndicator();
+
         UI::NewLine();
 
         UI::BeginChild("Bingo Room View", vec2(0, -24));
@@ -285,6 +288,37 @@ namespace UIGameRoom {
         }
         UI::Text(value);
         UI::EndTooltip();
+    }
+
+    void MaploadStatusIndicator() {
+        string bodyText;
+        string tooltipText;
+        switch (Match.maploadStatus) {
+            case LoadStatus::NotLoaded: {
+                bodyText = "\\$888" + Icons::Ban;
+                tooltipText = "No maps have been loaded yet.";
+                break;
+            }
+            case LoadStatus::Loading: {
+                bodyText = "\\$a88" + Icons::Refresh;
+                tooltipText = "Preparing new maps to play...";
+                break;
+            }
+            case LoadStatus::Ok: {
+                bodyText = Icons::CheckCircle;
+                tooltipText = "All maps are ready to be played.";
+                break;
+            }
+            case LoadStatus::Error: {
+                bodyText = "\\$f88" + Icons::MinusCircle;
+                tooltipText = "Not enough maps could be selected for play.";
+                break;
+            }
+        }
+
+        Layout::AlignText(bodyText, 0.99);
+        UI::Text(bodyText);
+        UI::SetItemTooltip(tooltipText);
     }
 
     void Countdown() {

@@ -27,6 +27,7 @@ use super::{
 };
 use crate::{
     config,
+    core::models::room::LoadState,
     datatypes::{MatchConfiguration, Medal, PlayerProfile, PlayerRef, RoomConfiguration},
     server::{context::ClientContext, mapload},
     transport::Channel,
@@ -46,6 +47,7 @@ pub struct GameRoom {
     active_match: Option<Shared<LiveMatch>>,
     host_uid: Option<i32>,
     verification_locked: bool,
+    mapload_status: LoadState,
 }
 
 impl GameRoom {
@@ -68,6 +70,7 @@ impl GameRoom {
             active_match: None,
             host_uid: None,
             verification_locked: false,
+            mapload_status: LoadState::default(),
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
@@ -210,6 +213,7 @@ impl GameRoom {
             matchconfig: self.matchconfig.clone(),
             join_code: self.join_code.clone(),
             teams: self.network_teams(),
+            load_status: self.mapload_status,
         }
     }
 
@@ -244,6 +248,7 @@ impl GameRoom {
             let verified_maps = self.verify_map_compatibility(maps);
             info!("loaded {} maps", verified_maps.len());
             self.loaded_maps.extend(verified_maps);
+            self.update_maps_loaded_status();
 
             if self.verification_locked {
                 // try and start the game after a verification
@@ -253,7 +258,25 @@ impl GameRoom {
         }
     }
 
-    fn verify_map_compatibility(&self, maps: Vec<GameMap>) -> Vec<GameMap> {
+    fn update_maps_loaded_status(&mut self) {
+        self.mapload_status = if self.loaded_maps.is_empty() {
+            LoadState::Unloaded
+        } else if self.loaded_maps.len()
+            < (self.matchconfig.grid_size * self.matchconfig.grid_size) as usize
+        {
+            LoadState::Warn
+        } else {
+            LoadState::Ok
+        };
+        self.broadcast_room_extras();
+    }
+
+    fn set_maps_loaded_status(&mut self, status: LoadState) {
+        self.mapload_status = status;
+        self.broadcast_room_extras();
+    }
+
+    fn verify_map_compatibility(&mut self, maps: Vec<GameMap>) -> Vec<GameMap> {
         if self.matchconfig.target_medal == Medal::WR {
             // for maps that don't have a WR set, require reloading
             let (maps_with_wr, maps_without_wr): (Vec<GameMap>, Vec<GameMap>) =
@@ -264,6 +287,7 @@ impl GameRoom {
 
             if !maps_without_wr.is_empty() {
                 mapload::reload_maps(self.ptr.clone(), maps_without_wr, self.load_marker);
+                self.set_maps_loaded_status(LoadState::Loading);
             }
             return maps_with_wr;
         }
@@ -464,6 +488,7 @@ impl GameRoom {
     pub fn reload_maps(&mut self) {
         self.loaded_maps = Vec::new();
         mapload::load_maps(self.ptr.clone(), &self.matchconfig, self.get_load_marker());
+        self.set_maps_loaded_status(LoadState::Loading);
     }
 
     pub fn set_configs(&mut self, config: RoomConfiguration, matchconfig: MatchConfiguration) {
@@ -577,8 +602,14 @@ impl GameRoom {
 
     fn set_verification_locked(&mut self, locked: bool) {
         self.verification_locked = locked;
-        self.channel
-            .broadcast(&RoomEvent::StartPlayVerification { locked });
+        self.broadcast_room_extras();
+    }
+
+    fn broadcast_room_extras(&mut self) {
+        self.channel.broadcast(&RoomEvent::RoomExtrasUpdate {
+            locked: self.verification_locked,
+            load_status: self.mapload_status,
+        });
     }
 
     fn start_match(&mut self) -> Owned<LiveMatch> {
