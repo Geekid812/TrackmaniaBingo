@@ -444,6 +444,7 @@ namespace Network {
         if (@Match !is null) {
             joinedMatch.roomConfig = Match.roomConfig;
             joinedMatch.isLocalPlayerHost = Match.isLocalPlayerHost;
+            joinedMatch.joinCode = Match.joinCode;
         }
 
         Gamemaster::SetBingoActive(true);
