@@ -451,6 +451,7 @@ impl GameRoom {
             || self.matchconfig.mappack_id != config.mappack_id
             || self.matchconfig.map_tag != config.map_tag
             || self.matchconfig.campaign_selection != config.campaign_selection
+            || self.matchconfig.discovery != self.matchconfig.discovery
             || self.matchconfig.grid_size < config.grid_size;
 
         self.matchconfig = config;
