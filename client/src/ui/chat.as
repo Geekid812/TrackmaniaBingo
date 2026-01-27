@@ -42,7 +42,7 @@ namespace UIChat {
         UI::PushStyleColor(UI::Col::WindowBg, color);
 
         UI::SetNextWindowPos(CHAT_POSITION_OFFSET,
-                             Draw::GetHeight() - CHAT_POSITION_OFFSET - CHAT_INPUT_HEIGHT -
+                             Display::GetHeight() - CHAT_POSITION_OFFSET - CHAT_INPUT_HEIGHT -
                                  CHAT_WINDOW_MARGIN,
                              UI::Cond::FirstUseEver,
                              0.,

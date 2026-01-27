@@ -469,7 +469,7 @@ namespace Board {
     }
 
     // A unit of drawing is 1/100th of the screen's width.
-    float Unit() { return float(Draw::GetWidth() / 100.); }
+    float Unit() { return float(Display::GetWidth() / 100.); }
 
     class CellHighlightDrawData {
         int row;

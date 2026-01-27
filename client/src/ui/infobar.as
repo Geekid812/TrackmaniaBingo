@@ -104,10 +104,10 @@ namespace UIInfoBar {
             string claimingText = leadingClaim.result.Display() + " by";
 
             float claimTextWidth =
-                Math::Max(Draw::MeasureString(claimingText + " " + leadingClaim.player.name).x,
+                Math::Max(UI::MeasureString(claimingText + " " + leadingClaim.player.name).x,
                           UI::GetWindowSize().x);
             Layout::MoveTo(
-                Layout::GetPadding(claimTextWidth, Draw::MeasureString(displayText).x, 0.5));
+                Layout::GetPadding(claimTextWidth, UI::MeasureString(displayText).x, 0.5));
             UI::Text(displayText);
             UI::Text(claimingText);
 

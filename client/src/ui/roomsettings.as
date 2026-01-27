@@ -201,7 +201,7 @@ namespace UIRoomSettings {
         UI::SetNextItemWidth(250);
         if (!MXTags::TagsLoaded()) {
             UI::BeginDisabled();
-            UI::InputText("##maptaginput", "...", false);
+            UI::InputText("##maptaginput", "...");
             UI::EndDisabled();
             return;
         }
