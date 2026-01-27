@@ -8,7 +8,7 @@ namespace Config {
     array<string> CompetitiveBlockedPlugins = {};
 
     void FetchConfig() {
-        string url = "https://openplanet.dev/plugin/trackmaniabingo/config/main-" +
+        string url = "https://api.openplanet.dev/plugin/trackmaniabingo/config/main-" +
                      Meta::ExecutingPlugin().Version.SubStr(0, 1);
         logtrace("[Config::FetchConfig] Updating configuration: " + url);
         auto req = Net::HttpGet(url);
