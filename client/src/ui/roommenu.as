@@ -122,13 +122,13 @@ namespace UIRoomMenu {
                         timer = "\\$f80Game starting in " + (room.startedTimestamp - Time::Stamp) +
                                 "...";
                     float padding = Layout::GetPadding(
-                        UI::GetWindowSize().x, Draw::MeasureString(timer).x, 0.75);
+                        UI::GetWindowSize().x, UI::MeasureString(timer).x, 0.75);
                     UI::SetCursorPos(base + vec2(padding, 4.));
                     UI::Text(timer);
                 }
 
                 float padding = Layout::GetPadding(
-                    UI::GetWindowSize().x, Draw::MeasureString("\t\t" + buttonText).x, 1.0);
+                    UI::GetWindowSize().x, UI::MeasureString("\t\t" + buttonText).x, 1.0);
                 UI::SetCursorPos(base + vec2(padding, 0.));
                 UI::BeginDisabled(tooLateToJoin);
                 if (!inGame)
@@ -162,7 +162,7 @@ namespace UIRoomMenu {
                            (room.config.size != 0 ? "/" + room.config.size : "") + "\t" +
                            (room.hostName != "" ? ("\t" + Icons::User + " " + room.hostName) : "");
         float padding = Layout::GetPadding(
-            UI::GetWindowSize().x - base.x, Draw::MeasureString(righttext).x, 1.0);
+            UI::GetWindowSize().x - base.x, UI::MeasureString(righttext).x, 1.0);
         UI::SetCursorPos(base + vec2(padding, 0.));
         UI::Text(righttext);
         UI::Text(string::Join(UIGameRoom::MatchConfigInfo(room.matchConfig), "\t"));

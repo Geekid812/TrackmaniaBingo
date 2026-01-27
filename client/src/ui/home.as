@@ -20,7 +20,7 @@ namespace UIHome {
         Font::Set(Font::Style::Bold, Font::Size::XXLarge);
 
         string title = PLUGIN_TITLE;
-        float titleSize = Draw::MeasureString(title).x;
+        float titleSize = UI::MeasureString(title).x;
         float titlePadding = Layout::GetPadding(UI::GetWindowSize().x, titleSize, 0.5);
         UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
         UI::Text(title);
@@ -32,7 +32,7 @@ namespace UIHome {
         Font::Set(Font::Style::Regular, Font::Size::Large);
 
         string subtitle = "\\$666" + Subtitles[SubtitleIndex];
-        float titleSize = Draw::MeasureString(subtitle).x;
+        float titleSize = UI::MeasureString(subtitle).x;
         float titlePadding = Layout::GetPadding(UI::GetWindowSize().x, titleSize, 0.5);
         UI::SetCursorPos(vec2(titlePadding, UI::GetCursorPos().y));
         UI::Text(subtitle);

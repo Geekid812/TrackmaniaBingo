@@ -132,7 +132,7 @@ namespace UIGameRoom {
         string[] roomInfo = MatchConfigInfo(Match.config);
         string combinedInfo = string::Join(roomInfo, " ");
         float infoPadding =
-            Layout::GetPadding(windowWidth, Draw::MeasureString(combinedInfo).x, 0.5);
+            Layout::GetPadding(windowWidth, UI::MeasureString(combinedInfo).x, 0.5);
         UI::SetCursorPos(vec2(infoPadding, UI::GetCursorPos().y));
 
         for (uint i = 0; i < roomInfo.Length; i++) {
@@ -329,7 +329,7 @@ namespace UIGameRoom {
             countdownText = "Verifying all player records before starting...";
         }
 
-        vec2 textSize = Draw::MeasureString(countdownText);
+        vec2 textSize = UI::MeasureString(countdownText);
         float padding = Layout::GetPadding(windowSize.x, textSize.x, 1.0);
         vec4 textColor = UI::GetStyleColor(UI::Col::Text);
         float margin = 16;
