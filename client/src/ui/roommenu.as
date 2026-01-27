@@ -33,7 +33,6 @@ namespace UIRoomMenu {
         UI::SetNextItemWidth(200);
         JoinCodeInput = UI::InputText("##bingoroomcode",
                                       JoinCodeInput,
-                                      false,
                                       UI::InputTextFlags::CharsUppercase |
                                           (JoinCodeVisible ? 0 : UI::InputTextFlags::Password));
         UI::SameLine();
