@@ -3,7 +3,10 @@ namespace UIItemSelect {
     bool Visible;
     bool HookingMapClick;
     bool HookingPlayerClick;
+    bool IsSelectingNewTile;
     int SelectedPlayerUid = -1;
+    int SelectedBoardIndex = -1;
+    array<GameMap> MapChoices = {};
     Powerup Powerup;
 
     void Render() {
@@ -29,7 +32,11 @@ namespace UIItemSelect {
         case Powerup::Rally:
         case Powerup::RainbowTile:
         case Powerup::GoldenDice:
-            RenderSelectTile();
+            if (SelectedBoardIndex == -1) {
+                RenderSelectTile();
+            } else {
+                RenderDiceMapChoice();
+            }
             break;
         case Powerup::Jail: {
             if (SelectedPlayerUid == -1) {
@@ -131,11 +138,43 @@ namespace UIItemSelect {
         HookingPlayerClick = false;
     }
 
+    void RenderDiceMapChoice() {
+        UI::SeparatorText("Select one of three new maps from the Golden Dice");
+        if (MapChoices.Length == 0) {
+            UITools::CenterText("\n\n\\$ff8" + Icons::Star + " \\$zRolling the dice...\n\n");
+        } else {
+            array<GameTile> tiles = {};
+            for (uint i = 0; i < MapChoices.Length; i++) {
+                GameTile tile(MapChoices[i]);
+                tiles.InsertLast(tile);
+            }
+
+            HookingMapClick = true;
+            IsSelectingNewTile = true;
+            UIMapList::MapGrid(tiles, 3, 1.2, true, false);
+            IsSelectingNewTile = false;
+            HookingMapClick = false;
+        }
+    }
+
     void OnTileClicked(uint tileIndex) {
-        NetParams::PowerupBoardIndex = tileIndex;
-        NetParams::PlayerSelectUid = SelectedPlayerUid;
-        SelectedPlayerUid = -1;
-        startnew(Network::ActivatePowerup);
+        if (Powerup == Powerup::GoldenDice) {
+            if (IsSelectingNewTile) {
+                NetParams::PowerupChoiceIndex = tileIndex;
+                NetParams::PowerupBoardIndex = SelectedBoardIndex;
+                SelectedBoardIndex = -1;
+                startnew(Network::ActivatePowerup);
+            } else {
+                SelectedBoardIndex = tileIndex;
+                MapChoices = {};
+                startnew(Network::GetDiceChoices);
+            }
+        } else {
+            NetParams::PowerupBoardIndex = tileIndex;
+            NetParams::PlayerSelectUid = SelectedPlayerUid;
+            SelectedPlayerUid = -1;
+            startnew(Network::ActivatePowerup);
+        }
     }
 
     void OnPlayerClicked(Player @player) { SelectedPlayerUid = player.profile.uid; }

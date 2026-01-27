@@ -40,6 +40,8 @@ pub struct GameCell {
     pub state_deadline: DateTime<Utc>,
     #[serde(skip)]
     pub state_ident: Option<u32>,
+    #[serde(skip)]
+    pub reroll_ident: Option<u32>,
 }
 
 impl GameCell {
@@ -75,6 +77,7 @@ pub struct MvpData {
 #[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq)]
 #[repr(u8)]
 pub enum MatchPhase {
+    Pregame,
     Starting,
     NoBingo,
     Running,
@@ -91,4 +94,11 @@ pub enum TileItemState {
     Rainbow,
     Rally,
     Jail,
+}
+
+#[derive(Clone, Debug)]
+pub enum TileSelector {
+    StateIdent(u32),
+    RerollIdent(u32),
+    BoardIndex(usize),
 }

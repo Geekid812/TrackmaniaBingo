@@ -12,6 +12,14 @@ namespace Settings {
         }
     }
 
+    // Logging message severity.
+    enum LoggingLevel {
+        Trace,
+        Info,
+        Warning,
+        Error
+    }
+
     BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 5500);
 
     BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 5500);
@@ -35,9 +43,6 @@ namespace Settings {
     [Setting name="Enable Unsupported Configuration Warnings" category="Behaviour"]
     bool UnstableConfigWarnings = true;
 
-    [Setting name="Show the System Survey prompt on startup" category="Behaviour"]
-    bool ShowSystemSurvey = true;
-
     [Setting name="Selected Backend" category="Developer"]
     BackendSelection Backend = BackendSelection::Live;
 
@@ -52,6 +57,9 @@ namespace Settings {
 
     [Setting name="Server Ping Interval" category="Developer"]
     uint PingInterval = 30000;
+
+    [Setting name="Log Level" category="Developer"]
+    LoggingLevel LogLevel = LoggingLevel::Info;
 
     [Setting name="Enable Developer Tools" category="Developer"]
     bool DevTools = false;

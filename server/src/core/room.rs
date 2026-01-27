@@ -9,11 +9,11 @@ use parking_lot::Mutex;
 use rand::{distributions::Uniform, seq::SliceRandom, Rng};
 use serde::{Serialize, Serializer};
 use thiserror::Error;
-use tracing::debug;
+use tracing::{debug, info};
 
 use super::{
     directory::{self, Owned, Shared, PUB_ROOMS_CHANNEL, ROOMS},
-    events::{game::GameEvent, room::RoomEvent, roomlist::RoomlistEvent},
+    events::{room::RoomEvent, roomlist::RoomlistEvent},
     gamecommon::PlayerData,
     livegame::LiveMatch,
     models::{
@@ -27,7 +27,8 @@ use super::{
 };
 use crate::{
     config,
-    datatypes::{MatchConfiguration, PlayerProfile, PlayerRef, RoomConfiguration},
+    core::models::room::LoadState,
+    datatypes::{MatchConfiguration, Medal, PlayerProfile, PlayerRef, RoomConfiguration},
     server::{context::ClientContext, mapload},
     transport::Channel,
 };
@@ -39,12 +40,14 @@ pub struct GameRoom {
     matchconfig: MatchConfiguration,
     members: Vec<PlayerData>,
     teams: TeamsManager<BaseTeam>,
-    channel: Channel<RoomEvent>,
+    channel: Channel,
     created: DateTime<Utc>,
     load_marker: u32,
     loaded_maps: Vec<GameMap>,
     active_match: Option<Shared<LiveMatch>>,
     host_uid: Option<i32>,
+    verification_locked: bool,
+    mapload_status: LoadState,
 }
 
 impl GameRoom {
@@ -66,6 +69,8 @@ impl GameRoom {
             loaded_maps: Vec::new(),
             active_match: None,
             host_uid: None,
+            verification_locked: false,
+            mapload_status: LoadState::default(),
         };
         let arc = Arc::new(Mutex::new(_self));
         arc.lock().ptr = Arc::downgrade(&arc);
@@ -92,7 +97,7 @@ impl GameRoom {
         self.config.size != 0 && (self.members.len() as u32) >= self.config.size
     }
 
-    pub fn channel(&mut self) -> &mut Channel<RoomEvent> {
+    pub fn channel(&mut self) -> &mut Channel {
         &mut self.channel
     }
 
@@ -208,6 +213,7 @@ impl GameRoom {
             matchconfig: self.matchconfig.clone(),
             join_code: self.join_code.clone(),
             teams: self.network_teams(),
+            load_status: self.mapload_status,
         }
     }
 
@@ -239,8 +245,54 @@ impl GameRoom {
 
     pub fn maps_load_callback(&mut self, maps: Vec<GameMap>, userdata: u32) {
         if userdata == self.load_marker {
-            self.loaded_maps = maps;
+            let verified_maps = self.verify_map_compatibility(maps);
+            info!("loaded {} maps", verified_maps.len());
+            self.loaded_maps.extend(verified_maps);
+            self.update_maps_loaded_status();
+
+            if self.verification_locked {
+                // try and start the game after a verification
+                let _ = self.check_start_match();
+                self.set_verification_locked(false);
+            }
         }
+    }
+
+    fn update_maps_loaded_status(&mut self) {
+        self.mapload_status = if self.loaded_maps.is_empty() {
+            LoadState::Unloaded
+        } else if self.loaded_maps.len()
+            < (self.matchconfig.grid_size * self.matchconfig.grid_size) as usize
+        {
+            LoadState::Warn
+        } else {
+            LoadState::Ok
+        };
+        self.broadcast_room_extras();
+    }
+
+    fn set_maps_loaded_status(&mut self, status: LoadState) {
+        self.mapload_status = status;
+        self.broadcast_room_extras();
+    }
+
+    fn verify_map_compatibility(&mut self, maps: Vec<GameMap>) -> Vec<GameMap> {
+        if self.matchconfig.target_medal == Medal::WR {
+            // for maps that don't have a WR set, require reloading
+            let (maps_with_wr, maps_without_wr): (Vec<GameMap>, Vec<GameMap>) =
+                maps.into_iter().partition(|map| match map {
+                    GameMap::TMX(record) => record.wr_time.is_some_and(|record| record > 0),
+                    _ => false,
+                });
+
+            if !maps_without_wr.is_empty() {
+                mapload::reload_maps(self.ptr.clone(), maps_without_wr, self.load_marker);
+                self.set_maps_loaded_status(LoadState::Loading);
+            }
+            return maps_with_wr;
+        }
+
+        maps
     }
 
     pub fn has_started(&self) -> bool {
@@ -264,8 +316,12 @@ impl GameRoom {
         if self.has_player(ctx.profile.uid) {
             return Err(JoinRoomError::PlayerAlreadyJoined);
         }
+        if self.verification_locked {
+            return Err(JoinRoomError::Locked);
+        }
 
         let is_operator = self.host_uid.is_some_and(|u| u == profile.uid);
+        info!("{:#?}", self.host_uid);
         let team = self.add_player(ctx, profile, is_operator);
         self.channel.broadcast(&RoomEvent::PlayerJoin {
             profile: profile.clone(),
@@ -332,30 +388,30 @@ impl GameRoom {
             }));
     }
 
-    pub fn remove_team(&mut self, id: TeamIdentifier) {
-        let team = self.teams.remove_team(id);
-        if let Some(team) = team {
-            let mut updated_players = Vec::new();
-            let default = self.teams.get_index(0).unwrap().id;
-            self.members.iter_mut().for_each(|p| {
-                if p.team == team.id {
-                    p.team = default;
-                    updated_players.push(p);
-                }
-            });
+    pub fn remove_team(&mut self, id: TeamIdentifier) -> Result<(), anyhow::Error> {
+        let removed_team = self.teams.remove_team(id)?;
 
-            if updated_players.len() > 0 {
-                self.channel
-                    .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
-                        updates: HashMap::from_iter(
-                            updated_players
-                                .into_iter()
-                                .map(|p| (p.profile.uid, default)),
-                        ),
-                    }));
+        let mut updated_players = Vec::new();
+        let default = self.teams.get_index(0).unwrap().id;
+        self.members.iter_mut().for_each(|p| {
+            if p.team == removed_team.id {
+                p.team = default;
+                updated_players.push(p);
             }
+        });
+
+        if updated_players.len() > 0 {
+            self.channel
+                .broadcast(&RoomEvent::PlayerUpdate(PlayerUpdates {
+                    updates: HashMap::from_iter(
+                        updated_players
+                            .into_iter()
+                            .map(|p| (p.profile.uid, default)),
+                    ),
+                }));
         }
         self.channel.broadcast(&RoomEvent::TeamDeleted { id });
+        Ok(())
     }
 
     pub fn create_team_from_preset(&mut self, teams: &Vec<(String, Color)>) -> Option<BaseTeam> {
@@ -419,6 +475,7 @@ impl GameRoom {
             || self.matchconfig.mappack_id != config.mappack_id
             || self.matchconfig.map_tag != config.map_tag
             || self.matchconfig.campaign_selection != config.campaign_selection
+            || self.matchconfig.discovery != self.matchconfig.discovery
             || self.matchconfig.grid_size < config.grid_size;
 
         self.matchconfig = config;
@@ -431,6 +488,7 @@ impl GameRoom {
     pub fn reload_maps(&mut self) {
         self.loaded_maps = Vec::new();
         mapload::load_maps(self.ptr.clone(), &self.matchconfig, self.get_load_marker());
+        self.set_maps_loaded_status(LoadState::Loading);
     }
 
     pub fn set_configs(&mut self, config: RoomConfiguration, matchconfig: MatchConfiguration) {
@@ -507,7 +565,7 @@ impl GameRoom {
         self.loaded_maps.shuffle(&mut rand::thread_rng());
     }
 
-    pub fn check_start_match(&mut self) -> Result<Owned<LiveMatch>, anyhow::Error> {
+    pub fn check_start_match(&mut self) -> Result<(), anyhow::Error> {
         let map_count_minimum = self.matchconfig.grid_size * self.matchconfig.grid_size;
         let count = self.loaded_maps.len();
         if count < map_count_minimum as usize {
@@ -517,7 +575,41 @@ impl GameRoom {
             }
             return Err(err);
         }
-        Ok(self.start_match())
+
+        if self.matchconfig.discovery && !self.verification_locked {
+            // we haven't verified our maps yet
+            self.start_map_discovery_verification();
+        } else {
+            self.start_match();
+        }
+
+        Ok(())
+    }
+
+    fn start_map_discovery_verification(&mut self) {
+        let maps = std::mem::take(&mut self.loaded_maps);
+        self.set_verification_locked(true);
+        mapload::verify_map_records(
+            self.ptr.clone(),
+            maps,
+            self.players()
+                .iter()
+                .map(|p| p.profile.account_id.clone())
+                .collect(),
+            self.get_load_marker(),
+        );
+    }
+
+    fn set_verification_locked(&mut self, locked: bool) {
+        self.verification_locked = locked;
+        self.broadcast_room_extras();
+    }
+
+    fn broadcast_room_extras(&mut self) {
+        self.channel.broadcast(&RoomEvent::RoomExtrasUpdate {
+            locked: self.verification_locked,
+            load_status: self.mapload_status,
+        });
     }
 
     fn start_match(&mut self) -> Owned<LiveMatch> {
@@ -536,7 +628,7 @@ impl GameRoom {
         );
         let mut lock = match_arc.lock();
         lock.set_parent_room(self.ptr.clone());
-        lock.set_channel(Channel::<GameEvent>::from(&self.channel));
+        lock.set_channel(self.channel.clone());
 
         lock.setup_match_start(start_date);
         directory::MATCHES.insert(lock.uid().to_owned(), match_arc.clone());
@@ -595,6 +687,8 @@ pub enum JoinRoomError {
     HasStarted,
     #[error("You have already joined this room.")]
     PlayerAlreadyJoined,
+    #[error("The room you are trying to join is locked, it might have just started.")]
+    Locked,
 }
 
 #[derive(Serialize, Clone, Debug)]

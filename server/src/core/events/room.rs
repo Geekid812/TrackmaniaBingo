@@ -3,7 +3,7 @@ use serde::Serialize;
 use crate::{
     core::{
         models::{
-            room::RoomState,
+            room::{LoadState, RoomState},
             team::{BaseTeam, TeamIdentifier},
         },
         room::PlayerUpdates,
@@ -38,4 +38,8 @@ pub enum RoomEvent {
     },
     RoomSync(RoomState),
     ChatMessage(ChatMessage),
+    RoomExtrasUpdate {
+        locked: bool,
+        load_status: LoadState,
+    },
 }

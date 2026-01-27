@@ -63,7 +63,7 @@ namespace LocalStorage {
             UI::Texture @value;
             __internal::textureLocalStorage.Get(keys[i], @value);
 
-            print("[LocalStorage::DebugEnumerateTextureStorage] Cache resource: " + keys[i] +
+            loginfo("[LocalStorage::DebugEnumerateTextureStorage] Cache resource: " + keys[i] +
                   " -> " + (value is null ? "null" : "UI::Texture@"));
         }
     }

@@ -45,6 +45,8 @@
         <m name="grid_size" type="uint" default="5" />
         <m name="selection" type="MapMode" default="MapMode::RandomTMX" />
         <m name="target_medal" type="Medal" default="Medal::Author" />
+        <m name="discovery" type="bool" default="false" />
+        <m name="secret" type="bool" default="false" />
         <m name="time_limit" type="duration" />
         <m name="no_bingo_duration" type="duration" />
         <m name="overtime" type="bool" default="true" />
@@ -56,6 +58,9 @@
         <m name="map_tag" type="int" optional="true" default="1" />
         <m name="items" type="FrenzyItemSettings" />
         <m name="items_expire" type="uint" default="600" />
+        <m name="items_tick_multiplier" type="uint" default="1000" />
+        <m name="rally_length" type="uint" default="600" />
+        <m name="jail_length" type="uint" default="600" />
     </struct>
 
     <struct name="FrenzyItemSettings">
@@ -128,6 +133,7 @@
 
     <enum name="Medal">
         <comment>A Trackmania medal ranking.</comment>
+        <v>WR</v>
         <v>Author</v>
         <v>Gold</v>
         <v>Silver</v>

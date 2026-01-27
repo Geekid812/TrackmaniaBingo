@@ -13,7 +13,7 @@ namespace Layout {
     void MoveToY(float y) { UI::SetCursorPos(vec2(UI::GetCursorPos().x, y)); }
 
     float ButtonWidth(const string& in text) {
-        return Draw::MeasureString(text, Font::Current()).x +
+        return UI::MeasureString(text).x +
                2 * UI::GetStyleVarVec2(UI::StyleVar::FramePadding).x;
     }
 
@@ -24,6 +24,6 @@ namespace Layout {
 
     void AlignText(const string& in text, float alignment) {
         MoveTo(GetPadding(
-            UI::GetWindowSize().x, Draw::MeasureString(text, Font::Current()).x, alignment));
+            UI::GetWindowSize().x, UI::MeasureString(text).x, alignment));
     }
 }

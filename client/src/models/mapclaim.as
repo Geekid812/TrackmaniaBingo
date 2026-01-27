@@ -22,18 +22,18 @@ namespace MapClaim {
         return value;
     }
 
-    MapClaim Deserialize(Json::Value @value, LiveMatch @match = null) {
+    MapClaim Deserialize(Json::Value @value, GameServer @match = null) {
         auto mapClaim = MapClaim();
         if (@match is null) {
             if (!Gamemaster::IsBingoActive()) {
-                error("[MapClaim::Deserialize] Game is not active.");
+                logerror("[MapClaim::Deserialize] Game is not active.");
                 return mapClaim;
             }
 
             @match = @Match;
         }
 
-        Player @claimingPlayer = match.GetPlayer(int(value["player"]["uid"]));
+        Player @claimingPlayer = PlayerEnsureNotNull(match.GetPlayer(int(value["player"]["uid"])));
         @mapClaim.player = claimingPlayer;
         mapClaim.teamId = int(value["team_id"]);
         mapClaim.result = RunResult(uint64(value["time"]), Medal(int(value["medal"])));

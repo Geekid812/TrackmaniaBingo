@@ -1,12 +1,14 @@
 
 
 namespace NetworkHandlers {
+    string LastRerolledMapName;
+
     void TeamsUpdate(Json::Value @status) {
-        @Room.teams = {};
+        @Match.teams = {};
         auto JsonTeams = status["teams"];
         for (uint i = 0; i < JsonTeams.Length; i++) {
             auto JsonTeam = JsonTeams[i];
-            Room.teams.InsertLast(Team(JsonTeam["id"],
+            Match.teams.InsertLast(Team(JsonTeam["id"],
                                        JsonTeam["name"],
                                        UIColor::FromRgb(JsonTeam["color"][0],
                                                         JsonTeam["color"][1],
@@ -18,22 +20,21 @@ namespace NetworkHandlers {
         auto uids = status["updates"].GetKeys();
         for (uint i = 0; i < uids.Length; i++) {
             int uid = Text::ParseInt(uids[i]);
-            Player @player = Room.GetPlayer(uid);
+            Player @player = Match.GetPlayer(uid);
             if (player is null)
                 continue;
-            player.team = Room.GetTeamWithId(int(status["updates"].Get(tostring(uid))));
+            player.team = Match.GetTeamWithId(int(status["updates"].Get(tostring(uid))));
         }
     }
 
     void MatchStart(Json::Value @match) {
         Gamemaster::SetBingoActive(true);
-        @Match = LiveMatch();
         Match.uid = match["uid"];
         Match.startTime = Time::Now + uint64(match["start_ms"]);
-        Match.teams = Room.teams;
-        Match.players = Room.players;
-        Match.config = Room.matchConfig;
         Match.canReroll = bool(match["can_reroll"]);
+        Match.endState = EndState();
+
+        Gamemaster::SetPhase(GamePhase::Starting);
         LoadMaps(match["maps"]);
         UIGameRoom::GrabFocus = true;
         UIMapList::Visible = false;
@@ -76,26 +77,30 @@ namespace NetworkHandlers {
                 UIColor::Brighten(UIColor::GetAlphaColor(claimingTeam.color, 0.1), 0.75);
             vec4 dimmedColor = teamColor / 1.5;
             RunResult result = claim.result;
+            string recordDetail = "\n" + result.Display() + " (" + deltaTime + ")";
+
+            if (Match.config.secret) {
+                // don't show records in secret mode
+                recordDetail = "";
+            }
 
             if (isReclaim) {
                 UI::ShowNotification(Icons::Retweet + " Map Reclaimed",
                                      playerName + " has reclaimed \\$fd8" + mapName + "\\$z " +
-                                         teamCredit + "\n" + result.Display() + " (" + deltaTime +
-                                         ")",
+                                         teamCredit + recordDetail,
                                      teamColor,
                                      15000);
             } else if (isImprove) {
                 UI::ShowNotification(Icons::ClockO + " Time Improved",
                                      playerName + " has improved " + teamName +
                                          (teamName.EndsWith("s") ? "'" : "'s") + " time on \\$fd8" +
-                                         mapName + "\\$z\n" + result.Display() + " (" + deltaTime +
-                                         ")",
+                                         mapName + "\\$z" + recordDetail,
                                      dimmedColor,
                                      15000);
             } else { // Normal claim
                 UI::ShowNotification(Icons::Bookmark + " Map Claimed",
                                      playerName + " has claimed \\$fd8" + mapName + "\\$z " +
-                                         teamCredit + "\n" + result.Display(),
+                                         teamCredit + (Match.config.secret ? "" : "\n" + result.Display()),
                                      teamColor,
                                      15000);
             }
@@ -111,8 +116,8 @@ namespace NetworkHandlers {
     }
 
     void UpdateConfig(Json::Value @data) {
-        Room.config = RoomConfiguration::Deserialize(data["config"]);
-        Room.matchConfig = MatchConfiguration::Deserialize(data["match_config"]);
+        Match.roomConfig = RoomConfiguration::Deserialize(data["config"]);
+        Match.config = MatchConfiguration::Deserialize(data["match_config"]);
     }
 
     void AddRoomListing(Json::Value @room) {
@@ -120,7 +125,7 @@ namespace NetworkHandlers {
         UIRoomMenu::PublicRooms.InsertLast(netRoom);
 
         if (PersistantStorage::SubscribeToRoomUpdates && !Gamemaster::IsBingoActive() &&
-            @Room is null) {
+            @Match is null) {
             array<string> params = {stringof(netRoom.matchConfig.selection),
                                     netRoom.matchConfig.gridSize + "x" +
                                         netRoom.matchConfig.gridSize,
@@ -165,33 +170,33 @@ namespace NetworkHandlers {
     }
 
     void LoadRoomTeams(Json::Value @teams) {
-        @Room.teams = {};
-        @Room.players = {};
+        @Match.teams = {};
+        @Match.players = {};
         for (uint i = 0; i < teams.Length; i++) {
             Json::Value @t = teams[i];
             Team team = Team::Deserialize(t);
-            Room.teams.InsertLast(team);
+            Match.teams.InsertLast(team);
 
             for (uint j = 0; j < t["members"].Length; j++) {
                 Json::Value @m = t["members"][j];
                 PlayerProfile profile = PlayerProfile::Deserialize(m);
-                Room.players.InsertLast(Player(profile, team));
+                Match.players.InsertLast(Player(profile, team));
             }
         }
     }
 
     void PlayerJoin(Json::Value @data) {
-        if (@Room is null)
+        if (@Match is null)
             return;
-        Room.players.InsertLast(
-            Player(PlayerProfile::Deserialize(data["profile"]), Room.GetTeamWithId(data["team"])));
+        Match.players.InsertLast(
+            Player(PlayerProfile::Deserialize(data["profile"]), Match.GetTeamWithId(data["team"])));
     }
 
     void PlayerLeave(Json::Value @data) {
         int uid = int(data["uid"]);
-        for (uint i = 0; i < Room.players.Length; i++) {
-            if (Room.players[i].profile.uid == uid) {
-                Room.players.RemoveAt(i);
+        for (uint i = 0; i < Match.players.Length; i++) {
+            if (Match.players[i].profile.uid == uid) {
+                Match.players.RemoveAt(i);
                 return;
             }
         }
@@ -236,7 +241,7 @@ namespace NetworkHandlers {
     }
 
     void TeamCreated(Json::Value @data) {
-        Room.teams.InsertLast(
+        Match.teams.InsertLast(
             Team(data["id"],
                  data["name"],
                  vec3(data["color"][0] / 255., data["color"][1] / 255., data["color"][2] / 255.)));
@@ -244,9 +249,9 @@ namespace NetworkHandlers {
 
     void TeamDeleted(Json::Value @data) {
         int id = data["id"];
-        for (uint i = 0; i < Room.teams.Length; i++) {
-            if (Room.teams[i].id == id) {
-                Room.teams.RemoveAt(i);
+        for (uint i = 0; i < Match.teams.Length; i++) {
+            if (Match.teams[i].id == id) {
+                Match.teams.RemoveAt(i);
                 return;
             }
         }
@@ -254,7 +259,7 @@ namespace NetworkHandlers {
 
     void PhaseChange(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("Handlers [PhaseChange]: Bingo game is inactive!");
+            logwarn("Handlers [PhaseChange]: Bingo game is inactive!");
             return;
         }
         Gamemaster::SetPhase(GamePhase(int(data["phase"])));
@@ -263,13 +268,13 @@ namespace NetworkHandlers {
     void LoadGameData(Json::Value @data) {}
 
     void RoomSync(Json::Value @data) {
-        Room.config = RoomConfiguration::Deserialize(data["config"]);
-        Room.matchConfig = MatchConfiguration::Deserialize(data["matchconfig"]);
-        Room.joinCode = data["join_code"];
+        Match.roomConfig = RoomConfiguration::Deserialize(data["config"]);
+        Match.config = MatchConfiguration::Deserialize(data["matchconfig"]);
+        Match.joinCode = data["join_code"];
         LoadRoomTeams(data["teams"]);
     }
 
-    void MatchSync(Json::Value @data) { warn("MatchSync unimplemented"); }
+    void MatchSync(Json::Value @data) { logwarn("MatchSync unimplemented"); }
 
     void AnnounceWinByCellCount(Json::Value @data) {
         Team team = Match.GetTeamWithId(int(data["team"]));
@@ -317,9 +322,18 @@ namespace NetworkHandlers {
     void MatchPlayerJoin(Json::Value @data) {
         if (!Gamemaster::IsBingoActive())
             return;
-        Player player(PlayerProfile::Deserialize(data["profile"]),
-                      Match.GetTeamWithId(data["team"]));
-        Match.players.InsertLast(player);
+
+        Player@ player = Match.GetPlayer(int(data["profile"]["uid"]));
+        Team team = Match.GetTeamWithId(data["team"]);
+
+        if (@player is null) {
+            Player newPlayer(PlayerProfile::Deserialize(data["profile"]),
+                        team);
+            Match.players.InsertLast(newPlayer);
+            player = newPlayer;
+        } else {
+            player.team = team;
+        }
 
         vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(player.team.color, 0.1), 0.5);
         UI::ShowNotification(
@@ -328,7 +342,7 @@ namespace NetworkHandlers {
 
     void MapRerolled(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("Handlers: got MapRerolled event but game is inactive.");
+            logwarn("Handlers: got MapRerolled event but game is inactive.");
             return;
         }
 
@@ -337,9 +351,9 @@ namespace NetworkHandlers {
         string oldName =
             tile.map !is null ? Text::StripFormatCodes(Match.tiles[id].map.trackName) : "";
         tile.SetMap(GameMap::Deserialize(data["map"]));
-        tile.attemptRanking = {};
         Match.canReroll = bool(data["can_reroll"]);
 
+        LastRerolledMapName = oldName;
         UI::ShowNotification(Icons::Kenney::ReloadInverse + " Map Rerolled",
                              "The map \\$fd8" + oldName + " \\$zhas been rerolled.",
                              vec4(0., .6, .6, 1.),
@@ -384,7 +398,7 @@ namespace NetworkHandlers {
 
     void PowerupSpawn(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::PowerupSpawn] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::PowerupSpawn] Bingo is not active, ignoring this event.");
             return;
         }
 
@@ -406,53 +420,65 @@ namespace NetworkHandlers {
 
     void PowerupActivated(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::PowerupActivated] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::PowerupActivated] Bingo is not active, ignoring this event.");
             return;
         }
         Powerup usedPowerup = Powerup(int(data["powerup"]));
         PlayerRef powerupUser = PlayerRef::Deserialize(data["player"]);
-        Player @user = Match.GetPlayer(powerupUser.uid);
+        Player @user = PlayerEnsureNotNull(Match.GetPlayer(powerupUser.uid));
         int boardIndex = int(data["board_index"]);
         bool forwards = bool(data["forwards"]);
+        uint duration = uint(data["duration"]);
         PlayerRef targetPlayer =
             (data["target"].GetType() != Json::Type::Null ? PlayerRef::Deserialize(data["target"])
                                                           : PlayerRef());
-        string explainerText = Powerups::GetExplainerText(usedPowerup);
+        string explainerText = Powerups::GetExplainerText(usedPowerup, boardIndex, duration);
         string targetText;
         if (usedPowerup == Powerup::Jail) {
-            targetText = " and has sent " + targetPlayer.name;
+            targetText = " \\$zand has sent " + targetPlayer.name;
         }
         if (usedPowerup == Powerup::RainbowTile || usedPowerup == Powerup::Rally ||
             usedPowerup == Powerup::Jail) {
             targetText +=
                 " \\$zon \\$ff8" + Text::StripFormatCodes(Match.GetCell(boardIndex).map.trackName);
         }
-
-        if (usedPowerup != Powerup::GoldenDice) {
-            UIPoll::NotifyToast("\\$" + (@user !is null ? UIColor::GetHex(user.team.color) : "z") +
-                                    powerupUser.name + " \\$zhas used \\$fd8" +
-                                    itemName(usedPowerup) + targetText + "\\$z!" + explainerText,
-                                Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1),
-                                Powerups::GetPowerupTexture(usedPowerup));
+        if (usedPowerup == Powerup::GoldenDice) {
+            targetText += " \\$zon \\$ff8" + LastRerolledMapName + "\\$z";
+            explainerText += "\nThe map has been switched to \\$ff8" + Text::StripFormatCodes(Match.GetCell(boardIndex).map.trackName) + "\\$z.";
         }
 
-        Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer);
+        if (usedPowerup == Powerup::GoldenDice && UIItemSelect::MapChoices.Length > 0 && int(powerupUser.uid) != Profile.uid) {
+            // Someone used Golden Dice while we had our own, reload our map choices as they will be different now
+            UIItemSelect::MapChoices = {};
+            startnew(Network::GetDiceChoices);
+        }
+
+        UIPoll::NotifyToast("\\$" + (@user !is null ? UIColor::GetHex(user.team.color) : "z") +
+                                powerupUser.name + " \\$zhas used \\$fd8" +
+                                itemName(usedPowerup) + targetText + "\\$z!" + explainerText,
+                            Poll::POLL_EXPIRE_MILLIS * (explainerText != "" ? 2 : 1),
+                            Powerups::GetPowerupTexture(usedPowerup));
+
+        Powerups::TriggerPowerup(usedPowerup, powerupUser, boardIndex, forwards, targetPlayer, duration);
     }
 
     void ItemSlotEquip(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::ItemSlotEquip] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::ItemSlotEquip] Bingo is not active, ignoring this event.");
             return;
         }
 
         Player @equipUser = Match.GetPlayer(int(data["uid"]));
+        if (@equipUser is null) {
+            logwarn("[NetworkHandlers::ItemSlotEquip] Player is null, ignoring this event. This means something is likely broken!");
+        }
         equipUser.holdingPowerup = Powerup(int(data["powerup"]));
         equipUser.powerupExpireTimestamp = Time::Now + Match.config.itemsExpire * 1000;
     }
 
     void RallyResolved(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::RallyResolved] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::RallyResolved] Bingo is not active, ignoring this event.");
             return;
         }
         int cellId = int(data["cell_id"]);
@@ -488,7 +514,7 @@ namespace NetworkHandlers {
 
     void JailResolved(Json::Value @data) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[NetworkHandlers::JailResolved] Bingo is not active, ignoring this event.");
+            logwarn("[NetworkHandlers::JailResolved] Bingo is not active, ignoring this event.");
             return;
         }
 
@@ -502,7 +528,7 @@ namespace NetworkHandlers {
 
         if (int(tile.statePlayerTarget.uid) == Profile.uid) {
             // We are free from jail!
-            trace("[NetworkHandlers::JailResolved] Removing local jail.");
+            logtrace("[NetworkHandlers::JailResolved] Removing local jail.");
             @Jail = null;
         }
 
@@ -515,9 +541,14 @@ namespace NetworkHandlers {
             @Match.endState.mvpPlayer = PlayerRef::Deserialize(data["mvp"]["player"]);
             Match.endState.mvpScore = int(data["mvp"]["score"]);
 
-            if (@Room !is null) {
-                Room.SetMvp(Match.endState.mvpPlayer.uid);
+            if (@Match !is null) {
+                Match.SetMvp(Match.endState.mvpPlayer.uid);
             }
         }
+    }
+
+    void RoomExtrasUpdate(Json::Value @data) {
+        Match.verificationLocked = bool(data["locked"]);
+        Match.maploadStatus = LoadStatus(int(data["load_status"]));
     }
 }

@@ -100,7 +100,7 @@ namespace UIDevActions {
 
     void DummyGameLauncher() {
         if (UI::Button(Icons::PlayCircle + " Launch Dummy Game")) {
-            trace("[UIDevActions::DummyGameLauncher] Starting a dummy Bingo game.");
+            logtrace("[UIDevActions::DummyGameLauncher] Starting a dummy Bingo game.");
             Gamemaster::ResetAll();
 
             Gamemaster::SetBingoActive(true);
@@ -149,7 +149,7 @@ namespace UIDevActions {
 
     void AddFakePlayer() {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[UIDevActions::AddFakePlayer] Cannot add a player, Bingo is not active!");
+            logwarn("[UIDevActions::AddFakePlayer] Cannot add a player, Bingo is not active!");
             return;
         }
 
@@ -163,7 +163,7 @@ namespace UIDevActions {
 
     void ClearAllFakePlayers() {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[UIDevActions::ClearAllFakePlayers] Cannot add a player, Bingo is not active!");
+            logwarn("[UIDevActions::ClearAllFakePlayers] Cannot add a player, Bingo is not active!");
             return;
         }
 

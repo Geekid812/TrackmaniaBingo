@@ -69,7 +69,8 @@ namespace UIMapList {
     bool MapGrid(array<GameTile> @& in maps,
                  int gridSize,
                  float uiScale = 1.0,
-                 bool interactable = true) {
+                 bool interactable = true,
+                 bool showCoordinates = true) {
         bool interacted = false;
         auto drawList = UI::GetWindowDrawList();
 
@@ -89,6 +90,18 @@ namespace UIMapList {
             auto cell = maps[i];
             UI::TableNextColumn();
 
+            RenderMapTile(cell, drawList, "bingomapname" + i, i, (showCoordinates ? gridSize : -1), uiScale, interactable, interacted);
+        }
+
+        UI::EndTable();
+        UI::PopStyleColor(2);
+        UI::PopStyleVar(3);
+        Font::Unset();
+
+        return interacted;
+    }
+
+    void RenderMapTile(GameTile cell, UI::DrawList@ drawList, const string&in id, int cellId = -1, int gridSize = -1, float uiScale = 1.0, bool interactable = false, bool&out interacted = false) {
             auto startPos = UI::GetCursorPos() + UI::GetWindowPos() -
                             vec2(8 * uiScale, 8 * uiScale) - vec2(0, UI::GetScrollY());
 
@@ -102,7 +115,7 @@ namespace UIMapList {
                 UI::Dummy(thumbnailSize);
             }
 
-            UI::BeginChild("bingomapname" + i, vec2(160. * uiScale, UI::GetTextLineHeight()));
+            UI::BeginChild(id, vec2(160. * uiScale, UI::GetTextLineHeight()));
 
             string mapName =
                 cell.map !is null ? Text::OpenplanetFormatCodes(cell.map.trackName) : "";
@@ -113,25 +126,30 @@ namespace UIMapList {
             UI::EndGroup();
             bool mapHovered = UI::IsItemHovered();
             if (mapHovered && cell.map !is null) {
-                ShowTileTooltip(cell, (i % gridSize), (i / gridSize));
+                if (cellId != -1 && gridSize != -1) {
+                    ShowTileTooltip(cell, (cellId % gridSize), (cellId / gridSize));
+                } else {
+                    ShowTileTooltip(cell);
+                }
             }
             if (interactable && UI::IsItemClicked()) {
                 if (UIPaintColor::Visible)
                     cell.paintColor = UIPaintColor::SelectedColor;
                 else if (RerollMenuOpen) {
-                    NetParams::RerollCellId = i;
+                    NetParams::RerollCellId = cellId;
                     startnew(Network::RerollCell);
                     RerollMenuOpen = false;
                 } else if (UIItemSelect::HookingMapClick) {
                     if (cell.specialState == TileItemState::Empty ||
                         cell.specialState == TileItemState::HasPowerup ||
                         cell.specialState == TileItemState::HasSpecialPowerup) {
-                        UIItemSelect::OnTileClicked(i);
+                        UIItemSelect::OnTileClicked(cellId);
                         interacted = true;
                     }
                 } else if (cell.map !is null) {
                     Visible = false;
 
+                    // Playground::DebugClaim(cellId);
                     OnTileClicked(cell);
 
                     interacted = true;
@@ -162,14 +180,6 @@ namespace UIMapList {
             }
             if (mapHovered)
                 drawList.AddRectFilled(rect, vec4(.5, .5, .5, .1));
-        }
-
-        UI::EndTable();
-        UI::PopStyleColor(2);
-        UI::PopStyleVar(3);
-        Font::Unset();
-
-        return interacted;
     }
 
     vec4 TeamColorIndex(uint idx) {
@@ -179,7 +189,7 @@ namespace UIMapList {
     string GetTileTitle(GameTile tile, int x = -1, int y = -1) {
         string mapName = tile.map !is null ? Text::OpenplanetFormatCodes(tile.map.trackName) : "";
         string cellCoordinates =
-            (Settings::ShowCellCoordinates
+            (Settings::ShowCellCoordinates && x != -1 && y != -1
                  ? "\\$888[ \\$ff8" + GetTextCoordinates(x, y) + " \\$888] \\$z"
                  : "");
 
@@ -199,6 +209,7 @@ namespace UIMapList {
         }
 
         string mapTitle = GetTileTitle(tile, x, y);
+        bool isSecret = @Match !is null && Match.config.secret;
         UI::Text(mapTitle);
 
         if (tile.map.username != "")
@@ -218,9 +229,19 @@ namespace UIMapList {
             Player topPlayer = tile.LeadingRun().player;
             UI::Text((tile.claimant.id != -1 ? "Current record by \\$" : "Claimed by \\$") +
                      UIColor::GetHex(topPlayer.team.color) + topPlayer.name);
-            UI::Text(tile.LeadingRun().result.Display());
+
+            if (!isSecret || (@Match !is null && Match.endState.HasEnded())) {
+                UI::Text(tile.LeadingRun().result.Display());
+            }
         } else {
-            UI::TextDisabled("This map has not been claimed yet!");
+            Medal targetMedal = (@Match !is null ? Match.config.targetMedal : Medal::None);
+            
+            if (targetMedal == Medal::None || isSecret) {
+                UI::TextDisabled("This map has not been claimed yet!");
+            } else {
+                int targetTime = objectiveOf(targetMedal, tile.map);
+                UI::Text("\\$888Target Medal: " + RunResult(targetTime, targetMedal).Display());
+            }
         }
 
         if (RerollMenuOpen) {
@@ -232,12 +253,19 @@ namespace UIMapList {
         }
 
         switch (tile.specialState) {
-        case TileItemState::HasPowerup:
-            UI::Text("\\$8ffA powerup can be obtained on this map!");
+        case TileItemState::HasPowerup: {
+            if (!UIItemSelect::HookingMapClick) {
+                UI::Text("\\$8ffA powerup can be obtained on this map!");
+
+            }
             break;
-        case TileItemState::HasSpecialPowerup:
-            UI::Text("\\$fb0A SPECIAL powerup can be obtained on this map!");
+        }
+        case TileItemState::HasSpecialPowerup: {
+            if (!UIItemSelect::HookingMapClick) {
+                UI::Text("\\$fb0A SPECIAL powerup can be obtained on this map!");
+            }
             break;
+        }
         case TileItemState::Rally:
             UI::Text("\\$fcaA rally is currently taking place on this map!");
             break;
@@ -256,6 +284,10 @@ namespace UIMapList {
                 tile.specialState != TileItemState::HasPowerup &&
                 tile.specialState != TileItemState::HasSpecialPowerup) {
                 UI::Text("\\$f88Cannot select this tile, there is already a powerup active here.");
+            }
+
+            if (UIItemSelect::Powerup == Powerup::Jail && !tile.HasRunSubmissions() && tile.claimant.id == -1) {
+                UI::Text("\\$f88Cannot select an unclaimed tile.");
             }
         }
 

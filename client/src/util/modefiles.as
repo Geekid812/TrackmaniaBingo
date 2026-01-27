@@ -14,7 +14,7 @@ namespace Modefiles {
             // TODO: versioning check. for now, it is considered up to date
             return;
         }
-        print("[Modefiles::CreateBingoModescript] Creating " + destination);
+        loginfo("[Modefiles::CreateBingoModescript] Creating " + destination);
         string modeSource = IO::FileSource(souce).ReadToEnd();
 
         string fileName = targetPath.Split("/")[targetPath.Split("/").Length - 1];

@@ -77,7 +77,7 @@ namespace UIDevMapCache {
         int originalAmount = amount;
 
         while (amount > 0) {
-            trace("[UIDevMapCache::LoadTMXMapsCoroutine] Fetching new map... (" + amount +
+            logtrace("[UIDevMapCache::LoadTMXMapsCoroutine] Fetching new map... (" + amount +
                   " remaining)");
 
             Net::HttpRequest @req = Net::HttpGet(MAP_REQUEST_TMX_URL);
@@ -95,10 +95,8 @@ namespace UIDevMapCache {
             // Ad-hoc parsing of TMX results
             map.id = int(body["TrackID"]);
             map.uid = body["TrackUID"];
-            map.authorLogin = body["AuthorLogin"];
             map.authorTime = int(body["AuthorTime"]);
             map.gbxName = body["GbxMapName"];
-            map.coppers = int(body["DisplayCost"]);
             map.trackName = body["Name"];
             map.type = MapType::TMX;
             map.userid = int(body["UserID"]);
@@ -111,7 +109,7 @@ namespace UIDevMapCache {
             MapCache.InsertLast(map);
         }
 
-        print("[UIDevMapCache::LoadTMXMapsCoroutine] Loaded " + originalAmount +
+        loginfo("[UIDevMapCache::LoadTMXMapsCoroutine] Loaded " + originalAmount +
               " new maps in local cache.");
         PersistantStorage::SaveDevMapCache();
     }

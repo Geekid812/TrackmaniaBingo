@@ -35,16 +35,6 @@ namespace UIDevFonts {
                 }
             }
             UI::EndTable();
-
-            if (FontCacheOpenState[0])
-                Font::InspectFontCache(
-                    Font::FontCache_Regular, FontCacheOpenState[0], "Font Cache: Regular");
-            if (FontCacheOpenState[1])
-                Font::InspectFontCache(
-                    Font::FontCache_Bold, FontCacheOpenState[1], "Font Cache: Bold");
-            if (FontCacheOpenState[2])
-                Font::InspectFontCache(
-                    Font::FontCache_Mono, FontCacheOpenState[2], "Font Cache: Mono");
         }
     }
 }

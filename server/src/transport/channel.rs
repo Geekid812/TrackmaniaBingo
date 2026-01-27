@@ -1,29 +1,18 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::collections::HashMap;
 
 use serde::Serialize;
 
 use super::messager::NetMessager;
 
-#[derive(Clone, Debug)]
-pub struct Channel<T: Serialize> {
+#[derive(Clone, Debug, Default)]
+pub struct Channel {
     peers: HashMap<i32, NetMessager>,
-    _data: PhantomData<T>,
 }
 
-impl<T: Serialize, U: Serialize> From<&Channel<U>> for Channel<T> {
-    fn from(value: &Channel<U>) -> Self {
-        Self {
-            peers: value.peers.clone(),
-            _data: PhantomData,
-        }
-    }
-}
-
-impl<T: Serialize> Channel<T> {
+impl Channel {
     pub fn new() -> Self {
         Self {
             peers: HashMap::new(),
-            _data: PhantomData,
         }
     }
 
@@ -35,7 +24,7 @@ impl<T: Serialize> Channel<T> {
         self.peers.remove(&address);
     }
 
-    pub fn broadcast(&mut self, message: &T) {
+    pub fn broadcast(&mut self, message: &impl Serialize) {
         // send message to all peers and collect closed connections which produced an error
         let closed: Vec<i32> = self
             .peers
@@ -47,11 +36,5 @@ impl<T: Serialize> Channel<T> {
         for addr in closed {
             self.peers.remove(&addr);
         }
-    }
-}
-
-impl<T: Serialize> Default for Channel<T> {
-    fn default() -> Self {
-        Channel::new()
     }
 }

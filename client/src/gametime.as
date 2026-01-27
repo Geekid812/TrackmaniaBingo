@@ -17,11 +17,11 @@ namespace GameTime {
         case GamePhase::Running:
             return isCountdown
                        ? (Match.config.timeLimit - elapsedTime + Match.config.noBingoDuration)
-                       : elapsedTime - Match.config.noBingoDuration;
+                       : elapsedTime;
         case GamePhase::Overtime:
             return Time::Now - Match.overtimeStartTime;
         case GamePhase::Ended:
-            return Match.endState.endTime - Match.startTime - Match.config.noBingoDuration;
+            return Match.endState.endTime - Match.startTime;
         }
         return 0;
     }

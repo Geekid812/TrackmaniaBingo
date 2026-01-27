@@ -94,13 +94,13 @@ namespace UIPlayers {
                 }
                 UIColor::Reset();
                 UI::EndDisabled();
+                if (!teamPresetAvailable)
+                    UI::SetItemTooltip("Not enough team presets are available to create a new "
+                                       "team.\nCreate a new team in the Teams Editor.");
 
                 UI::SameLine();
                 UIColor::Gray();
-                if (UI::Button(Icons::Pencil)) {
-                    UITeamEditor::Visible = !UITeamEditor::Visible;
-                }
-                UI::SetItemTooltip("Edit Teams");
+                EditTeamsButton();
 
                 UI::SameLine();
                 if (UI::Button(Icons::Random)) {
@@ -109,10 +109,6 @@ namespace UIPlayers {
                 UI::SetItemTooltip("Shuffle Teams");
 
                 UIColor::Reset();
-
-                if (!teamPresetAvailable)
-                    UI::SetItemTooltip("Not enough team presets are available to create a new "
-                                       "team.\nCreate a new team in the Teams Editor.");
             }
 
             uint rowIndex = 0;
@@ -139,6 +135,13 @@ namespace UIPlayers {
             }
         }
         UI::EndTable();
+    }
+
+    void EditTeamsButton() {
+        if (UI::Button(Icons::Pencil)) {
+            UITeamEditor::Visible = !UITeamEditor::Visible;
+        }
+        UI::SetItemTooltip("Edit Teams");
     }
 
     void PlayerLabel(Player player, uint index, bool canBeSelected = false) {

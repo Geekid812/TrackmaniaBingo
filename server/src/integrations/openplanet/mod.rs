@@ -1,4 +1,4 @@
 mod auth;
 pub use auth::*;
 
-const BASE: &'static str = "https://openplanet.dev";
+const BASE: &'static str = "https://api.openplanet.dev";

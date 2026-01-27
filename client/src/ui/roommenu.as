@@ -1,3 +1,9 @@
+enum LoadStatus {
+    NotLoaded,
+    Loading,
+    Ok,
+    Error
+}
 
 namespace UIRoomMenu {
     string JoinCodeInput;
@@ -11,7 +17,7 @@ namespace UIRoomMenu {
                 return PublicRooms[i];
         }
 
-        warn("Roomlist: GetRoom(" + code + ") returned null.");
+        logwarn("Roomlist: GetRoom(" + code + ") returned null.");
         return null;
     }
 
@@ -27,7 +33,6 @@ namespace UIRoomMenu {
         UI::SetNextItemWidth(200);
         JoinCodeInput = UI::InputText("##bingoroomcode",
                                       JoinCodeInput,
-                                      false,
                                       UI::InputTextFlags::CharsUppercase |
                                           (JoinCodeVisible ? 0 : UI::InputTextFlags::Password));
         UI::SameLine();
@@ -117,13 +122,13 @@ namespace UIRoomMenu {
                         timer = "\\$f80Game starting in " + (room.startedTimestamp - Time::Stamp) +
                                 "...";
                     float padding = Layout::GetPadding(
-                        UI::GetWindowSize().x, Draw::MeasureString(timer).x, 0.75);
+                        UI::GetWindowSize().x, UI::MeasureString(timer).x, 0.75);
                     UI::SetCursorPos(base + vec2(padding, 4.));
                     UI::Text(timer);
                 }
 
                 float padding = Layout::GetPadding(
-                    UI::GetWindowSize().x, Draw::MeasureString("\t\t" + buttonText).x, 1.0);
+                    UI::GetWindowSize().x, UI::MeasureString("\t\t" + buttonText).x, 1.0);
                 UI::SetCursorPos(base + vec2(padding, 0.));
                 UI::BeginDisabled(tooLateToJoin);
                 if (!inGame)
@@ -157,7 +162,7 @@ namespace UIRoomMenu {
                            (room.config.size != 0 ? "/" + room.config.size : "") + "\t" +
                            (room.hostName != "" ? ("\t" + Icons::User + " " + room.hostName) : "");
         float padding = Layout::GetPadding(
-            UI::GetWindowSize().x - base.x, Draw::MeasureString(righttext).x, 1.0);
+            UI::GetWindowSize().x - base.x, UI::MeasureString(righttext).x, 1.0);
         UI::SetCursorPos(base + vec2(padding, 0.));
         UI::Text(righttext);
         UI::Text(string::Join(UIGameRoom::MatchConfigInfo(room.matchConfig), "\t"));
@@ -169,7 +174,31 @@ namespace UIRoomMenu {
                          PersistantStorage::SubscribeToRoomUpdates);
     }
 
+    void Matchmaking() {
+        UI::Text("\\$aaaYour seasonal matchmaking points: \\$ff8100\n\\$aaaMatchmaking is open from 16:00 to 22:00 CET.");
+
+
+        string joinMatchmakingText = Icons::Play + " Quick Play";
+
+        UI::NewLine();
+        Layout::AlignButton(joinMatchmakingText, 0.45);
+        UI::Button(joinMatchmakingText);
+
+        UI::SameLine();
+        UIColor::Gray();
+        UI::Button(Icons::BellO);
+        UI::SetItemTooltip("Enable notifications to join new matchmaking games");
+        UIColor::Reset();
+
+        UI::NewLine();
+    }
+
     void RoomMenu() {
+        /* Not ready yet!
+        UITools::SectionHeader("Matchmaking");
+        Matchmaking();
+        */
+
         UITools::SectionHeader("Public Rooms");
         if (Network::GetState() == ConnectionState::Connected) {
             PublicRoomList();

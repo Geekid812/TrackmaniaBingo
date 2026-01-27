@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use once_cell::sync::Lazy;
-use serde::Deserialize;
 use tracing::error;
 
 use crate::core::util::base64;
@@ -27,12 +26,6 @@ static AUTHENTICATOR: Lazy<Option<Arc<Authenticator>>> = Lazy::new(|| {
 
 static COUNTRY_IDENTIFIER: Lazy<Arc<CountryIdentifier>> =
     Lazy::new(|| Arc::new(CountryIdentifier::new()));
-
-#[derive(Deserialize)]
-enum AuthenticationMethod {
-    Openplanet,
-    None,
-}
 
 /// Handling logic for authenticating new players.
 pub async fn login(request: KeyExchangeRequest) -> Result<String, anyhow::Error> {

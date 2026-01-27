@@ -7,11 +7,12 @@ const string DEVELOPER_MENUITEM_NAME = "\\$82a" + DEVELOPER_WINDOW_NAME;
 const string BINGO_REPO_URL = "https://github.com/Geekid812/TrackmaniaBingo";
 const string BINGO_ISSUES_URL = "https://github.com/Geekid812/TrackmaniaBingo/issues";
 
+const string PLUGIN_TITLE = "\\$ff5Trackmania Bingo \\$888" + Meta::ExecutingPlugin().Version;
+
 const GamePlatform CURRENT_GAME = GamePlatform::Next;
 
 void Main() {
     // Initialization
-    Font::Init();
     UIHome::InitSubtitles();
     Powerups::InitPowerupTextures();
     Modefiles::EnsureAllModefilesCreated();
@@ -19,11 +20,16 @@ void Main() {
 
     // Load configuration settings
     PersistantStorage::LoadItems();
-    Config::FetchConfig();
+
+    try {
+        Config::FetchConfig();
+    } catch {
+        logwarn("[Main] FetchConfig raised an exception, unable to load configuration: " + getExceptionInfo());
+    }
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
-    if (PersistantStorage::LastConnectedMatchId != "") {
-        print("[Main] Plugin was previously connected, attempting to reconnect.");
+    if (PersistantStorage::LastConnectedMatchId != "" || PersistantStorage::LastConnectedRoomCode != "") {
+        loginfo("[Main] Plugin was previously connected, attempting to reconnect.");
         Network::Connect();
 
         if (Network::IsConnected()) {
@@ -36,7 +42,7 @@ void Main() {
 
     // We are interested in roomlist notifications, so we should connect
     if (PersistantStorage::SubscribeToRoomUpdates) {
-        print("[Main] Player is subscribed to roomlist updates, connecting to the servers.");
+        loginfo("[Main] Player is subscribed to roomlist updates, connecting to the servers.");
         Network::Connect();
         UIRoomMenu::RoomsLoad = LoadStatus::Loading;
         startnew(Network::GetPublicRooms);
@@ -55,15 +61,8 @@ void RenderMenu() {
 
         // Connect to server when opening plugin window the first time
         if (UIMainWindow::Visible && Network::GetState() == ConnectionState::Closed) {
-            print("[Main] Plugin window opened, connecting to the servers.");
+            loginfo("[Main] Plugin window opened, connecting to the servers.");
             startnew(Network::Connect);
-        }
-
-        // Ask to participate in the user survey
-        if (UIMainWindow::Visible && Settings::ShowSystemSurvey) {
-            print("[Main] User has not participated in the system survey, showing UISystemSurvey "
-                  "now.");
-            UISystemSurvey::Visible = true;
         }
     }
 
@@ -74,8 +73,6 @@ void RenderMenu() {
 
 void Render() {
     if (!UI::IsGameUIVisible())
-        return;
-    if (!Font::Initialized)
         return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
@@ -107,14 +104,11 @@ void Render() {
 }
 
 void RenderInterface() {
-    if (!Font::Initialized)
-        return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIMainWindow::Render();
     UINews::Render();
     UIDevActions::Render();
-    UISystemSurvey::Render();
 
     Font::Unset();
 }

@@ -4,11 +4,11 @@ namespace Playground {
     /* Load a map in the game playground. */
     void PlayMap(const string& in filePath, const string& in modeName = "") {
         if (!Permissions::PlayLocalMap()) {
-            warn("[Playground::PlayMap] Aborting, player does not have required permissions!");
+            logwarn("[Playground::PlayMap] Aborting, player does not have required permissions!");
             return;
         }
 
-        trace("[Playground::PlayMap] Loading map '" + filePath + "'...");
+        logtrace("[Playground::PlayMap] Loading map '" + filePath + "'...");
         __internal::CurrentLoadingPath = filePath;
         __internal::PlayMapCoroutineData data(filePath, modeName);
         startnew(__internal::PlayMapCoroutine, data);
@@ -44,7 +44,7 @@ namespace Playground {
     /* Send a manialink event to update the mode UI of a new record. */
     void
     UpdateCurrentPlaygroundRecord(const string& in accountId, int time, array<uint> checkpoints) {
-        trace("[Playground::UpdateCurrentPlaygroundRecord] (" + accountId + ") - " +
+        logtrace("[Playground::UpdateCurrentPlaygroundRecord] (" + accountId + ") - " +
               Time::Format(time));
         auto app = cast<CTrackMania>(GetApp());
         CGameManiaAppPlayground @playground = app.Network.ClientManiaAppPlayground;
@@ -76,7 +76,7 @@ namespace Playground {
             return false;
 
         auto rank = tile.attemptRanking;
-        trace("[Playground::ManialinkInit] Initializing " + rank.Length + " record" +
+        logtrace("[Playground::ManialinkInit] Initializing " + rank.Length + " record" +
               (rank.Length == 1 ? "" : "s") + "...");
         for (uint i = 0; i < rank.Length; i++) {
             Player @player = rank[i].player;
@@ -130,7 +130,7 @@ namespace Playground {
             while (app.Switcher.ModuleStack.Length == 0 ||
                    cast<CTrackManiaMenus>(app.Switcher.ModuleStack[0]) is null) {
                 if (__internal::CurrentLoadingPath != data.filePath) {
-                    warn("[Playground::PlayMapCoroutine] A new map has been requested, aborting "
+                    logwarn("[Playground::PlayMapCoroutine] A new map has been requested, aborting "
                          "previous load.");
                     return;
                 }
@@ -138,7 +138,7 @@ namespace Playground {
             }
             while (!app.ManiaTitleControlScriptAPI.IsReady) {
                 if (__internal::CurrentLoadingPath != data.filePath) {
-                    warn("[Playground::PlayMapCoroutine] A new map has been requested, aborting "
+                    logwarn("[Playground::PlayMapCoroutine] A new map has been requested, aborting "
                          "previous load.");
                     return;
                 }
@@ -146,7 +146,7 @@ namespace Playground {
             }
 
             app.ManiaTitleControlScriptAPI.PlayMap(data.filePath, data.modeName, "");
-            trace("[Playground::PlayMap] Load coroutine completed.");
+            logtrace("[Playground::PlayMap] Load coroutine completed.");
         }
     }
 }

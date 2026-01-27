@@ -22,7 +22,7 @@ namespace GameUpdates {
     }
 
     void ChecksWarn(const string& in warning) {
-        warn("[GameUpdates::ChecksWarn] Unsupported configuration: " + warning);
+        logwarn("[GameUpdates::ChecksWarn] Unsupported configuration: " + warning);
         UI::ShowNotification(Icons::ExclamationCircle +
                                  " Bingo: Unsupported Configuration Detected",
                              warning + "\nYou can disable this warning in the plugin settings.",
@@ -45,10 +45,31 @@ namespace GameUpdates {
     void TickUpdates() {
         Playground::UpdateCurrentTileIndex();
         Poll::CleanupExpiredToasts();
-        if (Match.config.competitvePatch && !MapIsCompetitivePatched) {
-            // Records will only be visible once the game ends
-            MapIsCompetitivePatched =
-                Playground::SetMapLeaderboardVisible(Match.endState.HasEnded());
+        if (Match.config.competitvePatch) {
+            if (!MapIsCompetitivePatched) {
+                // Records will only be visible once the game ends
+                MapIsCompetitivePatched =
+                    Playground::SetMapLeaderboardVisible(Match.endState.HasEnded());
+            }
+            if (!Match.endState.HasEnded()) {
+                DisableCompetitiveBannedPlugins();
+            }
+        }
+    }
+
+    void DisableCompetitiveBannedPlugins() {
+        auto plugins = Meta::AllPlugins();
+        for (uint i = 0; i < plugins.Length; i++) {
+            auto plugin = plugins[i];
+            if (!plugin.Enabled) {
+                // skip disabled plugins
+                continue;
+            }
+            if (Config::CompetitiveBlockedPlugins.Find(plugin.ID) != -1) {
+                // plugin is blacklisted, disable it
+                logwarn("[GameUpdates::DisableCompetitiveBannedPlugins] Plugin \"" + plugin.ID + "\" is blacklisted in competitive matches, disabling.");
+                plugin.Enabled = false;
+            }
         }
     }
 
@@ -56,7 +77,7 @@ namespace GameUpdates {
         auto map = Playground::GetCurrentMap();
         if (@map !is null && map.EdChallengeId != Jail.map.uid &&
             Time::Now - LastSummonTimestamp > 5000) {
-            print("[GameUpdates::SummonToJail] Player is not in their jail, summoning them now.");
+            loginfo("[GameUpdates::SummonToJail] Player is not in their jail, summoning them now.");
             Powerups::NotifyJail();
             LastSummonTimestamp = Time::Now;
             Playground::PlayMap(Jail.map);

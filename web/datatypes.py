@@ -31,11 +31,12 @@ class MapMode(Enum):
 
 # A Trackmania medal ranking.
 class Medal(Enum):
-    AUTHOR = 0
-    GOLD = 1
-    SILVER = 2
-    BRONZE = 3
-    NONE = 4
+    WR = 0
+    AUTHOR = 1
+    GOLD = 2
+    SILVER = 3
+    BRONZE = 4
+    NONE = 5
 
 # A selection of game rules.
 class Gamemode(Enum):
@@ -90,6 +91,8 @@ class MatchConfiguration(BaseModel):
     grid_size: int = 5
     selection: MapMode = MapMode.RANDOMTMX
     target_medal: Medal = Medal.AUTHOR
+    discovery: bool = False
+    secret: bool = False
     time_limit: TimedeltaMilliseconds
     no_bingo_duration: TimedeltaMilliseconds
     overtime: bool = True
@@ -101,6 +104,9 @@ class MatchConfiguration(BaseModel):
     map_tag: int | None = 1
     items: FrenzyItemSettings
     items_expire: int = 600
+    items_tick_multiplier: int = 1000
+    rally_length: int = 600
+    jail_length: int = 600
 
 # Item drawing probabilities for configuring the Frenzy gamemode.
 class FrenzyItemSettings(BaseModel):

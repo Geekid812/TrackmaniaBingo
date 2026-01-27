@@ -29,20 +29,32 @@ impl TryFrom<MapResponse> for MapRecord {
             .get(0)
             .ok_or(anyhow!("missing primary author when parsing MapResponse"))?
             .user;
-        let style_name = value.tags.get(0).map(|tag| tag.name.clone());
+
+        let tag_ids: Vec<String> = value
+            .tags
+            .iter()
+            .map(|tag| tag.tag_id.to_string())
+            .collect();
+        let tags = tag_ids.join(",");
+
+        let wr_time = value.online_wr.map(|record| record.record_time);
+        let style_name = value.tags.first().map(|t| t.name.clone());
         Ok(Self {
             uid: value.map_uid,
             tmxid: value.map_id,
+            webservices_id: value.online_map_id,
             userid: primary_author.user_id,
-            author_login: "".to_owned(), // Compatibility: This field is deprecated.
             username: primary_author.name.clone(),
             track_name: value.name,
             gbx_name: value.gbx_map_name,
-            coppers: 0,     // Compatibility: This field is deprecated.
-            author_time: 0, // Compatibility: This field is deprecated.
+            wr_time,
+            author_time: value.medals.author,
+            gold_time: value.medals.gold,
+            silver_time: value.medals.silver,
+            bronze_time: value.medals.bronze,
             uploaded_at: value.uploaded_at,
             updated_at: value.updated_at,
-            tags: None, // Compatibility: This field is deprecated.
+            tags,
             style: style_name,
         })
     }
@@ -93,7 +105,7 @@ impl MappackLoader {
             .map(|map_uid| format!("&after={}", map_uid))
             .unwrap_or_default();
         let url = Url::from_str(
-            &format!("{}{}?mappackid={}{}&count=100&fields=MapId,MapUid,Name,GbxMapName,Authors[],UploadedAt,UpdatedAt,Tags[]", BASE, ROUTE_MAPPACK, mappack_id, query_extra)
+            &format!("{}{}?mappackid={}{}&count=100&fields=MapId,MapUid,OnlineMapId,Name,GbxMapName,Authors[],UploadedAt,UpdatedAt,Medals.Author,Medals.Gold,Medals.Silver,Medals.Bronze,Tags[],OnlineWR", BASE, ROUTE_MAPPACK, mappack_id, query_extra)
         )?;
         debug!("requesting TMX tracks: {}", url);
 

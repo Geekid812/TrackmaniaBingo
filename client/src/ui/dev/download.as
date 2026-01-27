@@ -19,7 +19,7 @@ namespace UIDownloads {
             UI::Text(tostring(imageDownloads) + " images downloading");
 
         vec2 size = UI::GetWindowSize();
-        vec2 full = vec2(Draw::GetWidth(), Draw::GetHeight());
+        vec2 full = vec2(Display::GetWidth(), Display::GetHeight());
         UI::SetWindowPos(full - size -
                          vec2(full.y * BOTTOM_ANCHOR_OFFSET, full.y * BOTTOM_ANCHOR_OFFSET));
         UI::End();

@@ -84,11 +84,11 @@ namespace UIPoll {
                     Time::Now, data.startTime, ANIMATION_IN_MILLIS, Animation::Easing::CubicOut) *
                 targetWindowY);
 
-        UI::SetNextWindowPos(Draw::GetWidth() / 2, currentY, UI::Cond::Always, 0.5, 0.);
+        UI::SetNextWindowPos(Display::GetWidth() / 2, currentY, UI::Cond::Always, 0.5, 0.);
         Window::Create(
             "##bingopoll" + data.poll.id,
             open,
-            Math::Max(500, int(Draw::MeasureString(data.poll.title, Font::Current()).x) + 100),
+            Math::Max(500, int(UI::MeasureString(data.poll.title).x) + 100),
             POLL_WINDOW_HEIGHT,
             UI::WindowFlags::NoMove | UI::WindowFlags::NoResize | UI::WindowFlags::NoTitleBar |
                 UI::WindowFlags::NoScrollbar);
@@ -113,7 +113,7 @@ namespace UIPoll {
                     Time::Now, data.startTime, ANIMATION_IN_MILLIS, Animation::Easing::CubicOut) *
                 targetWindowY);
 
-        UI::SetNextWindowPos(Draw::GetWidth() / 2, currentY, UI::Cond::Always, 0.5, 0.);
+        UI::SetNextWindowPos(Display::GetWidth() / 2, currentY, UI::Cond::Always, 0.5, 0.);
         Window::Create("##bingonotify" + stackIndex,
                        open,
                        500,
@@ -125,10 +125,9 @@ namespace UIPoll {
         Layout::EndLabelAlign();
 
         string notifyTitle = data.title;
-        UI::Font @font = Font::Current();
         Layout::MoveTo(
             Layout::GetPadding(UI::GetWindowSize().x,
-                               Draw::MeasureString(notifyTitle, font, font.FontSize).x +
+                               UI::MeasureString(notifyTitle).x +
                                    (@data.thumbnail !is null ? NOTIFY_THUMBNAIL_SIZE : 0),
                                0.5));
 
@@ -136,7 +135,7 @@ namespace UIPoll {
             UI::Image(data.thumbnail, vec2(NOTIFY_THUMBNAIL_SIZE, NOTIFY_THUMBNAIL_SIZE));
             UI::SameLine();
             Layout::MoveToY(UI::GetCursorPos().y +
-                            (NOTIFY_THUMBNAIL_SIZE - UI::GetTextLineHeight()) / 2);
+                            (NOTIFY_THUMBNAIL_SIZE - UI::GetTextLineHeight()) / 4);
         }
 
         UI::Text(notifyTitle);
@@ -198,7 +197,7 @@ namespace UIPoll {
     }
 
     void ClearAllPollsAndNotifications() {
-        trace("[UIPolls::ClearAllPollsAndNotifications] All toasts were removed.");
+        logtrace("[UIPolls::ClearAllPollsAndNotifications] All toasts were removed.");
         Polls.Resize(0);
         Notifications.Resize(0);
     }

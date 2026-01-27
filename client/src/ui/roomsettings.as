@@ -115,6 +115,22 @@ namespace UIRoomSettings {
         UI::EndDisabled();
     }
 
+    void DiscoveryToggle() {
+        UITools::AlignedLabel(Icons::Search + " Map Discovery");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        MatchConfig.discovery = UI::Checkbox("##bingodiscovery", MatchConfig.discovery);
+        UI::SameLine();
+        UITools::HelpTooltip("Excludes maps where any player in the match currently has a record on.");
+    }
+
+    void SecretToggle() {
+        UITools::AlignedLabel(Icons::QuestionCircle + " Secret Records");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        MatchConfig.secret = UI::Checkbox("##bingosecret", MatchConfig.secret);
+        UI::SameLine();
+        UITools::HelpTooltip("All records from other players will be hidden until the end of the game.");
+    }
+
     void TimeLimitControl() {
         UITools::AlignedLabel(Icons::ClockO + "  Time Limit");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
@@ -185,7 +201,7 @@ namespace UIRoomSettings {
         UI::SetNextItemWidth(250);
         if (!MXTags::TagsLoaded()) {
             UI::BeginDisabled();
-            UI::InputText("##maptaginput", "...", false);
+            UI::InputText("##maptaginput", "...");
             UI::EndDisabled();
             return;
         }
@@ -201,10 +217,14 @@ namespace UIRoomSettings {
     }
 
     void TargetMedalSelector() {
-        UITools::AlignedLabel(Icons::Kenney::ButtonCircle + "  Target Medal");
+        UITools::AlignedLabel(Icons::Kenney::ButtonCircle + " Medal Objective");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
         if (UI::BeginCombo("##bingomedal", stringof(MatchConfig.targetMedal))) {
+            if (UI::Selectable(stringof(Medal::WR), MatchConfig.targetMedal == Medal::WR)) {
+                MatchConfig.targetMedal = Medal::WR;
+            }
+
             if (UI::Selectable(stringof(Medal::Author), MatchConfig.targetMedal == Medal::Author)) {
                 MatchConfig.targetMedal = Medal::Author;
             }
@@ -251,7 +271,7 @@ namespace UIRoomSettings {
     }
 
     void RerollsToggle() {
-        UITools::AlignedLabel(Icons::Kenney::ReloadInverse + " Enable Map Rerolls");
+        UITools::AlignedLabel(Icons::Kenney::ReloadInverse + " Map Rerolls");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         MatchConfig.rerolls = UI::Checkbox("##bingorerolls", MatchConfig.rerolls);
         UI::SameLine();
@@ -262,9 +282,9 @@ namespace UIRoomSettings {
     void CompetitvePatchToggle() {
         UITools::AlignedLabel(Icons::Trophy + " Competitive Patch");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch);
+        MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch) || MatchConfig.secret;
         UI::SameLine();
-        UITools::HelpTooltip("Viewing records, leaderboards and splits will be disabled.");
+        UITools::HelpTooltip("Viewing records, leaderboards and splits will be disabled. Some blacklisted plugins will be disabled during the match.");
     }
 
     void TotalTimeIndicator() {
@@ -329,6 +349,36 @@ namespace UIRoomSettings {
                              "frame or it will disappear.");
     }
 
+    void ItemTickrateEdit() {
+        UITools::AlignedLabel(Icons::Forward + " Item Spawns");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+
+        UI::SetNextItemWidth(250);
+        if (UI::BeginCombo("##bingoitemtickrate",
+                           MatchConfig.itemsTickMultiplier <= 1000 ? (MatchConfig.itemsTickMultiplier == 400 ? "Few" : "Balanced") : (MatchConfig.itemsTickMultiplier == 2000 ? "Many" : "True Frenzy"))) {
+
+            if (UI::Selectable("Few", MatchConfig.itemsTickMultiplier == 400)) {
+                MatchConfig.itemsTickMultiplier = 400;
+            }
+
+            if (UI::Selectable("Balanced", MatchConfig.itemsTickMultiplier == 1000)) {
+                MatchConfig.itemsTickMultiplier = 1000;
+            }
+
+            if (UI::Selectable("Many", MatchConfig.itemsTickMultiplier == 2000)) {
+                MatchConfig.itemsTickMultiplier = 2000;
+            }
+
+            if (UI::Selectable("True Frenzy", MatchConfig.itemsTickMultiplier == 4000)) {
+                MatchConfig.itemsTickMultiplier = 4000;
+            }
+
+            UI::EndCombo();
+        }
+        UI::SameLine();
+        UITools::HelpTooltip("Controls how frequently new items will appear.");
+    }
+
     void SettingsView() {
         UITools::SectionHeader("Room Settings");
         RoomNameInput();
@@ -358,16 +408,29 @@ namespace UIRoomSettings {
             MapTagSelector();
         }
         TargetMedalSelector();
+
         GridSizeSelector();
         TimeLimitControl();
         NoBingoTimeControl();
         if (MatchConfig.timeLimit != 0) {
             OvertimeToggle();
         }
+
+        UI::BeginDisabled(MatchConfig.selection == MapMode::Mappack);
+        DiscoveryToggle();
+        UI::EndDisabled();
+
         RerollsToggle();
+        
+        UI::BeginDisabled(MatchConfig.secret);
         CompetitvePatchToggle();
+        UI::EndDisabled();
+
+        SecretToggle();
+
         if (MatchConfig.mode == Gamemode::Frenzy) {
             ItemExpiryEdit();
+            ItemTickrateEdit();
         }
 
         if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0)

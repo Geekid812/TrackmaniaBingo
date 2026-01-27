@@ -122,8 +122,8 @@ namespace Playground {
         if (myRun !is null && myRun.result.time <= result.time)
             return;
 
-        int medalTime = Playground::GetMedalTime(map, config.targetMedal);
-        if (medalTime != -1 && result.time > medalTime)
+        int minimumTime = Playground::GetCurrentTimeToBeat(true).time;
+        if (minimumTime != -1 && result.time > minimumTime)
             return;
 
         // Map should be claimed
@@ -131,7 +131,7 @@ namespace Playground {
         mapClaimData.tileIndex = Gamemaster::GetCurrentTileIndex();
         mapClaimData.mapResult = result;
 
-        trace("[Playground::CheckRunFinished] Claiming map '" + map.MapName + "' with time of " +
+        logtrace("[Playground::CheckRunFinished] Claiming map '" + map.MapName + "' with time of " +
               result.time);
         startnew(ClaimMedalCoroutine);
     }
@@ -151,11 +151,7 @@ namespace Playground {
             return currentTile.LeadingRun().result;
 
         // Map is not claimed, get the target medal time
-        CGameCtnChallenge @map = Playground::GetCurrentMap();
-        if (map is null)
-            return null;
-
-        return RunResult(GetMedalTime(map, Match.config.targetMedal), Match.config.targetMedal);
+        return RunResult(objectiveOf(Match.config.targetMedal, currentTile.map), Match.config.targetMedal);
     }
 
     Medal CalculateMedal(int time, int author, int gold, int silver, int bronze) {
@@ -185,15 +181,15 @@ namespace Playground {
                 mapClaimData.tileIndex, mapClaimData.campaign, mapClaimData.mapResult);
             mapClaimData.retries -= 1;
             if (Success) {
-                trace("[Playground::ClaimMedalCoroutine] Map successfully claimed.");
+                logtrace("[Playground::ClaimMedalCoroutine] Map successfully claimed.");
                 ok = true;
                 break;
             } else
-                trace("[Playground::ClaimMedalCoroutine] Map claim failed, retrying... (" +
+                logtrace("[Playground::ClaimMedalCoroutine] Map claim failed, retrying... (" +
                       mapClaimData.retries + " attempts left)");
         }
         if (!ok) {
-            warn("[Playground::ClaimMedalCoroutine] Warning! Failed to claim a map after several "
+            logwarn("[Playground::ClaimMedalCoroutine] Warning! Failed to claim a map after several "
                  "retries.");
         }
         mapClaimData.retries = 0;

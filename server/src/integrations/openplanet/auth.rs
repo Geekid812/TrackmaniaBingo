@@ -6,7 +6,7 @@ use std::str::FromStr;
 use thiserror::Error;
 use tracing::debug;
 
-const AUTH_VALIDATE: &'static str = "/api/auth/validate";
+const AUTH_VALIDATE: &'static str = "/auth/validate";
 
 pub struct Authenticator {
     client: Client,

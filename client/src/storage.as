@@ -18,21 +18,25 @@ namespace PersistantStorage {
 
     [Setting hidden] string DevelMapCache = "[]";
 
-    [Setting hidden] string TeamEditorStorage = GetDefaultTeams();
+    [Setting hidden] string CustomTeamsStorage = "[]";
 
     [Setting hidden] bool HasDismissedItemSpoiler = false;
 
-    string GetDefaultTeams() {
-        Json::Value @teams = Json::Array();
+    array<Team@> GetDefaultTeams() {
+        array<Team@> teams;
 
-        teams.Add(Team::Serialize(Team(0, "Red", vec3(0.97, 0.07, 0.08))));
-        teams.Add(Team::Serialize(Team(0, "Green", vec3(0.55, 0.76, 0.29))));
-        teams.Add(Team::Serialize(Team(0, "Blue", vec3(0.00, 0.58, 1.00))));
-        teams.Add(Team::Serialize(Team(0, "Cyan", vec3(0.30, 0.82, 0.88))));
-        teams.Add(Team::Serialize(Team(0, "Pink", vec3(0.88, 0.29, 0.50))));
-        teams.Add(Team::Serialize(Team(0, "Yellow", vec3(1.00, 1.00, 0.00))));
+        teams.InsertLast(Team(0, "Red", vec3(0.90,0.10,0.10)));
+        teams.InsertLast(Team(0, "Orange", vec3(0.95,0.55,0.15)));
+        teams.InsertLast(Team(0, "Yellow", vec3(0.95,0.90,0.20)));
+        teams.InsertLast(Team(0, "Green", vec3(0.20,0.85,0.25)));
+        teams.InsertLast(Team(0, "Teal", vec3(0.10,0.70,0.65)));
+        teams.InsertLast(Team(0, "Cyan", vec3(0.35,0.75,0.95)));
+        teams.InsertLast(Team(0, "Blue", vec3(0.15,0.30,0.85)));
+        teams.InsertLast(Team(0, "Purple", vec3(0.45,0.25,0.65)));
+        teams.InsertLast(Team(0, "Magenta", vec3(0.85,0.25,0.65)));
+        teams.InsertLast(Team(0, "Pink", vec3(0.95,0.55,0.75)));
 
-        return Json::Write(teams);
+        return teams;
     }
 
     void LoadItems() {
@@ -42,7 +46,7 @@ namespace PersistantStorage {
                 @Profile = PlayerProfile::Deserialize(Json::Parse(LocalProfile));
             }
         } catch {
-            warn("[PersistantStorage::LoadItems] Deserialize of {LocalProfile} failed (" +
+            logwarn("[PersistantStorage::LoadItems] Deserialize of {LocalProfile} failed (" +
                  getExceptionInfo() + ")");
         }
 
@@ -54,7 +58,7 @@ namespace PersistantStorage {
                 MatchConfig = MatchConfiguration::Deserialize(configs["game"]);
             }
         } catch {
-            warn("[PersistantStorage::LoadItems] Deserialize of {LastConfig} failed (" +
+            logwarn("[PersistantStorage::LoadItems] Deserialize of {LastConfig} failed (" +
                  getExceptionInfo() + ")");
         }
 
@@ -65,22 +69,23 @@ namespace PersistantStorage {
                 MapCache.InsertLast(GameMap::Deserialize(mapCache[i]));
             }
         } catch {
-            warn("[PersistantStorage::LoadItems] Deserialize of {DevelMapCache} failed (" +
+            logwarn("[PersistantStorage::LoadItems] Deserialize of {DevelMapCache} failed (" +
                  getExceptionInfo() + ")");
         }
 
-        // TeamEditorStorage
+        // CustomTeamsStorage
         LoadTeamEditor();
     }
 
     void LoadTeamEditor() {
         try {
-            Json::Value @presetTeams = Json::Parse(TeamEditorStorage);
+            TeamPresets = GetDefaultTeams();
+            Json::Value @presetTeams = Json::Parse(CustomTeamsStorage);
             for (uint i = 0; i < presetTeams.Length; i++) {
                 TeamPresets.InsertLast(Team::Deserialize(presetTeams[i]));
             }
         } catch {
-            warn("[PersistantStorage::LoadItems] Deserialize of {TeamEditorStorage} failed (" +
+            logwarn("[PersistantStorage::LoadItems] Deserialize of {CustomTeamsStorage} failed (" +
                  getExceptionInfo() + ")");
         }
     }
@@ -88,11 +93,11 @@ namespace PersistantStorage {
     void SaveTeamEditor() {
         auto jsonStoage = Json::Array();
 
-        for (uint i = 0; i < TeamPresets.Length; i++)
+        for (uint i = GetDefaultTeams().Length; i < TeamPresets.Length; i++)
             jsonStoage.Add(Team::Serialize(TeamPresets[i]));
 
         string textJson = Json::Write(jsonStoage);
-        PersistantStorage::TeamEditorStorage = textJson;
+        PersistantStorage::CustomTeamsStorage = textJson;
     }
 
     void SaveDevMapCache() {
@@ -106,13 +111,13 @@ namespace PersistantStorage {
     }
 
     void SaveConnectedMatch() {
-        if (@Room !is null) {
-            PersistantStorage::LastConnectedRoomCode = Room.joinCode;
+        if (@Match !is null) {
+            PersistantStorage::LastConnectedRoomCode = Match.joinCode;
         } else {
             PersistantStorage::LastConnectedRoomCode = "";
         }
 
-        if (@Match !is null) {
+        if (@Match !is null && Match.uid != "") {
             PersistantStorage::LastConnectedMatchId = Match.uid;
 
             auto self = Match.GetSelf();
@@ -133,7 +138,7 @@ namespace PersistantStorage {
     }
 
     void ResetStorage() {
-        warn("[PersistantStorage::ResetStorage] Resetting all items...");
+        logwarn("[PersistantStorage::ResetStorage] Resetting all items...");
         ClientToken = "";
         LocalProfile = "";
         MapListUiScale = 1.0f;
@@ -143,7 +148,7 @@ namespace PersistantStorage {
         LastConnectedMatchId = "";
         LastConnectedMatchTeamId = -1;
         DevelMapCache = "[]";
-        TeamEditorStorage = GetDefaultTeams();
+        CustomTeamsStorage = "[]";
         HasDismissedItemSpoiler = false;
     }
 }

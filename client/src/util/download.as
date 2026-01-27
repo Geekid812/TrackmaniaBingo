@@ -5,7 +5,7 @@ namespace Framework {
     void Download(const string& in url,
                   __internal::DownloadCallbackSuccess @successCallback = null,
                   __internal::DownloadCallbackFailure @failureCallback = null) {
-        trace("[Framework::Download] Downloading '" + url + "'");
+        logtrace("[Framework::Download] Downloading '" + url + "'");
         __internal::DownloadCoroutineData data(url, successCallback, failureCallback);
         startnew(__internal::DownloadCoroutine, data);
     }
@@ -47,7 +47,7 @@ namespace Framework {
                 return;
             }
 
-            trace("[Framework::Download] Download of '" + data.url +
+            logtrace("[Framework::Download] Download of '" + data.url +
                   "' completed. Total size: " + Extra::IO::FormatFileSize(req.Buffer().GetSize()));
             if (@data.successCallback !is null)
                 data.successCallback(data.url, req.Buffer());

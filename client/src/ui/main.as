@@ -1,17 +1,6 @@
 
-enum LoadStatus {
-    NotLoaded,
-    Loading,
-    Ok,
-    Error
-}
-
 namespace UIMainWindow {
-
     bool Visible;
-
-    bool ClipboardHovered;
-    bool ClipboardCopied;
 
     enum WindowTab {
         Home,
@@ -19,9 +8,7 @@ namespace UIMainWindow {
         Create
     }
 
-    void
-    Render() {
-
+    void Render() {
         if (!Visible)
             return;
 
@@ -57,7 +44,7 @@ namespace UIMainWindow {
         }
         UI::Dummy(vec2(0, 10));
 
-        if (@Room != null || @Match != null) {
+        if (@Match != null || @Match != null) {
             InGameHeader();
         }
 
@@ -95,10 +82,11 @@ namespace UIMainWindow {
             UI::EndTabItem();
         }
 
-        /*
-        if (UI::BeginTabItem(Icons::Star + " Events")) {
-            UI::NewLine();
-            UITools::CenterText("Coming soon!");
+        /* Not ready yet!
+        if (UI::BeginTabItem(Icons::Trophy + " Rankings")) {
+            UI::BeginChild("bingoleaderboards");
+            UILeaderboards::Render();
+            UI::EndChild();
             UI::EndTabItem();
         }*/
 
@@ -150,8 +138,8 @@ namespace UIMainWindow {
         UI::Text("\\$f44IN GAME");
 
         UI::SameLine();
-        if (@Room !is null) {
-            UIRoomMenu::RoomInfo(Room.NetworkState());
+        if (@Match !is null) {
+            UIRoomMenu::RoomInfo(Match.NetworkState());
         } else {
             UI::NewLine();
             UI::Text(string::Join(UIGameRoom::MatchConfigInfo(Match.config), "\t"));
@@ -181,11 +169,29 @@ namespace UIEditSettings {
                   Visible,
                   UI::WindowFlags::NoCollapse | UI::WindowFlags::AlwaysAutoResize);
 
-        UI::BeginDisabled(!Room.localPlayerIsHost);
-        UIRoomSettings::SettingsView();
-        UI::EndDisabled();
+        if (!Match.isLocalPlayerHost) {
+            // Read-only view of the match's config
 
-        if (!Room.localPlayerIsHost) {
+            // Sort of hacky behaviour: temporarily swap the config globals to the current match's config
+            // The global variables are supported to be local state for the Create tab, they are NOT reflecting the current match config!
+            RoomConfiguration roomConfig = RoomConfig;
+            MatchConfiguration matchConfig = MatchConfig;
+
+            UI::BeginDisabled(!Match.isLocalPlayerHost);
+            RoomConfig = Match.roomConfig;
+            MatchConfig = Match.config;
+            UIRoomSettings::SettingsView();
+            UI::EndDisabled();
+
+            // Restore global configs
+            RoomConfig = roomConfig;
+            MatchConfig = matchConfig;
+        } else {
+            // Read/write view of the player's local RoomConfig and MatchConfig
+            UIRoomSettings::SettingsView();
+        }
+
+        if (!Match.isLocalPlayerHost) {
             UI::End();
             return;
         }

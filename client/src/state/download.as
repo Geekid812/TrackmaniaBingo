@@ -83,18 +83,18 @@ namespace DownloadManager {
                 if (texture !is null && texture.GetSize().x != 0) {
                     LocalStorage::AddTextureResource(url, texture);
                 } else {
-                    warn("[DownloadManager::OnDownloadCompleted] Could not load image.");
+                    logwarn("[DownloadManager::OnDownloadCompleted] Could not load image.");
                 }
 
                 break;
             }
             default:
-                warn("[DownloadManager::OnDownloadCompleted] Unhandled AssetType " + assetType);
+                logwarn("[DownloadManager::OnDownloadCompleted] Unhandled AssetType " + assetType);
             }
         }
 
         void OnDownloadCancelled(const string& in url) {
-            warn("[DownloadManager::OnDownloadCancelled] Cancelled url: " + url);
+            logwarn("[DownloadManager::OnDownloadCancelled] Cancelled url: " + url);
         }
     }
 }

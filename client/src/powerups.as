@@ -31,18 +31,36 @@ namespace Powerups {
         }
     }
 
-    string GetExplainerText(Powerup powerup) {
-        if (powerup == Powerup::Rally) {
-            return "\nThe team who is winning here in 10 minutes will claim all adjacent squares!";
-        }
-        if (powerup == Powerup::Jail) {
-            return "\nThey have to remain on this map until they can beat the current record!";
-        }
-        if (powerup == Powerup::RainbowTile) {
-            return "\nThis map will be counted as every color for win conditions!";
+    string GetExplainerText(Powerup powerup, uint boardIndex, uint duration) {
+        switch (powerup) {
+            case Powerup::Rally:
+                if (duration > 90) {
+                    return "\nThe team who is winning here in " + tostring(duration / 60) + " minutes will claim all adjacent squares!";
+                } else{
+                return "\nThe team who is winning here in " + tostring(duration) + " seconds will claim all adjacent squares!";
+                }
+            case Powerup::Jail:
+                return "\nThey have to remain on this map until they can beat the current record!";
+            case Powerup::RainbowTile:
+                return "\nThis map will be counted as every color for win conditions!";
+            case Powerup::ColumnShift:
+                return "\nThe " + tostring(boardIndex + 1) + OrdinalValue(boardIndex + 1) + " column of the board has been moved!";
+            case Powerup::RowShift:
+                return "\nThe " + tostring(boardIndex + 1) + OrdinalValue(boardIndex + 1) + " row of the board has been moved!";
         }
 
         return "";
+    }
+
+    string OrdinalValue(uint index) {
+        if (index == 1)
+            return "st";
+        if (index == 2)
+            return "nd";
+        if (index == 3)
+            return "rd";
+
+        return "th";
     }
 
     void InitPowerupTextures() {
@@ -52,12 +70,12 @@ namespace Powerups {
         @PowerupJailTex = LoadInternalTex("data/jail.png");
         @PowerupRainbowTileTex = LoadInternalTex("data/rainbow.png");
         @PowerupGoldenDiceTex = LoadInternalTex("data/golden_dice.png");
-        trace("[Powerups::InitPowerupTextures] Item textures loaded.");
+        logtrace("[Powerups::InitPowerupTextures] Item textures loaded.");
     }
 
     void SyncPowerupEffects() {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::SyncPowerupEffects] Bingo not active, ignoring this call.");
+            logwarn("[Powerups::SyncPowerupEffects] Bingo not active, ignoring this call.");
             return;
         }
 
@@ -73,9 +91,10 @@ namespace Powerups {
                         PlayerRef powerupUser,
                         int boardIndex,
                         bool forwards,
-                        PlayerRef @targetPlayer) {
+                        PlayerRef @targetPlayer,
+                        uint duration) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::TriggerPowerup] Bingo is not active, ignoring this event.");
+            logwarn("[Powerups::TriggerPowerup] Bingo is not active, ignoring this event.");
             return;
         }
 
@@ -85,13 +104,13 @@ namespace Powerups {
             PowerupEffectBoardShift(powerup == Powerup::RowShift, boardIndex, forwards);
             break;
         case Powerup::Rally:
-            PowerupEffectRally(boardIndex, 600000);
+            PowerupEffectRally(boardIndex, duration * 1000);
             break;
         case Powerup::RainbowTile:
             PowerupEffectRainbowTile(boardIndex);
             break;
         case Powerup::Jail:
-            PowerupEffectJail(boardIndex, targetPlayer, 600000);
+            PowerupEffectJail(boardIndex, targetPlayer, duration * 1000);
             break;
         case Powerup::GoldenDice:
             PowerupEffectGoldenDice(boardIndex);
@@ -101,7 +120,7 @@ namespace Powerups {
 
     void PowerupEffectBoardShift(bool isRow, uint rowColIndex, bool fowards) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectBoardShift] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectBoardShift] Bingo is not active, ignoring this call.");
             return;
         }
 
@@ -134,7 +153,7 @@ namespace Powerups {
 
     void PowerupEffectRainbowTile(uint tileIndex) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectRainbowTile] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectRainbowTile] Bingo is not active, ignoring this call.");
             return;
         }
 
@@ -143,7 +162,7 @@ namespace Powerups {
 
     void PowerupEffectRally(uint tileIndex, uint64 duration) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectRally] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectRally] Bingo is not active, ignoring this call.");
             return;
         }
 
@@ -153,7 +172,7 @@ namespace Powerups {
 
     void PowerupEffectJail(uint tileIndex, PlayerRef targetPlayer, uint64 duration) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectJail] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectJail] Bingo is not active, ignoring this call.");
             return;
         }
 
@@ -168,18 +187,16 @@ namespace Powerups {
 
     void PowerupEffectGoldenDice(uint tileIndex) {
         if (!Gamemaster::IsBingoActive()) {
-            warn("[Powerups::PowerupEffectGoldenDice] Bingo is not active, ignoring this call.");
+            logwarn("[Powerups::PowerupEffectGoldenDice] Bingo is not active, ignoring this call.");
             return;
         }
 
         GameTile @tile = Match.GetCell(tileIndex);
-        tile.SetMap(null);
 
         if (tile.claimant.id == -1 && tile.HasRunSubmissions()) {
             tile.claimant = tile.LeadingRun().player.team;
-            print(tile.claimant.id);
-            print(Match.GetCell(tileIndex).claimant.id);
         }
+        tile.attemptRanking = {};
     }
 
     void NotifyJail() {

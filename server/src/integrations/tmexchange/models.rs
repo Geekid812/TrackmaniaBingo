@@ -13,12 +13,22 @@ pub struct MapsResponse {
 pub struct MapResponse {
     pub map_id: i32,
     pub map_uid: String,
+    pub online_map_id: Option<String>,
     pub name: String,
     pub gbx_map_name: String,
     pub authors: Vec<AuthorModel>,
     pub uploaded_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-    pub tags: Vec<TagModel>
+    pub medals: MedalModel,
+    pub tags: Vec<TagModel>,
+    #[serde(rename = "OnlineWR")]
+    pub online_wr: Option<RecordModel>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RecordModel {
+    pub record_time: i32,
 }
 
 #[derive(Deserialize)]
@@ -28,6 +38,14 @@ pub struct TagModel {
     pub name: String,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct MedalModel {
+    pub author: i32,
+    pub gold: i32,
+    pub silver: i32,
+    pub bronze: i32,
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "PascalCase")]

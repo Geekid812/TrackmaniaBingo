@@ -1,9 +1,9 @@
 namespace UITeamEditor {
     bool Visible;
-    vec3 CreateTeamColor;
+    vec3 CreateTeamColor = vec3(.5, .5, .5);
     string CreateTeamName;
 
-    void DisplayTeamPreset(uint i, Team @team) {
+    void DisplayTeamPreset(uint i, Team @team, bool canBeDeleted = false) {
         UI::PushStyleColor(UI::Col::ChildBg, UIColor::GetAlphaColor(team.color, 0.4));
         UI::PushStyleVar(UI::StyleVar::ChildBorderSize, .5f);
         UI::BeginChild("###bingoteampreset" + i, vec2(0, 32), true, UI::WindowFlags::NoScrollbar);
@@ -14,24 +14,25 @@ namespace UITeamEditor {
         UI::SameLine();
 
         string buttonText = Icons::Trash;
-        Layout::AlignButton(buttonText, 1.0);
-        UI::SetCursorPos(UI::GetCursorPos() - vec2(4, 4));
-        UIColor::Gray();
-        if (UI::Button(buttonText)) {
-            TeamPresets.RemoveAt(i);
-            PersistantStorage::SaveTeamEditor();
+        if (canBeDeleted) {
+            Layout::AlignButton(buttonText, 1.0);
+            UI::SetCursorPos(UI::GetCursorPos() - vec2(4, 4));
+            UIColor::Gray();
+            if (UI::Button(buttonText)) {
+                TeamPresets.RemoveAt(i);
+                PersistantStorage::SaveTeamEditor();
+            }
+            UIColor::Reset();
         }
-        UIColor::Reset();
 
-        if (@Room != null) {
-            Team @teamInRoom = Room.GetTeamWithName(team.name);
+        if (@Match != null) {
+            Team @teamInRoom = Match.GetTeamWithName(team.name);
             bool teamInstantiatedInRoom = @teamInRoom != null;
 
-            UI::BeginDisabled(teamInstantiatedInRoom);
 
             if (teamInstantiatedInRoom) {
-                buttonText = Icons::Check;
-                UIColor::Gray();
+                buttonText = Icons::MinusSquare;
+                UIColor::DarkRed();
             } else {
                 buttonText = Icons::PlusSquare;
                 UIColor::DarkGreen();
@@ -41,10 +42,14 @@ namespace UITeamEditor {
             Layout::AlignButton(buttonText, 0.85);
             UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
             if (UI::Button(buttonText)) {
-                InstantiatePresetTeam(i);
+                if (!teamInstantiatedInRoom) {
+                    InstantiatePresetTeam(i);
+                } else {
+                    NetParams::DeletedTeamId = teamInRoom.id;
+                    startnew(Network::DeleteTeam);
+                }
             }
             UIColor::Reset();
-            UI::EndDisabled();
         }
 
         UI::EndChild();
@@ -53,8 +58,10 @@ namespace UITeamEditor {
     }
 
     void TeamsEnumerator() {
+        auto defaultTeams = PersistantStorage::GetDefaultTeams();
         for (uint i = 0; i < TeamPresets.Length; i++) {
-            DisplayTeamPreset(i, TeamPresets[i]);
+            bool canBeDeleted = i >= defaultTeams.Length;
+            DisplayTeamPreset(i, TeamPresets[i], canBeDeleted);
         }
     }
 
@@ -97,11 +104,11 @@ namespace UITeamEditor {
     }
 
     bool HasAnyUninstantiatedTeam() {
-        if (@Room is null)
+        if (@Match is null)
             return false;
 
         for (uint i = 0; i < TeamPresets.Length; i++) {
-            if (@Room.GetTeamWithName(TeamPresets[i].name) == null)
+            if (@Match.GetTeamWithName(TeamPresets[i].name) == null)
                 return true;
         }
 
@@ -109,19 +116,19 @@ namespace UITeamEditor {
     }
 
     void InstantiateAnyNewTeam() {
-        if (@Room is null) {
-            warn("[UITeamEditor::InstantiateAnyNewTeam] Can't instantiate a new team when Room is "
+        if (@Match is null) {
+            logwarn("[UITeamEditor::InstantiateAnyNewTeam] Can't instantiate a new team when Room is "
                  "null.");
             return;
         }
         if (!HasAnyUninstantiatedTeam()) {
-            warn("[UITeamEditor::InstantiateAnyNewTeam] All team presets are instantiated, cannot "
+            logwarn("[UITeamEditor::InstantiateAnyNewTeam] All team presets are instantiated, cannot "
                  "create a new one.");
             return;
         }
 
         int index = -1;
-        while (index < 0 || @Room.GetTeamWithName(TeamPresets[index].name) != null) {
+        while (index < 0 || @Match.GetTeamWithName(TeamPresets[index].name) != null) {
             index = Math::Rand(0, TeamPresets.Length);
         }
 

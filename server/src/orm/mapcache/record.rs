@@ -1,31 +1,27 @@
 use crate::core::util::serialize::serialize_time;
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::FromRow;
 
-#[derive(Serialize, Deserialize, Clone, Debug, FromRow)]
-#[serde(rename_all(deserialize = "PascalCase"))]
+#[derive(Serialize, Clone, Debug, FromRow)]
 pub struct MapRecord {
-    #[serde(rename(deserialize = "TrackID"))]
     pub tmxid: i32,
-    #[serde(rename(deserialize = "TrackUID"))]
     pub uid: String,
-    #[serde(rename(deserialize = "UserID"))]
+    pub webservices_id: Option<String>,
     pub userid: i32,
-    pub author_login: String,
     pub username: String,
-    #[serde(rename(deserialize = "Name"))]
     pub track_name: String,
-    #[serde(rename(deserialize = "GbxMapName"))]
     pub gbx_name: String,
-    #[serde(rename(deserialize = "DisplayCost"))]
-    pub coppers: i32,
+    #[sqlx(default)]
+    pub wr_time: Option<i32>,
     pub author_time: i32,
+    pub gold_time: i32,
+    pub silver_time: i32,
+    pub bronze_time: i32,
     #[serde(serialize_with = "serialize_time")]
     pub uploaded_at: NaiveDateTime,
     #[serde(serialize_with = "serialize_time")]
     pub updated_at: NaiveDateTime,
-    pub tags: Option<String>,
-    #[serde(rename(deserialize = "StyleName"))]
+    pub tags: String,
     pub style: Option<String>,
 }

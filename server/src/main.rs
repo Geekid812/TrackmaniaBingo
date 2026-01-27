@@ -1,5 +1,9 @@
+use reqwest::{
+    header::{HeaderMap, USER_AGENT},
+    ClientBuilder,
+};
 use std::net::{Ipv4Addr, SocketAddrV4};
-use tracing::{info, Level};
+use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
 pub mod core;
@@ -9,11 +13,13 @@ pub mod orm;
 pub mod server;
 pub mod store;
 pub mod transport;
-pub mod web;
 
 pub mod config;
 
-use crate::server::NetServer;
+use crate::{
+    integrations::{hooks::HooksClient, webservices::NadeoWebserivcesClient},
+    server::NetServer,
+};
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -21,7 +27,7 @@ pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 async fn main() {
     // Logging setup
     let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
+        .with_max_level(Level::DEBUG)
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("logging could not be initialized");
 
@@ -37,14 +43,50 @@ async fn main() {
     info!("opening mapcache database");
     orm::mapcache::start_database("db/mapcache.db").await;
 
-    // Run mainloop for web server
-    info!("starting Web API");
-    tokio::spawn(web::main());
+    // Initialize integrations
+    let mut headers = HeaderMap::new();
+    headers.insert(USER_AGENT, integrations::USER_AGENT.parse().unwrap());
+    let client = ClientBuilder::new()
+        .default_headers(headers)
+        .build()
+        .expect("could not initialize integrations client");
+
+    let keys = config::get_string("keys.webservices")
+        .expect("configuration value keys.webservices not provided");
+    let (username, password) = keys
+        .split_once(':')
+        .expect("malformed keys.websevices value, expected username:password");
+    let nadeo_client =
+        NadeoWebserivcesClient::new(client.clone(), username.to_string(), password.to_string());
+    integrations::NADEOSERVICES_CLIENT
+        .set(nadeo_client)
+        .map_err(|_| ())
+        .expect("failed to initialize NadeoWebservices");
+
+    let hook_url = config::get_string("keys.hook_endpoint");
+    if let Some(url) = hook_url {
+        let client = HooksClient::new(client.clone(), url);
+        match client {
+            Ok(c) => {
+                let _ = integrations::HOOK.set(c);
+            }
+            Err(e) => warn!("invalid keys.hook_endpoint: {}", e),
+        }
+    } else {
+        info!("keys.hook_endpoint not provided, external event hooks are disabled");
+    }
 
     // TCP server startup
     let port = config::get_integer("network.tcp_port")
         .expect("configuration key network.tcp_port not specified") as u16;
-    let local_addr = SocketAddrV4::new(if config::is_development() { Ipv4Addr::LOCALHOST } else { Ipv4Addr::new(0, 0, 0, 0) }, port);
+    let local_addr = SocketAddrV4::new(
+        if config::is_development() {
+            Ipv4Addr::LOCALHOST
+        } else {
+            Ipv4Addr::new(0, 0, 0, 0)
+        },
+        port,
+    );
 
     let mut server = NetServer::new();
     server.set_reuseaddr_opt(true);

@@ -91,7 +91,7 @@ namespace Network {
 
             if (!IsConnected()) {
                 retries -= 1;
-                trace("[Network] Failed to connect. " + retries + " retry attempts left.");
+                logwarn("[Network] Failed to connect. " + retries + " retry attempts left.");
             }
         }
     }
@@ -104,19 +104,19 @@ namespace Network {
         }
 
         if (!ShouldStayConnected()) {
-            trace("[Network] Plugin not active, disconnecting from the server.");
+            loginfo("[Network] Plugin not active, disconnecting from the server.");
             CloseConnection();
             return;
         }
 
         string message = _protocol.Recv();
         while (message != "") {
-            trace("[Network] <- " + message);
+            logtrace("[Network] <- " + message);
             Json::Value json;
             try {
                 json = Json::Parse(message);
             } catch {
-                warn("[Network] Failed to parse received message. Got: " + message);
+                logwarn("[Network] Failed to parse received message. Got: " + message);
                 _protocol.Fail();
                 break;
             }
@@ -138,9 +138,10 @@ namespace Network {
     }
 
     bool ShouldStayConnected() {
-        return UIMainWindow::Visible || @Room != null || @Match != null ||
+        return UIMainWindow::Visible || @Match != null ||
                PersistantStorage::SubscribeToRoomUpdates ||
-               PersistantStorage::LastConnectedMatchId != "";
+               PersistantStorage::LastConnectedMatchId != "" ||
+               PersistantStorage::LastConnectedRoomCode != "";
     }
 
     void DoPing() {
@@ -150,7 +151,7 @@ namespace Network {
     }
 
     void OnDisconnect() {
-        trace("[Network] Disconnected! Attempting to reconnect...");
+        logtrace("[Network] Disconnected! Attempting to reconnect...");
         Reset();
         Connect();
         if (!IsConnected()) {
@@ -161,7 +162,7 @@ namespace Network {
                                  10000);
             Internal::OfflineMode = true;
         } else {
-            trace("[Network] Reconnected to server.");
+            logtrace("[Network] Reconnected to server.");
         }
     }
 
@@ -170,7 +171,7 @@ namespace Network {
         auto response = Post("Ping", Json::Object(), false);
         uint64 end = Time::Now - start;
         bool result = response !is null;
-        trace("[Network::TestConnection] " + tostring(result) + " in " + end + "ms");
+        logtrace("[Network::TestConnection] " + tostring(result) + " in " + end + "ms");
     }
 
     void Handle(Json::Value @body) {
@@ -182,7 +183,7 @@ namespace Network {
             return;
         }
         if (!body.HasKey("event")) {
-            warn("Invalid message, discarding.");
+            logwarn("Invalid message, discarding.");
             return;
         }
         string event = body["event"];
@@ -248,14 +249,16 @@ namespace Network {
             NetworkHandlers::RallyResolved(body);
         } else if (event == "JailResolved") {
             NetworkHandlers::JailResolved(body);
+        } else if (event == "RoomExtrasUpdate") {
+            NetworkHandlers::RoomExtrasUpdate(body);
         } else {
-            warn("[Network] Unknown event: " + string(body["event"]));
+            logwarn("[Network] Unknown event: " + string(body["event"]));
         }
     }
 
     void CloseConnection() {
         Reset();
-        trace("[Network::CloseConnection] Connection closed.");
+        logtrace("[Network::CloseConnection] Connection closed.");
     }
 
     int AddSequenceValue(Json::Value @val) {
@@ -287,9 +290,9 @@ namespace Network {
         body["req"] = type;
         uint Sequence = AddSequenceValue(body);
         string Text = Json::Write(body);
-        trace("[Network] -> " + Text);
+        logtrace("[Network] -> " + Text);
         if (!_protocol.Send(Text)) {
-            warn("[Network] Post preemptively failed!");
+            logwarn("[Network] Post preemptively failed!");
             if (Network::IsConnected())
                 OnDisconnect();
             return null;
@@ -303,7 +306,7 @@ namespace Network {
 
         if (reply !is null && reply.HasKey("error")) {
             string err = string(reply["error"]);
-            trace("[Network::Post] Request [" + type + "]: Error: " + err);
+            logtrace("[Network::Post] Request [" + type + "]: Error: " + err);
             UI::ShowNotification(
                 "", Icons::Times + " Error in " + type + ": " + err, vec4(.8, 0., 0., 1.), 10000);
             Internal::Errors[type] = err;
@@ -324,45 +327,48 @@ namespace Network {
         MatchConfig.game = CURRENT_GAME;
 
         if (TeamPresets.Length < 2) {
-            PersistantStorage::TeamEditorStorage = PersistantStorage::GetDefaultTeams();
             PersistantStorage::LoadTeamEditor();
         }
 
         auto body = Json::Object();
         body["config"] = RoomConfiguration::Serialize(RoomConfig);
         body["match_config"] = MatchConfiguration::Serialize(MatchConfig);
-        body["teams"] = Json::Parse(PersistantStorage::TeamEditorStorage);
+
+        auto teams = Json::Array();
+        for (uint i = 0; i < TeamPresets.Length; i++) {
+            teams.Add(Team::Serialize(TeamPresets[i]));
+        }
+        body["teams"] = teams;
 
         Json::Value @response = Post("CreateRoom", body, true);
         if (response is null) {
-            trace("[Network] CreateRoom - No reply from server.");
+            logtrace("[Network] CreateRoom - No reply from server.");
             return;
         }
 
         // The room was created. Setting up room status (local player is host)
-        @Room = GameRoom();
-        Room.config = RoomConfig;
-        Room.matchConfig = MatchConfig;
+        @Match = GameServer();
+        Match.roomConfig = RoomConfig;
+        Match.config = MatchConfig;
         string roomCode = response["join_code"];
-        Room.maxTeams = int(response["max_teams"]);
         UIRoomMenu::JoinCodeVisible = false;
         UIRoomMenu::SwitchToContext();
 
-        Room.teams = {};
+        Match.teams = {};
         auto jsonTeams = response["teams"];
         for (uint i = 0; i < jsonTeams.Length; i++) {
             auto JsonTeam = jsonTeams[i];
-            Room.teams.InsertLast(Team(JsonTeam["id"],
+            Match.teams.InsertLast(Team(JsonTeam["id"],
                                        JsonTeam["name"],
                                        vec3(JsonTeam["color"][0] / 255.,
                                             JsonTeam["color"][1] / 255.,
                                             JsonTeam["color"][2] / 255.)));
         }
 
-        Room.name = response["name"];
-        Room.localPlayerIsHost = true;
-        Room.joinCode = roomCode;
-        @Room.players = {Player(Profile, Room.teams[0])};
+        Match.isLocalPlayerHost = true;
+        Match.joinCode = roomCode;
+        @Match.players = {Player(Profile, Match.teams[0])};
+        PersistantStorage::SaveConnectedMatch();
     }
 
     void CreateTeam() {
@@ -383,30 +389,31 @@ namespace Network {
 
         auto response = Post("JoinRoom", body, true);
         if (response is null) {
-            trace("[Network] JoinRoom - No reply from server.");
+            logtrace("[Network] JoinRoom - No reply from server.");
             return;
         }
 
-        @Room = GameRoom();
-        Room.config = RoomConfiguration::Deserialize(response["config"]);
-        Room.matchConfig = MatchConfiguration::Deserialize(response["match_config"]);
-        Room.name = Room.config.name;
-        Room.joinCode = NetParams::JoinCode;
-        Room.localPlayerIsHost = (response.HasKey("is_host") ? bool(response["is_host"]) : false);
+        @Match = GameServer();
+        Match.roomConfig = RoomConfiguration::Deserialize(response["config"]);
+        Match.config = MatchConfiguration::Deserialize(response["match_config"]);
+        Match.joinCode = NetParams::JoinCode;
+        Match.isLocalPlayerHost = (response.HasKey("is_host") ? bool(response["is_host"]) : false);
         NetworkHandlers::LoadRoomTeams(response["teams"]);
 
         UIRoomMenu::JoinCodeVisible = false;
 
-        // Don't process join handlers if we are reconnecting
-        if (Internal::Reconnecting)
-            return;
-
+        PersistantStorage::SaveConnectedMatch();
         if (response["match_uid"].GetType() != Json::Type::Null) {
             // We're joining an active game
+
+            // Don't process join handlers if we are reconnecting
+            if (Internal::Reconnecting)
+                return;
+
             string currentMatchUid = response["match_uid"];
             NetParams::MatchJoinUid = currentMatchUid;
 
-            if (canPlayersChooseTheirOwnTeam(Room.config)) {
+            if (canPlayersChooseTheirOwnTeam(Match.roomConfig)) {
                 // We have to choose a team before joining
                 UITeams::SwitchToJoinContext();
             } else {
@@ -429,11 +436,16 @@ namespace Network {
 
         auto response = Post("JoinMatch", body, true);
         if (response is null) {
-            trace("[Network] JoinMatch - No reply from server.");
+            logtrace("[Network] JoinMatch - No reply from server.");
             return;
         }
 
-        LiveMatch @joinedMatch = LiveMatch::Deserialize(response["state"]);
+        GameServer @joinedMatch = LiveMatch::Deserialize(response["state"]);
+        if (@Match !is null) {
+            joinedMatch.roomConfig = Match.roomConfig;
+            joinedMatch.isLocalPlayerHost = Match.isLocalPlayerHost;
+            joinedMatch.joinCode = Match.joinCode;
+        }
 
         Gamemaster::SetBingoActive(true);
         UITeams::CloseContext();
@@ -449,7 +461,7 @@ namespace Network {
     void GetPublicRooms() {
         auto response = Post("GetPublicRooms", Json::Object(), false);
         if (response is null) {
-            trace("[Network] GetPublicRooms - No reply from server.");
+            logtrace("[Network] GetPublicRooms - No reply from server.");
             UIRoomMenu::RoomsLoad = LoadStatus::Error;
             return;
         }
@@ -471,7 +483,7 @@ namespace Network {
 
         auto response = Post("EditConfig", body, true);
         if (response is null) {
-            trace("[Network] EditConfig - No reply from server.");
+            logtrace("[Network] EditConfig - No reply from server.");
             return;
         }
         UIEditSettings::Visible = false;
@@ -479,7 +491,7 @@ namespace Network {
     }
 
     void JoinTeam(Team team) {
-        if (Room.GetSelf().team == team)
+        if (Match.GetSelf().team == team)
             return;
 
         auto body = Json::Object();
@@ -525,11 +537,11 @@ namespace Network {
     void Reconnect() {
         Internal::Reconnecting = true;
         UI::ShowNotification(Icons::Globe + " Reconnecting to your Bingo match...");
-        JoinRoom();
-        JoinMatch();
+        if (NetParams::JoinCode != "") JoinRoom();
+        if (NetParams::MatchJoinUid != "") JoinMatch();
 
-        if (!Gamemaster::IsBingoActive() || Match.uid != PersistantStorage::LastConnectedMatchId) {
-            trace("[Network] Reconnection failure, forgetting previous game save.");
+        if (@Match is null) {
+            logtrace("[Network] Reconnection failure, forgetting previous game save.");
             PersistantStorage::ResetConnectedMatch();
         }
         Internal::Reconnecting = false;
@@ -561,6 +573,17 @@ namespace Network {
         body["board_index"] = NetParams::PowerupBoardIndex;
         body["forwards"] = NetParams::PowerupBoardIsForward;
         body["player_uid"] = NetParams::PlayerSelectUid;
+        body["choice"] = NetParams::PowerupChoiceIndex;
         Network::Post("ActivatePowerup", body, true);
+    }
+
+    void GetDiceChoices() {
+        auto request = Network::Post("GetDiceChoices", Json::Object(), true);
+        if (@request is null) return;
+
+        UIItemSelect::MapChoices = {};
+        for (uint i = 0; i < request["maps"].Length; i++) {
+            UIItemSelect::MapChoices.InsertLast(GameMap::Deserialize(request["maps"][i]));
+        }
     }
 }

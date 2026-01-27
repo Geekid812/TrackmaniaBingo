@@ -5,11 +5,12 @@ namespace Config {
     NewsItem[] News;
     FeaturedMappack[] FeaturedMappacks;
     uint64 LastUpdate;
+    array<string> CompetitiveBlockedPlugins = {};
 
     void FetchConfig() {
-        string url = "https://openplanet.dev/plugin/trackmaniabingo/config/main-" +
+        string url = "https://api.openplanet.dev/plugin/trackmaniabingo/config/main-" +
                      Meta::ExecutingPlugin().Version.SubStr(0, 1);
-        trace("[Config::FetchConfig] Updating configuration: " + url);
+        logtrace("[Config::FetchConfig] Updating configuration: " + url);
         auto req = Net::HttpGet(url);
         while (!req.Finished()) {
             yield();
@@ -20,7 +21,7 @@ namespace Config {
             if (json.HasKey("error"))
                 throw(json["error"]);
         } catch {
-            trace("[Config::FetchConfig] Response parse failed. Status code: " +
+            logtrace("[Config::FetchConfig] Response parse failed. Status code: " +
                   req.ResponseCode() + " | Body: " + req.String());
             return;
         }
@@ -39,8 +40,14 @@ namespace Config {
                 jsonItem["title"], jsonItem["content"], linkKeys, linkRefs, jsonItem["ts"]));
         }
 
+        CompetitiveBlockedPlugins = {};
+        auto banned = json["competitive_banned_plugins"];
+        for (uint i = 0; i < banned.Length; i++) {
+            CompetitiveBlockedPlugins.InsertLast(string(banned[i]));
+        }
+
         LastUpdate = Time::Now;
-        trace("[Config::FetchConfig] Update was successful.");
+        logtrace("[Config::FetchConfig] Update was successful.");
     }
 
     class NewsItem {

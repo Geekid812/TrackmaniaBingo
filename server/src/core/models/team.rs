@@ -1,7 +1,8 @@
+use std::fmt::Display;
+
 use palette::serde::as_array;
 use serde::{Deserialize, Serialize};
 
-use crate::core::events::game::GameEvent;
 use crate::core::{teams::Team, util::Color};
 use crate::transport::Channel;
 
@@ -10,6 +11,12 @@ use super::room::RoomTeam;
 
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Debug, Hash, Deserialize)]
 pub struct TeamIdentifier(usize);
+
+impl Display for TeamIdentifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug, Eq)]
 pub struct BaseTeam {
@@ -45,7 +52,7 @@ impl Team for BaseTeam {
 pub struct GameTeam {
     pub base: BaseTeam,
     pub members: Vec<IngamePlayer>,
-    pub channel: Channel<GameEvent>,
+    pub channel: Channel,
     pub winner: bool,
 }
 
@@ -53,6 +60,7 @@ pub struct GameTeam {
 pub struct NetworkGameTeam {
     pub base: BaseTeam,
     pub members: Vec<IngamePlayer>,
+    pub winner: bool,
 }
 
 impl From<BaseTeam> for GameTeam {
@@ -87,6 +95,7 @@ impl From<&GameTeam> for NetworkGameTeam {
         Self {
             base: value.base.clone(),
             members: value.members.clone(),
+            winner: value.winner,
         }
     }
 }

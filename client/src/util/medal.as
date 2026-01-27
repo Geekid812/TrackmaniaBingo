@@ -6,9 +6,12 @@ namespace Medals {
     const string Silver = "\\$899" + Icons::Circle;
     const string Gold = "\\$db4" + Icons::Circle;
     const string Author = "\\$071" + Icons::Circle;
+    const string WR = "\\$292" + Icons::Trophy;
 }
 
 string stringof(Medal medal) {
+    if (medal == Medal::WR)
+        return "World Record";
     if (medal == Medal::Author)
         return "Author";
     if (medal == Medal::Gold)
@@ -21,6 +24,8 @@ string stringof(Medal medal) {
 }
 
 string symbolOf(Medal medal) {
+    if (medal == Medal::WR)
+        return Medals::WR;
     if (medal == Medal::Author)
         return Medals::Author;
     if (medal == Medal::Gold)
@@ -41,5 +46,19 @@ int objectiveOf(Medal medal, CGameCtnChallenge @map) {
         return map.TMObjective_SilverTime;
     if (medal == Medal::Bronze)
         return map.TMObjective_BronzeTime;
+    return -1;
+}
+
+int objectiveOf(Medal medal, GameMap@ map) {
+    if (medal == Medal::WR)
+        return map.wrTime;
+    if (medal == Medal::Author)
+        return map.authorTime;
+    if (medal == Medal::Gold)
+        return map.goldTime;
+    if (medal == Medal::Silver)
+        return map.silverTime;
+    if (medal == Medal::Bronze)
+        return map.bronzeTime;
     return -1;
 }
