@@ -9,3 +9,4 @@ A minor update for some polishing here and there. Changelog here:
 - Fixed maps not being reloaded after toggling "Map Discovery".
 - Fixed losing host permissions upon reconnecting to a game.
 - Fixed not being able to return to room after disconnecting from a game.
+- Compatibility updates for the January 2026 Trackmania update.
