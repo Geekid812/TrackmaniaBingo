@@ -15,6 +15,12 @@ app = flask.Flask(__name__)
 def forward_request():
     target_url = sys.argv[2]
     auth_token = sys.argv[3]
+    if len(sys.argv) > 4:
+        matchexp = sys.argv[4]
+        mjson = flask.request.get_json(force=True)
+        if matchexp.lower() not in mjson["room_config"]["name"].lower():
+            return flask.Response(status=204)
+
     try:
         response = requests.post(
             target_url,
@@ -28,7 +34,7 @@ def forward_request():
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
-        print("Usage: main.py <port> <target_url> <auth_token>")
+        print("Usage: main.py <port> <target_url> <auth_token> [matchexp]")
         sys.exit(1)
     
     port = int(sys.argv[1])
