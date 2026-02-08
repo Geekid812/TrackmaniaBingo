@@ -20,7 +20,7 @@ To run the server locally:
    ```bash
    cd scripts/mapcache
    mkdir -p ../../db
-   python3 main.py -o ../../db/mapcache.db
+   python3 main.py -o ../../db/mapcache.db -c 100
    cd ../../
    ```
 5. Build and run the server:
