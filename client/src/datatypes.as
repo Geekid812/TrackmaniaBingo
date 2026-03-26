@@ -120,7 +120,7 @@ class MatchConfiguration {
     bool competitvePatch;
     uint mappackId;
     array<uint> campaignSelection;
-    int mapTag = 1;
+    int mapTag = 3;
     FrenzyItemSettings items;
     uint itemsExpire = 600;
     uint itemsTickMultiplier = 1000;

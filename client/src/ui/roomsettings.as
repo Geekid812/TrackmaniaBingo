@@ -5,13 +5,15 @@ namespace UIRoomSettings {
     const int TIMELIMIT_MAX = 180;
     const int NOBINGO_MAX = 120;
     const float CHECKBOXES_ALIGN_X = 200;
-    const float GAME_SETTINGS_ALIGN_X = 180;
+    const float GAME_SETTINGS_ALIGN_X = 160;
 
     FeaturedMappack @SelectedPack;
     int State;
+    string HoveredTrackSelect;
 
     void RoomNameInput() {
         UITools::AlignedLabel(Icons::Pencil + "  Room Name");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(220);
         RoomConfig.name = UI::InputText("##bingoroomname", RoomConfig.name);
         if (RoomConfig.name == "") {
@@ -187,16 +189,16 @@ namespace UIRoomSettings {
     void MappackIdInput() {
         UITools::AlignedLabel(Icons::Exchange + "  TMX Mappack ID");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        UI::SetNextItemWidth(132);
+        UI::SetNextItemWidth(150);
         MatchConfig.mappackId = UI::InputInt("##bingomappack", MatchConfig.mappackId, 0);
     }
 
     void MapTagSelector() {
-        // FIX: mapTag should not be 0, as it is invalid. Correct it if it was loaded from an
+        // FIX: mapTag should not be less than 0, as it is invalid. Correct it if it was loaded from an
         // invalid LastConfig
-        MatchConfig.mapTag = Math::Max(MatchConfig.mapTag, 1);
+        MatchConfig.mapTag = Math::Max(MatchConfig.mapTag, 0);
 
-        UITools::AlignedLabel(Icons::Tag + "  Selected Map Tag");
+        UITools::AlignedLabel(Icons::Tag + "  Track Style");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
         if (!MXTags::TagsLoaded()) {
@@ -205,7 +207,10 @@ namespace UIRoomSettings {
             UI::EndDisabled();
             return;
         }
-        if (UI::BeginCombo("##bingomaptag", MXTags::GetTag(MatchConfig.mapTag).name)) {
+        if (UI::BeginCombo("##bingomaptag", MatchConfig.mapTag == 0 ? "\\$ffa-- Pick & Ban --" : MXTags::GetTag(MatchConfig.mapTag).name)) {
+            if (UI::Selectable("\\$ffa-- Pick & Ban --", MatchConfig.mapTag == 0)) {
+                MatchConfig.mapTag = 0;
+            }
             for (uint i = 0; i < MXTags::Tags.Length; i++) {
                 MXTags::Tag tag = MXTags::Tags[i];
                 if (UI::Selectable(tag.name, tag.id == MatchConfig.mapTag)) {
@@ -217,7 +222,7 @@ namespace UIRoomSettings {
     }
 
     void TargetMedalSelector() {
-        UITools::AlignedLabel(Icons::Kenney::ButtonCircle + " Medal Objective");
+        UITools::AlignedLabel(Icons::Kenney::ButtonCircle + "  Medal Objective");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
         if (UI::BeginCombo("##bingomedal", stringof(MatchConfig.targetMedal))) {
@@ -380,18 +385,35 @@ namespace UIRoomSettings {
     }
 
     void SettingsView() {
-        UITools::SectionHeader("Room Settings");
+        UITools::SectionHeader("Track Select");
+        PlaymodeSelect();
+        UI::NewLine();
+
+        UITools::SectionHeader("Game Settings");
+        GamemodeSelect();
         RoomNameInput();
         UI::SameLine();
         AccessToggle();
-        PlayerLimitToggle();
+        //MapModeSelector();
+        TargetMedalSelector();
+        if (MatchConfig.selection == MapMode::Tags) {
+            MapTagSelector();
+        }
+        if (MatchConfig.selection == MapMode::Mappack) {
+            MappackIdInput();
+        }
+
+        GridSizeSelector();
+        TimeLimitControl();
+        // PlayerLimitToggle();
+        NoBingoTimeControl();
 
         UI::BeginDisabled(RoomConfig.hostControl);
-        RandomizeToggle();
+        // RandomizeToggle();
         UI::EndDisabled();
 
-        LateJoinToggle();
-        HostControlsSetupToggle();
+        // LateJoinToggle();
+        // HostControlsSetupToggle();
 
         if (hasPlayerLimit(RoomConfig)) {
             PlayerLimitInput();
@@ -399,19 +421,7 @@ namespace UIRoomSettings {
 
         UI::NewLine();
         UITools::SectionHeader("Game Settings");
-        GamemodeSelect();
-        MapModeSelector();
-        if (MatchConfig.selection == MapMode::Mappack) {
-            MappackIdInput();
-        }
-        if (MatchConfig.selection == MapMode::Tags) {
-            MapTagSelector();
-        }
-        TargetMedalSelector();
 
-        GridSizeSelector();
-        TimeLimitControl();
-        NoBingoTimeControl();
         if (MatchConfig.timeLimit != 0) {
             OvertimeToggle();
         }
@@ -446,5 +456,56 @@ namespace UIRoomSettings {
         configs["room"] = RoomConfiguration::Serialize(RoomConfig);
         configs["game"] = MatchConfiguration::Serialize(MatchConfig);
         PersistantStorage::LastConfig = Json::Write(configs);
+    }
+
+    void PlaymodeSelect() {
+        Font::Set(Font::Style::Bold, Font::Size::Medium);
+        UI::PushStyleVar(UI::StyleVar::ChildBorderSize, 1.);
+
+        UI::BeginTable("bingoplaymodes", 2);
+        MapmodeSelectTablet("bingoplaymode1", "Random Maps", MatchConfig.selection == MapMode::RandomTMX, vec3(.25, .7, 1.), MapMode::RandomTMX);
+        MapmodeTooltip("All maps uploaded on Trackmania Exchange. There's no\ntelling what you will get!\n\n\\$aaaTrack Duration: 00:10.000 - 01:00.000");
+
+        MapmodeSelectTablet("bingoplaymode2", "Discovery", MatchConfig.selection == MapMode::Campaign, vec3(.05, .71, .36), MapMode::Campaign);
+        MapmodeTooltip("All maps released in the past 12 months that are not\nknown by anyone playing in your game.\n\n\\$aaaTrack Duration: 00:25.000 - 00:45.000");
+
+        MapmodeSelectTablet("bingoplaymode3", "Map Drafts", MatchConfig.selection == MapMode::Tags, vec3(1., .8, .4), MapMode::Tags);
+        MapmodeTooltip("Pick different map styles to create a unique map\npool for your game.\n\n\\$aaaTrack Duration: 00:10.000 - 01:00.000");
+
+        MapmodeSelectTablet("bingoplaymode4", "Custom Mappack", MatchConfig.selection == MapMode::Mappack, vec3(1., .4, .4), MapMode::Mappack);
+        MapmodeTooltip("Play with your own maps.\n\n\\$aaaTrack Duration: Unrestricted");
+
+        UI::EndTable();
+
+        UI::PopStyleVar();
+        Font::Unset();
+    }
+
+    void MapmodeTooltip(const string&in tooltipText) {
+        Font::Set(Font::Style::Regular, Font::Size::Medium);
+        UI::SetItemTooltip(tooltipText);
+        Font::Unset();
+    }
+
+    void MapmodeSelectTablet(const string&in id, const string&in name, bool selected, vec3 color, MapMode mapmode) {
+        UI::TableNextColumn();
+
+        bool wasHoveredLastFrame = HoveredTrackSelect == id;
+        UI::PushStyleColor(UI::Col::ChildBg, vec4(color * (selected || wasHoveredLastFrame ? 1. : .7), .5));
+        UI::PushStyleColor(UI::Col::Border, vec4(1., 1., 1., selected ? .5 : 0.));
+        UI::BeginChild(id, vec2(0, 0), UI::ChildFlags::AutoResizeY | UI::ChildFlags::Border);
+        UITools::CenterText(name);
+        UI::EndChild();
+        UI::PopStyleColor(2);
+
+        if (UI::IsItemClicked()) {
+            MatchConfig.selection = mapmode;
+        }
+
+        if (UI::IsItemHovered()) {
+            HoveredTrackSelect = id;
+        } else if (wasHoveredLastFrame) {
+            HoveredTrackSelect = "";
+        }
     }
 }
