@@ -2,11 +2,13 @@ mod client;
 mod protocol;
 mod scenarios;
 
+use std::collections::HashMap;
 use std::net::TcpStream;
 use std::process::{Child, Command, Stdio};
 use std::time::Duration;
 
 use clap::Parser;
+use serde::{Deserialize, Serialize};
 
 #[derive(Parser)]
 #[command(name = "bench", about = "Benchmark harness for the Trackmania Bingo server")]
@@ -34,6 +36,14 @@ struct Args {
     /// Automatically start the server as a subprocess (uses bench.config.toml)
     #[arg(long)]
     spawn_server: bool,
+
+    /// Save results to a JSON file
+    #[arg(long)]
+    output: Option<String>,
+
+    /// Compare results against a previous JSON file
+    #[arg(long)]
+    compare: Option<String>,
 }
 
 fn fmt_dur(d: Duration) -> String {
@@ -77,6 +87,101 @@ fn print_table(rows: &[Row]) {
         );
     }
     println!();
+}
+
+// -- JSON output / compare --
+
+#[derive(Serialize, Deserialize)]
+struct RunResult {
+    timestamp: String,
+    git_commit: Option<String>,
+    clients: u32,
+    scenarios: HashMap<String, ScenarioResult>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct ScenarioResult {
+    count: usize,
+    wall_time_ms: f64,
+    p50_ms: f64,
+    p95_ms: f64,
+    p99_ms: f64,
+    max_ms: f64,
+    throughput: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    extra: Option<String>,
+}
+
+fn dur_ms(d: Duration) -> f64 {
+    d.as_secs_f64() * 1000.0
+}
+
+fn rows_to_result(rows: &[Row], clients: u32) -> RunResult {
+    let git_commit = std::process::Command::new("git")
+        .args(["rev-parse", "--short", "HEAD"])
+        .output()
+        .ok()
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .map(|s| s.trim().to_string());
+
+    let mut scenarios = HashMap::new();
+    for row in rows {
+        let s = &row.stats;
+        scenarios.insert(row.name.clone(), ScenarioResult {
+            count: s.count,
+            wall_time_ms: dur_ms(s.wall_time),
+            p50_ms: dur_ms(s.p50),
+            p95_ms: dur_ms(s.p95),
+            p99_ms: dur_ms(s.p99),
+            max_ms: dur_ms(s.max),
+            throughput: s.count as f64 / s.wall_time.as_secs_f64(),
+            extra: row.extra.clone(),
+        });
+    }
+
+    RunResult {
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        git_commit,
+        clients,
+        scenarios,
+    }
+}
+
+fn print_comparison(current: &RunResult, baseline: &RunResult) {
+    println!();
+    println!("  Comparison vs baseline ({})", baseline.git_commit.as_deref().unwrap_or("unknown"));
+    println!("  {}", "-".repeat(90));
+    println!(
+        "  {:<20} {:>12} {:>12} {:>10}  {:>12} {:>12} {:>10}",
+        "Scenario", "base p50", "curr p50", "delta", "base p95", "curr p95", "delta"
+    );
+    println!("  {}", "-".repeat(90));
+
+    let mut names: Vec<&String> = current.scenarios.keys().collect();
+    names.sort();
+
+    for name in names {
+        let curr = &current.scenarios[name];
+        if let Some(base) = baseline.scenarios.get(name) {
+            let p50_delta = pct_change(base.p50_ms, curr.p50_ms);
+            let p95_delta = pct_change(base.p95_ms, curr.p95_ms);
+            println!(
+                "  {:<20} {:>10.1}ms {:>10.1}ms {:>+9.1}%  {:>10.1}ms {:>10.1}ms {:>+9.1}%",
+                name,
+                base.p50_ms, curr.p50_ms, p50_delta,
+                base.p95_ms, curr.p95_ms, p95_delta,
+            );
+        } else {
+            println!("  {:<20} {:>12} {:>10.1}ms {:>10}  {:>12} {:>10.1}ms {:>10}",
+                name, "-", curr.p50_ms, "new", "-", curr.p95_ms, "new");
+        }
+    }
+    println!();
+}
+
+fn pct_change(base: f64, curr: f64) -> f64 {
+    if base == 0.0 { return 0.0; }
+    ((curr - base) / base) * 100.0
 }
 
 struct ServerGuard {
@@ -215,6 +320,30 @@ async fn main() {
 
     if !rows.is_empty() {
         print_table(&rows);
+    }
+
+    // Save results to JSON
+    if let Some(ref path) = args.output {
+        let result = rows_to_result(&rows, args.clients);
+        let json = serde_json::to_string_pretty(&result).expect("json serialization failed");
+        std::fs::write(path, &json).unwrap_or_else(|e| {
+            eprintln!("failed to write output to {path}: {e}");
+        });
+        println!("  results saved to {path}");
+    }
+
+    // Compare against baseline
+    if let Some(ref path) = args.compare {
+        match std::fs::read_to_string(path) {
+            Ok(json) => match serde_json::from_str::<RunResult>(&json) {
+                Ok(baseline) => {
+                    let current = rows_to_result(&rows, args.clients);
+                    print_comparison(&current, &baseline);
+                }
+                Err(e) => eprintln!("failed to parse baseline {path}: {e}"),
+            },
+            Err(e) => eprintln!("failed to read baseline {path}: {e}"),
+        }
     }
 
     if had_error {

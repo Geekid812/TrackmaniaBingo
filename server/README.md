@@ -60,3 +60,68 @@ docker run \
 ```
 
 **Important Note:** When using `environment = "dev"` in the config, the server will only bind to the localhost interface and it will not be reachable from outside of the container. To fix that, change the value to `"live"` before deploying.
+
+## Benchmarking
+
+The `bench` binary is an integration-style load-test harness that connects simulated TCP clients to a running server instance.
+
+### Quick start
+
+```bash
+# Build both the server (release) and bench tool
+cargo build --release
+cargo build --bin bench
+
+# Run all scenarios (auto-starts the server)
+cargo run --bin bench -- --scenario all --clients 100 --spawn-server
+```
+
+### Scenarios
+
+| Scenario | Description |
+|---|---|
+| `join_storm` | N clients join a room concurrently. Measures join latency. |
+| `broadcast_fanout` | Host sends a chat message, N clients wait to receive it. Measures broadcast delivery time. |
+| `ping_throughput` | N clients send pings in a loop for `--duration` seconds. Measures req/sec and latency. |
+| `run_submission` | N clients submit runs to every cell on a `--grid-size` board. Requires a populated mapcache DB. |
+| `all` | Runs all of the above in sequence. |
+
+### Options
+
+```
+--scenario <name>       Scenario to run (required)
+--clients <N>           Number of simulated clients (default: 100)
+--server-addr <addr>    Server address (default: 127.0.0.1:5000)
+--duration <secs>       Duration for throughput tests (default: 10)
+--grid-size <N>         Grid size for match scenarios (default: 5)
+--spawn-server          Auto-start a release server using bench.config.toml
+--output <file.json>    Save results to a JSON file
+--compare <file.json>   Compare current run against a previous JSON file
+```
+
+### Comparing runs
+
+Save a baseline, make changes, then compare:
+
+```bash
+# Before
+cargo run --bin bench -- --scenario all --clients 200 --spawn-server --output baseline.json
+
+# After changes
+cargo run --bin bench -- --scenario all --clients 200 --spawn-server --output after.json --compare baseline.json
+```
+
+This prints a side-by-side table with percentage deltas for p50 and p95 latencies.
+
+### Running against an external server
+
+Without `--spawn-server`, the bench tool connects to whatever is at `--server-addr`:
+
+```bash
+cargo run -- --config bench.config.toml   # terminal 1
+cargo run --bin bench -- --scenario join_storm --clients 500   # terminal 2
+```
+
+### Configuration
+
+The `bench.config.toml` file configures the server for benchmarking with auth disabled and rooms that never close. The server accepts a `--config <path>` flag to use an alternative config file.
