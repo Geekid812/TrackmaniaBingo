@@ -92,7 +92,8 @@ cargo run --bin bench -- --scenario all --clients 100 --spawn-server
 --scenario <name>       Scenario to run (required)
 --clients <N>           Number of simulated clients (default: 100)
 --server-addr <addr>    Server address (default: 127.0.0.1:5000)
---duration <secs>       Duration for throughput tests (default: 10)
+--duration <secs>       Duration for throughput tests (default: 3)
+--iterations <N>        Iterations per scenario; median is reported (default: 5)
 --grid-size <N>         Grid size for match scenarios (default: 5)
 --spawn-server          Auto-start a release server using data/config.bench.toml
 --output <file.json>    Save results to a JSON file

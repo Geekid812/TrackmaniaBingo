@@ -26,8 +26,12 @@ struct Args {
     server_addr: String,
 
     /// Duration in seconds for throughput tests
-    #[arg(long, default_value = "10")]
+    #[arg(long, default_value = "3")]
     duration: u64,
+
+    /// Number of iterations per scenario (median is reported)
+    #[arg(long, default_value = "5")]
+    iterations: u32,
 
     /// Grid size for match scenarios (NxN)
     #[arg(long, default_value = "5")]
@@ -184,6 +188,39 @@ fn pct_change(base: f64, curr: f64) -> f64 {
     ((curr - base) / base) * 100.0
 }
 
+fn median_dur(vals: &mut Vec<Duration>) -> Duration {
+    vals.sort();
+    vals[vals.len() / 2]
+}
+
+fn median_f64(vals: &mut Vec<f64>) -> f64 {
+    vals.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    vals[vals.len() / 2]
+}
+
+fn median_usize(vals: &mut Vec<usize>) -> usize {
+    vals.sort();
+    vals[vals.len() / 2]
+}
+
+/// Compute the median Stats across multiple runs.
+fn median_stats(runs: &[scenarios::Stats]) -> scenarios::Stats {
+    let mut counts: Vec<usize> = runs.iter().map(|s| s.count).collect();
+    let mut walls: Vec<Duration> = runs.iter().map(|s| s.wall_time).collect();
+    let mut p50s: Vec<Duration> = runs.iter().map(|s| s.p50).collect();
+    let mut p95s: Vec<Duration> = runs.iter().map(|s| s.p95).collect();
+    let mut p99s: Vec<Duration> = runs.iter().map(|s| s.p99).collect();
+    let mut maxes: Vec<Duration> = runs.iter().map(|s| s.max).collect();
+    scenarios::Stats {
+        count: median_usize(&mut counts),
+        wall_time: median_dur(&mut walls),
+        p50: median_dur(&mut p50s),
+        p95: median_dur(&mut p95s),
+        p99: median_dur(&mut p99s),
+        max: median_dur(&mut maxes),
+    }
+}
+
 struct ServerGuard {
     child: Child,
     addr: String,
@@ -274,8 +311,9 @@ async fn main() {
         other => vec![other],
     };
 
+    let iterations = args.iterations.max(1);
     println!(
-        "bench: scenarios={}, clients={}, addr={server_addr}",
+        "bench: scenarios={}, clients={}, iterations={iterations}, addr={server_addr}",
         to_run.join(","),
         args.clients,
     );
@@ -286,29 +324,70 @@ async fn main() {
     for scenario in &to_run {
         println!("\n--- {scenario} ---");
         match *scenario {
-            "join_storm" => match scenarios::join_storm(&server_addr, args.clients).await {
-                Ok(stats) => rows.push(Row { name: "Join Storm".into(), stats, extra: None }),
-                Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+            "join_storm" => {
+                let mut runs = Vec::new();
+                for i in 0..iterations {
+                    if iterations > 1 { println!("  iteration {}/{iterations}", i + 1); }
+                    match scenarios::join_storm(&server_addr, args.clients).await {
+                        Ok(stats) => runs.push(stats),
+                        Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+                    }
+                }
+                if !runs.is_empty() {
+                    rows.push(Row { name: "Join Storm".into(), stats: median_stats(&runs), extra: None });
+                }
             },
-            "broadcast_fanout" => match scenarios::broadcast_fanout(&server_addr, args.clients).await {
-                Ok(stats) => rows.push(Row { name: "Broadcast Fan-out".into(), stats, extra: None }),
-                Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+            "broadcast_fanout" => {
+                let mut runs = Vec::new();
+                for i in 0..iterations {
+                    if iterations > 1 { println!("  iteration {}/{iterations}", i + 1); }
+                    match scenarios::broadcast_fanout(&server_addr, args.clients).await {
+                        Ok(stats) => runs.push(stats),
+                        Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+                    }
+                }
+                if !runs.is_empty() {
+                    rows.push(Row { name: "Broadcast Fan-out".into(), stats: median_stats(&runs), extra: None });
+                }
             },
-            "ping_throughput" => match scenarios::ping_throughput(&server_addr, args.clients, args.duration).await {
-                Ok(ping_stats) => {
-                    let total = ping_stats.total_requests;
-                    let rps = total as f64 / ping_stats.wall_time.as_secs_f64();
+            "ping_throughput" => {
+                let mut runs = Vec::new();
+                let mut extras: Vec<(u64, f64)> = Vec::new();
+                for i in 0..iterations {
+                    if iterations > 1 { println!("  iteration {}/{iterations}", i + 1); }
+                    match scenarios::ping_throughput(&server_addr, args.clients, args.duration).await {
+                        Ok(ping_stats) => {
+                            let total = ping_stats.total_requests;
+                            let rps = total as f64 / ping_stats.wall_time.as_secs_f64();
+                            extras.push((total, rps));
+                            runs.push(ping_stats.latency);
+                        }
+                        Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+                    }
+                }
+                if !runs.is_empty() {
+                    let mut rps_vals: Vec<f64> = extras.iter().map(|(_, rps)| *rps).collect();
+                    let median_rps = median_f64(&mut rps_vals);
+                    let median_total = extras[extras.len() / 2].0;
                     rows.push(Row {
                         name: "Ping Throughput".into(),
-                        stats: ping_stats.latency,
-                        extra: Some(format!("{total} reqs, {rps:.0} agg req/s")),
+                        stats: median_stats(&runs),
+                        extra: Some(format!("{median_total} reqs, {median_rps:.0} agg req/s")),
                     });
                 }
-                Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
             },
-            "run_submission" => match scenarios::run_submission(&server_addr, args.clients, args.grid_size).await {
-                Ok(stats) => rows.push(Row { name: "Run Submission".into(), stats, extra: None }),
-                Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+            "run_submission" => {
+                let mut runs = Vec::new();
+                for i in 0..iterations {
+                    if iterations > 1 { println!("  iteration {}/{iterations}", i + 1); }
+                    match scenarios::run_submission(&server_addr, args.clients, args.grid_size).await {
+                        Ok(stats) => runs.push(stats),
+                        Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+                    }
+                }
+                if !runs.is_empty() {
+                    rows.push(Row { name: "Run Submission".into(), stats: median_stats(&runs), extra: None });
+                }
             },
             other => {
                 eprintln!("unknown scenario: {other}");

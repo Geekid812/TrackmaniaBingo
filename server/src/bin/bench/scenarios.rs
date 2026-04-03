@@ -385,25 +385,62 @@ pub async fn run_submission(addr: &str, num_clients: u32, grid_size: u32) -> Res
     }
     println!("  match started: {match_uid}");
 
-    // All clients join the match
-    for client in clients.iter_mut() {
-        client.request("JoinMatch", JoinMatchFields {
-            uid: match_uid.clone(),
-            team_id: None,
-        }).await?;
+    // All clients join the match concurrently.
+    // Drain the host connection in parallel to prevent backpressure from
+    // unread broadcasts blocking the server.
+    let mut handles: Vec<JoinHandle<Result<BenchClient>>> = Vec::new();
+    for client in clients.drain(..) {
+        let uid = match_uid.clone();
+        handles.push(tokio::spawn(async move {
+            let mut c = client;
+            c.request("JoinMatch", JoinMatchFields {
+                uid,
+                team_id: None,
+            }).await?;
+            Ok(c)
+        }));
     }
+
+    let join_future = join_all(handles);
+    tokio::pin!(join_future);
+
+    let mut got_phase_change = false;
+    let join_results = loop {
+        tokio::select! {
+            results = &mut join_future => {
+                break results;
+            }
+            msg = host.recv_any() => {
+                // Check for PhaseChange among drained broadcasts
+                if let Ok(evt) = msg {
+                    if evt.fields.get("event").and_then(|v| v.as_str()) == Some("PhaseChange") {
+                        got_phase_change = true;
+                    }
+                }
+            }
+        }
+    };
+
+    clients = Vec::new();
+    for result in join_results {
+        clients.push(result??);
+    }
+
     // Wait for the NoBingo phase to activate before submitting runs.
     // The match starts in "Starting" phase where bingo checks are active;
     // we need to wait for the PhaseChange broadcast.
-    println!("  waiting for NoBingo phase...");
-    let phase_deadline = Instant::now() + Duration::from_secs(10);
-    loop {
-        if Instant::now() > phase_deadline {
-            bail!("timed out waiting for PhaseChange broadcast");
-        }
-        let evt = host.recv_any().await?;
-        if evt.fields.get("event").and_then(|v| v.as_str()) == Some("PhaseChange") {
-            break;
+    // It may have already arrived during the JoinMatch drain above.
+    if !got_phase_change {
+        println!("  waiting for NoBingo phase...");
+        let phase_deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            if Instant::now() > phase_deadline {
+                bail!("timed out waiting for PhaseChange broadcast");
+            }
+            let evt = host.recv_any().await?;
+            if evt.fields.get("event").and_then(|v| v.as_str()) == Some("PhaseChange") {
+                break;
+            }
         }
     }
     println!("  submitting runs...");
