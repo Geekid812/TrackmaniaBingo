@@ -392,7 +392,21 @@ pub async fn run_submission(addr: &str, num_clients: u32, grid_size: u32) -> Res
             team_id: None,
         }).await?;
     }
-    println!("  all clients joined match, submitting runs...");
+    // Wait for the NoBingo phase to activate before submitting runs.
+    // The match starts in "Starting" phase where bingo checks are active;
+    // we need to wait for the PhaseChange broadcast.
+    println!("  waiting for NoBingo phase...");
+    let phase_deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        if Instant::now() > phase_deadline {
+            bail!("timed out waiting for PhaseChange broadcast");
+        }
+        let evt = host.recv_any().await?;
+        if evt.fields.get("event").and_then(|v| v.as_str()) == Some("PhaseChange") {
+            break;
+        }
+    }
+    println!("  submitting runs...");
 
     // Fire concurrent SubmitRun requests from all clients
     let wall_start = Instant::now();

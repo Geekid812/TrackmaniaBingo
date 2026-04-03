@@ -18,6 +18,7 @@ required_version = "0.0"
 never_close = true
 max_teams = 10
 skip_checks = true
+start_countdown = 0
 
 [keys]
 openplanet = "KEY"
