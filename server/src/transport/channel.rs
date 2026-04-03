@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use std::collections::HashMap;
 
 use serde::Serialize;
@@ -28,7 +29,7 @@ impl Channel {
 
     pub fn broadcast(&mut self, message: &impl Serialize) {
         let serialized = match to_vec(message) {
-            Ok(message) => message,
+            Ok(message) => Bytes::from(message),
             Err(e) => {
                 error!("serialization failure: {}", e);
                 return;
