@@ -45,7 +45,10 @@ impl NetServer {
     /// Run the main server loop.
     pub async fn run(self) {
         let client_timeout = get_client_timeout_config();
-        let listener = self.socket.listen(256).expect("TCP listener not created");
+        let backlog = config::get_integer("network.backlog")
+            .expect("configuration key network.backlog not specified")
+            as u32;
+        let listener = self.socket.listen(backlog).expect("TCP listener not created");
 
         loop {
             let (incoming, remote_addr) = listener

@@ -94,7 +94,7 @@ cargo run --bin bench -- --scenario all --clients 100 --spawn-server
 --server-addr <addr>    Server address (default: 127.0.0.1:5000)
 --duration <secs>       Duration for throughput tests (default: 10)
 --grid-size <N>         Grid size for match scenarios (default: 5)
---spawn-server          Auto-start a release server using bench.config.toml
+--spawn-server          Auto-start a release server using data/config.bench.toml
 --output <file.json>    Save results to a JSON file
 --compare <file.json>   Compare current run against a previous JSON file
 ```
@@ -118,10 +118,10 @@ This prints a side-by-side table with percentage deltas for p50 and p95 latencie
 Without `--spawn-server`, the bench tool connects to whatever is at `--server-addr`:
 
 ```bash
-cargo run -- --config bench.config.toml   # terminal 1
+cargo run -- --config data/config.bench.toml   # terminal 1
 cargo run --bin bench -- --scenario join_storm --clients 500   # terminal 2
 ```
 
 ### Configuration
 
-The `bench.config.toml` file configures the server for benchmarking with auth disabled and rooms that never close. The server accepts a `--config <path>` flag to use an alternative config file.
+The `data/config.bench.toml` file configures the server for benchmarking with auth disabled and rooms that never close. The server accepts a `--config <path>` flag to use an alternative config file.

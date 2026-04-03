@@ -33,7 +33,7 @@ struct Args {
     #[arg(long, default_value = "5")]
     grid_size: u32,
 
-    /// Automatically start the server as a subprocess (uses bench.config.toml)
+    /// Automatically start the server as a subprocess (uses data/config.bench.toml)
     #[arg(long)]
     spawn_server: bool,
 
@@ -202,7 +202,7 @@ impl Drop for ServerGuard {
 fn spawn_server() -> ServerGuard {
     let server_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
     let server_bin = server_dir.join("target/release/bingohost");
-    let bench_config = server_dir.join("bench.config.toml");
+    let bench_config = server_dir.join("data/config.bench.toml");
     let log_path = server_dir.join("bench-server.log");
 
     println!("  starting server from {}", server_bin.display());
