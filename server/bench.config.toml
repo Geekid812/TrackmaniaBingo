@@ -1,6 +1,8 @@
 # Benchmark configuration for the Trackmania Bingo server.
-# Copy this to config.toml before starting the server for benchmarking:
-#   cp bench.config.toml config.toml
+# Use --config bench.config.toml when starting the server, or copy to config.toml.
+#
+# The run_submission scenario requires a populated SQLite map cache
+# (maps table) for map loading to succeed.
 
 environment = "dev"
 

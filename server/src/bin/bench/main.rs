@@ -11,7 +11,7 @@ use clap::Parser;
 #[derive(Parser)]
 #[command(name = "bench", about = "Benchmark harness for the Trackmania Bingo server")]
 struct Args {
-    /// Scenario to run: join_storm, broadcast_fanout, ping_throughput
+    /// Scenario to run: all, join_storm, broadcast_fanout, ping_throughput, run_submission
     #[arg(long)]
     scenario: String,
 
@@ -27,12 +27,16 @@ struct Args {
     #[arg(long, default_value = "10")]
     duration: u64,
 
+    /// Grid size for match scenarios (NxN)
+    #[arg(long, default_value = "5")]
+    grid_size: u32,
+
     /// Automatically start the server as a subprocess (uses bench.config.toml)
     #[arg(long)]
     spawn_server: bool,
 }
 
-fn fmt_duration(d: Duration) -> String {
+fn fmt_dur(d: Duration) -> String {
     if d.as_millis() < 1 {
         format!("{:.0}us", d.as_micros())
     } else if d.as_secs() < 1 {
@@ -42,18 +46,37 @@ fn fmt_duration(d: Duration) -> String {
     }
 }
 
-fn print_stats(label: &str, stats: &scenarios::Stats) {
-    let throughput = stats.count as f64 / stats.wall_time.as_secs_f64();
+struct Row {
+    name: String,
+    stats: scenarios::Stats,
+    extra: Option<String>,
+}
+
+fn print_table(rows: &[Row]) {
+    // Header
     println!();
-    println!("  {label}");
-    println!("  {:-<50}", "");
-    println!("  Completed:  {}", stats.count);
-    println!("  Wall time:  {}", fmt_duration(stats.wall_time));
-    println!("  Throughput: {throughput:.1} ops/sec");
-    println!("  p50:        {}", fmt_duration(stats.p50));
-    println!("  p95:        {}", fmt_duration(stats.p95));
-    println!("  p99:        {}", fmt_duration(stats.p99));
-    println!("  max:        {}", fmt_duration(stats.max));
+    println!(
+        "  {:<20} {:>7} {:>9} {:>9} {:>9} {:>9} {:>9} {:>12}  {}",
+        "Scenario", "Ops", "Wall", "p50", "p95", "p99", "Max", "Throughput", "Extra"
+    );
+    println!("  {}", "-".repeat(105));
+
+    for row in rows {
+        let throughput = row.stats.count as f64 / row.stats.wall_time.as_secs_f64();
+        println!(
+            "  {:<20} {:>7} {:>9} {:>9} {:>9} {:>9} {:>9} {:>10.1}/s  {}",
+            row.name,
+            row.stats.count,
+            fmt_dur(row.stats.wall_time),
+            fmt_dur(row.stats.p50),
+            fmt_dur(row.stats.p95),
+            fmt_dur(row.stats.p99),
+            fmt_dur(row.stats.max),
+            throughput,
+            row.extra.as_deref().unwrap_or(""),
+        );
+    }
+    println!();
 }
 
 struct ServerGuard {
@@ -141,40 +164,60 @@ async fn main() {
         server_addr = args.server_addr.clone();
     }
 
-    println!("bench: scenario={}, clients={}, addr={server_addr}", args.scenario, args.clients);
-
-    let result = match args.scenario.as_str() {
-        "join_storm" => {
-            scenarios::join_storm(&server_addr, args.clients)
-                .await
-                .map(|stats| print_stats("Join Storm", &stats))
-        }
-        "broadcast_fanout" => {
-            scenarios::broadcast_fanout(&server_addr, args.clients)
-                .await
-                .map(|stats| print_stats("Broadcast Fan-out", &stats))
-        }
-        "ping_throughput" => {
-            scenarios::ping_throughput(&server_addr, args.clients, args.duration)
-                .await
-                .map(|ping_stats| {
-                    print_stats("Ping Throughput", &ping_stats.latency);
-                    let rps = ping_stats.total_requests as f64 / ping_stats.wall_time.as_secs_f64();
-                    println!("  Total reqs: {}", ping_stats.total_requests);
-                    println!("  Aggregate:  {rps:.1} req/sec");
-                })
-        }
-        other => {
-            eprintln!("unknown scenario: {other}");
-            eprintln!("available: join_storm, broadcast_fanout, ping_throughput");
-            std::process::exit(1);
-        }
+    let to_run: Vec<&str> = match args.scenario.as_str() {
+        "all" => vec!["join_storm", "broadcast_fanout", "ping_throughput", "run_submission"],
+        other => vec![other],
     };
 
-    if let Err(e) = result {
-        eprintln!("\nERROR: {e:#}");
-        std::process::exit(1);
+    println!(
+        "bench: scenarios={}, clients={}, addr={server_addr}",
+        to_run.join(","),
+        args.clients,
+    );
+
+    let mut rows: Vec<Row> = Vec::new();
+    let mut had_error = false;
+
+    for scenario in &to_run {
+        println!("\n--- {scenario} ---");
+        match *scenario {
+            "join_storm" => match scenarios::join_storm(&server_addr, args.clients).await {
+                Ok(stats) => rows.push(Row { name: "Join Storm".into(), stats, extra: None }),
+                Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+            },
+            "broadcast_fanout" => match scenarios::broadcast_fanout(&server_addr, args.clients).await {
+                Ok(stats) => rows.push(Row { name: "Broadcast Fan-out".into(), stats, extra: None }),
+                Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+            },
+            "ping_throughput" => match scenarios::ping_throughput(&server_addr, args.clients, args.duration).await {
+                Ok(ping_stats) => {
+                    let total = ping_stats.total_requests;
+                    let rps = total as f64 / ping_stats.wall_time.as_secs_f64();
+                    rows.push(Row {
+                        name: "Ping Throughput".into(),
+                        stats: ping_stats.latency,
+                        extra: Some(format!("{total} reqs, {rps:.0} agg req/s")),
+                    });
+                }
+                Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+            },
+            "run_submission" => match scenarios::run_submission(&server_addr, args.clients, args.grid_size).await {
+                Ok(stats) => rows.push(Row { name: "Run Submission".into(), stats, extra: None }),
+                Err(e) => { eprintln!("  ERROR: {e:#}"); had_error = true; }
+            },
+            other => {
+                eprintln!("unknown scenario: {other}");
+                eprintln!("available: all, join_storm, broadcast_fanout, ping_throughput, run_submission");
+                std::process::exit(1);
+            }
+        }
     }
 
-    println!();
+    if !rows.is_empty() {
+        print_table(&rows);
+    }
+
+    if had_error {
+        std::process::exit(1);
+    }
 }

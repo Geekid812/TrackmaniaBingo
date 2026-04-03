@@ -2,6 +2,7 @@ use std::time::{Duration, Instant};
 
 use anyhow::{bail, Result};
 use futures::future::join_all;
+use rand::Rng;
 use tokio::task::JoinHandle;
 
 use crate::client::BenchClient;
@@ -302,4 +303,129 @@ pub async fn ping_throughput(addr: &str, num_clients: u32, duration_secs: u64) -
         wall_time,
         latency,
     })
+}
+
+// ---------------------------------------------------------------------------
+// Scenario 4: Run Submission Storm
+// ---------------------------------------------------------------------------
+
+pub async fn run_submission(addr: &str, num_clients: u32, grid_size: u32) -> Result<Stats> {
+    let cell_count = (grid_size * grid_size) as usize;
+    println!("  setting up room with {num_clients} clients (grid {grid_size}x{grid_size})...");
+
+    // Host creates room
+    let mut host = BenchClient::connect(addr, 0).await?;
+    let resp = host.request(
+        "CreateRoom",
+        CreateRoomFields {
+            config: RoomConfig { size: 0, ..Default::default() },
+            match_config: MatchConfig {
+                grid_size,
+                overtime: false,
+                time_limit: 0,
+                no_bingo_duration: 0,
+                ..Default::default()
+            },
+            teams: vec![
+                Team { id: 0, name: "Team A".into(), color: [255, 0, 0] },
+                Team { id: 1, name: "Team B".into(), color: [0, 0, 255] },
+            ],
+        },
+    ).await?;
+
+    let join_code = resp
+        .fields
+        .get("join_code")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| anyhow::anyhow!("no join_code in CreateRoom response"))?
+        .to_string();
+
+    // Connect and join all clients to the room
+    let mut clients = connect_clients(addr, num_clients, 1).await?;
+    for client in clients.iter_mut() {
+        client.request("JoinRoom", JoinRoomFields { join_code: join_code.clone() }).await?;
+    }
+
+    // Poll StartMatch until maps are loaded
+    println!("  waiting for maps to load...");
+    let start_deadline = Instant::now() + Duration::from_secs(30);
+    let match_uid;
+    loop {
+        if Instant::now() > start_deadline {
+            bail!("timed out waiting for maps to load (30s)");
+        }
+        let result = host.request("StartMatch", StartMatchFields {}).await;
+        match result {
+            Ok(_) => {
+                // Match started — read the MatchStart broadcast to get the uid
+                let evt = host.recv_any().await?;
+                match evt.fields.get("uid").and_then(|v| v.as_str()) {
+                    Some(uid) => {
+                        match_uid = uid.to_string();
+                        break;
+                    }
+                    None => bail!("StartMatch ok but no MatchStart broadcast with uid received"),
+                }
+            }
+            Err(_) => {
+                tokio::time::sleep(Duration::from_millis(500)).await;
+            }
+        }
+    }
+    println!("  match started: {match_uid}");
+
+    // All clients join the match
+    for client in clients.iter_mut() {
+        client.request("JoinMatch", JoinMatchFields {
+            uid: match_uid.clone(),
+            team_id: None,
+        }).await?;
+    }
+    println!("  all clients joined match, submitting runs...");
+
+    // Fire concurrent SubmitRun requests from all clients
+    let wall_start = Instant::now();
+
+    let mut handles: Vec<JoinHandle<Result<Vec<Duration>>>> = Vec::new();
+    for mut client in clients.drain(..) {
+        let cells = cell_count;
+        // Pre-generate random times (ThreadRng is not Send)
+        let times: Vec<u64> = {
+            let mut rng = rand::thread_rng();
+            (0..cells).map(|_| rng.gen_range(30_000..120_000u64)).collect()
+        };
+        handles.push(tokio::spawn(async move {
+            let mut latencies = Vec::new();
+            // Each client submits a run to each cell
+            for (tile_index, time) in times.into_iter().enumerate() {
+                let start = Instant::now();
+                client.request("SubmitRun", SubmitRunFields {
+                    tile_index,
+                    time,
+                    medal: 2, // Gold
+                    splits: vec![],
+                }).await?;
+                latencies.push(start.elapsed());
+            }
+            Ok(latencies)
+        }));
+    }
+
+    let results = join_all(handles).await;
+    let wall_time = wall_start.elapsed();
+
+    let mut durations = Vec::new();
+    for result in results {
+        match result {
+            Ok(Ok(lats)) => durations.extend(lats),
+            Ok(Err(e)) => eprintln!("  submit failed: {e}"),
+            Err(e) => eprintln!("  submit task panicked: {e}"),
+        }
+    }
+
+    if durations.is_empty() {
+        bail!("all submissions failed");
+    }
+
+    Ok(Stats::from_durations(durations, wall_time))
 }

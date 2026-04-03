@@ -118,6 +118,23 @@ pub struct SendChatMessageFields {
     pub message: String,
 }
 
+#[derive(Serialize)]
+pub struct StartMatchFields {}
+
+#[derive(Serialize)]
+pub struct JoinMatchFields {
+    pub uid: String,
+    pub team_id: Option<usize>,
+}
+
+#[derive(Serialize)]
+pub struct SubmitRunFields {
+    pub tile_index: usize,
+    pub time: u64,
+    pub medal: u8,
+    pub splits: Vec<u64>,
+}
+
 // -- Helpers --
 
 impl Default for RoomConfig {
