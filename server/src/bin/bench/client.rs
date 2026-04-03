@@ -18,6 +18,8 @@ pub struct BenchClient {
     seq: AtomicU32,
     pub player_id: String,
     pub display_name: String,
+    /// Broadcasts received while waiting for a request response.
+    broadcast_buf: Vec<BaseResponse>,
 }
 
 impl BenchClient {
@@ -66,6 +68,7 @@ impl BenchClient {
             seq: AtomicU32::new(1),
             player_id: account_id,
             display_name,
+            broadcast_buf: Vec::new(),
         })
     }
 
@@ -84,7 +87,7 @@ impl BenchClient {
         send_msg(&mut self.framed, &msg).await?;
 
         // Read messages until we get one with our seq.
-        // Non-seq messages (broadcasts) are discarded here.
+        // Non-seq messages (broadcasts) are buffered for recv_any().
         loop {
             let resp: BaseResponse = recv_msg(&mut self.framed).await?;
             if resp.seq == Some(seq) {
@@ -93,11 +96,17 @@ impl BenchClient {
                 }
                 return Ok(resp);
             }
+            // Buffer broadcasts so they aren't lost
+            self.broadcast_buf.push(resp);
         }
     }
 
     /// Wait for the next incoming message (broadcast or response).
+    /// Returns buffered broadcasts first (from messages received during request()).
     pub async fn recv_any(&mut self) -> Result<BaseResponse> {
+        if !self.broadcast_buf.is_empty() {
+            return Ok(self.broadcast_buf.remove(0));
+        }
         recv_msg(&mut self.framed).await
     }
 

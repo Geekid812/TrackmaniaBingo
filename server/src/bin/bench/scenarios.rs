@@ -323,7 +323,9 @@ pub async fn run_submission(addr: &str, num_clients: u32, grid_size: u32) -> Res
                 grid_size,
                 overtime: false,
                 time_limit: 0,
-                no_bingo_duration: 0,
+                // Keep the match in NoBingo phase so completing a row doesn't end
+                // the match mid-benchmark.
+                no_bingo_duration: 3_600_000,
                 ..Default::default()
             },
             teams: vec![
@@ -357,15 +359,24 @@ pub async fn run_submission(addr: &str, num_clients: u32, grid_size: u32) -> Res
         let result = host.request("StartMatch", StartMatchFields {}).await;
         match result {
             Ok(_) => {
-                // Match started — read the MatchStart broadcast to get the uid
-                let evt = host.recv_any().await?;
-                match evt.fields.get("uid").and_then(|v| v.as_str()) {
-                    Some(uid) => {
-                        match_uid = uid.to_string();
-                        break;
+                // Match started — read broadcasts until we find the MatchStart event
+                let deadline = Instant::now() + Duration::from_secs(10);
+                loop {
+                    if Instant::now() > deadline {
+                        bail!("timed out waiting for MatchStart broadcast");
                     }
-                    None => bail!("StartMatch ok but no MatchStart broadcast with uid received"),
+                    let evt = host.recv_any().await?;
+                    if evt.fields.get("event").and_then(|v| v.as_str()) == Some("MatchStart") {
+                        match evt.fields.get("uid").and_then(|v| v.as_str()) {
+                            Some(uid) => {
+                                match_uid = uid.to_string();
+                                break;
+                            }
+                            None => bail!("MatchStart broadcast missing uid field"),
+                        }
+                    }
                 }
+                break;
             }
             Err(_) => {
                 tokio::time::sleep(Duration::from_millis(500)).await;
