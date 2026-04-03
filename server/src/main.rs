@@ -34,7 +34,11 @@ async fn main() {
     info!("Trackmania Bingo Server: Version {VERSION}");
 
     // Load configuration
-    config::initialize();
+    let config_path = std::env::args()
+        .skip_while(|a| a != "--config")
+        .nth(1)
+        .unwrap_or_else(|| "config.toml".to_string());
+    config::initialize(&config_path);
     config::enumerate_keys();
 
     // Database setup

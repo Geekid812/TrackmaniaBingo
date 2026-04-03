@@ -1,0 +1,22 @@
+# Benchmark configuration for the Trackmania Bingo server.
+# Copy this to config.toml before starting the server for benchmarking:
+#   cp bench.config.toml config.toml
+
+environment = "dev"
+
+[network]
+tcp_port = 5000
+http_port = 8080
+timeout = 60
+
+[client]
+required_version = "0.0"
+
+[behaviour]
+never_close = true
+max_teams = 10
+skip_checks = true
+
+[keys]
+openplanet = "KEY"
+webservices = "username:password"

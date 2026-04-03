@@ -109,7 +109,7 @@ fn populate_configuration_keys(
 }
 
 /// Initialize configuration. Only call this once.
-pub fn initialize() -> bool {
+pub fn initialize(config_path: &str) -> bool {
     let default_data = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/data/config.default.toml"
@@ -122,7 +122,7 @@ pub fn initialize() -> bool {
         toml::from_str(default_data).expect("default configuration has invalid syntax");
     populate_configuration_keys(&mut configuration, &default_config, String::new());
 
-    match fs::read_to_string("config.toml") {
+    match fs::read_to_string(config_path) {
         Ok(text) => {
             let config_overrides: Map<String, Value> = match toml::from_str(&text) {
                 Ok(map) => map,
@@ -135,7 +135,7 @@ pub fn initialize() -> bool {
         }
         Err(ref e) if e.kind() == io::ErrorKind::NotFound => {
             info!("configuration file not found, created a new copy of the default configuration.");
-            fs::write("config.toml", default_data).unwrap();
+            fs::write(config_path, default_data).unwrap();
         }
         Err(e) => {
             error!("IO error reading configuration file: {e}");
