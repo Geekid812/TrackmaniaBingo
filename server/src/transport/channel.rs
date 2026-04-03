@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use serde::Serialize;
+use serde_json::to_vec;
+use tracing::error;
 
 use super::messager::NetMessager;
 
@@ -25,11 +27,19 @@ impl Channel {
     }
 
     pub fn broadcast(&mut self, message: &impl Serialize) {
+        let serialized = match to_vec(message) {
+            Ok(message) => message,
+            Err(e) => {
+                error!("serialization failure: {}", e);
+                return;
+            }
+        };
+
         // send message to all peers and collect closed connections which produced an error
         let closed: Vec<i32> = self
             .peers
             .iter()
-            .filter(|(_, peer)| peer.send(message).is_err_and(|e| e.is_some()))
+            .filter(|(_, peer)| peer.send_serialized(serialized.clone()).is_err())
             .map(|(addr, _)| *addr)
             .collect();
 
