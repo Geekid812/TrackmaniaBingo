@@ -1,12 +1,11 @@
 use bytes::BytesMut;
-use futures::FutureExt;
 use serde_json::json;
 use std::sync::atomic::{self, AtomicU64};
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::select;
 use tokio::sync::mpsc::unbounded_channel;
-use tokio::time::{timeout_at, Instant};
+use tokio::time::Instant;
 use tracing::{debug, error, warn};
 
 use super::handshake;
@@ -86,36 +85,28 @@ impl NetClient {
 
     /// Run the main loop of the client.
     pub async fn run(mut self) {
-        let mut timeout_deadline = Instant::now() + self.timeout;
-        loop {
-            let next_message_received =
-                timeout_at(timeout_deadline, self.protocol.receive_message().fuse());
-            let outgoing_message_queued = self.receiver.recv().fuse();
+        let sleep = tokio::time::sleep(self.timeout);
+        tokio::pin!(sleep);
 
+        loop {
             select! {
-                timed_result = next_message_received => match timed_result {
-                    Ok(option_message) => match option_message {
-                        Some(result) => match result {
-                            Ok(message) => {
-                                self.handle_message(message).await;
-                                timeout_deadline = Instant::now() + self.timeout;
-                            },
-                            Err(err) => {
-                                error!(cid = self.cid, "socket read error: {}", err);
-                                break;
-                            }
+                option_message = self.protocol.receive_message() => match option_message {
+                    Some(result) => match result {
+                        Ok(message) => {
+                            self.handle_message(message).await;
+                            sleep.as_mut().reset(Instant::now() + self.timeout);
                         },
-                        None => {
-                            debug!(cid = self.cid, "closed connection by remote client");
+                        Err(err) => {
+                            error!(cid = self.cid, "socket read error: {}", err);
                             break;
                         }
                     },
-                    Err(timeout) => {
-                        debug!(cid = self.cid, "timed out: {}", timeout);
+                    None => {
+                        debug!(cid = self.cid, "closed connection by remote client");
                         break;
                     }
                 },
-                queued_message = outgoing_message_queued => match queued_message {
+                queued_message = self.receiver.recv() => match queued_message {
                     Some(message) => match self.protocol.write(message).await {
                         Ok(()) => (),
                         Err(err) => {
@@ -130,6 +121,10 @@ impl NetClient {
                         );
                         break;
                     }
+                },
+                () = &mut sleep => {
+                    debug!(cid = self.cid, "timed out");
+                    break;
                 }
             }
         }
