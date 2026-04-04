@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use bytes::Bytes;
 use serde::Serialize;
 use serde_json::to_vec;
 use tokio::sync::mpsc::error::SendError;
@@ -23,14 +24,14 @@ impl NetMessageWriter {
         Self { writer }
     }
 
-    pub fn send_serialized(&self, message: Vec<u8>) -> Result<(), SendError<Vec<u8>>> {
+    pub fn send_serialized(&self, message: Bytes) -> Result<(), SendError<Bytes>> {
         self.writer.send(message)
     }
 
     /// Send a serialized message to the client.
-    pub fn send<T: Serialize>(&self, message: &T) -> Result<(), Option<SendError<Vec<u8>>>> {
-        let serialized = match to_vec(message) {
-            Ok(message) => message,
+    pub fn send<T: Serialize>(&self, message: &T) -> Result<(), Option<SendError<Bytes>>> {
+        let serialized: Bytes = match to_vec(message) {
+            Ok(message) => message.into(),
             Err(e) => {
                 error!("serilization failure: {}", e);
                 return Err(None);
