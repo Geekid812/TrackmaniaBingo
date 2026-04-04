@@ -2,7 +2,7 @@ use std::{net::SocketAddr, time::Duration};
 
 use client::ClientCallbackImplementation;
 use tokio::net::TcpSocket;
-use tracing::debug;
+use tracing::{debug, warn};
 
 use crate::{config, server::client::NetClient};
 
@@ -48,10 +48,13 @@ impl NetServer {
         let listener = self.socket.listen(256).expect("TCP listener not created");
 
         loop {
-            let (incoming, remote_addr) = listener
-                .accept()
-                .await
-                .expect("failed to accept an incoming connection");
+            let (incoming, remote_addr) = match listener.accept().await {
+                Ok(conn) => conn,
+                Err(e) => {
+                    warn!("failed to accept connection: {}", e);
+                    continue;
+                }
+            };
 
             let mut client = NetClient::new(incoming, client_timeout);
             client.set_callback_mode(ClientCallbackImplementation::Handshake);
