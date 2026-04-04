@@ -336,9 +336,11 @@ namespace NetworkHandlers {
             player.team = team;
         }
 
-        vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(player.team.color, 0.1), 0.5);
-        UI::ShowNotification(
-            "", Icons::Plus + " " + player.profile.name + " joined the game.", teamColor, 10000);
+        if (!Match.IsLargeServer()) {
+            vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(player.team.color, 0.1), 0.5);
+            UI::ShowNotification(
+                "", Icons::Plus + " " + player.profile.name + " joined the game.", teamColor, 10000);
+        }
     }
 
     void MapRerolled(Json::Value @data) {
