@@ -9,6 +9,7 @@ namespace UIPlayers {
                      bool canDelete = false,
                      bool canDragPlayers = false,
                      Player @draggedPlayer = null) {
+        uint maxVisibleRows = 50;
         bool isOpen = UI::BeginTable("Bingo_PlayerTable",
                                      hideTeams ? 4 : teams.Length + (canCreate ? 1 : 0),
                                      UI::TableFlags::None,
@@ -129,12 +130,24 @@ namespace UIPlayers {
                     }
                 }
 
-                if (finishedTeams == teams.Length)
+                if (finishedTeams == teams.Length || rowIndex >= maxVisibleRows)
                     break;
                 rowIndex += 1;
             }
         }
         UI::EndTable();
+
+        if (!hideTeams && @Match !is null) {
+            uint maxTeamSize = 0;
+            for (uint i = 0; i < teams.Length; i++) {
+                auto arr = cast<array<Player>>(Match.teamPlayersCache[tostring(teams[i].id)]);
+                if (arr !is null && arr.Length > maxTeamSize)
+                    maxTeamSize = arr.Length;
+            }
+            if (maxTeamSize > maxVisibleRows) {
+                UI::TextDisabled("... and " + (maxTeamSize - maxVisibleRows) + "more players");
+            }
+        }
     }
 
     void EditTeamsButton() {
@@ -165,22 +178,24 @@ namespace UIPlayers {
 
     // Helper function to build the table
     Player @PlayerCell(array<Player> @players, Team team, int index, Player @draggedPlayer = null) {
-        int count = 0;
-        for (uint i = 0; i < players.Length; i++) {
-            auto player = players[i];
-            bool isNotDraggedPlayer =
-                @draggedPlayer is null || player.profile.uid != draggedPlayer.profile.uid;
+        if (@draggedPlayer !is null) {
+            int count = 0;
+            for (uint i = 0; i < players.Length; i++) {
+                auto player = players[i];
+                bool isNotDraggedPlayer =
+                    player.profile.uid != draggedPlayer.profile.uid;
 
-            if (player.team == team && isNotDraggedPlayer) {
-                if (count == index)
-                    return player;
-                else
-                    count += 1;
+                if (player.team == team && isNotDraggedPlayer) {
+                    if (count == index)
+                        return player;
+                    else
+                        count += 1;
+                }
             }
+            if (draggedPlayer.team.id == team.id && count == index)
+                return draggedPlayer;
+            return null;
         }
-        if (@draggedPlayer !is null && draggedPlayer.team.id == team.id && count == index) {
-            return draggedPlayer;
-        }
-        return null;
+        return Match.GetCachedTeamPlayer(team, index);
     }
 }

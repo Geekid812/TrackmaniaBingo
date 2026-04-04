@@ -136,6 +136,12 @@ namespace UIDevActions {
         if (UI::Button(Icons::TrashO + " Clear Fake Players")) {
             ClearAllFakePlayers();
         }
+
+        if (UI::Button("+ 100")) { AddBulkFakePlayers(100); }
+        UI::SameLine();
+        if (UI::Button("+ 500")) { AddBulkFakePlayers(500); }
+        UI::SameLine();
+        if (UI::Button("+ 1000")) { AddBulkFakePlayers(1000); }
     }
 
     void DummyRecordControl() {
@@ -159,6 +165,7 @@ namespace UIDevActions {
         fakeProfile.name = "Player " + Math::Rand(100, 1000);
         fakeProfile.countryCode = "WOR";
         Match.players.InsertLast(Player(fakeProfile, randomTeam));
+        Match.RebuildTeamCache();
     }
 
     void ClearAllFakePlayers() {
@@ -175,5 +182,27 @@ namespace UIDevActions {
                 i++;
             }
         }
+        Match.RebuildTeamCache();
+    }
+
+    // For testing
+    void AddBulkFakePlayers(int count) {
+        if (!Gamemaster::IsBingoActive()) return;
+
+        if (Match.teams.Length == 0) {
+            Match.teams.InsertLast(Team(1, "Team Red", vec3(1., 0., 0.)));
+            Match.teams.InsertLast(Team(2, "Team Blue", vec3(0., 0., 1.)));
+        }
+
+        int offset = Match.players.Length;
+        for (int j = 0; j < count; j++) {
+            Team randomTeam = Match.teams[j % Match.teams.Length];
+            PlayerProfile fakeProfile();
+            fakeProfile.uid = -(offset + j + 2);
+            fakeProfile.name = "Fake " + j;
+            fakeProfile.countryCode = "WOR";
+            Match.players.InsertLast(Player(fakeProfile, randomTeam));
+        }
+        Match.RebuildTeamCache();
     }
 }
