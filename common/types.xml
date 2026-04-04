@@ -42,7 +42,7 @@
         <comment>Match parameters set by the host.</comment>
         <m name="game" type="GamePlatform" default="GamePlatform::Next" />
         <m name="mode" type="Gamemode" default="Gamemode::Standard" />
-        <m name="grid_size" type="int" default="5" />
+        <m name="grid_size" type="uint" default="5" />
         <m name="selection" type="MapMode" default="MapMode::RandomTMX" />
         <m name="target_medal" type="Medal" default="Medal::Author" />
         <m name="discovery" type="bool" default="false" />
