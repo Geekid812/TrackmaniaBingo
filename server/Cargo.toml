@@ -81,3 +81,6 @@ derivative = "2.2.0"
 
 # CLI argument parsing (used by bench binary)
 clap = { version = "4", features = ["derive"] }
+
+# C library bindings (used by bench for reliable process cleanup)
+libc = "0.2"

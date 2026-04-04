@@ -221,6 +221,20 @@ fn median_stats(runs: &[scenarios::Stats]) -> scenarios::Stats {
     }
 }
 
+use std::sync::atomic::{AtomicU32, Ordering};
+
+/// PID of the spawned server process, used to ensure cleanup on exit.
+static SERVER_PID: AtomicU32 = AtomicU32::new(0);
+
+/// Kill the server process by PID. Safe to call multiple times.
+fn kill_server_pid() {
+    let pid = SERVER_PID.swap(0, Ordering::SeqCst);
+    if pid != 0 {
+        unsafe { libc::kill(pid as i32, libc::SIGKILL); }
+        unsafe { libc::waitpid(pid as i32, std::ptr::null_mut(), 0); }
+    }
+}
+
 struct ServerGuard {
     child: Child,
     addr: String,
@@ -228,9 +242,10 @@ struct ServerGuard {
 
 impl Drop for ServerGuard {
     fn drop(&mut self) {
-        println!("  shutting down server...");
+        eprintln!("  shutting down server...");
         let _ = self.child.kill();
         let _ = self.child.wait();
+        SERVER_PID.store(0, Ordering::SeqCst);
     }
 }
 
@@ -241,6 +256,29 @@ fn spawn_server() -> ServerGuard {
     let server_bin = server_dir.join("target/release/bingohost");
     let bench_config = server_dir.join("data/config.bench.toml");
     let log_path = server_dir.join("bench-server.log");
+
+    let addr: std::net::SocketAddr = "127.0.0.1:5000".parse().unwrap();
+
+    // Fail early if the port is already occupied
+    if TcpStream::connect_timeout(&addr, Duration::from_millis(200)).is_ok() {
+        eprintln!("error: port {} is already in use — kill the existing server first", addr.port());
+        std::process::exit(1);
+    }
+
+    // Build the release server binary so we never run a stale one
+    print!("  building release server...");
+    let build_status = Command::new("cargo")
+        .current_dir(server_dir)
+        .args(["build", "--release", "--bin", "bingohost"])
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .status()
+        .expect("failed to run cargo build");
+    if !build_status.success() {
+        eprintln!(" FAILED (exit {})", build_status);
+        std::process::exit(1);
+    }
+    println!(" ok");
 
     println!("  starting server from {}", server_bin.display());
 
@@ -260,10 +298,18 @@ fn spawn_server() -> ServerGuard {
         });
 
     // Poll TCP until the server is accepting connections
-    let addr = "127.0.0.1:5000";
     print!("  waiting for server to be ready...");
     let deadline = std::time::Instant::now() + Duration::from_secs(15);
     loop {
+        // Check the child hasn't already exited (e.g. crash on startup)
+        if let Some(status) = child.try_wait().expect("failed to check server status") {
+            eprintln!("\n\nserver exited immediately with {status}. Server output:");
+            if let Ok(log) = std::fs::read_to_string(&log_path) {
+                eprintln!("{log}");
+            }
+            std::process::exit(1);
+        }
+
         if std::time::Instant::now() > deadline {
             eprintln!("\n\nserver did not become ready within 15s. Server output:");
             if let Ok(log) = std::fs::read_to_string(&log_path) {
@@ -273,15 +319,14 @@ fn spawn_server() -> ServerGuard {
             let _ = child.wait();
             std::process::exit(1);
         }
-        if TcpStream::connect_timeout(
-            &addr.parse().unwrap(),
-            Duration::from_millis(100),
-        ).is_ok() {
+        if TcpStream::connect_timeout(&addr, Duration::from_millis(100)).is_ok() {
             break;
         }
         std::thread::sleep(Duration::from_millis(100));
     }
     println!(" ready");
+
+    SERVER_PID.store(child.id(), Ordering::SeqCst);
 
     ServerGuard {
         child,
@@ -289,8 +334,20 @@ fn spawn_server() -> ServerGuard {
     }
 }
 
+extern "C" fn atexit_kill_server() {
+    kill_server_pid();
+}
+
 #[tokio::main]
 async fn main() {
+    // Ensure the server subprocess is killed on Ctrl-C, panic, or normal exit.
+    unsafe { libc::atexit(atexit_kill_server); }
+    tokio::spawn(async {
+        tokio::signal::ctrl_c().await.ok();
+        kill_server_pid();
+        std::process::exit(130);
+    });
+
     let args = Args::parse();
 
     let _server_guard: Option<ServerGuard>;

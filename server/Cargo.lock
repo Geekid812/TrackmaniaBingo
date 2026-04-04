@@ -175,6 +175,7 @@ dependencies = [
  "derivative",
  "futures",
  "generational-arena",
+ "libc",
  "once_cell",
  "palette",
  "parking_lot",
