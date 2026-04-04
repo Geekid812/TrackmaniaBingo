@@ -348,6 +348,15 @@ async fn main() {
         std::process::exit(130);
     });
 
+    // Raise the file descriptor limit so we can handle many concurrent connections.
+    // The spawned server inherits this limit.
+    unsafe {
+        let mut rlim: libc::rlimit = std::mem::zeroed();
+        libc::getrlimit(libc::RLIMIT_NOFILE, &mut rlim);
+        rlim.rlim_cur = rlim.rlim_max.min(65536);
+        libc::setrlimit(libc::RLIMIT_NOFILE, &rlim);
+    }
+
     let args = Args::parse();
 
     let _server_guard: Option<ServerGuard>;

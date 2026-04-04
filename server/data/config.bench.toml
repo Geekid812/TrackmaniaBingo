@@ -10,7 +10,7 @@ environment = "dev"
 tcp_port = 5000
 http_port = 8080
 timeout = 60
-backlog = 4096
+backlog = 8096
 
 [client]
 required_version = "0.0"
