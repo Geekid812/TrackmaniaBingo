@@ -324,7 +324,7 @@ namespace UIRoomSettings {
     void ItemExpiryEdit() {
         LabelAdvancedSettings(Icons::HourglassEnd + " Items Expire");
 
-        UI::SetNextItemWidth(250);
+        UI::SetNextItemWidth(Math::Min(UI::GetContentRegionAvail().x, 200));
         if (UI::BeginCombo("##bingoitemexpire",
                            MatchConfig.itemsExpire == 0
                                ? "Never"
@@ -352,7 +352,7 @@ namespace UIRoomSettings {
     void ItemTickrateEdit() {
         LabelAdvancedSettings(Icons::Forward + " Item Spawns");
 
-        UI::SetNextItemWidth(250);
+        UI::SetNextItemWidth(Math::Min(UI::GetContentRegionAvail().x, 200));
         if (UI::BeginCombo("##bingoitemtickrate",
                            MatchConfig.itemsTickMultiplier <= 1000 ? (MatchConfig.itemsTickMultiplier == 400 ? "Few" : "Balanced") : (MatchConfig.itemsTickMultiplier == 2000 ? "Many" : "True Frenzy"))) {
 
