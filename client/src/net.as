@@ -178,6 +178,9 @@ namespace Network {
         if (body.HasKey("seq")) {
             uint SequenceCode = body["seq"];
             Response @res = Response(SequenceCode, body);
+            while (Internal::Received.Length > 500) {
+                Internal::Received.RemoveAt(0);
+            }
             Internal::Received.InsertLast(res);
             yield();
             return;

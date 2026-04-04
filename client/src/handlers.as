@@ -14,6 +14,7 @@ namespace NetworkHandlers {
                                                         JsonTeam["color"][1],
                                                         JsonTeam["color"][2])));
         }
+        Match.RebuildTeamCache();
     }
 
     void PlayerUpdate(Json::Value @status) {
@@ -25,6 +26,7 @@ namespace NetworkHandlers {
                 continue;
             player.team = Match.GetTeamWithId(int(status["updates"].Get(tostring(uid))));
         }
+        Match.RebuildTeamCache();
     }
 
     void MatchStart(Json::Value @match) {
@@ -183,6 +185,7 @@ namespace NetworkHandlers {
                 Match.players.InsertLast(Player(profile, team));
             }
         }
+        Match.RebuildTeamCache();
     }
 
     void PlayerJoin(Json::Value @data) {
@@ -190,6 +193,7 @@ namespace NetworkHandlers {
             return;
         Match.players.InsertLast(
             Player(PlayerProfile::Deserialize(data["profile"]), Match.GetTeamWithId(data["team"])));
+        Match.RebuildTeamCache();
     }
 
     void PlayerLeave(Json::Value @data) {
@@ -197,6 +201,7 @@ namespace NetworkHandlers {
         for (uint i = 0; i < Match.players.Length; i++) {
             if (Match.players[i].profile.uid == uid) {
                 Match.players.RemoveAt(i);
+                Match.RebuildTeamCache();
                 return;
             }
         }
@@ -245,6 +250,7 @@ namespace NetworkHandlers {
             Team(data["id"],
                  data["name"],
                  vec3(data["color"][0] / 255., data["color"][1] / 255., data["color"][2] / 255.)));
+        Match.RebuildTeamCache();
     }
 
     void TeamDeleted(Json::Value @data) {
@@ -252,6 +258,7 @@ namespace NetworkHandlers {
         for (uint i = 0; i < Match.teams.Length; i++) {
             if (Match.teams[i].id == id) {
                 Match.teams.RemoveAt(i);
+                Match.RebuildTeamCache();
                 return;
             }
         }
@@ -317,6 +324,7 @@ namespace NetworkHandlers {
             Team(data["id"],
                  data["name"],
                  vec3(data["color"][0] / 255., data["color"][1] / 255., data["color"][2] / 255.)));
+        Match.RebuildTeamCache();
     }
 
     void MatchPlayerJoin(Json::Value @data) {
@@ -334,10 +342,13 @@ namespace NetworkHandlers {
         } else {
             player.team = team;
         }
+        Match.RebuildTeamCache();
 
-        vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(player.team.color, 0.1), 0.5);
-        UI::ShowNotification(
-            "", Icons::Plus + " " + player.profile.name + " joined the game.", teamColor, 10000);
+        if (Match.players.Length < 50) {
+            vec4 teamColor = UIColor::Brighten(UIColor::GetAlphaColor(player.team.color, 0.1), 0.5);
+            UI::ShowNotification(
+                "", Icons::Plus + " " + player.profile.name + " joined the game.", teamColor, 10000);
+        }
     }
 
     void MapRerolled(Json::Value @data) {

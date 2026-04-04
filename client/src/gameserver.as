@@ -15,6 +15,31 @@ class GameServer {
     EndState endState;
     LoadStatus maploadStatus;
 
+    // Performance cache
+    dictionary teamPlayersCache = {};
+    Player @cachedSelf = null;
+
+    void RebuildTeamCache() {
+        teamPlayersCache.DeleteAll();
+        @cachedSelf = null;
+        for (uint i = 0; i < teams.Length; i++) {
+            @teamPlayersCache[tostring(teams[i].id)] = array<Player>();
+        }
+        for (uint i = 0; i < players.Length; i++) {
+            string key = tostring(players[i].team.id);
+            auto arr = cast<array<Player>>(teamPlayersCache[key]);
+            if (arr !is null) {
+                arr.InsertLast(players[i]);
+            }
+        }
+    }
+
+    Player @GetCachedTeamPlayer(Team team, int index) {
+        auto arr = cast<array<Player>>(teamPlayersCache[tostring(team.id)]);
+        if (arr is null || index >= int(arr.Length)) return null;
+        return arr[index];
+    }
+
     // Local state
     int currentTileIndex = -1;
     bool currentTileInvalid = false;
@@ -22,10 +47,13 @@ class GameServer {
     bool verificationLocked = false;
 
     Player @GetSelf() {
+        if (@cachedSelf !is null) return cachedSelf;
         for (uint i = 0; i < players.Length; i++) {
             auto player = players[i];
-            if (player.IsSelf())
-                return player;
+            if (player.IsSelf()) {
+                @cachedSelf = player;
+                return cachedSelf;
+            }
         }
         return null;
     }
