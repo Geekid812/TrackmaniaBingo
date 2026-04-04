@@ -105,15 +105,16 @@ namespace UIMapList {
             auto startPos = UI::GetCursorPos() + UI::GetWindowPos() -
                             vec2(8 * uiScale, 8 * uiScale) - vec2(0, UI::GetScrollY());
 
-            UI::BeginGroup();
             vec2 thumbnailSize = vec2(160 * uiScale, 116 * uiScale);
-            if (cell.mapImage !is null && cell.mapImage.Data !is null) {
-                UI::Image(cell.mapImage.Data, thumbnailSize);
-            } else if (cell.thumbnail !is null && cell.thumbnail.Data !is null) {
+            if (cell.thumbnail !is null && cell.thumbnail.Data !is null) {
                 UI::Image(cell.thumbnail.Data, thumbnailSize);
             } else {
-                UI::Dummy(thumbnailSize);
+                UI::PushStyleColor(UI::Col::ChildBg, vec4(.3, .3, .3, .1));
+                UI::BeginChild("thumbnaildummy" + id, thumbnailSize);
+                UI::EndChild();
+                UI::PopStyleColor();
             }
+            bool mapHovered = UI::IsItemHovered();
 
             UI::BeginChild(id, vec2(160. * uiScale, UI::GetTextLineHeight()));
 
@@ -122,9 +123,6 @@ namespace UIMapList {
             UI::Text(mapName);
 
             UI::EndChild();
-
-            UI::EndGroup();
-            bool mapHovered = UI::IsItemHovered();
             if (mapHovered && cell.map !is null) {
                 if (cellId != -1 && gridSize != -1) {
                     ShowTileTooltip(cell, (cellId % gridSize), (cellId / gridSize));
@@ -158,7 +156,8 @@ namespace UIMapList {
 
             auto size = UI::GetCursorPos() + UI::GetWindowPos() + vec2(0, 8 * uiScale) - startPos -
                         vec2(0, UI::GetScrollY());
-            vec4 rect = vec4(startPos.x, startPos.y, 500, size.y);
+            float tileFullWidth = UI::GetContentRegionAvail().x + UI::GetStyleVarVec2(UI::StyleVar::CellPadding).x * 2;
+            vec4 rect = vec4(startPos.x, startPos.y, tileFullWidth, size.y);
             if (!RerollMenuOpen) {
                 if (cell.paintColor != vec3())
                     drawList.AddRectFilled(rect, UIColor::GetAlphaColor(cell.paintColor, 0.1));

@@ -44,9 +44,10 @@ namespace NetworkHandlers {
 
     void LoadMaps(Json::Value @mapList) {
         @Match.tiles = {};
+        bool autoloadThumbnails = !Match.IsLargeServer();
         for (uint i = 0; i < mapList.Length; i++) {
             auto jsonMap = mapList[i];
-            Match.tiles.InsertLast(GameMap::Deserialize(jsonMap));
+            Match.tiles.InsertLast(GameTile(GameMap::Deserialize(jsonMap), autoloadThumbnails));
         }
         Gamemaster::InitializeTiles();
     }
