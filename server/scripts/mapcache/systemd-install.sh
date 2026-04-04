@@ -1,4 +1,7 @@
 #!/bin/bash
+set -euo pipefail
+
+mkdir -p ~/.config/systemd/user
 cat mapcache.service | sed "s+{SCRIPT_PATH}+$PWD+g" > ~/.config/systemd/user/mapcache.service
 cp -f mapcache.timer ~/.config/systemd/user/mapcache.timer
 systemctl --user daemon-reload

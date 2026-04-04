@@ -148,7 +148,7 @@ namespace UIDevActions {
     }
 
     void AddFakePlayer() {
-        if (!Gamemaster::IsBingoActive()) {
+        if (@Match is null) {
             logwarn("[UIDevActions::AddFakePlayer] Cannot add a player, Bingo is not active!");
             return;
         }
@@ -162,7 +162,7 @@ namespace UIDevActions {
     }
 
     void ClearAllFakePlayers() {
-        if (!Gamemaster::IsBingoActive()) {
+        if (@Match is null) {
             logwarn("[UIDevActions::ClearAllFakePlayers] Cannot add a player, Bingo is not active!");
             return;
         }

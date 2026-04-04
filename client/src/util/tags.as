@@ -1,6 +1,8 @@
 
 namespace MXTags {
     const string MX_GETTAGS_URL = "https://trackmania.exchange/api/tags/gettags";
+    const int TAG_MAX_ID = 39;
+    const array<string> BANNED_TAGS = {"Race", "ZrT", "Offroad", "Press Forward", "Stunt", "Scenery", "Kacky", "Slow Motion", "Minigame", "Obstacle", "Transitional", "Signature"};
 
     class Tag {
         int id;
@@ -38,7 +40,13 @@ namespace MXTags {
         auto data = Json::Parse(req.String());
         Tags = {};
         for (uint i = 0; i < data.Length; i++) {
-            Tags.InsertLast(Tag(data[i]["ID"], data[i]["Name"]));
+            string name = data[i]["Name"];
+            int id = data[i]["ID"];
+            if (id > TAG_MAX_ID || BANNED_TAGS.Find(name) != -1) {
+                continue;
+            }
+
+            Tags.InsertLast(Tag(id, name));
         }
         logtrace("[MXTags::LoadTags] Loaded " + Tags.Length + " tags.");
     }
@@ -50,7 +58,6 @@ namespace MXTags {
                 return tag;
         }
 
-        throw("GetTag() returned null. Tags are maybe not initialized. (Requested tag " + id + ")");
         return Tag();
     }
 }

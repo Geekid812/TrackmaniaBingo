@@ -15,7 +15,7 @@ namespace UIChat {
     string ChatInput;
     bool Visible = true;
 
-    bool ShouldDisplay() { return Visible && (@Match !is null || @Match !is null); }
+    bool ShouldDisplay() { return Visible && @Match !is null && !Match.IsLargeServer(); }
 
     void RemoveExpiredMessages() {
         uint i = 0;

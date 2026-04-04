@@ -22,8 +22,6 @@ namespace Settings {
 
     BackendConfiguration LOCALHOST_BACKEND = BackendConfiguration("localhost", 5500);
 
-    BackendConfiguration LIVE_BACKEND = BackendConfiguration("38.242.214.20", 5500);
-
     enum BackendSelection {
         LocalDevelopment,
         Live,
@@ -69,7 +67,7 @@ namespace Settings {
     BackendConfiguration @GetBackendConfiguration() {
         switch (Backend) {
         case BackendSelection::Live:
-            return LIVE_BACKEND;
+            return BackendConfiguration(PersistantStorage::PublicServerAddress, PersistantStorage::PublicServerPort);
         case BackendSelection::LocalDevelopment:
             return LOCALHOST_BACKEND;
         default:

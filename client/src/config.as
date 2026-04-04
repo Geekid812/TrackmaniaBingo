@@ -41,10 +41,13 @@ namespace Config {
         }
 
         CompetitiveBlockedPlugins = {};
-        auto banned = json["competitive_banned_plugins"];
+        auto banned = json["competitiveBannedPlugins"];
         for (uint i = 0; i < banned.Length; i++) {
             CompetitiveBlockedPlugins.InsertLast(string(banned[i]));
         }
+
+        PersistantStorage::PublicServerAddress = json["liveServerConfig"]["address"];
+        PersistantStorage::PublicServerPort = int(json["liveServerConfig"]["port"]);
 
         LastUpdate = Time::Now;
         logtrace("[Config::FetchConfig] Update was successful.");

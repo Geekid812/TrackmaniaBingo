@@ -101,7 +101,7 @@ class MatchConfiguration(BaseModel):
     competitve_patch: bool
     mappack_id: int | None
     campaign_selection: list[int] | None
-    map_tag: int | None = 1
+    map_tag: int | None = 3
     items: FrenzyItemSettings
     items_expire: int = 600
     items_tick_multiplier: int = 1000

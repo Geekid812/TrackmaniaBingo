@@ -5,13 +5,15 @@ namespace UIRoomSettings {
     const int TIMELIMIT_MAX = 180;
     const int NOBINGO_MAX = 120;
     const float CHECKBOXES_ALIGN_X = 200;
-    const float GAME_SETTINGS_ALIGN_X = 180;
+    const float GAME_SETTINGS_ALIGN_X = 160;
 
     FeaturedMappack @SelectedPack;
     int State;
+    string HoveredTrackSelect;
 
     void RoomNameInput() {
         UITools::AlignedLabel(Icons::Pencil + "  Room Name");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(220);
         RoomConfig.name = UI::InputText("##bingoroomname", RoomConfig.name);
         if (RoomConfig.name == "") {
@@ -55,6 +57,12 @@ namespace UIRoomSettings {
             }
             UIColor::Reset();
         }
+    }
+
+    void LabelAdvancedSettings(const string&in title) {
+        vec2 originalPosition = UI::GetCursorPos();
+        UITools::AlignedLabel(title);
+        Layout::MoveTo(originalPosition.x + GAME_SETTINGS_ALIGN_X * UI::GetScale());
     }
 
     void GridSizeSelector() {
@@ -116,16 +124,14 @@ namespace UIRoomSettings {
     }
 
     void DiscoveryToggle() {
-        UITools::AlignedLabel(Icons::Search + " Map Discovery");
-        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        LabelAdvancedSettings(Icons::Search + " Map Discovery");
         MatchConfig.discovery = UI::Checkbox("##bingodiscovery", MatchConfig.discovery);
         UI::SameLine();
         UITools::HelpTooltip("Excludes maps where any player in the match currently has a record on.");
     }
 
     void SecretToggle() {
-        UITools::AlignedLabel(Icons::QuestionCircle + " Secret Records");
-        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        LabelAdvancedSettings(Icons::QuestionCircle + " Secret Records");
         MatchConfig.secret = UI::Checkbox("##bingosecret", MatchConfig.secret);
         UI::SameLine();
         UITools::HelpTooltip("All records from other players will be hidden until the end of the game.");
@@ -187,16 +193,16 @@ namespace UIRoomSettings {
     void MappackIdInput() {
         UITools::AlignedLabel(Icons::Exchange + "  TMX Mappack ID");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
-        UI::SetNextItemWidth(132);
+        UI::SetNextItemWidth(150);
         MatchConfig.mappackId = UI::InputInt("##bingomappack", MatchConfig.mappackId, 0);
     }
 
     void MapTagSelector() {
-        // FIX: mapTag should not be 0, as it is invalid. Correct it if it was loaded from an
+        // FIX: mapTag should not be less than 1, as it is invalid. Correct it if it was loaded from an
         // invalid LastConfig
         MatchConfig.mapTag = Math::Max(MatchConfig.mapTag, 1);
 
-        UITools::AlignedLabel(Icons::Tag + "  Selected Map Tag");
+        UITools::AlignedLabel(Icons::Tag + "  Track Style");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
         if (!MXTags::TagsLoaded()) {
@@ -217,7 +223,7 @@ namespace UIRoomSettings {
     }
 
     void TargetMedalSelector() {
-        UITools::AlignedLabel(Icons::Kenney::ButtonCircle + " Medal Objective");
+        UITools::AlignedLabel(Icons::Kenney::ButtonCircle + "  Medal Objective");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(250);
         if (UI::BeginCombo("##bingomedal", stringof(MatchConfig.targetMedal))) {
@@ -248,22 +254,19 @@ namespace UIRoomSettings {
     }
 
     void OvertimeToggle() {
-        UITools::AlignedLabel(Icons::PlusSquare + " Enable Overtime");
-        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        LabelAdvancedSettings(Icons::PlusSquare + " Enable Overtime");
         MatchConfig.overtime = UI::Checkbox("##bingoovertime", MatchConfig.overtime);
     }
 
     void LateJoinToggle() {
-        UITools::AlignedLabel(Icons::SignIn + " Allow Late Joins");
-        Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
+        LabelAdvancedSettings(Icons::SignIn + " Allow Late Joins");
         MatchConfig.lateJoin = UI::Checkbox("##bingolatejoin", MatchConfig.lateJoin);
         UI::SameLine();
         UITools::HelpTooltip("Players can still join after the game has started.");
     }
 
     void HostControlsSetupToggle() {
-        UITools::AlignedLabel(Icons::Lock + " Host Controls Setup");
-        Layout::MoveTo(CHECKBOXES_ALIGN_X * UI::GetScale());
+        LabelAdvancedSettings(Icons::Lock + " Host Controls Setup");
         RoomConfig.hostControl = UI::Checkbox("##bingohostcontrols", RoomConfig.hostControl);
         UI::SameLine();
         UITools::HelpTooltip("The room host assigns players to their respective teams. Players "
@@ -271,8 +274,7 @@ namespace UIRoomSettings {
     }
 
     void RerollsToggle() {
-        UITools::AlignedLabel(Icons::Kenney::ReloadInverse + " Map Rerolls");
-        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        LabelAdvancedSettings(Icons::Kenney::ReloadInverse + " Map Rerolls");
         MatchConfig.rerolls = UI::Checkbox("##bingorerolls", MatchConfig.rerolls);
         UI::SameLine();
         UITools::HelpTooltip(
@@ -280,8 +282,7 @@ namespace UIRoomSettings {
     }
 
     void CompetitvePatchToggle() {
-        UITools::AlignedLabel(Icons::Trophy + " Competitive Patch");
-        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        LabelAdvancedSettings(Icons::Trophy + " Competitive Patch");
         MatchConfig.competitvePatch = UI::Checkbox("##bingopatch", MatchConfig.competitvePatch) || MatchConfig.secret;
         UI::SameLine();
         UITools::HelpTooltip("Viewing records, leaderboards and splits will be disabled. Some blacklisted plugins will be disabled during the match.");
@@ -321,10 +322,9 @@ namespace UIRoomSettings {
     }
 
     void ItemExpiryEdit() {
-        UITools::AlignedLabel(Icons::HourglassEnd + " Items Expire");
-        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        LabelAdvancedSettings(Icons::HourglassEnd + " Items Expire");
 
-        UI::SetNextItemWidth(250);
+        UI::SetNextItemWidth(Math::Min(UI::GetContentRegionAvail().x, 200));
         if (UI::BeginCombo("##bingoitemexpire",
                            MatchConfig.itemsExpire == 0
                                ? "Never"
@@ -350,10 +350,9 @@ namespace UIRoomSettings {
     }
 
     void ItemTickrateEdit() {
-        UITools::AlignedLabel(Icons::Forward + " Item Spawns");
-        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        LabelAdvancedSettings(Icons::Forward + " Item Spawns");
 
-        UI::SetNextItemWidth(250);
+        UI::SetNextItemWidth(Math::Min(UI::GetContentRegionAvail().x, 200));
         if (UI::BeginCombo("##bingoitemtickrate",
                            MatchConfig.itemsTickMultiplier <= 1000 ? (MatchConfig.itemsTickMultiplier == 400 ? "Few" : "Balanced") : (MatchConfig.itemsTickMultiplier == 2000 ? "Many" : "True Frenzy"))) {
 
@@ -380,61 +379,80 @@ namespace UIRoomSettings {
     }
 
     void SettingsView() {
-        UITools::SectionHeader("Room Settings");
+        UITools::SectionHeader("Track Select");
+        PlaymodeSelect();
+        UI::NewLine();
+
+        UITools::SectionHeader("Game Settings");
+        GamemodeSelect();
         RoomNameInput();
         UI::SameLine();
         AccessToggle();
-        PlayerLimitToggle();
+        TargetMedalSelector();
+        if (MatchConfig.selection == MapMode::Tags) {
+            MapTagSelector();
+        }
+        if (MatchConfig.selection == MapMode::Mappack) {
+            MappackIdInput();
+        }
+
+        GridSizeSelector();
+        TimeLimitControl();
+        // PlayerLimitToggle();
+        NoBingoTimeControl();
+        if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0)
+            TotalTimeIndicator();
 
         UI::BeginDisabled(RoomConfig.hostControl);
-        RandomizeToggle();
+        // RandomizeToggle();
         UI::EndDisabled();
 
-        LateJoinToggle();
-        HostControlsSetupToggle();
 
         if (hasPlayerLimit(RoomConfig)) {
             PlayerLimitInput();
         }
 
         UI::NewLine();
-        UITools::SectionHeader("Game Settings");
-        GamemodeSelect();
-        MapModeSelector();
-        if (MatchConfig.selection == MapMode::Mappack) {
-            MappackIdInput();
+        UITools::SectionHeader("Advanced Settings");
+
+        if (UI::BeginTable("bingoadvsettings", 2)) {
+            UI::TableNextColumn();
+            UI::BeginDisabled(MatchConfig.selection == MapMode::Mappack);
+            DiscoveryToggle();
+            UI::EndDisabled();
+
+            UI::TableNextColumn();
+            RerollsToggle();
+            
+            UI::TableNextColumn();
+            UI::BeginDisabled(MatchConfig.secret);
+            CompetitvePatchToggle();
+            UI::EndDisabled();
+
+            UI::TableNextColumn();
+            LateJoinToggle();
+
+            UI::TableNextColumn();
+            HostControlsSetupToggle();
+
+            UI::TableNextColumn();
+            SecretToggle();
+
+            if (MatchConfig.mode == Gamemode::Frenzy) {
+                UI::TableNextColumn();
+                ItemExpiryEdit();
+
+                UI::TableNextColumn();
+                ItemTickrateEdit();
+            }
+
+            if (MatchConfig.timeLimit != 0) {
+                UI::TableNextColumn();
+                OvertimeToggle();
+            }
+
+            UI::EndTable();
         }
-        if (MatchConfig.selection == MapMode::Tags) {
-            MapTagSelector();
-        }
-        TargetMedalSelector();
-
-        GridSizeSelector();
-        TimeLimitControl();
-        NoBingoTimeControl();
-        if (MatchConfig.timeLimit != 0) {
-            OvertimeToggle();
-        }
-
-        UI::BeginDisabled(MatchConfig.selection == MapMode::Mappack);
-        DiscoveryToggle();
-        UI::EndDisabled();
-
-        RerollsToggle();
-        
-        UI::BeginDisabled(MatchConfig.secret);
-        CompetitvePatchToggle();
-        UI::EndDisabled();
-
-        SecretToggle();
-
-        if (MatchConfig.mode == Gamemode::Frenzy) {
-            ItemExpiryEdit();
-            ItemTickrateEdit();
-        }
-
-        if (MatchConfig.noBingoDuration != 0 && MatchConfig.timeLimit != 0)
-            TotalTimeIndicator();
 
         if (MatchConfig.mode == Gamemode::Frenzy) {
             EditItemSettings();
@@ -446,5 +464,54 @@ namespace UIRoomSettings {
         configs["room"] = RoomConfiguration::Serialize(RoomConfig);
         configs["game"] = MatchConfiguration::Serialize(MatchConfig);
         PersistantStorage::LastConfig = Json::Write(configs);
+    }
+
+    void PlaymodeSelect() {
+        Font::Set(Font::Style::Bold, Font::Size::Medium);
+        UI::PushStyleVar(UI::StyleVar::ChildBorderSize, 1.);
+
+        if (UI::BeginTable("bingoplaymodes", 2)) {
+            MapmodeSelectTablet("bingoplaymode1", "Random Maps", MatchConfig.selection == MapMode::RandomTMX, vec3(.25, .7, 1.), MapMode::RandomTMX);
+            MapmodeTooltip("All maps uploaded on Trackmania Exchange. There's no\ntelling what you will get!\n\n\\$aaaTrack Duration: < 02:00.000");
+
+            MapmodeSelectTablet("bingoplaymode2", "Map Tags", MatchConfig.selection == MapMode::Tags, vec3(1., .8, .4), MapMode::Tags);
+            MapmodeTooltip("Pick different map styles to create a unique map\npool for your game.\n\n\\$aaaTrack Duration: < 02:00.000");
+
+            MapmodeSelectTablet("bingoplaymode3", "Custom Mappack", MatchConfig.selection == MapMode::Mappack, vec3(1., .4, .4), MapMode::Mappack);
+            MapmodeTooltip("Play with your own maps.\n\n\\$aaaTrack Duration: Unrestricted");
+
+            UI::EndTable();
+        }
+
+        UI::PopStyleVar();
+        Font::Unset();
+    }
+
+    void MapmodeTooltip(const string&in tooltipText) {
+        Font::Set(Font::Style::Regular, Font::Size::Medium);
+        UI::SetItemTooltip(tooltipText);
+        Font::Unset();
+    }
+
+    void MapmodeSelectTablet(const string&in id, const string&in name, bool selected, vec3 color, MapMode mapmode) {
+        UI::TableNextColumn();
+
+        bool wasHoveredLastFrame = HoveredTrackSelect == id;
+        UI::PushStyleColor(UI::Col::ChildBg, vec4(color * (selected || wasHoveredLastFrame ? 1. : .7), .5));
+        UI::PushStyleColor(UI::Col::Border, vec4(1., 1., 1., selected ? .5 : 0.));
+        UI::BeginChild(id, vec2(0, 0), UI::ChildFlags::AutoResizeY | UI::ChildFlags::Border);
+        UITools::CenterText(name);
+        UI::EndChild();
+        UI::PopStyleColor(2);
+
+        if (UI::IsItemClicked()) {
+            MatchConfig.selection = mapmode;
+        }
+
+        if (UI::IsItemHovered()) {
+            HoveredTrackSelect = id;
+        } else if (wasHoveredLastFrame) {
+            HoveredTrackSelect = "";
+        }
     }
 }
