@@ -45,7 +45,7 @@ impl NetServer {
     /// Run the main server loop.
     pub async fn run(self) {
         let client_timeout = get_client_timeout_config();
-        let listener = self.socket.listen(256).expect("TCP listener not created");
+        let listener = self.socket.listen(2048).expect("TCP listener not created");
 
         loop {
             let (incoming, remote_addr) = listener
