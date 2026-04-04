@@ -113,21 +113,26 @@ namespace UIPlayers {
             }
 
             uint rowIndex = 0;
+            array<array<Player>> @teamMappings = PlayersToTeamIndices(players, teams);
             for (uint i = 0; i < MAX_DISPLAY_PLAYERS / teams.Length; i++) {
                 // Iterate forever until no players in any team remain
                 UI::TableNextRow();
                 uint finishedTeams = 0;
-                for (uint i = 0; i < teams.Length; i++) {
+                for (uint j = 0; j < teams.Length; j++) {
                     // Iterate through all teams
                     UI::TableNextColumn();
-                    Player @player = PlayerCell(players, teams[i], rowIndex, draggedPlayer);
-                    if (player is null) { // No more players in this team
+                    Player @player;
+                    if (@draggedPlayer != null && i == teamMappings[j].Length) {
+                        @player = draggedPlayer;
+                    } else if (i < teamMappings[j].Length) {
+                        @player = teamMappings[j][i];
+                    } else { // No more players in this team
                         finishedTeams += 1;
                         continue;
-                    } else {
-                        if (!(UITeams::IsJoinContext && player.IsSelf()))
-                            PlayerLabel(player, rowIndex, canDragPlayers);
                     }
+
+                    if (!(UITeams::IsJoinContext && player.IsSelf()))
+                        PlayerLabel(player, rowIndex, canDragPlayers);
                 }
 
                 if (finishedTeams == teams.Length)
@@ -164,24 +169,20 @@ namespace UIPlayers {
         }
     }
 
-    // Helper function to build the table
-    Player @PlayerCell(array<Player> @players, Team team, int index, Player @draggedPlayer = null) {
-        int count = 0;
+    array<array<Player>>@ PlayersToTeamIndices(array<Player> @players, array<Team> @teams) {
+        array<array<Player>> @indices = {};
+        array<int> @teamIds = {};
+        for (uint i = 0; i < teams.Length; i++) {
+            indices.InsertLast({});
+            teamIds.InsertLast(teams[i].id);
+        }
         for (uint i = 0; i < players.Length; i++) {
-            auto player = players[i];
-            bool isNotDraggedPlayer =
-                @draggedPlayer is null || player.profile.uid != draggedPlayer.profile.uid;
-
-            if (player.team == team && isNotDraggedPlayer) {
-                if (count == index)
-                    return player;
-                else
-                    count += 1;
+            int idx = teamIds.Find(players[i].team.id);
+            if (idx != -1) {
+                indices[idx].InsertLast(players[i]);
             }
         }
-        if (@draggedPlayer !is null && draggedPlayer.team.id == team.id && count == index) {
-            return draggedPlayer;
-        }
-        return null;
+
+        return indices;
     }
 }
