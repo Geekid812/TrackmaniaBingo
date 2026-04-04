@@ -1278,34 +1278,34 @@ impl LiveMatch {
 
             let team = tile.claimant.or(tile.leading_claim().map(|c| c.team_id));
 
-            let cell_id = tile.cell_id;
+            let cell_id = tile.cell_id as i32;
             if let Some(winning_team) = team {
                 let tile_up;
-                if cell_id as i32 - (self.config.grid_size as i32) < 0 {
-                    tile_up = cell_id as i32;
+                if cell_id - (self.config.grid_size) < 0 {
+                    tile_up = cell_id;
                 } else {
-                    tile_up = cell_id as i32 - self.config.grid_size as i32;
+                    tile_up = cell_id - self.config.grid_size;
                 }
 
                 let tile_left;
-                if (cell_id + 1) as i32 % self.config.grid_size as i32 == 1 {
-                    tile_left = cell_id as i32;
+                if (cell_id + 1) % self.config.grid_size == 1 {
+                    tile_left = cell_id;
                 } else {
-                    tile_left = cell_id as i32 - 1;
+                    tile_left = cell_id - 1;
                 }
 
                 let tile_right;
-                if (cell_id + 1) as i32 % self.config.grid_size as i32 == 0 {
-                    tile_right = cell_id as i32;
+                if (cell_id + 1) % self.config.grid_size == 0 {
+                    tile_right = cell_id;
                 } else {
-                    tile_right = cell_id as i32 + 1;
+                    tile_right = cell_id + 1;
                 }
 
                 let tile_down;
-                if cell_id as i32 + self.config.grid_size as i32 > self.cell_count() as i32 {
-                    tile_down = cell_id as i32;
+                if cell_id + self.config.grid_size > self.cell_count() as i32 {
+                    tile_down = cell_id;
                 } else {
-                    tile_down = cell_id as i32 + self.config.grid_size as i32;
+                    tile_down = cell_id + self.config.grid_size;
                 }
 
                 if tile_up >= 0 {
@@ -1325,7 +1325,7 @@ impl LiveMatch {
             }
 
             self.channel
-                .broadcast(&GameEvent::RallyResolved { cell_id, team });
+                .broadcast(&GameEvent::RallyResolved { cell_id: cell_id as usize, team });
             self.try_do_bingo_checks();
         }
     }

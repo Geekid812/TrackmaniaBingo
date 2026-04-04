@@ -55,10 +55,10 @@ fn get_load_future(
 
     match config.selection {
         MapMode::RandomTMX => Box::pin(cache_load_mxrandom(
-            config.grid_size * config.grid_size * number_of_grids,
+            (config.grid_size * config.grid_size * number_of_grids) as u32,
         )),
         MapMode::Tags => Box::pin(cache_load_tag(
-            config.grid_size * config.grid_size * number_of_grids,
+            (config.grid_size * config.grid_size * number_of_grids) as u32,
             config.map_tag.unwrap(),
         )),
         MapMode::Mappack => Box::pin(network_load_mappack(config.mappack_id.unwrap())),

@@ -107,7 +107,7 @@ namespace RoomConfiguration {
 class MatchConfiguration {
     GamePlatform game = GamePlatform::Next;
     Gamemode mode = Gamemode::Standard;
-    uint gridSize = 5;
+    int gridSize = 5;
     MapMode selection = MapMode::RandomTMX;
     Medal targetMedal = Medal::Author;
     bool discovery = false;

@@ -58,7 +58,7 @@ pub struct MatchConfiguration {
     #[derivative(Default(value = "Gamemode::Standard"))]
 	pub mode: Gamemode,
     #[derivative(Default(value = "5"))]
-	pub grid_size: u32,
+	pub grid_size: i32,
     #[derivative(Default(value = "MapMode::RandomTMX"))]
 	pub selection: MapMode,
     #[derivative(Default(value = "Medal::Author"))]
