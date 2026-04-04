@@ -1,6 +1,6 @@
 
 namespace UIPlayers {
-    const int MAX_DISPLAY_PLAYERS = 100;
+    const uint MAX_DISPLAY_PLAYERS = 100;
     void PlayerTable(array<Team> @teams,
                      array<Player> @players,
                      Team @ownTeam = null,
@@ -19,7 +19,7 @@ namespace UIPlayers {
             return;
 
         if (hideTeams) {
-            for (uint i = 0; i < Math::Min(players.Length, MAX_DISPLAY_PLAYERS); i++) {
+            for (uint i = 0; i < uint(Math::Min(players.Length, MAX_DISPLAY_PLAYERS)); i++) {
                 UI::TableNextColumn();
                 Player player = players[i];
                 PlayerLabel(player, i);
