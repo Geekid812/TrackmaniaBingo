@@ -24,7 +24,7 @@ max_match_duration = 1440   # max duration of a bingo match, in minutes
 start_countdown = 5000      # milliseconds counting down at match start
 
 [maps]
-max_author_millis = 180000  # in MXRandom mode, maximum author time for a map
+max_author_millis = 120000  # in MXRandom mode, maximum author time for a map
 
 [keys]
 openplanet = "KEY"                       # secret key for Openplanet authentication

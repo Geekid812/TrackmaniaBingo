@@ -45,10 +45,31 @@ namespace GameUpdates {
     void TickUpdates() {
         Playground::UpdateCurrentTileIndex();
         Poll::CleanupExpiredToasts();
-        if (Match.config.competitvePatch && !MapIsCompetitivePatched) {
-            // Records will only be visible once the game ends
-            MapIsCompetitivePatched =
-                Playground::SetMapLeaderboardVisible(Match.endState.HasEnded());
+        if (Match.config.competitvePatch) {
+            if (!MapIsCompetitivePatched) {
+                // Records will only be visible once the game ends
+                MapIsCompetitivePatched =
+                    Playground::SetMapLeaderboardVisible(Match.endState.HasEnded());
+            }
+            if (!Match.endState.HasEnded()) {
+                DisableCompetitiveBannedPlugins();
+            }
+        }
+    }
+
+    void DisableCompetitiveBannedPlugins() {
+        auto plugins = Meta::AllPlugins();
+        for (uint i = 0; i < plugins.Length; i++) {
+            auto plugin = plugins[i];
+            if (!plugin.Enabled) {
+                // skip disabled plugins
+                continue;
+            }
+            if (Config::CompetitiveBlockedPlugins.Find(plugin.ID) != -1) {
+                // plugin is blacklisted, disable it
+                logwarn("[GameUpdates::DisableCompetitiveBannedPlugins] Plugin \"" + plugin.ID + "\" is blacklisted in competitive matches, disabling.");
+                plugin.Enabled = false;
+            }
         }
     }
 

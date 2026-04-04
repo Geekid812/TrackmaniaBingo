@@ -26,10 +26,11 @@ namespace LiveMatch {
         }
 
         @match.tiles = {};
+        bool autoloadThumbnails = !match.IsLargeServer();
         for (uint i = 0; i < value["cells"].Length; i++) {
             auto cell_json = value["cells"][i];
             GameMap map = GameMap::Deserialize(cell_json["map"]);
-            GameTile cell = GameTile(map);
+            GameTile cell = GameTile(map, autoloadThumbnails);
             for (uint j = 0; j < cell_json["claims"].Length; j++) {
                 cell.attemptRanking.InsertLast(
                     MapClaim::Deserialize(cell_json["claims"][j], match));

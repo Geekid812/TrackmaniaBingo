@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::TimestampSeconds;
 
 use crate::{
@@ -18,6 +19,7 @@ pub struct RoomState {
     pub matchconfig: MatchConfiguration,
     pub join_code: String,
     pub teams: Vec<NetworkTeam>,
+    pub load_status: LoadState,
 }
 
 #[serde_with::serde_as]
@@ -55,4 +57,14 @@ pub struct RoomTeam {
     #[serde(flatten)]
     pub base: BaseTeam,
     pub members: Vec<PlayerData>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, PartialEq, Eq, Default)]
+#[repr(u8)]
+pub enum LoadState {
+    #[default]
+    Unloaded,
+    Loading,
+    Ok,
+    Warn,
 }

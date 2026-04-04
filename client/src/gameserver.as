@@ -13,6 +13,7 @@ class GameServer {
     int64 overtimeStartTime = 0;
     bool canReroll = false;
     EndState endState;
+    LoadStatus maploadStatus;
 
     // Local state
     int currentTileIndex = -1;
@@ -131,6 +132,10 @@ class GameServer {
         // Must have at least 2 teams to play
         return teams.Length > 2 && Match.isLocalPlayerHost;
     }
+
+    bool IsLargeServer() {
+        return players.Length >= 100;
+    }
 }
 
 class GameTile {
@@ -139,27 +144,30 @@ class GameTile {
     array<MapClaim> @attemptRanking = {};
     vec3 paintColor = vec3();
     Image @thumbnail;
-    Image @mapImage;
     TileItemState specialState = TileItemState::Empty;
     PlayerRef statePlayerTarget = PlayerRef();
     int64 stateTimeDeadline = 0;
     Team claimant = Team(-1, "", vec3());
+    bool autoloadThumbnail = true;
 
     GameTile() {}
 
-    GameTile(GameMap map) { SetMap(map); }
+    GameTile(GameMap map, bool autoloadThumbnail = true) {
+        this.autoloadThumbnail = autoloadThumbnail;
+        SetMap(map);
+    }
 
     void SetMap(GameMap @map) {
         @this.map = map;
+        if (autoloadThumbnail) LoadThumbnail();
+    }
+
+    void LoadThumbnail() {
         if (@map !is null) {
             @this.thumbnail =
                 Image("https://trackmania.exchange/maps/screenshot_normal/" + map.id);
-            @this.mapImage =
-                Image("https://trackmania.exchange/maps/" + map.id +
-                      "/image/1"); // Do not use /imagethumb route, Openplanet can't understand WEBP
         } else {
             @this.thumbnail = null;
-            @this.mapImage = null;
         }
     }
 

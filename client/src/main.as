@@ -13,7 +13,6 @@ const GamePlatform CURRENT_GAME = GamePlatform::Next;
 
 void Main() {
     // Initialization
-    Font::Init();
     UIHome::InitSubtitles();
     Powerups::InitPowerupTextures();
     Modefiles::EnsureAllModefilesCreated();
@@ -21,10 +20,15 @@ void Main() {
 
     // Load configuration settings
     PersistantStorage::LoadItems();
-    Config::FetchConfig();
+
+    try {
+        Config::FetchConfig();
+    } catch {
+        logwarn("[Main] FetchConfig raised an exception, unable to load configuration: " + getExceptionInfo());
+    }
 
     // Plugin was connected to a game when it was forcefully closed or game crashed
-    if (PersistantStorage::LastConnectedMatchId != "") {
+    if (PersistantStorage::LastConnectedMatchId != "" || PersistantStorage::LastConnectedRoomCode != "") {
         loginfo("[Main] Plugin was previously connected, attempting to reconnect.");
         Network::Connect();
 
@@ -70,8 +74,6 @@ void RenderMenu() {
 void Render() {
     if (!UI::IsGameUIVisible())
         return;
-    if (!Font::Initialized)
-        return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIGameRoom::Render();
@@ -102,8 +104,6 @@ void Render() {
 }
 
 void RenderInterface() {
-    if (!Font::Initialized)
-        return;
     Font::Set(Font::Style::Regular, Font::Size::Medium);
 
     UIMainWindow::Render();

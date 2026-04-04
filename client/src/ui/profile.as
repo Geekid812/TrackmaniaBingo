@@ -53,7 +53,7 @@ namespace UIProfile {
         ratingText += " \\$888±" + deviation;
         ratingText = "Score: " + ratingText;
         float padding = Layout::GetPadding(
-            UI::GetWindowSize().x, Draw::MeasureString(ratingText, Font::Current(), 16.).x, 0.95);
+            UI::GetWindowSize().x, UI::MeasureString(ratingText).x, 0.95);
         Layout::MoveTo(padding);
         UI::Text(ratingText);
     }
@@ -61,7 +61,7 @@ namespace UIProfile {
     void PlayerId(int uid) {
         string idText = "\\$888Player ID: " + uid;
         float padding = Layout::GetPadding(
-            UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
+            UI::GetWindowSize().x, UI::MeasureString(idText).x, 0.95);
         Layout::MoveTo(padding);
         UI::Text(idText);
     }
@@ -71,7 +71,7 @@ namespace UIProfile {
 
         string idText = "\\$888Joined " + MonthName(creationDate.Month) + " " + creationDate.Year;
         float padding = Layout::GetPadding(
-            UI::GetWindowSize().x, Draw::MeasureString(idText, Font::Current(), 16.).x, 0.95);
+            UI::GetWindowSize().x, UI::MeasureString(idText).x, 0.95);
         Layout::MoveTo(padding);
         UI::Text(idText);
     }

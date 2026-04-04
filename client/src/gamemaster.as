@@ -277,4 +277,11 @@ namespace Gamemaster {
         // Restore map leaderboards for competitive patch
         Playground::SetMapLeaderboardVisible(true);
     }
+
+    /**
+     * Return whether we are in a large game with a lot of players, enabling some optimizations.
+     */
+    bool IsLargeServer() {
+        return IsBingoActive() && Match.IsLargeServer();
+    }
 }

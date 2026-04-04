@@ -5,9 +5,10 @@ namespace Config {
     NewsItem[] News;
     FeaturedMappack[] FeaturedMappacks;
     uint64 LastUpdate;
+    array<string> CompetitiveBlockedPlugins = {};
 
     void FetchConfig() {
-        string url = "https://openplanet.dev/plugin/trackmaniabingo/config/main-" +
+        string url = "https://api.openplanet.dev/plugin/trackmaniabingo/config/main-" +
                      Meta::ExecutingPlugin().Version.SubStr(0, 1);
         logtrace("[Config::FetchConfig] Updating configuration: " + url);
         auto req = Net::HttpGet(url);
@@ -38,6 +39,15 @@ namespace Config {
             News.InsertLast(NewsItem(
                 jsonItem["title"], jsonItem["content"], linkKeys, linkRefs, jsonItem["ts"]));
         }
+
+        CompetitiveBlockedPlugins = {};
+        auto banned = json["competitiveBannedPlugins"];
+        for (uint i = 0; i < banned.Length; i++) {
+            CompetitiveBlockedPlugins.InsertLast(string(banned[i]));
+        }
+
+        PersistantStorage::PublicServerAddress = json["liveServerConfig"]["address"];
+        PersistantStorage::PublicServerPort = int(json["liveServerConfig"]["port"]);
 
         LastUpdate = Time::Now;
         logtrace("[Config::FetchConfig] Update was successful.");

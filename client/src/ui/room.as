@@ -132,7 +132,7 @@ namespace UIGameRoom {
         string[] roomInfo = MatchConfigInfo(Match.config);
         string combinedInfo = string::Join(roomInfo, " ");
         float infoPadding =
-            Layout::GetPadding(windowWidth, Draw::MeasureString(combinedInfo).x, 0.5);
+            Layout::GetPadding(windowWidth, UI::MeasureString(combinedInfo).x, 0.5);
         UI::SetCursorPos(vec2(infoPadding, UI::GetCursorPos().y));
 
         for (uint i = 0; i < roomInfo.Length; i++) {
@@ -159,6 +159,9 @@ namespace UIGameRoom {
 
             UI::SameLine();
         }
+        UI::SameLine();
+        MaploadStatusIndicator();
+
         UI::NewLine();
 
         UI::BeginChild("Bingo Room View", vec2(0, -24));
@@ -181,6 +184,10 @@ namespace UIGameRoom {
             }
 
             UI::Text("\\$ff8Number of teams: \\$z" + Match.teams.Length);
+            UI::SameLine();
+            UIColor::Gray();
+            UIPlayers::EditTeamsButton();
+            UIColor::Reset();
         } else if (Match.roomConfig.hostControl) {
             UI::Text("\\$ff8" + Icons::Lock + " \\$zThe host controls the team setup.");
         } else {
@@ -283,6 +290,37 @@ namespace UIGameRoom {
         UI::EndTooltip();
     }
 
+    void MaploadStatusIndicator() {
+        string bodyText;
+        string tooltipText;
+        switch (Match.maploadStatus) {
+            case LoadStatus::NotLoaded: {
+                bodyText = "\\$888" + Icons::Ban;
+                tooltipText = "No maps have been loaded yet.";
+                break;
+            }
+            case LoadStatus::Loading: {
+                bodyText = "\\$a88" + Icons::Refresh;
+                tooltipText = "Preparing new maps to play...";
+                break;
+            }
+            case LoadStatus::Ok: {
+                bodyText = Icons::CheckCircle;
+                tooltipText = "All maps are ready to be played.";
+                break;
+            }
+            case LoadStatus::Error: {
+                bodyText = "\\$f88" + Icons::MinusCircle;
+                tooltipText = "Not enough maps could be selected for play.";
+                break;
+            }
+        }
+
+        Layout::AlignText(bodyText, 0.99);
+        UI::Text(bodyText);
+        UI::SetItemTooltip(tooltipText);
+    }
+
     void Countdown() {
         vec2 windowSize = UI::GetWindowSize();
         int secondsRemaining = (Match.startTime - Time::Now) / 1000 + 1;
@@ -291,7 +329,7 @@ namespace UIGameRoom {
             countdownText = "Verifying all player records before starting...";
         }
 
-        vec2 textSize = Draw::MeasureString(countdownText, Font::Current());
+        vec2 textSize = UI::MeasureString(countdownText);
         float padding = Layout::GetPadding(windowSize.x, textSize.x, 1.0);
         vec4 textColor = UI::GetStyleColor(UI::Col::Text);
         float margin = 16;

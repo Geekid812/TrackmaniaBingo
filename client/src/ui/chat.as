@@ -15,7 +15,7 @@ namespace UIChat {
     string ChatInput;
     bool Visible = true;
 
-    bool ShouldDisplay() { return Visible && (@Match !is null || @Match !is null); }
+    bool ShouldDisplay() { return Visible && @Match !is null && !Match.IsLargeServer(); }
 
     void RemoveExpiredMessages() {
         uint i = 0;
@@ -42,7 +42,7 @@ namespace UIChat {
         UI::PushStyleColor(UI::Col::WindowBg, color);
 
         UI::SetNextWindowPos(CHAT_POSITION_OFFSET,
-                             Draw::GetHeight() - CHAT_POSITION_OFFSET - CHAT_INPUT_HEIGHT -
+                             Display::GetHeight() - CHAT_POSITION_OFFSET - CHAT_INPUT_HEIGHT -
                                  CHAT_WINDOW_MARGIN,
                              UI::Cond::FirstUseEver,
                              0.,

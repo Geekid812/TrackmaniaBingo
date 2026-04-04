@@ -19,7 +19,10 @@ pub fn handle(ctx: &mut ClientContext, args: DeleteTeam) -> Value {
         if !lock.get_player(ctx.profile.uid).unwrap().operator {
             return error("You are not a room operator.");
         }
-        lock.remove_team(args.id);
+
+        if let Err(e) = lock.remove_team(args.id) {
+            return error(&e.to_string());
+        }
     } else {
         return error("Player is not in a room.");
     }

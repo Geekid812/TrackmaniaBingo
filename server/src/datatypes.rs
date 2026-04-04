@@ -82,7 +82,7 @@ pub struct MatchConfiguration {
     pub competitve_patch: bool,
     pub mappack_id: Option<u32>,
     pub campaign_selection: Option<Vec<u32>>,
-    #[derivative(Default(value = "Some(1)"))]
+    #[derivative(Default(value = "Some(3)"))]
 	pub map_tag: Option<i32>,
     pub items: FrenzyItemSettings,
     #[derivative(Default(value = "600"))]

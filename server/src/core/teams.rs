@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use palette::{FromColor, Hsv, Srgb};
 use rand::Rng;
 use tracing::warn;
@@ -96,10 +97,9 @@ impl<T: Team> TeamsManager<T> {
         self.teams.get(index)
     }
 
-    pub fn remove_team(&mut self, id: TeamIdentifier) -> Option<T> {
+    pub fn remove_team(&mut self, id: TeamIdentifier) -> Result<T, anyhow::Error> {
         if self.teams.len() <= 1 {
-            warn!("attempted to delete when 1 or less team is left");
-            return None;
+            return Err(anyhow!("attempted to delete when 1 or less team is left"));
         }
 
         let searched = self
@@ -109,9 +109,10 @@ impl<T: Team> TeamsManager<T> {
             .find(|(_, t)| t.base().id == id)
             .map(|(i, t)| (i, t.to_owned()));
         if let Some((i, _)) = searched {
-            return Some(self.teams.remove(i));
+            return Ok(self.teams.remove(i));
         }
-        None
+
+        Err(anyhow!("team with id '{}' not found", id))
     }
 
     pub fn exists(&self, id: TeamIdentifier) -> bool {

@@ -22,6 +22,10 @@ namespace PersistantStorage {
 
     [Setting hidden] bool HasDismissedItemSpoiler = false;
 
+    [Setting hidden] string PublicServerAddress = "";
+
+    [Setting hidden] int PublicServerPort = 5500;
+
     array<Team@> GetDefaultTeams() {
         array<Team@> teams;
 
@@ -117,7 +121,7 @@ namespace PersistantStorage {
             PersistantStorage::LastConnectedRoomCode = "";
         }
 
-        if (@Match !is null) {
+        if (@Match !is null && Match.uid != "") {
             PersistantStorage::LastConnectedMatchId = Match.uid;
 
             auto self = Match.GetSelf();

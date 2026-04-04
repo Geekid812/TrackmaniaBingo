@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use palette::serde::as_array;
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +11,12 @@ use super::room::RoomTeam;
 
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Debug, Hash, Deserialize)]
 pub struct TeamIdentifier(usize);
+
+impl Display for TeamIdentifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug, Eq)]
 pub struct BaseTeam {
