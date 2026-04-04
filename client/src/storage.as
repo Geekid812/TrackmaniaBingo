@@ -22,6 +22,10 @@ namespace PersistantStorage {
 
     [Setting hidden] bool HasDismissedItemSpoiler = false;
 
+    [Setting hidden] string PublicServerAddress = "";
+
+    [Setting hidden] int PublicServerPort = 5500;
+
     array<Team@> GetDefaultTeams() {
         array<Team@> teams;
 
