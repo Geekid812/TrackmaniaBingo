@@ -194,9 +194,9 @@ namespace UIRoomSettings {
     }
 
     void MapTagSelector() {
-        // FIX: mapTag should not be less than 0, as it is invalid. Correct it if it was loaded from an
+        // FIX: mapTag should not be less than 1, as it is invalid. Correct it if it was loaded from an
         // invalid LastConfig
-        MatchConfig.mapTag = Math::Max(MatchConfig.mapTag, 0);
+        MatchConfig.mapTag = Math::Max(MatchConfig.mapTag, 1);
 
         UITools::AlignedLabel(Icons::Tag + "  Track Style");
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
@@ -207,10 +207,7 @@ namespace UIRoomSettings {
             UI::EndDisabled();
             return;
         }
-        if (UI::BeginCombo("##bingomaptag", MatchConfig.mapTag == 0 ? "\\$ffa-- Pick & Ban --" : MXTags::GetTag(MatchConfig.mapTag).name)) {
-            if (UI::Selectable("\\$ffa-- Pick & Ban --", MatchConfig.mapTag == 0)) {
-                MatchConfig.mapTag = 0;
-            }
+        if (UI::BeginCombo("##bingomaptag", MXTags::GetTag(MatchConfig.mapTag).name)) {
             for (uint i = 0; i < MXTags::Tags.Length; i++) {
                 MXTags::Tag tag = MXTags::Tags[i];
                 if (UI::Selectable(tag.name, tag.id == MatchConfig.mapTag)) {
@@ -464,15 +461,12 @@ namespace UIRoomSettings {
 
         UI::BeginTable("bingoplaymodes", 2);
         MapmodeSelectTablet("bingoplaymode1", "Random Maps", MatchConfig.selection == MapMode::RandomTMX, vec3(.25, .7, 1.), MapMode::RandomTMX);
-        MapmodeTooltip("All maps uploaded on Trackmania Exchange. There's no\ntelling what you will get!\n\n\\$aaaTrack Duration: 00:10.000 - 01:00.000");
+        MapmodeTooltip("All maps uploaded on Trackmania Exchange. There's no\ntelling what you will get!\n\n\\$aaaTrack Duration: < 02:00.000");
 
-        MapmodeSelectTablet("bingoplaymode2", "Discovery", MatchConfig.selection == MapMode::Campaign, vec3(.05, .71, .36), MapMode::Campaign);
-        MapmodeTooltip("All maps released in the past 12 months that are not\nknown by anyone playing in your game.\n\n\\$aaaTrack Duration: 00:25.000 - 00:45.000");
+        MapmodeSelectTablet("bingoplaymode2", "Map Tags", MatchConfig.selection == MapMode::Tags, vec3(1., .8, .4), MapMode::Tags);
+        MapmodeTooltip("Pick different map styles to create a unique map\npool for your game.\n\n\\$aaaTrack Duration: < 02:00.000");
 
-        MapmodeSelectTablet("bingoplaymode3", "Map Drafts", MatchConfig.selection == MapMode::Tags, vec3(1., .8, .4), MapMode::Tags);
-        MapmodeTooltip("Pick different map styles to create a unique map\npool for your game.\n\n\\$aaaTrack Duration: 00:10.000 - 01:00.000");
-
-        MapmodeSelectTablet("bingoplaymode4", "Custom Mappack", MatchConfig.selection == MapMode::Mappack, vec3(1., .4, .4), MapMode::Mappack);
+        MapmodeSelectTablet("bingoplaymode3", "Custom Mappack", MatchConfig.selection == MapMode::Mappack, vec3(1., .4, .4), MapMode::Mappack);
         MapmodeTooltip("Play with your own maps.\n\n\\$aaaTrack Duration: Unrestricted");
 
         UI::EndTable();
