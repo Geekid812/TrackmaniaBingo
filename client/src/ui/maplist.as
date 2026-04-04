@@ -105,6 +105,7 @@ namespace UIMapList {
             auto startPos = UI::GetCursorPos() + UI::GetWindowPos() -
                             vec2(8 * uiScale, 8 * uiScale) - vec2(0, UI::GetScrollY());
 
+            UI::BeginGroup();
             vec2 thumbnailSize = vec2(160 * uiScale, 116 * uiScale);
             if (cell.thumbnail !is null && cell.thumbnail.Data !is null) {
                 UI::Image(cell.thumbnail.Data, thumbnailSize);
@@ -123,6 +124,7 @@ namespace UIMapList {
             UI::Text(mapName);
 
             UI::EndChild();
+            UI::EndGroup();
             if (mapHovered && cell.map !is null) {
                 if (cellId != -1 && gridSize != -1) {
                     ShowTileTooltip(cell, (cellId % gridSize), (cellId / gridSize));
