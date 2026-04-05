@@ -5,7 +5,7 @@ use std::sync::atomic::{self, AtomicU64};
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::select;
-use tokio::sync::mpsc::unbounded_channel;
+use tokio::sync::mpsc::channel;
 use tokio::time::{timeout_at, Instant};
 use tracing::{debug, error, warn};
 
@@ -34,7 +34,8 @@ pub struct NetClient {
 impl NetClient {
     /// Create a new `NetClient`.
     pub fn new(stream: TcpStream, timeout: Duration) -> Self {
-        let (tx, rx): (TransportWriteQueue, TransportReadQueue) = unbounded_channel();
+        let (tx, rx): (TransportWriteQueue, TransportReadQueue) =
+            channel(crate::transport::CLIENT_CHANNEL_CAPACITY);
         Self {
             cid: CLIENT_ID.fetch_add(1, atomic::Ordering::Relaxed),
             protocol: NativeClientProtocol::new(stream),
@@ -84,6 +85,16 @@ impl NetClient {
         debug!(cid = self.cid(), "close event was dropped");
     }
 
+    async fn flush_outgoing(&mut self) -> bool {
+        while let Ok(message) = self.receiver.try_recv() {
+            if let Err(err) = self.protocol.write(message).await {
+                error!(cid = self.cid, "socket write error during flush: {}", err);
+                return false;
+            }
+        }
+        true
+    }
+
     /// Run the main loop of the client.
     pub async fn run(mut self) {
         let mut timeout_deadline = Instant::now() + self.timeout;
@@ -98,6 +109,9 @@ impl NetClient {
                         Some(result) => match result {
                             Ok(message) => {
                                 self.handle_message(message).await;
+                                if !self.flush_outgoing().await {
+                                    break;
+                                }
                                 timeout_deadline = Instant::now() + self.timeout;
                             },
                             Err(err) => {
@@ -175,8 +189,7 @@ async fn mainloop_message_received(client: &mut NetClient, message: BytesMut) ->
                 },
             };
 
-            // send a response. if it's an error, break the connection
-            if ctx.writer.send(&response).is_err() {
+            if ctx.writer.send_reliable(&response).await.is_err() {
                 return false;
             }
         }

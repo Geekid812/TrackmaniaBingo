@@ -18,6 +18,13 @@ pub async fn start_database(url: &str) {
         .connect(url)
         .await
         .expect("database should be started");
+
+    sqlx::query("PRAGMA journal_mode=WAL").execute(&pool).await.ok();
+    sqlx::query("PRAGMA synchronous=NORMAL").execute(&pool).await.ok();
+    sqlx::query("PRAGMA cache_size=-65536").execute(&pool).await.ok();
+    sqlx::query("PRAGMA temp_store=MEMORY").execute(&pool).await.ok();
+    sqlx::query("PRAGMA mmap_size=33554432").execute(&pool).await.ok();
+
     DB_POOL.get_or_init(|| pool);
 }
 
