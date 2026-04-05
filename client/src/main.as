@@ -16,7 +16,10 @@ void Main() {
     UIHome::InitSubtitles();
     Powerups::InitPowerupTextures();
     Modefiles::EnsureAllModefilesCreated();
-    GameUpdates::CheckUnstableConfigurations();
+    if(Settings::UnstableConfigWarnings)
+    {
+        GameUpdates::CheckUnstableConfigurations();
+    }
 
     // Load configuration settings
     PersistantStorage::LoadItems();
