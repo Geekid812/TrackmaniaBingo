@@ -16,8 +16,7 @@ void Main() {
     UIHome::InitSubtitles();
     Powerups::InitPowerupTextures();
     Modefiles::EnsureAllModefilesCreated();
-    if(Settings::UnstableConfigWarnings)
-    {
+    if (Settings::UnstableConfigWarnings) {
         GameUpdates::CheckUnstableConfigurations();
     }
 
