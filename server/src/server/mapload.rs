@@ -2,6 +2,7 @@ use std::pin::Pin;
 use std::time::Duration;
 
 use futures::executor::block_on;
+use futures::stream::{self, StreamExt};
 use futures::Future;
 use once_cell::sync::Lazy;
 use sqlx::FromRow;
@@ -166,32 +167,41 @@ pub async fn maps_get_world_record(maps: Vec<GameMap>) -> MaploadResult {
 }
 
 pub async fn maps_verify_discovery(maps: Vec<GameMap>, account_ids: Vec<String>) -> MaploadResult {
-    let mut valid_maps = Vec::new();
-    for map in maps {
-        let valid_map = match map {
-            GameMap::TMX(ref mxmap) => match mxmap.webservices_id {
-                Some(ref webservices_id) => {
-                    sleep(Duration::from_millis(200)).await;
-                    match integrations::NADEOSERVICES_CLIENT
-                        .wait()
-                        .core_get_map_records(webservices_id, &account_ids)
-                        .await
-                    {
-                        Ok(records) => records.first().is_none(),
-                        Err(e) => {
-                            error!("{}", e);
-                            false
+    const CONCURRENT_CHECKS: usize = 5;
+
+    let account_ids = &account_ids;
+    let results: Vec<(GameMap, bool)> = stream::iter(maps)
+        .map(|map| async move {
+            let valid = match map {
+                GameMap::TMX(ref mxmap) => match mxmap.webservices_id {
+                    Some(ref webservices_id) => {
+                        match integrations::NADEOSERVICES_CLIENT
+                            .wait()
+                            .core_get_map_records(webservices_id, account_ids)
+                            .await
+                        {
+                            Ok(records) => records.first().is_none(),
+                            Err(e) => {
+                                error!("{}", e);
+                                false
+                            }
                         }
                     }
-                }
-                None => false,
-            },
-            _ => false,
-        };
+                    None => false,
+                },
+                _ => false,
+            };
+            (map, valid)
+        })
+        .buffer_unordered(CONCURRENT_CHECKS)
+        .collect()
+        .await;
 
-        if valid_map {
-            valid_maps.push(map);
-        }
-    }
+    let valid_maps = results
+        .into_iter()
+        .filter(|(_, valid)| *valid)
+        .map(|(map, _)| map)
+        .collect();
+
     Ok(valid_maps)
 }

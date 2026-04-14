@@ -209,19 +209,29 @@ impl NadeoWebserivcesClient {
         map_id: &str,
         account_ids: &Vec<String>,
     ) -> Result<Vec<WebserivcesMapRecord>, WebservicesError> {
-        let request = self
-            .client
-            .get(CORE_ENDPOINT_MAP_RECORDS_BY_ACCOUNT)
-            .query(&[("accountIdList", account_ids.join(","))])
-            .query(&[("mapId", map_id)]);
-        let response: Vec<WebserivcesMapRecord> = self
-            .send_request(request, NadeoAudience::Core)
-            .await?
-            .json()
-            .await
-            .map_err(WebservicesError::Reqwest)?;
+        const CHUNK_SIZE: usize = 100;
+        let mut all_records = Vec::new();
 
-        Ok(response)
+        for chunk in account_ids.chunks(CHUNK_SIZE) {
+            let request = self
+                .client
+                .get(CORE_ENDPOINT_MAP_RECORDS_BY_ACCOUNT)
+                .query(&[("accountIdList", chunk.join(","))])
+                .query(&[("mapId", map_id)]);
+            let response: Vec<WebserivcesMapRecord> = self
+                .send_request(request, NadeoAudience::Core)
+                .await?
+                .json()
+                .await
+                .map_err(WebservicesError::Reqwest)?;
+
+            if !response.is_empty() {
+                all_records.extend(response);
+                break;
+            }
+        }
+
+        Ok(all_records)
     }
 
     pub async fn live_get_map_leaderboard(
