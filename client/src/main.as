@@ -125,3 +125,12 @@ void Update(float dt) {
     if (Gamemaster::IsBingoPlaying())
         GameUpdates::TickGameplay();
 }
+
+// if the plugin is uninstalled or disabled, remove the plugin's influence on the game and Openplanet
+void OnDisabled() {
+    Gamemaster::ResetInfluence();
+}
+void OnDestroyed() {
+    Gamemaster::ResetInfluence();
+}
+// since we check every frame for records / plugins, we don't need to do anything in OnEnabled
