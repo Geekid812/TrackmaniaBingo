@@ -9,6 +9,7 @@ environment = "dev"     # or "live"
 tcp_port = 5000             # local port for TCP server
 http_port = 8080            # local port for HTTP server
 timeout = 300               # delay in seconds until TCP connection is closed when idle
+backlog = 512               # TCP listen backlog (pending connection queue size)
 
 [client]
 required_version = "5.0"    # minimum version of the plugin client

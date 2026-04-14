@@ -3,6 +3,7 @@ name = "bingohost"
 description = "Server application for Trackmania Bingo."
 version = "1.6.2"
 edition = "2021"
+default-run = "bingohost"
 
 [dependencies]
 # Serialization framework
@@ -77,3 +78,9 @@ pollster = "0.3.0"
 
 # Utility for creating Derive implementations in generated code
 derivative = "2.2.0"
+
+# CLI argument parsing (used by bench binary)
+clap = { version = "4", features = ["derive"] }
+
+# C library bindings (used by bench for reliable process cleanup)
+libc = "0.2"

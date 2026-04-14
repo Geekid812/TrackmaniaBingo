@@ -1,0 +1,26 @@
+# Benchmark configuration for the Trackmania Bingo server.
+# Use --config data/config.bench.toml when starting the server, or copy to config.toml.
+#
+# The run_submission scenario requires a populated SQLite map cache
+# (maps table) for map loading to succeed.
+
+environment = "dev"
+
+[network]
+tcp_port = 5000
+http_port = 8080
+timeout = 60
+backlog = 8096
+
+[client]
+required_version = "0.0"
+
+[behaviour]
+never_close = true
+max_teams = 10
+skip_checks = true
+start_countdown = 0
+
+[keys]
+openplanet = "KEY"
+webservices = "username:password"
