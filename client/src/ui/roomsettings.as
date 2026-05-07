@@ -7,6 +7,8 @@ namespace UIRoomSettings {
     const float CHECKBOXES_ALIGN_X = 200;
     const float GAME_SETTINGS_ALIGN_X = 160;
 
+    string g_tagSearch = "";
+
     FeaturedMappack @SelectedPack;
     int State;
     string HoveredTrackSelect;
@@ -195,6 +197,78 @@ namespace UIRoomSettings {
         Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
         UI::SetNextItemWidth(150);
         MatchConfig.mappackId = UI::InputInt("##bingomappack", MatchConfig.mappackId, 0);
+    }
+
+    void DrawTagsMultiselect(const string &in comboId, int[]@ tags) {
+        if (!MXTags::TagsLoaded()) {
+            UI::BeginDisabled();
+            UI::InputText("##"+comboId, "...");
+            UI::EndDisabled();
+            return;
+        }
+        string label;
+        if (tags.Length == 0) {
+            label = "No tags selected";
+        } else if (tags.Length <= 3) {
+            label = MXTags::AllTagsLookup[tags[0]];
+            for (uint i = 1; i < tags.Length; i++) {
+                label += ", " + MXTags::AllTagsLookup[tags[i]];
+            }
+        } else {
+            label = tags.Length + " tags selected";
+        }
+        if (UI::BeginCombo("##"+comboId, label)) {
+            if (UI::IsWindowAppearing()) {
+                g_tagSearch = "";
+            }
+
+            UI::SetNextItemWidth(200);
+            g_tagSearch = UI::InputText("##"+comboId+"-tagsearch", g_tagSearch);
+
+            UI::Separator();
+
+            for (uint i = 0; i < MXTags::AllTagsSorted.Length; i++) {
+                const auto tag = MXTags::AllTagsSorted[i];
+                if (tag.name == "") continue;
+
+                if (!tag.name.ToLower().Contains(g_tagSearch.ToLower())) {
+                    continue;
+                }
+
+                int idx = tags.Find(tag.id);
+                if (UI::Checkbox(tag.name + "##" + comboId, idx != -1)) {
+                    if (idx == -1) {
+                        tags.InsertLast(tag.id);
+                    }
+                } else {
+                    if (idx != -1) {
+                        tags.RemoveAt(idx);
+                    }
+                }
+            }
+            UI::EndCombo();
+        }
+        UI::BeginDisabled(tags.Length == 0);
+        UI::SameLine();
+#if TMNEXT
+        UI::SetCursorPos(UI::GetCursorPos() - vec2(0, 4));
+#endif
+        if (UI::Button("x##" + comboId)) {
+            tags.RemoveRange(0, tags.Length);
+        }
+        UI::EndDisabled();
+    }
+
+    void MappackTagsInput() {
+        UITools::AlignedLabel(Icons::Exchange + "  Included TMX Tags");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        UI::SetNextItemWidth(250);
+        DrawTagsMultiselect("mappackincludedtags", MatchConfig.includeTags);
+
+        UITools::AlignedLabel(Icons::Exchange + "  Excluded TMX Tags");
+        Layout::MoveTo(GAME_SETTINGS_ALIGN_X * UI::GetScale());
+        UI::SetNextItemWidth(250);
+        DrawTagsMultiselect("mappackexcludedtags", MatchConfig.excludeTags);
     }
 
     void MapTagSelector() {
@@ -394,6 +468,7 @@ namespace UIRoomSettings {
         }
         if (MatchConfig.selection == MapMode::Mappack) {
             MappackIdInput();
+            MappackTagsInput();
         }
 
         GridSizeSelector();

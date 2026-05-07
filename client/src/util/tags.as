@@ -19,11 +19,16 @@ namespace MXTags {
     array<Tag @>
         Tags = {};
 
+    array<string> AllTagsLookup;
+    array<Tag@> AllTagsSorted;
+
     bool TagsRequested;
 
     bool TagsLoaded() {
-        if (!TagsRequested)
+        if (!TagsRequested) {
+            TagsRequested = true;
             startnew(LoadTags);
+        }
         return Tags.Length > 0;
     }
 
@@ -39,16 +44,31 @@ namespace MXTags {
 
         auto data = Json::Parse(req.String());
         Tags = {};
+        AllTagsLookup = {};
+        AllTagsSorted = {};
+        AllTagsLookup.Resize(data.Length + 1);
         for (uint i = 0; i < data.Length; i++) {
             string name = data[i]["Name"];
             int id = data[i]["ID"];
+
+            auto tag = Tag(id, name);
+            AllTagsSorted.InsertLast(tag);
+            AllTagsLookup[id] = name;
+
             if (id > TAG_MAX_ID || BANNED_TAGS.Find(name) != -1) {
                 continue;
             }
 
-            Tags.InsertLast(Tag(id, name));
+            Tags.InsertLast(tag);
         }
+
+        AllTagsSorted.Sort(_compareTmxTags);
+
         logtrace("[MXTags::LoadTags] Loaded " + Tags.Length + " tags.");
+    }
+
+    bool _compareTmxTags(const Tag@ const &in a, const Tag@ const &in b) {
+        return a.name < b.name;
     }
 
     Tag GetTag(int id) {

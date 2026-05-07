@@ -61,7 +61,13 @@ fn get_load_future(
             config.grid_size * config.grid_size * number_of_grids,
             config.map_tag.unwrap(),
         )),
-        MapMode::Mappack => Box::pin(network_load_mappack(config.mappack_id.unwrap())),
+        MapMode::Mappack => Box::pin(
+            network_load_mappack(
+                config.mappack_id.unwrap(),
+                config.include_tags.clone().unwrap_or(vec![]),
+                config.exclude_tags.clone().unwrap_or(vec![]),
+            )
+        ),
         #[allow(unreachable_patterns)]
         _ => unimplemented!(),
     }
@@ -118,9 +124,13 @@ async fn cache_load_tag(count: u32, tag: i32) -> MaploadResult {
     .map_err(anyhow::Error::from)
 }
 
-async fn network_load_mappack(mappack_id: u32) -> MaploadResult {
+async fn network_load_mappack(
+    mappack_id: u32,
+    include_tags: Vec<i32>,
+    exclude_tags: Vec<i32>,
+) -> MaploadResult {
     MAPPACK_LOADER
-        .get_mappack_tracks(&mappack_id.to_string())
+        .get_mappack_tracks(&mappack_id.to_string(), include_tags.as_slice(), exclude_tags.as_slice())
         .await
 }
 

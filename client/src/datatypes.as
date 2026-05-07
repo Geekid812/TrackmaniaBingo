@@ -119,6 +119,8 @@ class MatchConfiguration {
     bool rerolls = true;
     bool competitvePatch;
     uint mappackId;
+    array<int> includeTags;
+    array<int> excludeTags;
     array<uint> campaignSelection;
     int mapTag = 3;
     FrenzyItemSettings items;
@@ -152,6 +154,8 @@ namespace MatchConfiguration {
         value["items_tick_multiplier"] = cls.itemsTickMultiplier;
         value["rally_length"] = cls.rallyLength;
         value["jail_length"] = cls.jailLength;
+        value["include_tags"] = cls.includeTags;
+        value["exclude_tags"] = cls.excludeTags;
 
         return value;
     }
@@ -174,6 +178,12 @@ namespace MatchConfiguration {
         if (value["mappack_id"].GetType() != Json::Type::Null) cls.mappackId = value["mappack_id"];
         if (value["campaign_selection"].GetType() != Json::Type::Null) for (uint i = 0; i < value["campaign_selection"].Length; i++) {
             cls.campaignSelection.InsertLast(value["campaign_selection"][i]);
+        }
+        if (value["include_tags"].GetType() != Json::Type::Null) for (uint i = 0; i < value["include_tags"].Length; i++) {
+            cls.includeTags.InsertLast(value["include_tags"][i]);
+        }
+        if (value["exclude_tags"].GetType() != Json::Type::Null) for (uint i = 0; i < value["exclude_tags"].Length; i++) {
+            cls.includeTags.InsertLast(value["exclude_tags"][i]);
         }
         if (value["map_tag"].GetType() != Json::Type::Null) cls.mapTag = value["map_tag"];
         cls.items = FrenzyItemSettings::Deserialize(value["items"]);
