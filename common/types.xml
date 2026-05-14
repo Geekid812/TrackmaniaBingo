@@ -54,6 +54,8 @@
         <m name="rerolls" type="bool" default="true" />
         <m name="competitve_patch" type="bool" />
         <m name="mappack_id" type="uint" optional="true" />
+        <m name="include_tags" type="list[int]" optional="true" />
+        <m name="exclude_tags" type="list[int]" optional="true" />
         <m name="campaign_selection" type="list[uint]" optional="true" />
         <m name="map_tag" type="int" optional="true" default="3" />
         <m name="items" type="FrenzyItemSettings" />

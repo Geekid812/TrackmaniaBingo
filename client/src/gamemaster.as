@@ -254,7 +254,7 @@ namespace Gamemaster {
         ClearMatchId();
         @Match = null;
         @Jail = null;
-        Playground::SetMapLeaderboardVisible(true);
+        ResetInfluence();
         UIChat::ClearHistory();
         UIPoll::ClearAllPollsAndNotifications();
     }
@@ -274,8 +274,8 @@ namespace Gamemaster {
         }
         // Disable jail
         @Jail = null;
-        // Restore map leaderboards for competitive patch
-        Playground::SetMapLeaderboardVisible(true);
+        // Restore map leaderboards and disabled plugins for competitive patch
+        ResetInfluence();
     }
 
     /**
@@ -283,5 +283,15 @@ namespace Gamemaster {
      */
     bool IsLargeServer() {
         return IsBingoActive() && Match.IsLargeServer();
+    }
+
+    /**
+     * Clears the plugin's effects on Trackmania, and other plugins
+     */
+    void ResetInfluence() {
+        Playground::SetMapLeaderboardVisible(true);
+        GameUpdates::RestoreCompetitiveBannedPlugins();
+        GameUpdates::MapIsCompetitivePatched = false;
+        GameUpdates::ManialinkInitialized = false;
     }
 }

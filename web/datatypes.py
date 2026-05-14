@@ -100,6 +100,8 @@ class MatchConfiguration(BaseModel):
     rerolls: bool = True
     competitve_patch: bool
     mappack_id: int | None
+    include_tags: list[int] | None
+    exclude_tags: list[int] | None
     campaign_selection: list[int] | None
     map_tag: int | None = 3
     items: FrenzyItemSettings
