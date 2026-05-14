@@ -3,6 +3,8 @@ namespace GameUpdates {
     int64 LastSummonTimestamp;
     bool MapIsCompetitivePatched;
     bool ManialinkInitialized;
+    // plugins which were disabled during the bingo, to restore once it finishes
+    array<string> disabledPlugins = {};
 
     // Run checks and display a warning when using an unsupported config.
     void CheckUnstableConfigurations() {
@@ -69,8 +71,28 @@ namespace GameUpdates {
                 // plugin is blacklisted, disable it
                 logwarn("[GameUpdates::DisableCompetitiveBannedPlugins] Plugin \"" + plugin.ID + "\" is blacklisted in competitive matches, disabling.");
                 plugin.Enabled = false;
+                if (disabledPlugins.Find(plugin.ID) == -1) {
+                    disabledPlugins.InsertLast(plugin.ID);
+                }
             }
         }
+    }
+    void RestoreCompetitiveBannedPlugins() {
+        if (disabledPlugins.Length == 0) {return;}
+        auto plugins = Meta::AllPlugins();
+        for (uint i = 0; i < plugins.Length; i++) {
+            auto plugin = plugins[i];
+            if (plugin.Enabled) {
+                // skip enabled plugins
+                continue;
+            }
+            if (disabledPlugins.Find(plugin.ID) != -1) {
+                // plugin has been disabled by bingo, so re-enable it
+                trace("[GameUpdates::RestoreCompetitiveBannedPlugins] Plugin \"" + plugin.ID + "\" is being re-enabled.");
+                plugin.Enabled = true;
+            }
+        }
+        disabledPlugins = {};
     }
 
     void SummonToJail() {

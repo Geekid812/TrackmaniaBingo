@@ -20,7 +20,7 @@ namespace Playground {
         return app.RootMap;
     }
 
-    /* Set the visibility of the records leaderbaord manialink module. */
+    /* Set the visibility of the records leaderboard manialink module. */
     bool SetMapLeaderboardVisible(bool visible) {
         auto network = GetApp().Network;
         if (network is null)
