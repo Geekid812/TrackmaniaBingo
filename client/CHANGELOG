@@ -1,6 +1,7 @@
-## Update 6.7
+## Update 6.8
 
-- New room settings UI layout, seperated into basic and advanced settings.
-- Added some optimizations for large rooms (over 100 players), disabling the in-game chat and loading of map thumbnails.
-- Maximum Author Time for random maps reduced to 2 minutes (previously 3 minutes).
-- Various crash fixes and optimizations.
+- Mappacks can now have included/excluded tags to search for when preparing maps (Thanks teggot for contributing this!)
+- Plugins disabled by Competitive Patch will now be reenabled after the game ends (Thanks to ArEyeses for fixing this issue)
+- Configuration warnings can now be properly disabled (contributed by henrio6)
+- Fixed Rally powerup edge wrapping in some edge cases (contributed by Simber)
+- Fixed match state not being reset upon creating a new room
