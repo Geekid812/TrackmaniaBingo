@@ -79,16 +79,18 @@ impl MappackLoader {
     pub async fn get_mappack_tracks(
         &self,
         mappack_id: &str,
+        include_tags: &[i32],
+        exclude_tags: &[i32],
     ) -> Result<Vec<GameMap>, anyhow::Error> {
         let mut mappack_tracks = Vec::new();
 
         let (mut page_results, mut pagination_next_id) =
-            self.paged_mappack_request_tracks(mappack_id, None).await?;
+            self.paged_mappack_request_tracks(mappack_id, None, include_tags, exclude_tags).await?;
         mappack_tracks.append(&mut page_results);
 
         while pagination_next_id.is_some() {
             (page_results, pagination_next_id) = self
-                .paged_mappack_request_tracks(mappack_id, pagination_next_id)
+                .paged_mappack_request_tracks(mappack_id, pagination_next_id, include_tags, exclude_tags)
                 .await?;
             mappack_tracks.append(&mut page_results);
         }
@@ -100,6 +102,8 @@ impl MappackLoader {
         &self,
         mappack_id: &str,
         after_id: Option<i32>,
+        include_tags: &[i32],
+        exclude_tags: &[i32],
     ) -> Result<(Vec<GameMap>, Option<i32>), anyhow::Error> {
         let query_extra = after_id
             .map(|map_uid| format!("&after={}", map_uid))
@@ -119,9 +123,26 @@ impl MappackLoader {
             .await?;
 
         let more = response.more;
+        let next_id = if more {
+            response.results.last().map(|map| map.map_id)
+        } else {
+            None
+        };
+
         let maps: Vec<MapRecord> = response
             .results
             .into_iter()
+            .filter(|mp| {
+                if !exclude_tags.is_empty() {
+                    if mp.tags.iter().any(|t| exclude_tags.contains(&t.tag_id)) {
+                        return false;
+                    }
+                }
+                if !include_tags.is_empty() {
+                    return mp.tags.iter().any(|t| include_tags.contains(&t.tag_id));
+                }
+                return true;
+            })
             .map(MapRecord::try_from)
             .filter(|m| {
                 if let Err(e) = m {
@@ -132,11 +153,6 @@ impl MappackLoader {
             .map(Result::unwrap) // Safety: Err has been filtered out above
             .collect();
 
-        let next_id = if more {
-            maps.last().map(|map| map.tmxid)
-        } else {
-            None
-        };
         Ok((maps.into_iter().map(GameMap::TMX).collect(), next_id))
     }
 }
