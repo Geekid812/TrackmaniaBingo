@@ -347,6 +347,7 @@ namespace Network {
         }
 
         // The room was created. Setting up room status (local player is host)
+        Gamemaster::ResetAll();
         @Match = GameServer();
         Match.roomConfig = RoomConfig;
         Match.config = MatchConfig;
