@@ -33,10 +33,40 @@ pub async fn initialize_primary_store(path: &str) {
     file_create(path);
 
     let connection_pool = SqlitePoolOptions::new()
-        .max_connections(5)
+        .max_connections(20)
         .connect(path)
         .await
         .expect("primary store did not start");
+
+    sqlx::query("PRAGMA journal_mode=WAL")
+        .execute(&connection_pool)
+        .await
+        .expect("failed to set journal mode");
+
+    sqlx::query("PRAGMA synchronous=NORMAL")
+        .execute(&connection_pool)
+        .await
+        .expect("failed to set synchronous mode");
+
+    sqlx::query("PRAGMA cache_size=-65536")
+        .execute(&connection_pool)
+        .await
+        .expect("failed to set cache_size");
+
+    sqlx::query("PRAGMA temp_store=MEMORY")
+        .execute(&connection_pool)
+        .await
+        .expect("failed to set temp_store");
+
+    sqlx::query("PRAGMA mmap_size=33554432")
+        .execute(&connection_pool)
+        .await
+        .expect("failed to set mmap_size");
+
+    sqlx::query("PRAGMA busy_timeout=30000")
+        .execute(&connection_pool)
+        .await
+        .expect("failed to set busy_timeout");
 
     let configuration = match get_master_configuration(&connection_pool).await {
         Ok(config) => config,

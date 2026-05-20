@@ -3,7 +3,7 @@ use std::io;
 use bytes::BytesMut;
 use futures::{SinkExt, StreamExt};
 use serde::Serialize;
-use tokio::{net::TcpStream, sync::mpsc::error::SendError};
+use tokio::{net::TcpStream, sync::mpsc::error::TrySendError};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
 use super::TransportWriteQueue;
@@ -29,10 +29,10 @@ impl NativeClientProtocol {
     }
 }
 
-pub fn write<S: Serialize>(tx: &TransportWriteQueue, value: &S) -> Result<(), SendError<Vec<u8>>> {
-    tx.send(
+pub fn write<S: Serialize>(tx: &TransportWriteQueue, value: &S) -> Result<(), TrySendError<Vec<u8>>> {
+    tx.try_send(
         serde_json::to_string(value)
             .expect("Serialize should not error")
-            .into(),
+            .into_bytes(),
     )
 }

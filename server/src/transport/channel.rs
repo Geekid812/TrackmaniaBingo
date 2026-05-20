@@ -26,20 +26,23 @@ impl Channel {
         self.peers.remove(&address);
     }
 
+    pub fn peer_count(&self) -> usize {
+        self.peers.len()
+    }
+
     pub fn broadcast(&mut self, message: &impl Serialize) {
         let serialized = match to_vec(message) {
             Ok(message) => message,
             Err(e) => {
-                error!("serialization failure: {}", e);
+                error!("broadcast serialization failure: {}", e);
                 return;
             }
         };
 
-        // send message to all peers and collect closed connections which produced an error
         let closed: Vec<i32> = self
             .peers
             .iter()
-            .filter(|(_, peer)| peer.send_serialized(serialized.clone()).is_err())
+            .filter(|(_, peer)| peer.send_raw(serialized.clone()).is_err_and(|e| e.is_some()))
             .map(|(addr, _)| *addr)
             .collect();
 
