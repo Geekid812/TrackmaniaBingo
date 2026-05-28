@@ -76,6 +76,7 @@ namespace Network {
 
     void OpenConnection() {
         int retries = 3;
+        int backoffMs = 1000;
         while (!IsConnected() && retries > 0) {
             auto handshake = HandshakeRequest();
             handshake.version = Meta::ExecutingPlugin().Version;
@@ -92,6 +93,12 @@ namespace Network {
             if (!IsConnected()) {
                 retries -= 1;
                 logwarn("[Network] Failed to connect. " + retries + " retry attempts left.");
+                if (retries > 0) {
+                    int jitter = Math::Rand(0, backoffMs / 2);
+                    uint64 waitUntil = Time::Now + backoffMs + jitter;
+                    while (Time::Now < waitUntil) { yield(); }
+                    backoffMs *= 2;
+                }
             }
         }
     }
@@ -152,6 +159,9 @@ namespace Network {
 
     void OnDisconnect() {
         logtrace("[Network] Disconnected! Attempting to reconnect...");
+        // Random delay (0-2s) to avoid thundering herd on server restart
+        uint64 waitUntil = Time::Now + Math::Rand(0, 2000);
+        while (Time::Now < waitUntil) { yield(); }
         Reset();
         Connect();
         if (!IsConnected()) {
