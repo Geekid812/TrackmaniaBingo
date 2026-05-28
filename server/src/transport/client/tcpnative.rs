@@ -1,6 +1,6 @@
 use std::io;
 
-use bytes::BytesMut;
+use bytes::{Bytes, BytesMut};
 use futures::{SinkExt, StreamExt};
 use serde::Serialize;
 use tokio::{net::TcpStream, sync::mpsc::error::SendError};
@@ -24,12 +24,12 @@ impl NativeClientProtocol {
         self.inner.next().await
     }
 
-    pub async fn write(&mut self, message: Vec<u8>) -> Result<(), io::Error> {
+    pub async fn write(&mut self, message: Bytes) -> Result<(), io::Error> {
         self.inner.send(message.into()).await
     }
 }
 
-pub fn write<S: Serialize>(tx: &TransportWriteQueue, value: &S) -> Result<(), SendError<Vec<u8>>> {
+pub fn write<S: Serialize>(tx: &TransportWriteQueue, value: &S) -> Result<(), SendError<Bytes>> {
     tx.send(
         serde_json::to_string(value)
             .expect("Serialize should not error")

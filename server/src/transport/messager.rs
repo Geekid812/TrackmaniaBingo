@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use std::sync::Arc;
 
 use serde::Serialize;
@@ -23,14 +24,14 @@ impl NetMessageWriter {
         Self { writer }
     }
 
-    pub fn send_serialized(&self, message: Vec<u8>) -> Result<(), SendError<Vec<u8>>> {
+    pub fn send_serialized(&self, message: Bytes) -> Result<(), SendError<Bytes>> {
         self.writer.send(message)
     }
 
     /// Send a serialized message to the client.
-    pub fn send<T: Serialize>(&self, message: &T) -> Result<(), Option<SendError<Vec<u8>>>> {
+    pub fn send<T: Serialize>(&self, message: &T) -> Result<(), Option<SendError<Bytes>>> {
         let serialized = match to_vec(message) {
-            Ok(message) => message,
+            Ok(message) => Bytes::from(message),
             Err(e) => {
                 error!("serilization failure: {}", e);
                 return Err(None);
