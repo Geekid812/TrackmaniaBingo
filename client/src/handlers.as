@@ -474,6 +474,7 @@ namespace NetworkHandlers {
         Player @equipUser = Match.GetPlayer(int(data["uid"]));
         if (@equipUser is null) {
             logwarn("[NetworkHandlers::ItemSlotEquip] Player is null, ignoring this event. This means something is likely broken!");
+            return;
         }
         equipUser.holdingPowerup = Powerup(int(data["powerup"]));
         equipUser.powerupExpireTimestamp = Time::Now + Match.config.itemsExpire * 1000;
