@@ -163,6 +163,10 @@ namespace Network {
             Internal::OfflineMode = true;
         } else {
             logtrace("[Network] Reconnected to server.");
+            if (PersistantStorage::LastConnectedMatchId != "" || PersistantStorage::LastConnectedRoomCode != "") {
+                logtrace("[Network] Returning to match after being disconnected...");
+                TryReconnect();
+            }
         }
     }
 
@@ -546,6 +550,13 @@ namespace Network {
             PersistantStorage::ResetConnectedMatch();
         }
         Internal::Reconnecting = false;
+    }
+
+    void TryReconnect() {
+        NetParams::JoinCode = PersistantStorage::LastConnectedRoomCode;
+        NetParams::MatchJoinUid = PersistantStorage::LastConnectedMatchId;
+        NetParams::MatchJoinTeamId = PersistantStorage::LastConnectedMatchTeamId;
+        startnew(Network::Reconnect);
     }
 
     void PingCell() {
